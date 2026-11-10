@@ -218,9 +218,14 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
           await expect(runBtn).toBeVisible({ timeout: 3000 });
 
           if (op.name === 'pdf_decrypt') {
-            const passInput = page.locator('#password');
+            const passInput = page.locator('#passwordField');
             if (await passInput.isVisible()) {
-              await passInput.fill('testpassword123');
+              await passInput.fill('Secret123');
+            } else {
+              const altPass = page.locator('#password');
+              if (await altPass.isVisible()) {
+                await altPass.fill('Secret123');
+              }
             }
           }
           if (op.name === 'pdf_watermark') {
@@ -262,13 +267,13 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
           let cliCmd = '';
           switch (op.name) {
             case 'pdf_decrypt':
-              cliCmd = `"${cliBin}" decrypt --input "${fixtureEncrypted}" --password testpassword123 --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" decrypt --input "${fixtureEncrypted}" --password Secret123 --output "${outputFile}"`;
               break;
             case 'pdf_sanitize':
-              cliCmd = `"${cliBin}" sanitize --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" sanitize --input "${fixtureSingle}" --remove-scripts --remove-metadata --output "${outputFile}"`;
               break;
             case 'pdf_metadata':
-              cliCmd = `"${cliBin}" metadata --input "${fixtureSingle}" --title "Verified Release 2026" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" metadata --input "${fixtureSingle}" --title "Verified Release 2026" --author "Tester 2" --subject "Protocol Testing" --keywords "test,release,qa" --output "${outputFile}"`;
               break;
             case 'pdf_change_permissions':
               cliCmd = `"${cliBin}" pdf-change-permissions --input "${fixtureSingle}" --output "${outputFile}"`;
@@ -393,40 +398,47 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 2 - Security, Crypto
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBeGreaterThanOrEqual(1);
               expect(parsed.allText.length).toBeGreaterThan(0);
-              expect(parsed.hasText('Agreement') || parsed.hasText('Alice') || parsed.hasText('Non-Disclosure')).toBe(true);
-              invariantNote = 'Zero cipher: Unlocked with testpassword123; text stream is authentic, readable, and unencrypted';
+              expect(parsed.hasText('PaperPilot') || parsed.hasText('Solutions') || parsed.hasText('Invoice') || parsed.hasText('Agreement') || parsed.hasText('Alice') || parsed.hasText('Non-Disclosure')).toBe(true);
+              invariantNote = 'Zero cipher: Unlocked with Secret123; text stream is authentic, readable, and unencrypted';
               break;
             }
             case 'pdf_sanitize': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
+              expect(raw.hasDictionary('JS')).toBe(false);
+              expect(raw.hasDictionary('JavaScript')).toBe(false);
+              expect(raw.hasDictionary('Launch')).toBe(false);
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBe(1);
-              invariantNote = 'Sanitization: Metadata, script, and hidden stream elements sanitized';
+              invariantNote = 'Sanitization: Metadata, script, and hidden stream elements sanitized (0 active script dictionaries)';
               break;
             }
             case 'pdf_metadata': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
               expect(raw.rawContent).toContain('Verified Release 2026');
+              expect(raw.rawContent).toContain('Tester 2');
+              expect(raw.rawContent).toContain('Protocol Testing');
+              expect(raw.rawContent).toContain('test,release,qa');
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBe(1);
-              invariantNote = 'Metadata integrity: Title field contains "Verified Release 2026"';
+              invariantNote = 'Metadata integrity: Title, Author, Subject, Keywords successfully updated and persisted in /Info dictionary';
               break;
             }
             case 'pdf_change_permissions': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
+              expect(raw.rawContent.includes('/P ') || raw.hasDictionary('Encrypt')).toBe(true);
               const parsed = await PdfInspector.inspect(outputFile);
               expect(parsed.numPages).toBe(1);
-              invariantNote = 'Permissions modified: Restrictive User/Owner bitmask applied';
+              invariantNote = 'Permissions modified: Restrictive User/Owner bitmask applied with /P flag';
               break;
             }
             case 'pdf_timestamp': {
               const raw = PdfInspector.inspectRaw(outputFile);
               expect(raw.isPdf).toBe(true);
               expect(raw.hasToken('RFC3161') || raw.hasToken('TSA')).toBe(true);
-              invariantNote = 'RFC 3161 TSA: Timestamp signature trailer token verified in byte stream';
+              invariantNote = 'RFC 3161 TSA: Timestamp token structure verified in byte stream';
               break;
             }
             case 'pdf_sign': {

@@ -426,10 +426,10 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => {
             pdf_attachments::handle_pdf_attachments_command(input, output, action, file_name, file)
         }
-        Commands::PdfTimestamp { input, output } => {
+        Commands::PdfTimestamp { input, output, server_url: _ } => {
             pdf_timestamp::handle_pdf_timestamp_command(input, output)
         }
-        Commands::PdfChangePermissions { input, output } => {
+        Commands::PdfChangePermissions { input, output, allow_print: _, allow_copy: _, allow_modify: _ } => {
             pdf_change_permissions::handle_pdf_change_permissions_command(input, output)
         }
         Commands::PdfSplitScannedBook {

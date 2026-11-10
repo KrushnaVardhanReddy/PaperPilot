@@ -558,20 +558,28 @@ pub enum Commands {
         file: Option<PathBuf>,
     },
     /// Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens.
-    #[command(name = "pdf-timestamp")]
+    #[command(name = "pdf-timestamp", alias = "timestamp")]
     PdfTimestamp {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        server_url: Option<String>,
     },
     /// Modify PDF Permissions: Configure user and owner permissions for printing, copying, and modification.
-    #[command(name = "pdf-change-permissions")]
+    #[command(name = "pdf-change-permissions", alias = "change-permissions")]
     PdfChangePermissions {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        allow_print: Option<bool>,
+        #[arg(long)]
+        allow_copy: Option<bool>,
+        #[arg(long)]
+        allow_modify: Option<bool>,
     },
     /// Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages.
     #[command(name = "pdf-split-scanned-book")]

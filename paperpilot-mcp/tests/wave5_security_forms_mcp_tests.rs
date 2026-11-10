@@ -41,9 +41,9 @@ fn call_mcp_tool(name: &str, args: serde_json::Value) -> Result<(bool, serde_jso
 
 fn run_cli(args: &[&str]) -> Result<(bool, String, f64)> {
     let candidates = [
-        PathBuf::from("target/debug/paperpilot"),
-        PathBuf::from("target/release/paperpilot"),
-        PathBuf::from("target/debug/paperpilot-cli"),
+        get_workspace_root().join("target/debug/paperpilot"),
+        get_workspace_root().join("target/release/paperpilot"),
+        get_workspace_root().join("target/debug/paperpilot-cli"),
     ];
     let mut bin_path = candidates[0].clone();
     for p in &candidates {
@@ -130,6 +130,7 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_encrypt",
         "pdf_decrypt",
         "pdf_sanitize",
+        "pdf_metadata",
         "pdf_redact",
         "pdf_read_form",
         "pdf_fill_form",
@@ -167,14 +168,19 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "user_password": "pass", "owner_password": "pass" });
             }
             "pdf_decrypt" => {
-                cli_args = vec!["decrypt", "--input", &encrypted_pdf, "--output", cli_out.to_str().unwrap(), "--password", "password", "--json"];
-                mcp_payload = json!({ "input": encrypted_pdf, "output": mcp_out.to_str().unwrap(), "password": "password" });
-                api_payload = json!({ "input": encrypted_pdf, "output": api_out.to_str().unwrap(), "password": "password" });
+                cli_args = vec!["decrypt", "--input", &encrypted_pdf, "--output", cli_out.to_str().unwrap(), "--password", "Secret123", "--json"];
+                mcp_payload = json!({ "input": encrypted_pdf, "output": mcp_out.to_str().unwrap(), "password": "Secret123" });
+                api_payload = json!({ "input": encrypted_pdf, "output": api_out.to_str().unwrap(), "password": "Secret123" });
             }
             "pdf_sanitize" => {
-                cli_args = vec!["sanitize", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
+                cli_args = vec!["sanitize", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--remove-scripts", "--remove-metadata", "--json"];
                 mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap() });
                 api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap() });
+            }
+            "pdf_metadata" => {
+                cli_args = vec!["metadata", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--title", "Verified Release 2026", "--author", "Tester 2", "--subject", "Protocol Testing", "--keywords", "test,release,qa", "--json"];
+                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "title": "Verified Release 2026", "author": "Tester 2", "subject": "Protocol Testing", "keywords": "test,release,qa" });
+                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "title": "Verified Release 2026", "author": "Tester 2", "subject": "Protocol Testing", "keywords": "test,release,qa" });
             }
             "pdf_redact" => {
                 cli_args = vec!["redact", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--query", "Smallpdf", "--json"];

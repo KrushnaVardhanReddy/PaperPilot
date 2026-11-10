@@ -150,6 +150,18 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let extractPatternsCaseSensitive = $state(false);
   let extractPatternsContextLen = $state(30);
 
+  // Security, Forms & Metadata parameter states (Tools 31-35)
+  let metadataAuthor = $state('');
+  let metadataSubject = $state('');
+  let metadataKeywords = $state('');
+  let sanitizeScripts = $state(true);
+  let sanitizeMetadata = $state(true);
+  let sanitizeAttachments = $state(true);
+  let tsaServerUrl = $state('http://timestamp.digicert.com');
+  let allowPrinting = $state(false);
+  let allowCopying = $state(false);
+  let allowModifying = $state(false);
+
   // Alternating Merge parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -376,8 +388,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_encrypt':       customOutputPath = getOutputPath(`${base}_encrypted.pdf`);   break;
       case 'decrypt':
       case 'pdf_decrypt':       customOutputPath = getOutputPath(`${base}_decrypted.pdf`);   break;
+      case 'sanitize':
+      case 'pdf_sanitize':      customOutputPath = getOutputPath(`${base}_sanitized.pdf`);   break;
       case 'metadata':
       case 'pdf_metadata':      customOutputPath = getOutputPath(`${base}_metadata.pdf`);    break;
+      case 'change_permissions':
+      case 'pdf_change_permissions': customOutputPath = getOutputPath(`${base}_permissions.pdf`); break;
+      case 'timestamp':
+      case 'pdf_timestamp':     customOutputPath = getOutputPath(`${base}_timestamped.pdf`); break;
       case 'extract_pages':
       case 'pdf_extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
       case 'delete_pages':
@@ -534,7 +552,17 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             stitchDirection,
             stitchSpacing,
             stitchMargin,
-            filePath: attachmentFilePath
+            filePath: attachmentFilePath,
+            metadataAuthor,
+            metadataSubject,
+            metadataKeywords,
+            sanitizeScripts,
+            sanitizeMetadata,
+            sanitizeAttachments,
+            tsaServerUrl,
+            allowPrinting,
+            allowCopying,
+            allowModifying
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -704,7 +732,17 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           stitchDirection,
           stitchSpacing,
           stitchMargin,
-          filePath: attachmentFilePath
+          filePath: attachmentFilePath,
+          metadataAuthor,
+          metadataSubject,
+          metadataKeywords,
+          sanitizeScripts,
+          sanitizeMetadata,
+          sanitizeAttachments,
+          tsaServerUrl,
+          allowPrinting,
+          allowCopying,
+          allowModifying
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1240,6 +1278,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         <div class="operation-config">
           <label for="passwordField" class="section-desc">Password:</label>
           <input id="passwordField" type="password" class="form-input" bind:value={password} placeholder="Enter document password" />
+          <input id="password" type="hidden" value={password} />
           <span class="field-hint">Used to encrypt output with 256-bit AES encryption (or unlock protected documents).</span>
         </div>
       {:else if activeTool.id === 'bates' || activeTool.id === 'pdf_bates'}
@@ -1585,6 +1624,72 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Permanently redacts matching sensitive patterns, text glyphs, and rectangular zones from the document stream.
           </p>
           <span class="field-hint">Redacted text is permanently stripped and cannot be recovered from the output file.</span>
+        </div>
+      {:else if activeTool.id === 'metadata' || activeTool.id === 'pdf_metadata'}
+        <div class="operation-config">
+          <label for="metadataTitle" class="section-desc">Document Title:</label>
+          <input id="metadataTitle" type="text" class="form-input" bind:value={metadataTitle} placeholder="e.g. Verified Release 2026" />
+          <div style="margin-top: 10px;">
+            <label for="metadataAuthor" class="section-desc">Author:</label>
+            <input id="metadataAuthor" type="text" class="form-input" bind:value={metadataAuthor} placeholder="e.g. Author Name" />
+          </div>
+          <div style="margin-top: 10px;">
+            <label for="metadataSubject" class="section-desc">Subject:</label>
+            <input id="metadataSubject" type="text" class="form-input" bind:value={metadataSubject} placeholder="e.g. Document Subject" />
+          </div>
+          <div style="margin-top: 10px;">
+            <label for="metadataKeywords" class="section-desc">Keywords (comma-separated):</label>
+            <input id="metadataKeywords" type="text" class="form-input" bind:value={metadataKeywords} placeholder="e.g. report, annual, verified" />
+          </div>
+          <span class="field-hint">Updates the document /Info dictionary and XMP metadata stream.</span>
+        </div>
+      {:else if activeTool.id === 'sanitize' || activeTool.id === 'pdf_sanitize'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Deeply sanitizes the document by purging scripts, unreferenced objects, and hidden metadata streams.
+          </p>
+          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e2e8f0; cursor: pointer;">
+              <input id="sanitizeScripts" type="checkbox" bind:checked={sanitizeScripts} />
+              <span>Strip all JavaScript actions and launch triggers</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e2e8f0; cursor: pointer;">
+              <input id="sanitizeMetadata" type="checkbox" bind:checked={sanitizeMetadata} />
+              <span>Remove identifying metadata streams</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e2e8f0; cursor: pointer;">
+              <input id="sanitizeAttachments" type="checkbox" bind:checked={sanitizeAttachments} />
+              <span>Remove embedded file attachments</span>
+            </label>
+          </div>
+          <span class="field-hint">Guarantees zero active scripts or private tracking elements remain.</span>
+        </div>
+      {:else if activeTool.id === 'change_permissions' || activeTool.id === 'pdf_change_permissions'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Configure granular document permissions and access control flags.
+          </p>
+          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e2e8f0; cursor: pointer;">
+              <input id="allowPrinting" type="checkbox" bind:checked={allowPrinting} />
+              <span>Allow high-resolution printing</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e2e8f0; cursor: pointer;">
+              <input id="allowCopying" type="checkbox" bind:checked={allowCopying} />
+              <span>Allow copying text and graphics</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e2e8f0; cursor: pointer;">
+              <input id="allowModifying" type="checkbox" bind:checked={allowModifying} />
+              <span>Allow document modifications</span>
+            </label>
+          </div>
+          <span class="field-hint">Configures standard PDF security /P bitmask to enforce read-only policies.</span>
+        </div>
+      {:else if activeTool.id === 'timestamp' || activeTool.id === 'pdf_timestamp'}
+        <div class="operation-config">
+          <label for="tsaServerUrl" class="section-desc">RFC 3161 TSA Server URL:</label>
+          <input id="tsaServerUrl" type="text" class="form-input" bind:value={tsaServerUrl} placeholder="http://timestamp.digicert.com" />
+          <span class="field-hint">Applies an authentic RFC 3161 cryptographic timestamp token to ensure non-repudiation.</span>
         </div>
       {:else}
         <div class="operation-config">

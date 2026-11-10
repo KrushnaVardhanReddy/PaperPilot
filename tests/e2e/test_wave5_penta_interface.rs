@@ -41,9 +41,9 @@ fn call_mcp_tool(name: &str, args: serde_json::Value) -> Result<(bool, serde_jso
 
 fn run_cli(args: &[&str]) -> Result<(bool, String, f64)> {
     let candidates = [
-        PathBuf::from("target/debug/paperpilot"),
-        PathBuf::from("target/release/paperpilot"),
-        PathBuf::from("target/debug/paperpilot-cli"),
+        get_workspace_root().join("target/debug/paperpilot"),
+        get_workspace_root().join("target/release/paperpilot"),
+        get_workspace_root().join("target/debug/paperpilot-cli"),
     ];
     let mut bin_path = candidates[0].clone();
     for p in &candidates {

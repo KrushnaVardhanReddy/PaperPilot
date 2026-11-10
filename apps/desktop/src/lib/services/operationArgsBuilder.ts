@@ -81,6 +81,16 @@ export interface OperationContext {
     invertMode?: string;
     invertPages?: string;
     compareInputB?: string;
+    metadataAuthor?: string;
+    metadataSubject?: string;
+    metadataKeywords?: string;
+    tsaServerUrl?: string;
+    allowPrinting?: boolean;
+    allowCopying?: boolean;
+    allowModifying?: boolean;
+    sanitizeScripts?: boolean;
+    sanitizeMetadata?: boolean;
+    sanitizeAttachments?: boolean;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -477,10 +487,24 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'metadata':
+        case 'pdf_metadata':
             args = {
                 input: docPath,
                 title: metadataTitle || docName,
+                author: context.metadataAuthor || 'PaperPilot Author',
+                subject: context.metadataSubject || 'Document Subject',
+                keywords: context.metadataKeywords || 'paperpilot,pdf',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_metadata.pdf`)
+            };
+            break;
+        case 'sanitize':
+        case 'pdf_sanitize':
+            args = {
+                input: docPath,
+                remove_scripts: context.sanitizeScripts !== undefined ? context.sanitizeScripts : true,
+                remove_metadata: context.sanitizeMetadata !== undefined ? context.sanitizeMetadata : true,
+                remove_attachments: context.sanitizeAttachments !== undefined ? context.sanitizeAttachments : true,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_sanitized.pdf`)
             };
             break;
         case 'extract_pages':
@@ -672,16 +696,22 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 file: context.filePath
             };
             break;
+        case 'timestamp':
         case 'pdf_timestamp':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                server_url: context.tsaServerUrl || 'http://timestamp.digicert.com',
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_timestamped.pdf`)
             };
             break;
+        case 'change_permissions':
         case 'pdf_change_permissions':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.pdf`)
+                allow_print: context.allowPrinting !== undefined ? context.allowPrinting : false,
+                allow_copy: context.allowCopying !== undefined ? context.allowCopying : false,
+                allow_modify: context.allowModifying !== undefined ? context.allowModifying : false,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_permissions.pdf`)
             };
             break;
         case 'pdf_split_scanned_book':

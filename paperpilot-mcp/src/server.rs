@@ -1595,6 +1595,34 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_author_m),
         );
 
+        let mut prop_subject_m = serde_json::Map::new();
+        prop_subject_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_subject_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The new subject.".to_string()),
+        );
+        prop_meta.insert(
+            "subject".to_string(),
+            serde_json::Value::Object(prop_subject_m),
+        );
+
+        let mut prop_keywords_m = serde_json::Map::new();
+        prop_keywords_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_keywords_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The new keywords.".to_string()),
+        );
+        prop_meta.insert(
+            "keywords".to_string(),
+            serde_json::Value::Object(prop_keywords_m),
+        );
+
         let mut prop_output_m = serde_json::Map::new();
         prop_output_m.insert(
             "type".to_string(),
@@ -6086,6 +6114,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let title = get_string("title").ok();
                 let author = get_string("author").ok();
+                let subject = get_string("subject").ok();
+                let keywords = get_string("keywords").ok();
                 let output = get_string("output").ok();
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
@@ -6094,6 +6124,8 @@ impl PaperPilotMcpServer {
                 let mut op = paperpilot_pdf::operations::metadata::MetadataOperation::new();
                 op.title = title;
                 op.author = author;
+                op.subject = subject;
+                op.keywords = keywords;
 
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
