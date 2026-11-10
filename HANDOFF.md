@@ -76,16 +76,23 @@
 
 ---
 
-### 🥉 Tier 3: Growth & Virality (Phase 11 Browser Extension)
-*Goal: Bring PaperPilot directly into everyday user workflows inside Chrome/Edge/Firefox tabs.*
+### 🥉 Tier 3: Growth & Virality — Ecosystem & Editor Extensions (Phase 11 & Phase 12)
+*Goal: Bring PaperPilot directly into everyday user workflows inside Chrome/Edge/Firefox tabs and VS Code/Cursor editor workspaces.*
 
-6. **Task 11.1: Manifest V3 Companion Browser Extension**
-   - Toolbar popup & context-menu actions ("PaperPilot: OCR / Sign / Redact / Convert") for in-tab PDFs (arXiv, invoices, web PDFs).
-   - Native Messaging / local REST bridge to the background PaperPilot daemon.
-7. **Task 11.2: Web Clean-Article to PDF/A Exporter**
-   - One-click browser capture converting web articles to ad-free, sanitized PDF/A or clean Markdown with embedded bookmarks.
-8. **Task 11.3: In-Browser Client WASM Toolkit**
-   - Pure client-side WASM compilation for zero-install split, merge, watermark, and form inspection.
+6. **Phase 11: Manifest V3 Companion Browser Extension (`apps/extension`)**
+   - Toolbar popup & context-menu actions ("PaperPilot: OCR / Sign / Redact / Convert / Chunk") for in-tab PDFs (arXiv, invoices, web PDFs).
+   - One-click Web Clean-Article to PDF/A & Markdown capture.
+   - Dual-mode architecture: In-browser client WASM toolkit (`paperpilot-wasm`) for instant client-side operations + REST bridge to local daemon (`localhost:7823`) for heavy neural OCR & mmap processing.
+
+7. **Phase 12: VS Code & Cursor IDE Extension (`apps/vscode-extension`)**
+   - File Explorer context menus on `.pdf` files:
+     - *"PaperPilot: Semantic Chunk for AI / RAG Context"*
+     - *"PaperPilot: Convert to Markdown"*
+     - *"PaperPilot: Extract Tables to CSV/JSON"*
+     - *"PaperPilot: Scan & Redact PII"*
+   - Custom Editor / Side-by-Side View: Interactive PDF preview with synchronized extracted Markdown text and table inspection.
+   - Status bar diagnostic indicator connecting to `paperpilot doctor` and local Gateway.
+   - MCP Server auto-registration for Cursor and Claude Code in VS Code settings.
 
 ---
 
