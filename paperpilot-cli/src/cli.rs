@@ -371,11 +371,16 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Search Text: Search for text across document [Input: .pdf | Output: .json]
+    #[command(name = "search", alias = "pdf-search", alias = "pdf_search")]
     Search {
         #[arg(long)]
-        input: PathBuf,
+        input: Option<PathBuf>,
         #[arg(long)]
         query: String,
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     /// Render Page: Render page to image format [Input: .pdf | Output: png images]
     Render {
@@ -430,10 +435,12 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    #[command(name = "classify-type", alias = "classify")]
+    #[command(name = "classify-type", alias = "classify", alias = "pdf-classify-type", alias = "pdf_classify_type")]
     Classify {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt]
     #[command(alias = "pdf-validate", alias = "pdf_validate")]
@@ -804,18 +811,32 @@ pub enum Commands {
         #[arg(long)]
         input: PathBuf,
     },
-    #[command(name = "workspace-search")]
+    #[command(name = "workspace-search", alias = "workspace_search")]
     WorkspaceSearch {
         #[arg(long)]
-        input: PathBuf,
+        input: Option<PathBuf>,
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        #[arg(long)]
+        query: Option<String>,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
-    #[command(name = "semantic-search")]
+    #[command(name = "semantic-search", alias = "semantic_search")]
     SemanticSearch {
         #[arg(long)]
-        input: PathBuf,
+        input: Option<PathBuf>,
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        #[arg(long)]
+        query: Option<String>,
+        #[arg(long)]
+        limit: Option<usize>,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     /// Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]
-    #[command(name = "pdf-extract-patterns")]
+    #[command(name = "pdf-extract-patterns", alias = "extract-patterns", alias = "extract_patterns", alias = "pdf_extract_patterns")]
     PdfExtractPatterns {
         #[arg(long)]
         input: PathBuf,

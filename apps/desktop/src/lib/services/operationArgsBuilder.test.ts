@@ -331,7 +331,48 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_extract_patterns', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.json'
+            output: '/docs/test_extract_report.json',
+            keywords: [],
+            patterns: {},
+            case_sensitive: false,
+            context_len: 30
+        });
+    });
+
+    it('builds args for pdf_search', async () => {
+        const args = await buildOperationArgs('pdf_search', { ...defaultContext, searchQuery: 'FindMe' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            query: 'FindMe',
+            output: '/docs/test_search.json'
+        });
+    });
+
+    it('builds args for workspace_search', async () => {
+        const args = await buildOperationArgs('workspace_search', { ...defaultContext, workspaceQuery: 'FindInWs' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            dir: '/docs',
+            query: 'FindInWs',
+            output: '/docs/test_workspace_search.json'
+        });
+    });
+
+    it('builds args for semantic_search', async () => {
+        const args = await buildOperationArgs('semantic_search', { ...defaultContext, semanticQuery: 'concepts' });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            query: 'concepts',
+            limit: 5,
+            output: '/docs/test_semantic_search.json'
+        });
+    });
+
+    it('builds args for pdf_classify_type', async () => {
+        const args = await buildOperationArgs('pdf_classify_type', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_classified.json'
         });
     });
 });

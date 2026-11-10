@@ -131,6 +131,11 @@ export interface OperationContext {
     pdfaConformance?: string;
     excelSheet?: string;
     hasHeaders?: boolean;
+    workspaceQuery?: string;
+    workspaceDir?: string;
+    semanticQuery?: string;
+    semanticLimit?: number;
+    classifyDetail?: boolean;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -486,18 +491,58 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         }
         case 'bookmarks':
         case 'pdf_bookmarks':
-        case 'classify_type':
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_bookmarks.json`)
             };
             break;
-        case 'search':
+        case 'classify':
+        case 'classify_type':
+        case 'pdf_classify_type':
             args = {
                 input: docPath,
-                query: searchQuery && searchQuery.trim() !== '' ? searchQuery.trim() : 'PaperPilot'
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_classified.json`)
             };
             break;
+        case 'search':
+        case 'pdf_search': {
+            const query = (context.searchQuery && context.searchQuery.trim() !== '') ? context.searchQuery.trim() : 'PaperPilot';
+            args = {
+                input: docPath,
+                query,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_search.json`)
+            };
+            break;
+        }
+        case 'workspace_search': {
+            const query = (context.workspaceQuery && context.workspaceQuery.trim() !== '')
+                ? context.workspaceQuery.trim()
+                : (context.searchQuery && context.searchQuery.trim() !== '')
+                    ? context.searchQuery.trim()
+                    : 'PaperPilot';
+            const dir = context.workspaceDir || (docPath && docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '.');
+            args = {
+                input: docPath,
+                dir,
+                query,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_workspace_search.json`)
+            };
+            break;
+        }
+        case 'semantic_search': {
+            const query = (context.semanticQuery && context.semanticQuery.trim() !== '')
+                ? context.semanticQuery.trim()
+                : (context.searchQuery && context.searchQuery.trim() !== '')
+                    ? context.searchQuery.trim()
+                    : 'document';
+            args = {
+                input: docPath,
+                query,
+                limit: context.semanticLimit ?? 5,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_semantic_search.json`)
+            };
+            break;
+        }
         case 'bates':
         case 'pdf_bates':
             args = {
@@ -1002,6 +1047,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         }
+        case 'extract_patterns':
         case 'pdf_extract_patterns': {
             const keywords = (context.extractPatternsKeywords || '')
                 .split(',')

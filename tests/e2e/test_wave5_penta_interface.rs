@@ -197,6 +197,12 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "office_modernize_legacy",
         "excel_to_json",
         "excel_to_csv",
+        // Session 17 — Tools 81-85
+        "pdf_extract_patterns",
+        "pdf_search",
+        "workspace_search",
+        "semantic_search",
+        "pdf_classify_type",
     ];
 
     for tool_id in &tools {
@@ -530,6 +536,56 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 cli_args = vec!["office", "excel-to-csv", "--input", &test_xlsx, "--output", csv_cli.to_str().unwrap(), "--json"];
                 mcp_payload = json!({ "input": test_xlsx, "output": csv_mcp.to_str().unwrap() });
                 api_payload = json!({ "input": test_xlsx, "output": csv_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 17 — Tool 81: pdf_extract_patterns
+            "pdf_extract_patterns" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["pdf-extract-patterns", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--keywords", "PDF,Single", "--json"];
+                mcp_payload = json!({ "input": single_page, "output": json_mcp.to_str().unwrap(), "keywords": ["PDF", "Single"] });
+                api_payload = json!({ "input": single_page, "output": json_api.to_str().unwrap(), "keywords": ["PDF", "Single"] });
+                requires_output = false;
+            }
+            // Session 17 — Tool 82: pdf_search
+            "pdf_search" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["search", "--input", &single_page, "--query", "PDF", "--output", json_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "query": "PDF", "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "query": "PDF", "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 17 — Tool 83: workspace_search
+            "workspace_search" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["workspace-search", "--input", &single_page, "--query", "PDF", "--output", json_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "query": "PDF", "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "query": "PDF", "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 17 — Tool 84: semantic_search
+            "semantic_search" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["semantic-search", "--input", &single_page, "--query", "document", "--output", json_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "query": "document", "limit": 5, "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "query": "document", "limit": 5, "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 17 — Tool 85: pdf_classify_type
+            "pdf_classify_type" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["classify-type", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": json_api.to_str().unwrap() });
                 requires_output = false;
             }
             _ => {}

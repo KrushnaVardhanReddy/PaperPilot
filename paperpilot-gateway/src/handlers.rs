@@ -815,6 +815,7 @@ pub async fn handle_tool(
         || tool_name == "extract_images"
         || tool_name == "convert_excel"
         || tool_name == "workspace_search"
+        || tool_name == "semantic_search"
         || tool_name.starts_with("office_")
         || tool_name == "document_pii_scan"
     {
@@ -1884,10 +1885,62 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
     use paperpilot_pdf::document::LopdfDocument;
 
     let path = std::path::PathBuf::from(input);
-    let mut doc = match LopdfDocument::load(&path) {
-        Ok(d) => d,
-        Err(e) => {
-            return (
+    let mut matches = Vec::new();
+    if path.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(&path) {
+            for entry in entries.flatten() {
+                let ep = entry.path();
+                if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                    if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+                        if op.execute(&mut doc).is_ok() {
+                            let p = op.match_pages.lock().unwrap().clone();
+                            matches.extend(p);
+                        }
+                    }
+                }
+            }
+        }
+        (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({ "matches": matches })),
+                error: None,
+            }),
+        )
+            .into_response()
+    } else {
+        let mut doc = match LopdfDocument::load(&path) {
+            Ok(d) => d,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiResponse {
+                        success: false,
+                        result: None,
+                        error: Some(e.to_string()),
+                    }),
+                )
+                    .into_response();
+            }
+        };
+
+        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+        match op.execute(&mut doc) {
+            Ok(_) => {
+                let matches = op.match_pages.lock().unwrap().clone();
+                (
+                    StatusCode::OK,
+                    Json(ApiResponse {
+                        success: true,
+                        result: Some(serde_json::json!({ "matches": matches })),
+                        error: None,
+                    }),
+                )
+                    .into_response()
+            }
+            Err(e) => (
                 StatusCode::BAD_REQUEST,
                 Json(ApiResponse {
                     success: false,
@@ -1895,33 +1948,8 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
                     error: Some(e.to_string()),
                 }),
             )
-                .into_response();
+                .into_response(),
         }
-    };
-
-    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
-    match op.execute(&mut doc) {
-        Ok(_) => {
-            let matches = op.match_pages.lock().unwrap().clone();
-            (
-                StatusCode::OK,
-                Json(ApiResponse {
-                    success: true,
-                    result: Some(serde_json::json!({ "matches": matches })),
-                    error: None,
-                }),
-            )
-                .into_response()
-        }
-        Err(e) => (
-            StatusCode::BAD_REQUEST,
-            Json(ApiResponse {
-                success: false,
-                result: None,
-                error: Some(e.to_string()),
-            }),
-        )
-            .into_response(),
     }
 }
 

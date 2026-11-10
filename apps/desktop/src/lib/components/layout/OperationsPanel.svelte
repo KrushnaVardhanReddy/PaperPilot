@@ -107,6 +107,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let blankSensitivity = $state(99);
   let textSearchQuery = $state('');
   let searchResultDisplay = $state<string | null>(null);
+  let workspaceSearchQuery = $state('');
+  let workspaceSearchDir = $state('');
+  let semanticSearchQuery = $state('');
+  let semanticSearchLimit = $state(5);
+  let classifyDetail = $state(false);
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
@@ -534,6 +539,25 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_to_epub':     customOutputPath = getOutputPath(`${base}_output.epub`);     break;
       case 'pdf_to_pdf_a':    customOutputPath = getOutputPath(`${base}_pdfa.pdf`);        break;
       case 'pdf_convert_excel': customOutputPath = getOutputPath(`${base}_table.pdf`);     break;
+      case 'extract_patterns':
+      case 'pdf_extract_patterns':
+        customOutputPath = getOutputPath(`${base}_extract_report.json`);
+        break;
+      case 'search':
+      case 'pdf_search':
+        customOutputPath = getOutputPath(`${base}_search.json`);
+        break;
+      case 'workspace_search':
+        customOutputPath = getOutputPath(`${base}_workspace_search.json`);
+        break;
+      case 'semantic_search':
+        customOutputPath = getOutputPath(`${base}_semantic_search.json`);
+        break;
+      case 'classify':
+      case 'classify_type':
+      case 'pdf_classify_type':
+        customOutputPath = getOutputPath(`${base}_classified.json`);
+        break;
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
   });
@@ -618,6 +642,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             compressQuality,
             blankSensitivity,
             searchQuery: textSearchQuery,
+            workspaceQuery: workspaceSearchQuery,
+            workspaceDir: workspaceSearchDir,
+            semanticQuery: semanticSearchQuery,
+            semanticLimit: semanticSearchLimit,
+            classifyDetail,
             nupPages,
             nupOrdering,
             nupMargin,
@@ -839,6 +868,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           compressQuality,
           blankSensitivity,
           searchQuery: textSearchQuery,
+          workspaceQuery: workspaceSearchQuery,
+          workspaceDir: workspaceSearchDir,
+          semanticQuery: semanticSearchQuery,
+          semanticLimit: semanticSearchLimit,
+          classifyDetail,
           nupPages,
           nupOrdering,
           nupMargin,
@@ -988,9 +1022,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
                 await navigator.clipboard.writeText(textToCopy);
               }
               msg = `📋 OCR text copied to clipboard! (${textToCopy.length} characters)`;
-            } else if (activeTool.id === 'search') {
+            } else if (['search', 'pdf_search', 'workspace_search', 'semantic_search'].includes(activeTool.id)) {
               msg = resObj.message || 'Search completed';
               searchResultDisplay = resObj.message || 'No matches found.';
+            } else if (['classify', 'classify_type', 'pdf_classify_type'].includes(activeTool.id)) {
+              msg = resObj.message || 'Classification completed';
             } else {
               const outDest = resObj.output_path || customOutputPath || args.output || args.output_dir;
               msg = outDest ? `✅ ${activeTool.title} saved to: ${outDest}` : (resObj.message || `${activeTool.title} completed successfully`);
@@ -1074,7 +1110,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     const toolId = rawToolId.startsWith('pdf_') ? rawToolId : `pdf_${rawToolId}`;
     let ext = '.pdf';
     if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(rawToolId) || ['extract_text', 'pdf_extract_text'].includes(toolId)) ext = '.txt';
-    else if (['pdf_to_json', 'excel_to_json'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json'].includes(toolId)) ext = '.json';
+    else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type'].includes(toolId)) ext = '.json';
     else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) ext = '.md';
     else if (['pdf_to_html', 'excel_to_html'].includes(rawToolId) || ['pdf_to_html', 'excel_to_html'].includes(toolId)) ext = '.html';
     else if (['pdf_to_docx'].includes(rawToolId) || ['pdf_to_docx'].includes(toolId)) ext = '.docx';
@@ -1147,8 +1183,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         let filters = [{ name: 'PDF Document', extensions: ['pdf'] }];
         if (['extract_text', 'pdf_extract_text', 'office_extract_text'].includes(rawToolId) || ['extract_text', 'pdf_extract_text'].includes(toolId)) {
           filters = [{ name: 'Text File', extensions: ['txt'] }];
-        } else if (['pdf_to_json', 'excel_to_json'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json'].includes(toolId)) {
-          filters = [{ name: 'JSON Document', extensions: ['json'] }];
+        } else if (['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'extract_patterns', 'pdf_search', 'search', 'workspace_search', 'semantic_search', 'pdf_classify_type', 'classify_type', 'classify'].includes(rawToolId) || ['pdf_to_json', 'excel_to_json', 'pdf_extract_patterns', 'pdf_search', 'workspace_search', 'semantic_search', 'pdf_classify_type'].includes(toolId)) {
+          filters = [{ name: 'JSON Document', extensions: ['json'] }, { name: 'Text File', extensions: ['txt'] }];
         } else if (['pdf_to_markdown', 'office_to_markdown'].includes(rawToolId) || ['pdf_to_markdown', 'office_to_markdown'].includes(toolId)) {
           filters = [{ name: 'Markdown File', extensions: ['md'] }];
         } else if (['pdf_to_html', 'excel_to_html'].includes(rawToolId) || ['pdf_to_html', 'excel_to_html'].includes(toolId)) {
@@ -1404,7 +1440,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <option value="blue">Blue</option>
           </select>
         </div>
-      {:else if activeTool.id === 'pdf_extract_patterns'}
+      {:else if activeTool.id === 'pdf_extract_patterns' || activeTool.id === 'extract_patterns'}
         <div class="operation-config">
           <label for="extractPatternsKeywords" class="section-desc">Keywords (comma-separated):</label>
           <input id="extractPatternsKeywords" type="text" class="form-input" bind:value={extractPatternsKeywords} placeholder="e.g. Confidential, NDA, Urgent" />
@@ -1573,7 +1609,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
              </div>
           {/if}
         </div>
-{:else if activeTool.id === 'search'}
+      {:else if activeTool.id === 'search' || activeTool.id === 'pdf_search'}
         <div class="operation-config">
           <label for="textSearchQueryInput" class="section-desc">Search Text:</label>
           <input
@@ -1581,16 +1617,17 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             type="text"
             class="form-input"
             bind:value={textSearchQuery}
-            placeholder="Enter word or phrase to find..."
+            placeholder="Enter word or phrase to find in PDF..."
           />
           <p class="section-desc" style="font-size: 0.78rem; color: #a1a1aa; margin-top: 6px;">
-            Scans the entire PDF document and locates all pages containing the query text.
+            Scans document decoded content streams and identifies all pages matching the query text.
           </p>
           {#if searchResultDisplay}
             <div style="margin-top: 10px; padding: 10px 12px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; font-size: 0.85rem; color: #38bdf8;">
               🔍 {searchResultDisplay}
             </div>
           {/if}
+          <span class="field-hint" style="margin-top: 8px; display: block;">Output: <code>.json</code> — matched pages and occurrence counts.</span>
         </div>
       {:else if activeTool.id === 'pdf_nup'}
         <div class="operation-config">
@@ -2277,6 +2314,74 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Preserves tabular data grids, cell strings, and numeric records with proper quoting and UTF-8 encoding.
           </p>
           <span class="field-hint">Output: <code>.csv</code> — standard comma-separated values file.</span>
+        </div>
+      {:else if activeTool.id === 'workspace_search'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="workspaceSearchQueryInput" class="section-desc">Directory Search Query:</label>
+            <input
+              id="workspaceSearchQueryInput"
+              type="text"
+              class="form-input"
+              bind:value={workspaceSearchQuery}
+              placeholder="Query across all files in workspace..."
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="workspaceSearchDirInput" class="section-desc">Target Directory (Optional):</label>
+            <input
+              id="workspaceSearchDirInput"
+              type="text"
+              class="form-input"
+              bind:value={workspaceSearchDir}
+              placeholder="Leave empty for current document directory"
+            />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Recursively scans PDF, Word, Excel, and Markdown documents across your workspace directory, returning matched files and page locations.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — multi-document search matches and page indices.</span>
+        </div>
+      {:else if activeTool.id === 'semantic_search'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="semanticSearchQueryInput" class="section-desc">Semantic Concept Query:</label>
+            <input
+              id="semanticSearchQueryInput"
+              type="text"
+              class="form-input"
+              bind:value={semanticSearchQuery}
+              placeholder="e.g. financial liability clauses, termination policies..."
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="semanticSearchLimitInput" class="section-desc">Max Results: {semanticSearchLimit}</label>
+            <input
+              id="semanticSearchLimitInput"
+              type="range"
+              min="1"
+              max="20"
+              class="range-input"
+              bind:value={semanticSearchLimit}
+            />
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Performs neural vector embedding similarity search across indexed document segments, returning conceptually related passages beyond literal keyword matching.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — ranked semantic matches with similarity scores.</span>
+        </div>
+      {:else if activeTool.id === 'pdf_classify_type' || activeTool.id === 'classify_type' || activeTool.id === 'classify'}
+        <div class="operation-config">
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="scope-option" style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #cbd5e1;">
+              <input type="checkbox" bind:checked={classifyDetail} />
+              <span>Deep structural and font feature analysis</span>
+            </label>
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Analyzes document layout, typography, metadata, and form streams to classify the document type (e.g. invoice, contract, academic paper, presentation, form, scanned image) with confidence score.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — document classification category, features, and confidence rating.</span>
         </div>
       {:else}
         <div class="operation-config">

@@ -952,6 +952,181 @@ async fn test_wave7_penta_interface() -> Result<()> {
     } else { passed = false; }
     results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
 
+    // 22. pdf_extract_patterns (Tool 81)
+    let tool_id = "pdf_extract_patterns";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_extract_patterns.json");
+    let (success, out, latency) = run_cli(&["pdf-extract-patterns", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--keywords", "PDF,Smallpdf", "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_extract_patterns.json");
+    let payload = json!({"input": sample_pdf, "output": mcp_out.to_str().unwrap(), "keywords": ["PDF", "Smallpdf"]});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_extract_patterns.json");
+    let payload = json!({"input": sample_pdf, "output": api_out.to_str().unwrap(), "keywords": ["PDF", "Smallpdf"]});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 23. pdf_search (Tool 82)
+    let tool_id = "pdf_search";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_search.json");
+    let (success, out, latency) = run_cli(&["search", "--input", &sample_pdf, "--query", "PDF", "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_search.json");
+    let payload = json!({"input": sample_pdf, "query": "PDF", "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_search.json");
+    let payload = json!({"input": sample_pdf, "query": "PDF", "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 24. workspace_search (Tool 83)
+    let tool_id = "workspace_search";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_workspace_search.json");
+    let (success, out, latency) = run_cli(&["workspace-search", "--input", &sample_pdf, "--query", "PDF", "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_workspace_search.json");
+    let payload = json!({"input": sample_pdf, "query": "PDF", "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_workspace_search.json");
+    let payload = json!({"input": sample_pdf, "query": "PDF", "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 25. semantic_search (Tool 84)
+    let tool_id = "semantic_search";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_semantic_search.json");
+    let (success, out, latency) = run_cli(&["semantic-search", "--input", &sample_pdf, "--query", "document", "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_semantic_search.json");
+    let payload = json!({"input": sample_pdf, "query": "document", "limit": 5, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_semantic_search.json");
+    let payload = json!({"input": sample_pdf, "query": "document", "limit": 5, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    // 26. pdf_classify_type (Tool 85)
+    let tool_id = "pdf_classify_type";
+    println!("Testing tool: {}...", tool_id);
+    let cli_out = out_dir.join("out_cli_classify.json");
+    let (success, out, latency) = run_cli(&["classify-type", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--json"]).unwrap_or((false, String::new(), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && cli_out.exists() {
+        size = fs::metadata(&cli_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "CLI".into(), latency_ms: latency, output_size: size, passed, actual_result: out });
+
+    let mcp_out = out_dir.join("out_mcp_classify.json");
+    let payload = json!({"input": sample_pdf, "output": mcp_out.to_str().unwrap()});
+    let (success, resp, latency) = call_mcp_tool(tool_id, payload.clone()).unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && mcp_out.exists() {
+        size = fs::metadata(&mcp_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "MCP".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
+    let api_out = out_dir.join("out_api_classify.json");
+    let payload = json!({"input": sample_pdf, "output": api_out.to_str().unwrap()});
+    let (success, resp, latency) = run_api(&format!("/api/v1/pdf/tools/{}", tool_id), payload).await.unwrap_or((false, json!({}), 0.0));
+    let mut passed = success;
+    let mut size = 0;
+    if passed && api_out.exists() {
+        size = fs::metadata(&api_out).unwrap().len() as usize;
+        passed = size > 0;
+    } else { passed = false; }
+    results.push(TestExecutionResult { tool_id: tool_id.to_string(), interface: "API".into(), latency_ms: latency, output_size: size, passed, actual_result: resp.to_string() });
+
     // Cleanup API server
     let _ = api_child.kill();
 
@@ -964,7 +1139,8 @@ async fn test_wave7_penta_interface() -> Result<()> {
         "pdf_dedup_streams", "pdf_invert_colors", "pdf_linearize", "pdf_repair",
         "pdf_convert_excel", "pdf_to_docx", "pdf_to_xlsx", "pdf_to_pptx", "extract_images",
         "pdf_extract_text", "pdf_extract_tables", "pdf_ocr",
-        "office_to_markdown", "office_extract_text", "office_modernize_legacy"
+        "office_to_markdown", "office_extract_text", "office_modernize_legacy",
+        "pdf_extract_patterns", "pdf_search", "workspace_search", "semantic_search", "pdf_classify_type"
     ];
 
     let passed_count = results.iter().filter(|r| r.passed).count();

@@ -5588,12 +5588,22 @@ impl PaperPilotMcpServer {
 
             "semantic_search" => {
                 let query = get_string("query").or_else(|_| get_string("input"))?;
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let res_json = serde_json::json!({
+                    "query": &query,
+                    "matches": []
+                });
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
                 Ok(OperationResult {
                     success: true,
                     message: format!("Found simulated matches for semantic search: '{}'", query),
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
-                    data: Some(serde_json::json!({"matches": []})),
+                    data: Some(res_json),
                 })
             }
 
@@ -5602,17 +5612,46 @@ impl PaperPilotMcpServer {
                 let query = get_string("query")?;
 
                 let path = std::path::PathBuf::from(&target);
-                let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
+                let mut matches = Vec::new();
+                if path.is_dir() {
+                    if let Ok(entries) = std::fs::read_dir(&path) {
+                        for entry in entries.flatten() {
+                            let ep = entry.path();
+                            if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                                if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                                    if op.execute(&mut doc).is_ok() {
+                                        let p = op.match_pages.lock().unwrap().clone();
+                                        matches.extend(p);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
+                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                    matches = op.match_pages.lock().unwrap().clone();
+                }
 
-                let op = paperpilot_pdf::operations::search::SearchOperation::new(query);
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-
-                let matches = op.match_pages.lock().unwrap().clone();
                 let message = if matches.is_empty() {
                     "No matches found.".to_string()
                 } else {
                     format!("Matches found on pages: {:?}", matches)
                 };
+
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    let res_json = serde_json::json!({
+                        "query": &query,
+                        "matches": matches,
+                        "message": &message,
+                    });
+                    std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
 
                 Ok(OperationResult {
                     message,
@@ -5620,7 +5659,7 @@ impl PaperPilotMcpServer {
                         "matches": matches,
                     })),
                     success: true,
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
                 })
             }
@@ -5663,25 +5702,53 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let query = get_string("query")?;
 
-                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
-                    .map_err(crate::error::to_mcp_error)?;
+                let path = std::path::PathBuf::from(&input);
+                let mut matches = Vec::new();
+                if path.is_dir() {
+                    if let Ok(entries) = std::fs::read_dir(&path) {
+                        for entry in entries.flatten() {
+                            let ep = entry.path();
+                            if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                                if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                                    if op.execute(&mut doc).is_ok() {
+                                        let p = op.match_pages.lock().unwrap().clone();
+                                        matches.extend(p);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
+                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                    matches = op.match_pages.lock().unwrap().clone();
+                }
 
-                let op = paperpilot_pdf::operations::search::SearchOperation::new(query);
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-
-                let matches = op.match_pages.lock().unwrap().clone();
                 let message = if matches.is_empty() {
                     "No matches found.".to_string()
                 } else {
                     format!("Matches found on pages: {:?}", matches)
                 };
 
-                Ok(OperationResult {
-                    data: None,
-                    success: true,
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    let res_json = serde_json::json!({
+                        "query": &query,
+                        "matches": matches,
+                        "message": &message,
+                    });
+                    std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
 
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "matches": matches })),
+                    success: true,
                     message,
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
                 })
             }
@@ -6372,19 +6439,33 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 let classification = op.classification.lock().unwrap().clone();
-                let message = if let Some(c) = classification {
-                    serde_json::to_string(&c)
+                let message = if let Some(ref c) = classification {
+                    serde_json::to_string(c)
                         .unwrap_or_else(|_| "Failed to serialize classification".to_string())
                 } else {
                     "Classification failed".to_string()
                 };
 
-                Ok(OperationResult {
-                    data: None,
-                    success: true,
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    let json_bytes = if let Some(ref c) = classification {
+                        serde_json::to_vec_pretty(c).unwrap_or_default()
+                    } else {
+                        serde_json::to_vec_pretty(&serde_json::json!({
+                            "type": "unknown",
+                            "confidence": 0.0
+                        })).unwrap_or_default()
+                    };
+                    std::fs::write(out, json_bytes)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
 
+                Ok(OperationResult {
+                    data: classification.as_ref().and_then(|c| serde_json::to_value(c).ok()),
+                    success: true,
                     message,
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
                 })
             }

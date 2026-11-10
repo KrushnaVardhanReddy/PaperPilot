@@ -344,7 +344,7 @@ pub fn handle_ask(
                     "Search requires an input file".into(),
                 ));
             }
-            crate::commands::group_c::handle_search(&inputs_paths[0], "query")
+            crate::commands::group_c::handle_search(&inputs_paths[0], "query", output_path.as_deref())
         }
         Intent::Render => {
             if inputs_paths.is_empty() {
@@ -524,7 +524,7 @@ pub fn handle_ask(
                     "Classify requires an input file".into(),
                 ));
             }
-            crate::commands::group_d::handle_classify(&inputs_paths[0])
+            crate::commands::group_d::handle_classify(&inputs_paths[0], output_path.as_deref())
         }
         _ => Err(PdfError::UnsupportedOperation(
             "Unsupported NLP intent".into(),

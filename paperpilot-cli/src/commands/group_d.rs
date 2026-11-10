@@ -238,15 +238,27 @@ pub fn handle_convert(
     Ok(())
 }
 
-pub fn handle_classify(input: &Path) -> OperationResult<()> {
+pub fn handle_classify(input: &Path, output: Option<&Path>) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::classify::PdfClassifyOperation::new();
     op.execute(&mut doc)?;
 
     let res = op.classification.lock().unwrap().clone();
-    if let Some(c) = res {
-        let json = serde_json::to_string_pretty(&c).unwrap_or_default();
-        println!("{}", json);
+    let json = if let Some(ref c) = res {
+        serde_json::to_string_pretty(&c).unwrap_or_default()
+    } else {
+        serde_json::to_string_pretty(&serde_json::json!({
+            "type": "unknown",
+            "confidence": 0.0
+        })).unwrap_or_default()
+    };
+    println!("{}", json);
+
+    if let Some(out_path) = output {
+        if let Some(parent) = out_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let _ = std::fs::write(out_path, &json);
     }
 
     Ok(())
