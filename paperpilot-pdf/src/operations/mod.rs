@@ -64,8 +64,13 @@ pub mod validate;
 pub mod watermark;
 pub mod workflow;
 
-pub use pii::scan_pii;
+pub use pdf_extract_patterns::{
+    extract_patterns, extract_patterns_path, extract_patterns_source, pdf_extract_patterns_path,
+    pdf_extract_patterns_source,
+};
+pub use pii::{scan_pii, scan_pii_path, scan_pii_source};
 pub use sanitize::sanitize_pdf;
+pub use search::{search_pdf_bytes, search_pdf_path, search_pdf_source};
 pub use table::extract_tables_bytes;
 pub use workflow::run_workflow_bytes;
 pub mod pdf_dedup_streams;

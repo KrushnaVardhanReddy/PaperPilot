@@ -1,4 +1,5 @@
 use lopdf::Document;
+use paperpilot_core::document_source::DocumentSource;
 use paperpilot_core::error::PdfError;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use serde::{Deserialize, Serialize};
@@ -208,6 +209,40 @@ pub fn pdf_extract_patterns_bytes(
     serde_json::to_vec_pretty(&report).map_err(|e| PdfError::Other(e.to_string()))
 }
 
+/// Executes pattern extraction on a zero-copy [`DocumentSource`].
+pub fn extract_patterns_source(
+    source: &DocumentSource,
+    options: &PdfExtractPatternsOptions,
+) -> Result<PatternExtractionReport, PdfError> {
+    extract_patterns(source.as_ref(), options)
+}
+
+/// Opens a document using memory-mapping if above threshold, and extracts patterns.
+pub fn extract_patterns_path<P: AsRef<std::path::Path>>(
+    path: P,
+    options: &PdfExtractPatternsOptions,
+) -> Result<PatternExtractionReport, PdfError> {
+    let source = DocumentSource::open(path, None).map_err(PdfError::IoError)?;
+    extract_patterns_source(&source, options)
+}
+
+/// Convenience helper to return serialized JSON bytes from a [`DocumentSource`].
+pub fn pdf_extract_patterns_source(
+    source: &DocumentSource,
+    options: &PdfExtractPatternsOptions,
+) -> Result<Vec<u8>, PdfError> {
+    pdf_extract_patterns_bytes(source.as_ref(), options)
+}
+
+/// Convenience helper to return serialized JSON bytes directly from a file path using memory-mapping.
+pub fn pdf_extract_patterns_path<P: AsRef<std::path::Path>>(
+    path: P,
+    options: &PdfExtractPatternsOptions,
+) -> Result<Vec<u8>, PdfError> {
+    let source = DocumentSource::open(path, None).map_err(PdfError::IoError)?;
+    pdf_extract_patterns_source(&source, options)
+}
+
 #[derive(Default)]
 pub struct PdfExtractPatternsOperation {
     pub options: PdfExtractPatternsOptions,
@@ -280,5 +315,10 @@ mod tests {
             assert!(!finding.value.is_empty());
             assert!(!finding.context_snippet.is_empty());
         }
+
+        // Test with DocumentSource
+        let source = DocumentSource::from_bytes(bytes);
+        let src_report = extract_patterns_source(&source, &options).expect("Failed via source");
+        assert_eq!(src_report.total_matches, report.total_matches);
     }
 }

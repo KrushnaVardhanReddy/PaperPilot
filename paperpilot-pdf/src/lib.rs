@@ -2,6 +2,10 @@ pub mod document;
 pub mod operations;
 pub mod validation;
 
+pub use paperpilot_core::document_source::{
+    DEFAULT_MMAP_THRESHOLD_BYTES, DocumentSource, PageBatchIterator,
+};
+
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
 }

@@ -5,12 +5,19 @@ edition = "2021"
 
 [dependencies]
 paperpilot-mcp = { path = "../../paperpilot-mcp" }
+paperpilot-core = { path = "../../paperpilot-core" }
+paperpilot-pdf = { path = "../../paperpilot-pdf" }
 rmcp = "3.5.1"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
 anyhow = "1.0"
 reqwest = { version = "0.12", features = ["json"] }
+tempfile = "3.27.0"
+
+[[test]]
+name = "test_mmap_large_document"
+path = "test_mmap_large_document.rs"
 
 [[test]]
 name = "test_wave5_penta_interface"
