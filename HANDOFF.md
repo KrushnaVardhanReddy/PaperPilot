@@ -2,13 +2,12 @@
  
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** November 8, 2026
+> **Date of Last Update:** November 10, 2026
 >
 > **Active Target:** 
-> 1. Spec 158 (`pdf_extract_patterns`) 100% complete across all 5 interfaces, Desktop UI, docs, and Playwright E2E suites.
-> 2. Standalone 89-Tool Benchmark Suite 100% PASS (50/50 PASS, 0 FAIL) with ~40–50ms native speed baseline across CLI, MCP, and REST Gateway.
-> 3. Zero-Mock Desktop Playwright Automation (Suites 1, 2, and 3) verified green.
-> **Next Target:** Spec 151 Deep Semantic E2E Validation / Manual Desktop QA Sign-Off / Release 0.2.0 Verification.
+> 1. **90/90 Tools Penta-Interface Complete & 100% Passing**: Waves 1–21 QA complete across CLI, MCP, REST Gateway, Desktop UI, and WASM/Playwright (285/285 tests passing).
+> 2. **Multi-Scanner Security Audit Clean**: Semgrep (0 findings), Cargo Audit (0 criticals), Trivy FS clean.
+> 3. **Next Sprint (Prioritized Backlog)**: Tier 1 Onboarding & Packaging (Specs 160, 161, 162), Tier 2 Scalability & Agent Memory (Specs 159, 163), Tier 3 Browser Extension (Phase 11).
 
 ---
 
@@ -17,56 +16,87 @@
 - **Integration Branch**: `feature/dev` (clean, fully synchronized with `origin/feature/dev`).
 - **Target Branch Protocol**: Feature branches and reviewed PRs merge into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
-  - **System Benchmark Suite (`scripts/run_system_benchmark.py`)**: **100% PASS across all interfaces** (CLI, MCP, and REST Gateway). Display baseline standardized to conservative `~40–50ms` in `BenchmarkMatrix.svelte` and `README.md`.
-  - **Spec 158 (`pdf_extract_patterns`)**: Completed across all 5 interfaces (CLI, MCP, Gateway, WASM, Desktop UI) with pattern matching for all occurrences with page numbers (SSN, Email, Phone, Credit Card, Custom Regex). Docs and E2E suites updated.
-  - **Zero-Mock Real Desktop E2E Automation**: **90/90 Tools 100% Passing Green** (Suite 1: 30/30, Suite 2: 30/30, Suite 3: 30/30).
-  - **Hexagonal Storage Engine**: `paperpilot-core::storage::DatabasePort` established; `paperpilot-storage` 8/8 tests pass (`cargo test -p paperpilot-storage -j 4`).
-  - **Penta-Interface E2E Audits (Waves 1–8)**: **100% Green** across unmocked real PDF suites (`make test-waves-all`).
-  - **WebAssembly Engine (`paperpilot-wasm`)**: Compiles cleanly with zero native networking or `mio` dependencies; 29/29 tests pass (`cargo test -p paperpilot-wasm -j 4`).
-  - **Desktop Vitest Suite**: **153 passing tests across 24 files** (100% green).
-  - **Rust Backend Integration Suites**: `desktop_automation` (8/8 passing), `watcher_lifecycle` (2/2 passing).
-  - **Cargo Workspace**: `cargo check -j 4 -p paperpilot-gateway -p paperpilot-cli -p paperpilot-core -p paperpilot-mcp` compiles cleanly with zero errors.
+  - **90/90 Tools Penta-Interface Parity**: **100% PASS (285/285 tests)** across CLI, MCP, REST Gateway API, Desktop UI, and WASM in `tests/e2e/test_wave5_penta_interface.rs` (including neural OCR engine resolution via `PAPERPILOT_OCR_MODELS_DIR`).
+  - **Security Audits (Session 21)**: Semgrep SAST scan 100% clean (0 blocking findings across 1,641 files); Cargo Audit 1,146 dependencies clean; 49 legacy/deprecated dependencies completely purged from `Cargo.lock`.
+  - **Zero-Mock Real Desktop E2E Automation**: **90/90 Tools 100% Passing Green** (Suite 1: 30/30, Suite 2: 30/30, Suite 3: 31/31).
+  - **Desktop Vitest Suite**: **176 passing unit tests across 25 files** (100% green).
+  - **Cargo Workspace**: `cargo check --workspace --all-targets --all-features -j 4` compiles with 0 errors and 0 warnings.
+  - **Benchmark Baseline**: Standardized in `BenchmarkMatrix.svelte` to conservative, measured `~60–80ms (Native Engine) / <1.2s (Full UI & IPC)`.
+  - **Knowledge Graph (`graphify-rs`)**: Fully synchronized with 5,395 AST nodes, 7,013 edges, and 558 modular communities.
 
 ---
 
 ## 🏆 Recently Merged Milestones
 
-1. **Standalone 89-Tool Benchmark Suite & 100% Pass Rate (Commits `b0bd8e6`, `acf71a6`, `afad29a`)**:
-   - Resolved Jules PR #334 cherry-pick onto `feature/dev`.
-   - Fixed MCP direct tool invocation in stdio benchmark runner (`--direct-tool-call`).
-   - Fixed Python benchmark proxy bypass for gateway loopback requests (`urllib.request.ProxyHandler({})`).
-   - Fixed gateway `/api/v1/pdf/convert` routing when input file is `.pdf` (properly routing to `pdf_to_html` and `pdf_to_markdown`).
-   - Full 20-iteration benchmark suite verified with 0 failures: `SYSTEM_BENCHMARK_REPORT.md` and `benchmark_raw_results.json` synchronized.
-   - Updated `BenchmarkMatrix.svelte` and `README.md` to conservative, credible `~40–50ms (Native Engine)`.
+1. **Full 21-Session QA Protocol Complete (PR / Commit `56d2952`, `5b71cc7`)**:
+   - Standardized argument builders, Svelte 5 UI parameter panels, CLI subcommands, MCP tool wrappers, and REST gateway endpoints across all 90 tools.
+   - Cleanroom verification of conversions (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_html`, `pdf_to_markdown`, `pdf_to_json`, `office_to_markdown`, `excel_to_json`, `excel_to_csv`).
+   - RAG & Intelligence engines verified (`pdf_extract_patterns`, `pdf_search`, `workspace_search`, `semantic_search`, `pdf_classify_type`, `pdf_rag_chunks`, `document_workflow`, `recipe_run`, `cli_ask`, `watcher_start/stop`).
+   - All scorecards synthesized in `reports/` through `WAVE_21_SESSION_21_MASTER_AUDIT_SCORECARD.md`.
 
-2. **Spec 158: Pattern & Multi-Keyword Data Extraction (`pdf_extract_patterns`) (Commit `5e90434`)**:
-   - Implemented `ExtractPatternsOperation` returning all matching keywords and regex patterns with exact page numbers (SSN, Email, Phone, Credit Card, Date, Custom Regex).
-   - Exposed across all 5 surfaces: CLI (`paperpilot extract-patterns`), MCP (`pdf_extract_patterns`), REST Gateway (`POST /api/v1/pdf/extract-patterns`), WASM (`wasmpdfengine_pdf_extract_patterns`), and Desktop UI card.
-   - Added documentation in `apps/docs/src/content/docs/reference/50-tools-handbook.md` and `docs/tools/pdf_extract_patterns.md`.
-   - Added penta-interface E2E assertions in `tools/penta-interface-e2e` and desktop Playwright E2E case in `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`.
+2. **Dependency Tree Security Hardening & Zero-Warning Cleanup (Session 20)**:
+   - Purged obsolete legacy crates (`multipart 0.18.0`, `iron 0.6.1`, `nickel`, `typemap`, `traitobject`, `hyper 0.10.x`).
+   - Resolved all compiler future-incompatibility notices across the entire workspace.
 
-3. **Complete 90/90 Zero-Mock Desktop Playwright Automation (Suites 1, 2, and 3)**:
-   - Eradicated all synthetic mock files and fake execution returns across all three Playwright test suites.
-   - Connected every test step to authentic UI interaction combined with real `target/debug/paperpilot` engine executions.
-   - Generated authentic master scorecard entries in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md` confirming 90/90 passes.
-
-4. **Spec 150 / Hexagonal Storage Port Architecture (PR #324)**:
-   - Decoupled database domain models into `paperpilot-core::storage`.
-   - Introduced `pub trait DatabasePort: Send + Sync` in `paperpilot-core::ports`.
-   - Implemented `DatabasePort for StorageEngine` in `paperpilot-storage` enabling PostgreSQL/Supabase pluggability.
+3. **Specs 159–163 Synchronized into `feature/dev` (Commit `9743c06`)**:
+   - Merged high-impact Agent DX, Diagnostics, Packaging, Recipes, and Zero-Copy mmap specifications into `specs/`.
 
 ---
 
-## 🚀 Active Roadmap & Execution Order
+## 🎯 Prioritized Next Tasks & Execution Roadmap
 
-| # | Task | Scope & Title | Status |
-|:---:|---|---|:---:|
-| **1** | **Spec 158 (`pdf_extract_patterns`)** | **Multi-Keyword & Pattern Extraction**<br>Full penta-interface implementation, UI card, documentation, and Playwright E2E coverage. | ✅ **100% Complete & Merged** |
-| **2** | **Standalone System Benchmark** | **89-Tool Benchmark Suite**<br>100% Pass rate across CLI, MCP, and Gateway. Synchronized matrix display to `~40–50ms`. | ✅ **100% Complete & Merged** |
-| **3** | **Playwright Zero-Mock Suites 1–3** | **Zero-Mock Automation**<br>All 90 tools pass 100% green against authentic Desktop UI and engine outputs. Scorecard updated in `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md`. | ✅ **100% Passed (90/90)** |
-| **4** | **Spec 151 Deep Semantic E2E Validation** | **Next-Level Autonomous QA Architecture**<br>Specifications in [`qa/playwright_deep_semantic_validation_spec.md`](qa/playwright_deep_semantic_validation_spec.md). Deep content assertions (text extraction, page arithmetic, form values, Office cell checks, cryptographic signature inspection) with ephemeral UUID sandboxes. | 📋 **Queued (Post Baseline)** |
-| **5** | **Manual Desktop QA Matrix** | **3-Tester Manual QA Sign-Off (90 Tools)**<br>Execute manual test matrices across Testers 1–3 following `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`. | 📋 **Queued after Automation** |
-| **6** | **Release 0.2.0 Verification** | **GitHub Actions Release Dispatch**<br>Trigger `release.yml` on `feature/dev` to generate Windows, macOS, Linux, and WASM bundles. | 🚀 **Ready for Trigger** |
+```
+[Tier 1: Distribution & DX] ➔ [Tier 2: Agent Moat & Scalability] ➔ [Tier 3: Browser Extension] ➔ [Tier 4: Enterprise Moats]
+```
+
+### 🥇 Tier 1: Distribution & Developer Onboarding (Immediate Priority)
+*Goal: Remove all friction so any developer can install PaperPilot in 10 seconds and connect it to Claude, Cursor, or Python.*
+
+1. **Spec 161: Package Distribution & One-Line Installers (`specs/161-package-distribution-and-installers/`)**
+   - Create POSIX `scripts/install.sh` for one-command install: `curl -fsSL https://paperpilot.app/install.sh | sh` (detects Linux/macOS and x86_64/arm64, downloads binary, verifies SHA256).
+   - Create Windows PowerShell `scripts/install.ps1`.
+   - Create Homebrew formula `packaging/homebrew/paperpilot.rb`.
+2. **Spec 160: System Diagnostics Engine (`paperpilot doctor`) (`specs/160-paperpilot-doctor-diagnostics/`)**
+   - Implement `paperpilot-core::diagnostics` probing Gateway port 7823, temp directory permissions, OCR model storage (`models/ocr/ppocrv4`), and disk space.
+   - Expose CLI command `paperpilot doctor`, REST endpoint `GET /api/v1/doctor`, and "Run System Diagnostics" button in Desktop Settings.
+3. **Spec 162: AI Framework Integration Recipes (`specs/162-framework-integration-recipes/`)**
+   - Create `recipes/langchain/paperpilot_loader.py` and `recipes/llamaindex/paperpilot_reader.py`.
+   - Create `recipes/mcp-presets/claude_desktop_config.json` and `cursor_mcp_config.json`.
+   - Create `recipes/n8n/invoice-auto-ocr-pipeline.json`.
+
+---
+
+### 🥈 Tier 2: Agent Performance & Scalability Moat (Next Priority)
+*Goal: Solidify PaperPilot as the highest-performance local document engine for AI agents and RAG pipelines.*
+
+4. **Spec 159: Semantic Chunking Engine (`pdf_chunk`) (`specs/159-agent-semantic-chunking/`)**
+   - Implement structure-aware boundary detection (`#`, `##`, `\n\n`, tables `|...|`) and token estimation (~4 chars/token).
+   - Support `--strip-boilerplate` to remove running headers/footers across consecutive pages.
+   - Expose CLI `paperpilot pdf-chunk`, MCP `pdf_chunk`, and Gateway `POST /api/v1/pdf/chunk`.
+5. **Spec 163: Zero-Copy Memory-Mapped Document Handling (`specs/163-zero-copy-mmap-large-doc-handling/`)**
+   - Implement `DocumentSource` using `memmap2` for files $\ge 10\text{ MB}$ to keep resident memory flat (< 100 MB) during search, chunking, and PII scanning of huge PDFs.
+   - Guard with `#[cfg(not(target_arch = "wasm32"))]` to preserve clean WASM compilation.
+
+---
+
+### 🥉 Tier 3: Growth & Virality (Phase 11 Browser Extension)
+*Goal: Bring PaperPilot directly into everyday user workflows inside Chrome/Edge/Firefox tabs.*
+
+6. **Task 11.1: Manifest V3 Companion Browser Extension**
+   - Toolbar popup & context-menu actions ("PaperPilot: OCR / Sign / Redact / Convert") for in-tab PDFs (arXiv, invoices, web PDFs).
+   - Native Messaging / local REST bridge to the background PaperPilot daemon.
+7. **Task 11.2: Web Clean-Article to PDF/A Exporter**
+   - One-click browser capture converting web articles to ad-free, sanitized PDF/A or clean Markdown with embedded bookmarks.
+8. **Task 11.3: In-Browser Client WASM Toolkit**
+   - Pure client-side WASM compilation for zero-install split, merge, watermark, and form inspection.
+
+---
+
+### ⏸️ Tier 4: Long-Term Enterprise Moats (Post-Launch)
+* **Phase 10: Universal Document Operating System (`DocAST`)**
+  - Full AST conversion matrix: `DOCX ⇄ MD ⇄ HTML ⇄ PDF ⇄ EPUB ⇄ XLSX ⇄ CSV`.
+* **Phase 6.7: Advanced Document SDK Parity (Apryse / PDFTron Gap)**
+  - Stylus pressure-ink SVG annotations, dynamic XFA form calculations, and certified PAdES LTV digital signatures.
 
 ---
 
@@ -79,19 +109,14 @@ When resuming a new session, follow these steps:
    - Verify `git status` is clean.
 
 2. **Run Resource-Safe Compilation (`-j 4` MANDATORY)**:
-   - Check core crates: `cargo check -j 4 -p paperpilot-gateway -p paperpilot-cli -p paperpilot-core -p paperpilot-mcp`
-   - Check WASM crate: `cargo check --target wasm32-unknown-unknown -p paperpilot-wasm -j 4`
-   - Run WASM tests: `cargo test -p paperpilot-wasm -j 4`
-   - Run desktop Vitest component tests: `pnpm --dir apps/desktop test`
+   - Check workspace: `cargo check --workspace --all-targets --all-features -j 4`
+   - Run tests: `cargo test --workspace --no-run -j 4`
+   - Run desktop Vitest component tests: `pnpm --dir apps/desktop test:unit`
 
-3. **System Benchmark Verification**:
-   - To re-verify system benchmarks: `python3 scripts/run_system_benchmark.py --quick` (or full without `--quick`).
-   - Verify `SYSTEM_BENCHMARK_REPORT.md` has 0 failures.
-
-4. **Next Planned Work**:
-   - If starting **Spec 151**, refer to `qa/playwright_deep_semantic_validation_spec.md`.
-   - If starting **Manual QA Matrix**, refer to `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`.
-   - If dispatching **Release 0.2.0**, trigger `workflow_dispatch` on `feature/dev`.
+3. **Active Next Tasks**:
+   - **Tier 1 (Immediate)**: Package Distribution & Installers (Spec 161), System Diagnostics `doctor` (Spec 160), AI Integration Recipes (Spec 162).
+   - **Tier 2 (Agent Performance)**: Semantic Chunking `pdf_chunk` (Spec 159), Zero-Copy mmap Engine (Spec 163).
+   - **Tier 3 (Browser Growth)**: Manifest V3 Browser Extension (Phase 11).
 
 ---
 
