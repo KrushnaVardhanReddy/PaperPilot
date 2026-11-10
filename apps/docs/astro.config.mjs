@@ -29,7 +29,7 @@ export default defineConfig({
           items: [
             { label: 'Tools Handbook (All-in-One)', slug: 'reference/tools-handbook' },
             {
-              label: 'All Tools Index (89 Tools)',
+              label: 'All Tools Index (92 Tools)',
               autogenerate: { directory: 'reference/tools' },
             },
           ],
@@ -37,6 +37,10 @@ export default defineConfig({
         {
           label: 'Developer Gateway & AI Agents',
           autogenerate: { directory: 'developer' },
+        },
+        {
+          label: 'Architecture & Performance',
+          autogenerate: { directory: 'architecture' },
         },
       ],
       customCss: [],

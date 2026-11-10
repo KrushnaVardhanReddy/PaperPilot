@@ -34,6 +34,7 @@ const tools61_90 = [
   { name: 'semantic_search', title: 'Semantic Vector Search', type: 'pdf', ext: 'txt' },
   { name: 'pdf_classify_type', title: 'Classify Document', type: 'pdf', ext: 'json' },
   { name: 'pdf_rag_chunks', title: 'RAG Pipeline Chunks', type: 'pdf', ext: 'json' },
+  { name: 'pdf_chunk', title: 'Semantic Chunking', type: 'pdf', ext: 'json' },
   { name: 'document_workflow', title: 'Document Workflow Runner', type: 'pdf', ext: 'pdf' },
   { name: 'recipe_run', title: 'Instant Pipeline Recipe', type: 'pdf', ext: 'pdf' },
   { name: 'cli_ask', title: 'AI Document Assistant', type: 'pdf', ext: 'txt' },
@@ -194,6 +195,17 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
           const runBtn = page.locator('.run-btn');
           await expect(runBtn).toBeVisible({ timeout: 2000 });
 
+          if (op.name === 'pdf_chunk') {
+            const targetSlider = page.locator('#chunkTargetTokensInput');
+            if (await targetSlider.isVisible()) {
+              await targetSlider.fill('500');
+            }
+            const overlapSlider = page.locator('#chunkOverlapTokensInput');
+            if (await overlapSlider.isVisible()) {
+              await overlapSlider.fill('50');
+            }
+          }
+
           if (await runBtn.isDisabled()) {
              await runBtn.evaluate((node) => (node as HTMLButtonElement).removeAttribute('disabled'));
           }
@@ -282,6 +294,9 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               break;
             case 'pdf_rag_chunks':
               cliCmd = `"${cliBin}" rag-chunks --input "${fixtureSingle}" 2>/dev/null > "${outputFile}"`;
+              break;
+            case 'pdf_chunk':
+              cliCmd = `"${cliBin}" pdf-chunk --input "${fixtureSingle}" --target-tokens 500 --overlap 50 --json --output "${outputFile}"`;
               break;
             case 'document_workflow':
             case 'recipe_run':
@@ -538,6 +553,24 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 3 - Conversions, Int
               const allContent = insp.parsedJson.map((c: any) => c.content).join(' ');
               expect(allContent.length).toBeGreaterThan(20);
               invariantNote = 'Semantic Chunking: Structure-aware chunks with valid token counts and heading metadata';
+              break;
+            }
+            case 'pdf_chunk': {
+              const insp = OfficeInspector.inspectText(targetFile);
+              expect(insp.isJson).toBe(true);
+              expect(insp.parsedJson).toBeDefined();
+              expect(typeof insp.parsedJson.total_chunks).toBe('number');
+              expect(insp.parsedJson.total_chunks).toBeGreaterThan(0);
+              expect(typeof insp.parsedJson.total_tokens).toBe('number');
+              expect(Array.isArray(insp.parsedJson.chunks)).toBe(true);
+              const firstChunk = insp.parsedJson.chunks[0];
+              expect(firstChunk.page_start).toBeGreaterThanOrEqual(1);
+              expect(firstChunk.page_end).toBeGreaterThanOrEqual(1);
+              expect(typeof firstChunk.estimated_tokens).toBe('number');
+              expect(typeof firstChunk.text).toBe('string');
+              expect(firstChunk.text.length).toBeGreaterThan(0);
+              expect(Array.isArray(firstChunk.headings_context)).toBe(true);
+              invariantNote = 'Agent Semantic Chunking: Structure-aware chunks with headings context and token metrics';
               break;
             }
             case 'document_workflow':
