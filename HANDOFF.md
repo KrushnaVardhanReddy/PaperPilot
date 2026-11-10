@@ -68,9 +68,10 @@
    - Implement structure-aware boundary detection (`#`, `##`, `\n\n`, tables `|...|`) and token estimation (~4 chars/token).
    - Support `--strip-boilerplate` to remove running headers/footers across consecutive pages.
    - Expose CLI `paperpilot pdf-chunk`, MCP `pdf_chunk`, and Gateway `POST /api/v1/pdf/chunk`.
-5. **Spec 163: Zero-Copy Memory-Mapped Document Handling (`specs/163-zero-copy-mmap-large-doc-handling/`)**
-   - Implement `DocumentSource` using `memmap2` for files $\ge 10\text{ MB}$ to keep resident memory flat (< 100 MB) during search, chunking, and PII scanning of huge PDFs.
-   - Guard with `#[cfg(not(target_arch = "wasm32"))]` to preserve clean WASM compilation.
+5. **Spec 163: Zero-Copy Memory-Mapped Document Handling (`specs/163-zero-copy-mmap-large-doc-handling/`)** — ✅ **100% MERGED** (Commit `5663728`)
+   - Implemented `DocumentSource` using `memmap2` for files $\ge 10\text{ MB}$ to keep resident memory flat (< 100 MB) during search, chunking, and PII scanning of huge PDFs.
+   - Implemented `PageBatchIterator` for streaming batch execution without loading entire documents into memory.
+   - Guarded with `#[cfg(not(target_arch = "wasm32"))]` preserving 100% clean WASM compilation. Verified with unit, e2e, and doctor tests.
 
 ---
 
