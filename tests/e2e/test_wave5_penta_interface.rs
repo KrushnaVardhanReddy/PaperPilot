@@ -118,6 +118,8 @@ async fn test_wave5_penta_interface() -> Result<()> {
     let form_pdf = workspace_root.join("tests/e2e_fixtures/real/form.pdf").to_string_lossy().to_string();
     let encrypted_pdf = workspace_root.join("tests/e2e_fixtures/real/encrypted.pdf").to_string_lossy().to_string();
     let single_page = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf").to_string_lossy().to_string();
+    let signed_pdf = workspace_root.join("tests/e2e_fixtures/real/signed.pdf").to_string_lossy().to_string();
+    let dummy_p12 = workspace_root.join("tests/e2e_fixtures/real/dummy.p12").to_string_lossy().to_string();
     let img_png = workspace_root.join("tests/e2e_fixtures/real/img1.png").to_string_lossy().to_string();
 
     let tools = vec![
@@ -125,13 +127,17 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_encrypt",
         "pdf_decrypt",
         "pdf_sanitize",
+        "pdf_metadata",
         "pdf_redact",
         "pdf_read_form",
         "pdf_fill_form",
         "pdf_flatten",
         "pdf_stamp",
+        "pdf_sign",
         "pdf_validate_signatures",
         "pdf_remove_signatures",
+        "pdf_hash",
+        "pdf_validate",
         "pdf_change_permissions",
         "pdf_create_form_field",
         "pdf_timestamp",
@@ -162,14 +168,19 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap(), "user_password": "pass", "owner_password": "pass" });
             }
             "pdf_decrypt" => {
-                cli_args = vec!["decrypt", "--input", &encrypted_pdf, "--output", cli_out.to_str().unwrap(), "--password", "password", "--json"];
-                mcp_payload = json!({ "input": encrypted_pdf, "output": mcp_out.to_str().unwrap(), "password": "password" });
-                api_payload = json!({ "input": encrypted_pdf, "output": api_out.to_str().unwrap(), "password": "password" });
+                cli_args = vec!["decrypt", "--input", &encrypted_pdf, "--output", cli_out.to_str().unwrap(), "--password", "Secret123", "--json"];
+                mcp_payload = json!({ "input": encrypted_pdf, "output": mcp_out.to_str().unwrap(), "password": "Secret123" });
+                api_payload = json!({ "input": encrypted_pdf, "output": api_out.to_str().unwrap(), "password": "Secret123" });
             }
             "pdf_sanitize" => {
-                cli_args = vec!["sanitize", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
+                cli_args = vec!["sanitize", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--remove-scripts", "--remove-metadata", "--json"];
                 mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap() });
                 api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap() });
+            }
+            "pdf_metadata" => {
+                cli_args = vec!["metadata", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--title", "Verified Release 2026", "--author", "Tester 2", "--subject", "Protocol Testing", "--keywords", "test,release,qa", "--json"];
+                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "title": "Verified Release 2026", "author": "Tester 2", "subject": "Protocol Testing", "keywords": "test,release,qa" });
+                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "title": "Verified Release 2026", "author": "Tester 2", "subject": "Protocol Testing", "keywords": "test,release,qa" });
             }
             "pdf_redact" => {
                 cli_args = vec!["redact", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--query", "Smallpdf", "--json"];
@@ -197,16 +208,33 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap(), "image": img_png, "x": 100.0, "y": 100.0 });
                 api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap(), "image": img_png, "x": 100.0, "y": 100.0 });
             }
+            "pdf_sign" => {
+                cli_args = vec!["signature", "--input", &single_page, "--cert", &dummy_p12, "--output", cli_out.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap() });
+            }
             "pdf_validate_signatures" => {
-                cli_args = vec!["validate-signatures", "--input", &sample_pdf, "--json"];
-                mcp_payload = json!({ "input": sample_pdf });
-                api_payload = json!({ "input": sample_pdf });
+                cli_args = vec!["validate-signatures", "--input", &signed_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": signed_pdf, "output": mcp_out.to_str().unwrap() });
+                api_payload = json!({ "input": signed_pdf, "output": api_out.to_str().unwrap() });
                 requires_output = false;
             }
             "pdf_remove_signatures" => {
-                cli_args = vec!["remove-signatures", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
-                mcp_payload = json!({ "input": sample_pdf, "output": mcp_out.to_str().unwrap() });
-                api_payload = json!({ "input": sample_pdf, "output": api_out.to_str().unwrap() });
+                cli_args = vec!["remove-signatures", "--input", &signed_pdf, "--output", cli_out.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": signed_pdf, "output": mcp_out.to_str().unwrap() });
+                api_payload = json!({ "input": signed_pdf, "output": api_out.to_str().unwrap() });
+            }
+            "pdf_hash" => {
+                cli_args = vec!["hash", "--input", &single_page, "--json"];
+                mcp_payload = json!({ "input": single_page });
+                api_payload = json!({ "input": single_page });
+                requires_output = false;
+            }
+            "pdf_validate" => {
+                cli_args = vec!["validate", "--input", &single_page, "--json"];
+                mcp_payload = json!({ "input": single_page });
+                api_payload = json!({ "input": single_page });
+                requires_output = false;
             }
             "pdf_change_permissions" => {
                 cli_args = vec!["change-permissions", "--input", &sample_pdf, "--output", cli_out.to_str().unwrap(), "--allow-print", "true", "--json"];

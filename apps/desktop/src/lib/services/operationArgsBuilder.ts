@@ -91,6 +91,11 @@ export interface OperationContext {
     sanitizeScripts?: boolean;
     sanitizeMetadata?: boolean;
     sanitizeAttachments?: boolean;
+    signPassword?: string;
+    signFieldName?: string;
+    signReason?: string;
+    signLocation?: string;
+    hashAlgorithm?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -354,9 +359,14 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'sign':
+        case 'pdf_sign':
             args = {
                 input: docPath,
                 cert: signCertPath,
+                password: context.signPassword || context.password || undefined,
+                field_name: context.signFieldName || undefined,
+                reason: context.signReason || undefined,
+                location: context.signLocation || undefined,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_signed.pdf`)
             };
             break;
@@ -369,7 +379,20 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'validate':
+        case 'pdf_validate':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_validate_report.json`)
+            };
+            break;
         case 'hash':
+        case 'pdf_hash':
+            args = {
+                input: docPath,
+                algorithm: context.hashAlgorithm || 'sha256',
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_checksums.txt`)
+            };
+            break;
         case 'read_form':
         case 'bookmarks':
         case 'pdf_bookmarks':
@@ -600,6 +623,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
 
+        case 'validate_signatures':
         case 'pdf_validate_signatures':
             args = {
                 input: docPath,
@@ -640,6 +664,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 center_content: true
             };
             break;
+        case 'remove_signatures':
         case 'pdf_remove_signatures':
             args = {
                 input: docPath,

@@ -162,6 +162,13 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let allowCopying = $state(false);
   let allowModifying = $state(false);
 
+  // Digital Signatures, Hash & Conformance parameter states (Tools 36-40)
+  let signPassword = $state('test');
+  let signFieldName = $state('Signature1');
+  let signReason = $state('Approved and Verified');
+  let signLocation = $state('Local Secure Terminal');
+  let hashAlgorithm = $state('sha256');
+
   // Alternating Merge parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -396,6 +403,16 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_change_permissions': customOutputPath = getOutputPath(`${base}_permissions.pdf`); break;
       case 'timestamp':
       case 'pdf_timestamp':     customOutputPath = getOutputPath(`${base}_timestamped.pdf`); break;
+      case 'sign':
+      case 'pdf_sign':          customOutputPath = getOutputPath(`${base}_signed.pdf`);      break;
+      case 'validate_signatures':
+      case 'pdf_validate_signatures': customOutputPath = getOutputPath(`${base}_signature_report.json`); break;
+      case 'remove_signatures':
+      case 'pdf_remove_signatures': customOutputPath = getOutputPath(`${base}_unsigned.pdf`); break;
+      case 'hash':
+      case 'pdf_hash':          customOutputPath = getOutputPath(`${base}_checksums.txt`);   break;
+      case 'validate':
+      case 'pdf_validate':      customOutputPath = getOutputPath(`${base}_validate_report.json`); break;
       case 'extract_pages':
       case 'pdf_extract_pages': customOutputPath = getOutputPath(`${base}_extracted.pdf`);  break;
       case 'delete_pages':
@@ -562,7 +579,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             tsaServerUrl,
             allowPrinting,
             allowCopying,
-            allowModifying
+            allowModifying,
+            signPassword,
+            signFieldName,
+            signReason,
+            signLocation,
+            hashAlgorithm
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -742,7 +764,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           tsaServerUrl,
           allowPrinting,
           allowCopying,
-          allowModifying
+          allowModifying,
+          signPassword,
+          signFieldName,
+          signReason,
+          signLocation,
+          hashAlgorithm
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -1311,9 +1338,29 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {:else if activeTool.id === 'sign' || activeTool.id === 'pdf_sign'}
         <div class="operation-config">
-          <label for="signCertPath" class="section-desc">Certificate Path:</label>
-          <input id="signCertPath" type="text" class="form-input" bind:value={signCertPath} placeholder="Path to .p12 cert" />
+          <label for="signCertPath" class="section-desc">Certificate Path (.p12 / .pfx):</label>
+          <input id="signCertPath" type="text" class="form-input" bind:value={signCertPath} placeholder="Path to .p12 cert (e.g. tests/e2e_fixtures/real/dummy.p12)" />
           <span class="field-hint">Select an RFC 3161 PKCS#12 (.p12 / .pfx) cryptographic certificate file.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="signPassword" class="section-desc">Certificate Password:</label>
+          <input id="signPassword" type="password" class="form-input" bind:value={signPassword} placeholder="Enter certificate password" />
+          <span class="field-hint">Password to decrypt the PKCS#12 private key container.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="signFieldName" class="section-desc">Signature Field Name:</label>
+          <input id="signFieldName" type="text" class="form-input" bind:value={signFieldName} placeholder="Signature1" />
+          <span class="field-hint">Target form widget field name for the cryptographic signature dictionary.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="signReason" class="section-desc">Signing Reason:</label>
+          <input id="signReason" type="text" class="form-input" bind:value={signReason} placeholder="Approved and Verified" />
+          <span class="field-hint">Reason for signing recorded in the signature dictionary /Reason entry.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="signLocation" class="section-desc">Signing Location:</label>
+          <input id="signLocation" type="text" class="form-input" bind:value={signLocation} placeholder="Local Secure Terminal" />
+          <span class="field-hint">Physical or digital location recorded in the signature dictionary /Location entry.</span>
         </div>
       {:else if activeTool.id === 'header_footer' || activeTool.id === 'pdf_header_footer'}
         <div class="operation-config">
@@ -1690,6 +1737,36 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <label for="tsaServerUrl" class="section-desc">RFC 3161 TSA Server URL:</label>
           <input id="tsaServerUrl" type="text" class="form-input" bind:value={tsaServerUrl} placeholder="http://timestamp.digicert.com" />
           <span class="field-hint">Applies an authentic RFC 3161 cryptographic timestamp token to ensure non-repudiation.</span>
+        </div>
+      {:else if activeTool.id === 'validate_signatures' || activeTool.id === 'pdf_validate_signatures'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Cryptographically verify digital signatures, certificate chains, and document byte-range integrity.
+          </p>
+          <span class="field-hint">Inspects all signature fields, PKCS#7 detached envelopes, and generates a validation audit report.</span>
+        </div>
+      {:else if activeTool.id === 'remove_signatures' || activeTool.id === 'pdf_remove_signatures'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Strip digital signature fields, cryptographic locks, and widget annotations to enable editing.
+          </p>
+          <span class="field-hint">Removes /Sig dictionaries and /ByteRange blocks from the document catalog, producing a clean unsigned PDF.</span>
+        </div>
+      {:else if activeTool.id === 'hash' || activeTool.id === 'pdf_hash'}
+        <div class="operation-config">
+          <label for="hashAlgorithm" class="section-desc">Checksum Algorithm:</label>
+          <select id="hashAlgorithm" class="form-input" bind:value={hashAlgorithm}>
+            <option value="sha256">SHA-256 (Secure Hash Algorithm 256-bit)</option>
+            <option value="md5">MD5 (Message Digest 5 - 128-bit)</option>
+          </select>
+          <span class="field-hint">Streams file bytes into cryptographic digest engine for tamper-evident verification.</span>
+        </div>
+      {:else if activeTool.id === 'validate' || activeTool.id === 'pdf_validate'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Validate PDF syntax, dictionary structures, cross-reference tables, and ISO 32000 standards conformance.
+          </p>
+          <span class="field-hint">Scans xref tables, page trees, stream lengths, and encryption dictionary flags to report syntax conformance.</span>
         </div>
       {:else}
         <div class="operation-config">

@@ -267,7 +267,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Sign Document: Apply digital signature to document [Input: .pdf | Output: .pdf]
-    #[command(alias = "sign")]
+    #[command(alias = "sign", alias = "pdf-sign", alias = "pdf_sign")]
     Signature {
         #[arg(long)]
         input: PathBuf,
@@ -426,11 +426,13 @@ pub enum Commands {
         input: PathBuf,
     },
     /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt]
+    #[command(alias = "pdf-validate", alias = "pdf_validate")]
     Validate {
         #[arg(long)]
         input: PathBuf,
     },
     /// Generate Hash: Calculate document checksums [Input: .pdf | Output: .txt]
+    #[command(alias = "pdf-hash", alias = "pdf_hash")]
     Hash {
         #[arg(long)]
         input: PathBuf,
@@ -463,7 +465,7 @@ pub enum Commands {
         inline_css: Option<String>,
     },
     /// Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity.
-    #[command(name = "pdf-validate-signatures")]
+    #[command(name = "pdf-validate-signatures", alias = "validate-signatures", alias = "validate_signatures", alias = "pdf_validate_signatures")]
     PdfValidateSignatures {
         #[arg(long)]
         input: PathBuf,
@@ -498,7 +500,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations.
-    #[command(name = "pdf-remove-signatures")]
+    #[command(name = "pdf-remove-signatures", alias = "remove-signatures", alias = "remove_signatures", alias = "pdf_remove_signatures")]
     PdfRemoveSignatures {
         #[arg(long)]
         input: PathBuf,
