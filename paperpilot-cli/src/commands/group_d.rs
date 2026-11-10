@@ -138,7 +138,7 @@ pub fn handle_convert(
     let mut doc = LopdfDocument::load(input)?;
 
     match actual_format {
-        "html" => {
+        "html" | "htm" => {
             let out_path = output.unwrap_or(Path::new("output.html"));
             let op = paperpilot_pdf::operations::conversion::PdfToHtmlOperation::new();
             op.execute(&mut doc)?;
@@ -151,7 +151,7 @@ pub fn handle_convert(
             std::fs::write(out_path, html)
                 .map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
         }
-        "md" => {
+        "md" | "markdown" => {
             let out_path = output.unwrap_or(Path::new("output.md"));
             let op = paperpilot_pdf::operations::conversion::PdfToMarkdownOperation::new();
             op.execute(&mut doc)?;

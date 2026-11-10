@@ -207,6 +207,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   // Conversions & Packaging parameter states (Tools 61-65)
   let conversionDpi = $state(150);
   let imageFormat = $state('png');
+  let tableFormat = $state('json');
   let cbzArchiveName = $state('');
   let pdfaConformance = $state('PDF/A-1b');
 
@@ -504,8 +505,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_render':        customOutputPath = getOutputPath(`${base}_rendered.png`);    break;
       case 'compare':
       case 'pdf_compare':       customOutputPath = getOutputPath(`${base}_diff_report.json`); break;
-      case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
+      case 'extract_text':
+      case 'pdf_extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
       case 'ocr':
+      case 'pdf_ocr':
         if (ocrOutputFormat === 'txt') {
           customOutputPath = getOutputPath(`${base}_ocr.txt`);
         } else if (ocrOutputFormat === 'clipboard') {
@@ -520,6 +523,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_to_html':     customOutputPath = getOutputPath(`${base}.html`);           break;
       case 'pdf_to_json':     customOutputPath = getOutputPath(`${base}.json`);           break;
       case 'pdf_to_pptx':     customOutputPath = getOutputPath(`${base}.pptx`);           break;
+      case 'pdf_extract_tables': customOutputPath = getOutputPath(`${base}_tables.${tableFormat === 'csv' ? 'csv' : 'json'}`); break;
       case 'extract_images':
       case 'pdf_extract_images': customOutputPath = getOutputPath(`${base}_images`);       break;
       case 'pdf_comic_archive': customOutputPath = getOutputPath(cbzArchiveName || `${base}_output.cbz`); break;
@@ -689,6 +693,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             batchCsvPath,
             dpi: conversionDpi,
             imageFormat,
+            tableFormat,
             cbzArchiveName,
             pdfaConformance
           };
@@ -907,6 +912,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           batchCsvPath,
           dpi: conversionDpi,
           imageFormat,
+          tableFormat,
           cbzArchiveName,
           pdfaConformance
         };
@@ -972,7 +978,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           const resObj = result as any;
           if (resObj && resObj.success) {
             let msg = '';
-            if (activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') {
+            if ((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') {
               const textToCopy = resObj.data?.text || '';
               if (navigator.clipboard && textToCopy) {
                 await navigator.clipboard.writeText(textToCopy);
@@ -1068,6 +1074,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     else if (['pdf_to_html', 'excel_to_html'].includes(toolId)) ext = '.html';
     else if (['pdf_to_docx'].includes(toolId)) ext = '.docx';
     else if (['pdf_to_xlsx', 'excel_to_csv'].includes(toolId)) ext = toolId.includes('csv') ? '.csv' : '.xlsx';
+    else if (['pdf_extract_tables'].includes(toolId)) ext = tableFormat === 'csv' ? '.csv' : '.json';
 
     const defaultOutput = docPath ? docPath.replace(/\.[^/.]+$/, `_${activeTool.id.replace('pdf_', '')}${ext}`) : `output${ext}`;
     const output = customOutputPath || defaultOutput;
@@ -1142,6 +1149,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           filters = [{ name: 'Excel Spreadsheet', extensions: ['xlsx'] }];
         } else if (['excel_to_csv'].includes(toolId)) {
           filters = [{ name: 'CSV File', extensions: ['csv'] }];
+        } else if (['pdf_extract_tables'].includes(toolId)) {
+          filters = [{ name: 'JSON Document', extensions: ['json'] }, { name: 'CSV File', extensions: ['csv'] }];
         } else if (['pdf_comic_archive'].includes(toolId)) {
           filters = [{ name: 'Comic Book Archive', extensions: ['cbz'] }];
         } else if (['pdf_to_epub'].includes(toolId)) {
@@ -1512,7 +1521,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <input id="footerText" type="text" class="form-input" bind:value={footerText} placeholder="e.g. Page" />
           <span class="field-hint">Text placed at bottom margin across all pages.</span>
         </div>
-            {:else if activeTool.id === 'ocr'}
+            {:else if activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr'}
         <div class="operation-config">
           <label for="ocrOutputFormat" class="section-desc">Output Destination:</label>
           <select id="ocrOutputFormat" bind:value={ocrOutputFormat} class="form-input">
@@ -2141,6 +2150,44 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           </p>
           <span class="field-hint">Output: <code>.html</code> — self-contained responsive page renderable in any modern browser.</span>
         </div>
+      {:else if activeTool.id === 'pdf_to_markdown' || activeTool.id === 'pdf_convert_markdown'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Converts the active PDF document into structured Markdown (.md). Heading hierarchies,
+            lists, code blocks, and data tables are recognized and transcribed into clean
+            CommonMark format for documentation and LLM prompts.
+          </p>
+          <span class="field-hint">Output: <code>.md</code> — standard Markdown text file.</span>
+        </div>
+      {:else if activeTool.id === 'pdf_to_json'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Extracts document content and structure into an organized JSON hierarchy. Captures per-page text blocks,
+            bounding box coordinates, font metadata, and table structures for programmatic ingestion and analysis.
+          </p>
+          <span class="field-hint">Output: <code>.json</code> — structured JSON document data.</span>
+        </div>
+      {:else if activeTool.id === 'extract_text' || activeTool.id === 'pdf_extract_text'}
+        <div class="operation-config">
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
+            Extracts all raw textual content from the active PDF in natural reading order. Decodes character
+            glyphs using embedded font cmaps and normalizes unicode whitespace across pages.
+          </p>
+          <span class="field-hint">Output: <code>.txt</code> — clean UTF-8 plain text file.</span>
+        </div>
+      {:else if activeTool.id === 'pdf_extract_tables'}
+        <div class="operation-config">
+          <label for="tableFormat" class="section-desc">Extracted Table Format:</label>
+          <select id="tableFormat" class="form-input" bind:value={tableFormat}>
+            <option value="json">JSON (Structured records & cells)</option>
+            <option value="csv">CSV (Comma-separated values)</option>
+          </select>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Detects grid lines and cell alignments within PDF pages to extract structured tabular data into
+            reusable JSON records or spreadsheet CSV rows.
+          </p>
+          <span class="field-hint">Output: <code>.{tableFormat}</code> — structured tabular data.</span>
+        </div>
       {:else if activeTool.id === 'pdf_convert_excel' || activeTool.id === 'convert_excel'}
         <div class="operation-config">
           <label for="convertPreset" class="section-desc">Visual Table Styling Preset:</label>
@@ -2178,7 +2225,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'pdf_merge' && activeTool.id !== 'compare' && activeTool.id !== 'pdf_compare' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'pdf_images_to_pdf' && activeTool.id !== 'search' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'pdf_merge' && activeTool.id !== 'compare' && activeTool.id !== 'pdf_compare' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'pdf_images_to_pdf' && activeTool.id !== 'search' && !((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Output folder:' : 'Output file:'}
@@ -2209,7 +2256,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           class="run-btn"
           class:run-btn--loading={isRunning}
           id="btn-run-operation"
-          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'pdf_images_to_pdf', 'json_to_pdf', 'pdf_convert_excel', 'convert_excel', 'excel_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || (activeTool.id === 'ocr' && !isOcrDownloaded)}
+          disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'pdf_images_to_pdf', 'json_to_pdf', 'pdf_convert_excel', 'convert_excel', 'excel_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || ((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && !isOcrDownloaded)}
           onclick={handleRunOperation}
         >
           {#if isRunning}

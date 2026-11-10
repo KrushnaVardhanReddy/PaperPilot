@@ -662,12 +662,14 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'extract_text':
+        case 'pdf_extract_text':
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_text.txt`)
             };
             break;
-        case 'ocr': {
+        case 'ocr':
+        case 'pdf_ocr': {
             const defaultExt = ocrOutputFormat === 'txt' ? 'txt' : 'pdf';
             const targetOut = customOutputPath || (ocrOutputFormat === 'clipboard'
                 ? getOutputPath(`temp_ocr_clipboard.txt`)
@@ -691,6 +693,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'pdf_to_markdown':
+        case 'pdf_convert_markdown':
             args = {
                 input: docPath,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}.md`)

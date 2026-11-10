@@ -182,6 +182,12 @@ async fn test_wave5_penta_interface() -> Result<()> {
         "pdf_to_xlsx",
         "pdf_to_pptx",
         "pdf_to_html",
+        // Session 15 — Tools 71-75
+        "pdf_to_markdown",
+        "pdf_to_json",
+        "pdf_extract_text",
+        "pdf_extract_tables",
+        "pdf_ocr",
     ];
 
     for tool_id in &tools {
@@ -419,6 +425,53 @@ async fn test_wave5_penta_interface() -> Result<()> {
                 mcp_payload = json!({ "input": single_page, "output": html_mcp.to_str().unwrap() });
                 api_payload = json!({ "input": single_page, "output": html_api.to_str().unwrap() });
                 requires_output = false;
+            }
+            // Session 15 — Tool 71: pdf_to_markdown
+            "pdf_to_markdown" => {
+                let md_cli = out_dir.join(format!("{}_cli.md", tool_id));
+                let md_mcp = out_dir.join(format!("{}_mcp.md", tool_id));
+                let md_api = out_dir.join(format!("{}_api.md", tool_id));
+                cli_args = vec!["convert", "--format", "markdown", "--input", &single_page, "--output", md_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": md_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": md_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 15 — Tool 72: pdf_to_json
+            "pdf_to_json" => {
+                let json_cli = out_dir.join(format!("{}_cli.json", tool_id));
+                let json_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let json_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["convert", "--format", "json", "--input", &single_page, "--output", json_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": json_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": json_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 15 — Tool 73: pdf_extract_text
+            "pdf_extract_text" => {
+                let txt_cli = out_dir.join(format!("{}_cli.txt", tool_id));
+                let txt_mcp = out_dir.join(format!("{}_mcp.txt", tool_id));
+                let txt_api = out_dir.join(format!("{}_api.txt", tool_id));
+                cli_args = vec!["extract-text", "--input", &single_page, "--output", txt_cli.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": txt_mcp.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": txt_api.to_str().unwrap() });
+                requires_output = false;
+            }
+            // Session 15 — Tool 74: pdf_extract_tables
+            "pdf_extract_tables" => {
+                let tbl_cli = out_dir.join(format!("{}_cli.csv", tool_id));
+                let tbl_mcp = out_dir.join(format!("{}_mcp.json", tool_id));
+                let tbl_api = out_dir.join(format!("{}_api.json", tool_id));
+                cli_args = vec!["extract-tables", "--input", &single_page, "--output", tbl_cli.to_str().unwrap(), "--format", "csv", "--pages", "all", "--json"];
+                mcp_payload = json!({ "input": single_page, "output": tbl_mcp.to_str().unwrap(), "format": "json", "pages": "all" });
+                api_payload = json!({ "input": single_page, "output": tbl_api.to_str().unwrap(), "format": "json", "pages": "all" });
+                requires_output = false;
+            }
+            // Session 15 — Tool 75: pdf_ocr
+            "pdf_ocr" => {
+                cli_args = vec!["ocr", "--input", &single_page, "--output", cli_out.to_str().unwrap(), "--json"];
+                mcp_payload = json!({ "input": single_page, "output": mcp_out.to_str().unwrap() });
+                api_payload = json!({ "input": single_page, "output": api_out.to_str().unwrap() });
+                requires_output = true;
             }
             _ => {}
         }
