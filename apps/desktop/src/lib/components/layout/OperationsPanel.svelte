@@ -393,6 +393,14 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_bookmarks':     customOutputPath = getOutputPath(`${base}_bookmarks.json`);  break;
       case 'pdf_attachments':   customOutputPath = attachmentAction === 'add' ? getOutputPath(`${base}_with_attachment.pdf`) : getOutputPath(`${base}_attachments.json`); break;
       case 'pdf_auto_rotate':   customOutputPath = getOutputPath(`${base}_autorotated.pdf`); break;
+      case 'repair':
+      case 'pdf_repair':        customOutputPath = getOutputPath(`${base}_repaired.pdf`);    break;
+      case 'invert_colors':
+      case 'pdf_invert_colors': customOutputPath = getOutputPath(`${base}_inverted.pdf`);    break;
+      case 'render':
+      case 'pdf_render':        customOutputPath = getOutputPath(`${base}_rendered.png`);    break;
+      case 'compare':
+      case 'pdf_compare':       customOutputPath = getOutputPath(`${base}_diff_report.json`); break;
       case 'extract_text':  customOutputPath = getOutputPath(`${base}_text.txt`);        break;
       case 'ocr':
         if (ocrOutputFormat === 'txt') {
@@ -429,7 +437,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       return;
     }
 
-    if (activeTool.id === 'compare') {
+    if (activeTool.id === 'compare' || activeTool.id === 'pdf_compare') {
       appState.toggleDiffView(true);
       return;
     }
@@ -1565,7 +1573,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             Bursts every single page into an individual standalone PDF file saved into an output directory.
           </p>
         </div>
-      {:else if activeTool.id === 'compare'}
+      {:else if activeTool.id === 'compare' || activeTool.id === 'pdf_compare'}
         <div class="operation-config">
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
             Interactive comparison tool to visually inspect differences, slide between document revisions, or generate pixel discrepancy maps between two open PDFs.
@@ -1603,7 +1611,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'compare' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'pdf_images_to_pdf' && activeTool.id !== 'search' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
+      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'pdf_merge' && activeTool.id !== 'compare' && activeTool.id !== 'pdf_compare' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'pdf_images_to_pdf' && activeTool.id !== 'search' && !(activeTool.id === 'ocr' && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Output folder:' : 'Output file:'}

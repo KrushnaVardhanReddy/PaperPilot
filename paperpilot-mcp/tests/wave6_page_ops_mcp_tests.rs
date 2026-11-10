@@ -131,6 +131,7 @@ async fn test_wave6_penta_interface() -> Result<()> {
     let sample_two_up_book = workspace_root.join("tests/e2e_fixtures/real/two_up_book.pdf").to_string_lossy().to_string();
     let sample_pdf_photo = workspace_root.join("tests/e2e_fixtures/real/sample_photo_doc.pdf").to_string_lossy().to_string();
     let sample_large_doc = workspace_root.join("tests/e2e_fixtures/real/large_doc.pdf").to_string_lossy().to_string();
+    let sample_malformed = workspace_root.join("tests/e2e_fixtures/real/malformed.pdf").to_string_lossy().to_string();
     let sample_img1 = workspace_root.join("tests/e2e_fixtures/real/img1.png").to_string_lossy().to_string();
     let sample_img2 = workspace_root.join("tests/e2e_fixtures/real/img2.png").to_string_lossy().to_string();
 
@@ -156,6 +157,11 @@ async fn test_wave6_penta_interface() -> Result<()> {
         "pdf_compress",
         "pdf_dedup_streams",
         "pdf_linearize",
+        "pdf_repair",
+        "pdf_invert_colors",
+        "pdf_render",
+        "pdf_compare",
+        "pdf_encrypt",
     ];
 
     // Helper macro for CLI execution logic
@@ -164,7 +170,10 @@ async fn test_wave6_penta_interface() -> Result<()> {
             let (success, out, latency) = run_cli($args)?;
             let mut passed = success;
             let mut size = 0;
-            if passed && $out_path.exists() {
+            if $tool_id == "pdf_compare" {
+                passed = success && (out.contains("\"success\":true") || out.contains("Compare"));
+                size = out.len();
+            } else if passed && $out_path.exists() {
                 if $out_path.is_file() {
                     size = fs::metadata(&$out_path).unwrap().len() as usize;
                     passed = size > 0;
@@ -355,7 +364,7 @@ async fn test_wave6_penta_interface() -> Result<()> {
     // 15. pdf_posterize
     let tool_id = "pdf_posterize";
     let out_file = out_dir.join("posterize.pdf");
-    test_cli!(tool_id, &["pdf-posterize", "--input", &sample_single_page, "--target-sheet", "a4", "--grid", "2x2", "--scale", "1.0", "--guides", "true", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_cli!(tool_id, &["pdf-posterize", "--input", &sample_single_page, "--target-sheet", "a4", "--grid", "2x2", "--scale", "1.0", "--guides", "--output", out_file.to_str().unwrap(), "--json"], out_file);
     test_mcp_api!(tool_id, json!({"input": sample_single_page, "grid_cols": 2, "grid_rows": 2, "target_sheet": "a4", "output": out_file.to_str().unwrap()}), out_file);
 
     // 16. pdf_stitch_canvas
@@ -393,6 +402,36 @@ async fn test_wave6_penta_interface() -> Result<()> {
     let out_file = out_dir.join("linearized.pdf");
     test_cli!(tool_id, &["pdf-linearize", "--input", &sample_multi_page, "--output", out_file.to_str().unwrap(), "--json"], out_file);
     test_mcp_api!(tool_id, json!({"input": sample_multi_page, "output": out_file.to_str().unwrap()}), out_file);
+
+    // 22. pdf_repair
+    let tool_id = "pdf_repair";
+    let out_file = out_dir.join("repaired.pdf");
+    test_cli!(tool_id, &["pdf-repair", "--input", &sample_malformed, "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_malformed, "output": out_file.to_str().unwrap()}), out_file);
+
+    // 23. pdf_invert_colors
+    let tool_id = "pdf_invert_colors";
+    let out_file = out_dir.join("inverted.pdf");
+    test_cli!(tool_id, &["pdf-invert-colors", "--input", &sample_single_page, "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_single_page, "mode": "dark_mode", "output": out_file.to_str().unwrap()}), out_file);
+
+    // 24. pdf_render
+    let tool_id = "pdf_render";
+    let out_file = out_dir.join("rendered.png");
+    test_cli!(tool_id, &["render", "--input", &sample_single_page, "--page", "1", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_single_page, "page": 1, "dpi": 150.0, "output": out_file.to_str().unwrap()}), out_file);
+
+    // 25. pdf_compare
+    let tool_id = "pdf_compare";
+    let out_file = out_dir.join("diff_report.json");
+    test_cli!(tool_id, &["compare", "--input", &sample_pdf2, "--input-b", &sample_pdf3, "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input_a": sample_pdf2, "input_b": sample_pdf3, "output": out_file.to_str().unwrap()}), out_file);
+
+    // 26. pdf_encrypt
+    let tool_id = "pdf_encrypt";
+    let out_file = out_dir.join("encrypted.pdf");
+    test_cli!(tool_id, &["encrypt", "--input", &sample_single_page, "--user-password", "Secret123", "--output", out_file.to_str().unwrap(), "--json"], out_file);
+    test_mcp_api!(tool_id, json!({"input": sample_single_page, "password": "Secret123", "output": out_file.to_str().unwrap()}), out_file);
 
     // Cleanup API server
     let _ = api_child.kill();

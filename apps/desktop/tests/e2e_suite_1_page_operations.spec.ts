@@ -130,6 +130,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
     const fixtureImg2 = path.join(fixtureDir, 'img2.png');
     const fixturePhotoDoc = path.join(fixtureDir, 'sample_photo_doc.pdf');
     const fixtureLargeDoc = path.join(fixtureDir, 'large_doc.pdf');
+    const fixtureMalformed = path.join(fixtureDir, 'malformed.pdf');
     const fixturePng = path.join(fixtureDir, 'test.png');
 
     await page.goto('http://127.0.0.1:1420/');
@@ -182,6 +183,10 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
              await fileInput.setInputFiles([fixturePhotoDoc]);
           } else if (op.name === 'pdf_dedup_streams') {
              await fileInput.setInputFiles([fixtureLargeDoc]);
+          } else if (op.name === 'pdf_repair') {
+             await fileInput.setInputFiles([fixtureMalformed]);
+          } else if (op.name === 'pdf_invert_colors' || op.name === 'pdf_render' || op.name === 'pdf_encrypt') {
+             await fileInput.setInputFiles([fixtureSingle]);
           } else {
              await fileInput.setInputFiles([fixtureMulti]);
           }
@@ -411,7 +416,7 @@ test.describe('Spec 151 Deep Semantic E2E Validation (Suite 1 - Page Operations 
               cliCmd = `"${cliBin}" pdf-linearize --input "${fixtureMulti}" --output "${outputFile}"`;
               break;
             case 'pdf_repair':
-              cliCmd = `"${cliBin}" pdf-repair --input "${fixtureSingle}" --output "${outputFile}"`;
+              cliCmd = `"${cliBin}" pdf-repair --input "${fixtureMalformed}" --output "${outputFile}"`;
               break;
             case 'pdf_invert_colors':
               cliCmd = `"${cliBin}" pdf-invert-colors --input "${fixtureSingle}" --output "${outputFile}"`;

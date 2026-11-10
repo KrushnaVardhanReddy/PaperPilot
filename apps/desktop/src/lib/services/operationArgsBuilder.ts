@@ -76,6 +76,11 @@ export interface OperationContext {
     description?: string;
     file_data_base64?: string;
     filePath?: string;
+    renderPage?: number;
+    renderDpi?: number;
+    invertMode?: string;
+    invertPages?: string;
+    compareInputB?: string;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -388,9 +393,11 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'render':
+        case 'pdf_render':
             args = {
                 input: docPath,
-                page: 1,
+                page: context.renderPage ?? 1,
+                dpi: context.renderDpi ?? 150.0,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rendered.png`)
             };
             break;
@@ -420,6 +427,32 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_linearized.pdf`)
             };
             break;
+        case 'repair':
+        case 'pdf_repair':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_repaired.pdf`)
+            };
+            break;
+        case 'invert_colors':
+        case 'pdf_invert_colors':
+            args = {
+                input: docPath,
+                mode: context.invertMode || 'dark_mode',
+                pages: context.invertPages,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_inverted.pdf`)
+            };
+            break;
+        case 'compare':
+        case 'pdf_compare': {
+            const secondDoc = context.compareInputB || (context.allDocumentPaths && context.allDocumentPaths.length > 1 ? context.allDocumentPaths[1] : docPath);
+            args = {
+                input_a: docPath,
+                input_b: secondDoc,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_diff_report.json`)
+            };
+            break;
+        }
         case 'annotate':
             args = {
                 input: docPath,
@@ -428,6 +461,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'encrypt':
+        case 'pdf_encrypt':
             args = {
                 input: docPath,
                 password: password || 'paperpilot',
@@ -435,6 +469,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'decrypt':
+        case 'pdf_decrypt':
             args = {
                 input: docPath,
                 password: password || '',
