@@ -44,11 +44,10 @@
 ---
 
 ## 🎯 Active Development Focus & Parallel Jules Sprints
-- **Phase 6.1 (Tier 1 Developer Onboarding & Distribution) — 🚀 IN PROGRESS (Parallel Jules Cloud Sprints)**:
-  - **Task 6.1.1 (Spec 161)**: Universal one-line install scripts (`install.sh`, `install.ps1`, Homebrew formula `paperpilot.rb`) — **Session 14380280216481973858** (`in-progress`).
-  - **Task 6.1.2 (Spec 160)**: System diagnostics engine (`paperpilot doctor`, `GET /health`, `GET /api/v1/doctor`, Settings UI modal) — **Session 308936918267204628** (`in-progress`).
-  - **Task 6.1.3 (Spec 162)**: AI framework integration recipes (LangChain `PaperPilotLoader`, LlamaIndex `PaperPilotReader`, Claude/Cursor MCP presets, n8n OCR workflow) — **Session 17905418285765948360** (`in-progress`).
-  *(All 3 tasks dispatched simultaneously to Jules cloud agents with clean non-overlapping boundaries).*
+- **Phase 6.1 (Tier 1 Developer Onboarding & Distribution)**:
+  - **Task 6.1.1 (Spec 161)**: Universal one-line install scripts (`install.sh`, `install.ps1`, Homebrew formula `paperpilot.rb`) — ✅ **MERGED (PR #339)**.
+  - **Task 6.1.3 (Spec 162)**: AI framework integration recipes (LangChain `PaperPilotLoader`, LlamaIndex `PaperPilotReader`, Claude/Cursor MCP presets, n8n OCR workflow) — ✅ **MERGED (PR #338)**.
+  - **Task 6.1.2 (Spec 160)**: System diagnostics engine (`paperpilot doctor`, `GET /health`, `GET /api/v1/doctor`, Settings UI modal) — 🚀 **Session 308936918267204628** (`in-progress`).
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
 
