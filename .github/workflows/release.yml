@@ -174,15 +174,18 @@ jobs:
           TARGET_DIR="target/${{ matrix.target }}/release"
           [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
 
-          # 1. Desktop GUI installer bundles (.exe, .msi)
-          find target/ -type f \( -name "*.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} release_pkgs/ \; 2>/dev/null || true
+          # 1. Desktop GUI installer bundles (.exe NSIS, .msi) from all potential target roots
+          find . -type f \( -name "*setup.exe" -o -name "*Setup.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} release_pkgs/ \; 2>/dev/null || true
 
           # 2. Desktop GUI Standalone Portable Zip (.zip with PaperPilot GUI .exe + resources)
           mkdir -p staging_portable_gui
-          GUI_EXE=$(find target/ -type f -name "PaperPilot.exe" ! -path "*/bundle/*" | head -n 1)
-          [ -n "$GUI_EXE" ] || GUI_EXE="${TARGET_DIR}/PaperPilot.exe"
+          GUI_EXE=$(find . -type f \( -name "PaperPilot.exe" -o -name "desktop.exe" \) ! -path "*/bundle/*" ! -path "*/target/debug/*" | head -n 1)
+          if [ -z "$GUI_EXE" ]; then
+            GUI_EXE="${TARGET_DIR}/PaperPilot.exe"
+            [ -f "$GUI_EXE" ] || GUI_EXE="${TARGET_DIR}/desktop.exe"
+          fi
           if [ -f "$GUI_EXE" ]; then
-            cp "$GUI_EXE" staging_portable_gui/
+            cp "$GUI_EXE" staging_portable_gui/PaperPilot.exe
           fi
           cp README.md staging_portable_gui/ || true
           (cd staging_portable_gui && 7z a "../release_pkgs/PaperPilot-windows-portable-x86_64.zip" *)
@@ -205,15 +208,15 @@ jobs:
           cp README.md staging_gateway/ || true
           (cd staging_gateway && 7z a "../release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.zip" *)
 
-          # 6. All-in-One Suite (GUI app + CLI + Gateway + MCP)
+          # 6. All-in-One Suite (GUI app + CLI + Gateway + MCP + Installers)
           mkdir -p staging_all
           cp "${TARGET_DIR}/paperpilot.exe" staging_all/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli.exe" staging_all/paperpilot.exe 2>/dev/null || true
           cp "${TARGET_DIR}/paperpilot-gateway.exe" staging_all/ 2>/dev/null || true
           cp "${TARGET_DIR}/paperpilot-mcp.exe" staging_all/ 2>/dev/null || true
           if [ -f "$GUI_EXE" ]; then
-            cp "$GUI_EXE" staging_all/
+            cp "$GUI_EXE" staging_all/PaperPilot.exe
           fi
-          find target/ -type f \( -name "*.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} staging_all/ \; 2>/dev/null || true
+          find . -type f \( -name "*setup.exe" -o -name "*Setup.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} staging_all/ \; 2>/dev/null || true
           cp README.md staging_all/ || true
           (cd staging_all && 7z a "../release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.zip" *)
 
