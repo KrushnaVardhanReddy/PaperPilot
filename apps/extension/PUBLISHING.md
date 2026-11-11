@@ -118,3 +118,4 @@ To distribute the extension internally or test without store review:
    - Enable **Developer mode** (top-right toggle).
    - Click **"Load unpacked"** and select the `dist` directory.
    - Click the extension icon in the toolbar, or click the **↗ (Full Tab)** button to run in permanent tab mode.
+
