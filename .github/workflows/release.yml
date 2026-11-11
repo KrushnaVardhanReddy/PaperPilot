@@ -206,6 +206,7 @@ jobs:
           tool: cargo-zigbuild
 
       - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
+        shell: bash
         run: |
           if [ "${{ runner.os }}" = "Linux" ] && command -v cargo-zigbuild >/dev/null 2>&1 && command -v zig >/dev/null 2>&1; then
             echo "Building with cargo-zigbuild (glibc 2.17 compatibility)..."
