@@ -36,6 +36,15 @@
       markdown: 'text/markdown',
       txt: 'text/plain',
       csv: 'text/csv',
+      tsv: 'text/tab-separated-values',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      webp: 'image/webp',
+      gif: 'image/gif',
+      bmp: 'image/bmp',
+      tiff: 'image/tiff',
+      tif: 'image/tiff',
     };
     return map[ext] ?? 'application/octet-stream';
   }
@@ -79,10 +88,11 @@
     const selected = await open({
       multiple: true,
       filters: [
-        { name: 'All Supported Formats', extensions: ['pdf','docx','doc','xlsx','xls','pptx','ppt','json','html','htm','md','markdown','txt'] },
+        { name: 'All Supported Formats', extensions: ['pdf','docx','doc','xlsx','xls','pptx','ppt','json','html','htm','md','markdown','txt','png','jpg','jpeg','webp','bmp','tiff','gif'] },
         { name: 'PDF Files', extensions: ['pdf'] },
+        { name: 'Image Files', extensions: ['png','jpg','jpeg','webp','bmp','tiff','tif','gif'] },
         { name: 'Word Documents', extensions: ['docx','doc'] },
-        { name: 'Excel Spreadsheets', extensions: ['xlsx','xls','csv'] },
+        { name: 'Excel Spreadsheets', extensions: ['xlsx','xls','csv','tsv'] },
         { name: 'PowerPoint Presentations', extensions: ['pptx','ppt'] },
         { name: 'Web & Markdown (HTML, MD)', extensions: ['html','htm','md','markdown'] },
         { name: 'Data Files (JSON, TXT, CSV)', extensions: ['json','txt','csv'] },
@@ -218,6 +228,9 @@
 
     <div class="format-pills" aria-label="Supported file formats">
       <span class="format-pill">.pdf</span>
+      <span class="format-pill">.png</span>
+      <span class="format-pill">.jpg</span>
+      <span class="format-pill">.webp</span>
       <span class="format-pill">.docx</span>
       <span class="format-pill">.xlsx</span>
       <span class="format-pill">.md</span>
@@ -276,7 +289,7 @@
       bind:this={fileInputRef}
       type="file"
       multiple
-      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.json,.html,.htm,.md,.markdown,.txt,application/pdf"
+      accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.json,.html,.htm,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tiff,.tif,image/*,application/pdf"
       onchange={handleFileInputChange}
       style="display: none;"
     />
