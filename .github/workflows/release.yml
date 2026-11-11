@@ -200,10 +200,19 @@ jobs:
           sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
           for i in 1 2 3; do sudo apt-get update -o Acquire::Retries=3 && break || sleep 5; done
           sudo apt-get install -y --fix-missing libssl-dev pkg-config
+          # Install Zig and cargo-zigbuild for maximum glibc backwards compatibility & cross-compilation
+          pip install cargo-zigbuild
+          sudo snap install zig --classic --beta || true
 
       - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
         run: |
-          cargo build --release --locked --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
+          if [ "${{ runner.os }}" = "Linux" ] && command -v cargo-zigbuild >/dev/null 2>&1 && command -v zig >/dev/null 2>&1; then
+            echo "Building with cargo-zigbuild (glibc 2.17 compatibility)..."
+            cargo zigbuild --release --locked --target ${{ matrix.target }}.2.17 -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
+          else
+            echo "Building with standard cargo build..."
+            cargo build --release --locked --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
+          fi
 
       - name: Ad-Hoc Code Sign macOS Binaries
         if: runner.os == 'macOS'
