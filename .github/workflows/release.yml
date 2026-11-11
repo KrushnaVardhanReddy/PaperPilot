@@ -23,10 +23,15 @@ permissions: read-all
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_BUILD_JOBS: 4
 
 jobs:
-  build-platform-release:
-    name: Build Platform Release (${{ matrix.os }})
+  # =========================================================================
+  # 1. PARALLEL DESKTOP GUI BUILDS (Tauri Installers + Standalone Bundles)
+  # =========================================================================
+  build-desktop-gui:
+    name: Desktop GUI (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -34,15 +39,15 @@ jobs:
         include:
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            artifact_name: paperpilot-linux-x86_64
+            artifact_name: paperpilot-desktop-linux-x86_64
             bundles: "appimage,deb"
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: paperpilot-windows-x86_64
+            artifact_name: paperpilot-desktop-windows-x86_64
             bundles: "nsis,msi"
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact_name: paperpilot-macos-aarch64
+            artifact_name: paperpilot-desktop-macos-aarch64
             bundles: "app,dmg"
 
     steps:
@@ -56,7 +61,7 @@ jobs:
       - name: Rust Cache
         uses: swatinem/rust-cache@v2
         with:
-          key: ${{ matrix.target }}
+          key: tauri-gui-${{ matrix.target }}
 
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
@@ -82,83 +87,29 @@ jobs:
 
       - name: Build Desktop GUI Bundle (Tauri)
         shell: bash
-        env:
-          CARGO_BUILD_JOBS: 4
         run: |
           cd apps/desktop
           rm -f pnpm-workspace.yaml
           npx tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
 
-      - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
-        run: |
-          cargo build --release --locked --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
-
-      - name: Ad-Hoc Code Sign macOS Bundles & Binaries
+      - name: Ad-Hoc Code Sign macOS GUI Bundles
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          TARGET_DIR="target/${{ matrix.target }}/release"
-          [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
           SIGN_ID="${APPLE_SIGNING_IDENTITY:--}"
-          for bin in paperpilot paperpilot-cli paperpilot-gateway paperpilot-mcp; do
-            if [ -f "${TARGET_DIR}/${bin}" ]; then
-              xattr -cr "${TARGET_DIR}/${bin}" || true
-              codesign --force --sign "$SIGN_ID" "${TARGET_DIR}/${bin}" || true
-            fi
-          done
           find target/ -type d -name "*.app" -path "*/bundle/*" | while read -r app_bundle; do
             xattr -cr "$app_bundle" || true
             codesign --force --deep --sign "$SIGN_ID" "$app_bundle" || true
           done
 
-      - name: Package Release Assets (Linux / macOS)
+      - name: Package Desktop GUI Assets (Linux / macOS)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          mkdir -p release_pkgs
-          TARGET_DIR="target/${{ matrix.target }}/release"
-          [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
+          mkdir -p gui_pkgs
+          find target/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.dmg" \) -path "*/bundle/*" -exec cp {} gui_pkgs/ \; 2>/dev/null || true
 
-          # 1. Desktop GUI installer bundles (.AppImage, .deb, .dmg)
-          find target/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.dmg" \) -path "*/bundle/*" -exec cp {} release_pkgs/ \; 2>/dev/null || true
-
-          # 2. CLI standalone tarball
-          mkdir -p staging_cli
-          cp "${TARGET_DIR}/paperpilot" staging_cli/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli" staging_cli/paperpilot 2>/dev/null || true
-          cp README.md staging_cli/ || true
-          tar -czvf "release_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_cli .
-
-          # 3. MCP standalone tarball
-          mkdir -p staging_mcp
-          cp "${TARGET_DIR}/paperpilot-mcp" staging_mcp/ 2>/dev/null || true
-          cp README.md staging_mcp/ || true
-          tar -czvf "release_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_mcp .
-
-          # 4. Gateway standalone tarball
-          mkdir -p staging_gateway
-          cp "${TARGET_DIR}/paperpilot-gateway" staging_gateway/ 2>/dev/null || true
-          cp README.md staging_gateway/ || true
-          tar -czvf "release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_gateway .
-
-          # 5. All-in-One Suite (GUI app + CLI + Gateway + MCP)
-          mkdir -p staging_all
-          cp "${TARGET_DIR}/paperpilot" staging_all/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli" staging_all/paperpilot 2>/dev/null || true
-          cp "${TARGET_DIR}/paperpilot-gateway" staging_all/ 2>/dev/null || true
-          cp "${TARGET_DIR}/paperpilot-mcp" staging_all/ 2>/dev/null || true
-          find target/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.dmg" \) -path "*/bundle/*" -exec cp {} staging_all/ \; 2>/dev/null || true
-          if [ "${RUNNER_OS}" = "macOS" ]; then
-            find target/ -type d -name "*.app" -path "*/bundle/*" -exec cp -R {} staging_all/ \; 2>/dev/null || true
-            printf "#!/bin/bash\nset -e\nDIR=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\"\nxattr -cr \"\$DIR\" 2>/dev/null || true\nif [ -d \"/Applications/PaperPilot.app\" ]; then\n  xattr -cr \"/Applications/PaperPilot.app\" 2>/dev/null || true\n  codesign --force --deep --sign - \"/Applications/PaperPilot.app\" 2>/dev/null || true\nfi\necho \"macOS Gatekeeper quarantine cleared for PaperPilot.\"\n" > staging_all/macos-unquarantine.command
-            chmod +x staging_all/macos-unquarantine.command 2>/dev/null || true
-          fi
-          cp apps/desktop/src-tauri/icons/icon.png staging_all/PaperPilot.png 2>/dev/null || true
-          printf "[Desktop Entry]\nName=PaperPilot\nComment=Fast, privacy-first PDF manipulation toolkit\nExec=./paperpilot ui\nIcon=PaperPilot\nTerminal=false\nType=Application\nCategories=Office;Utility;\n" > staging_all/PaperPilot.desktop
-          chmod +x staging_all/PaperPilot.desktop 2>/dev/null || true
-          cp README.md staging_all/ || true
-          tar -czvf "release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_all .
-
-          # Checksums
-          cd release_pkgs
+          cd gui_pkgs
           for file in *; do
             if [ -f "$file" ] && [[ "$file" != *.sha256 ]]; then
               shasum -a 256 "$file" > "${file}.sha256" || sha256sum "$file" > "${file}.sha256"
@@ -166,16 +117,16 @@ jobs:
           done
           cd ..
 
-      - name: Package Release Assets (Windows)
+      - name: Package Desktop GUI Assets (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          mkdir -p release_pkgs
+          mkdir -p gui_pkgs
           TARGET_DIR="target/${{ matrix.target }}/release"
           [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
 
-          # 1. Desktop GUI installer bundles (.exe NSIS, .msi) from all potential target roots
-          find . -type f \( -name "*setup.exe" -o -name "*Setup.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} release_pkgs/ \; 2>/dev/null || true
+          # 1. Desktop GUI installer bundles (.exe NSIS, .msi)
+          find . -type f \( -name "*setup.exe" -o -name "*Setup.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} gui_pkgs/ \; 2>/dev/null || true
 
           # 2. Desktop GUI Standalone Portable Zip (.zip with PaperPilot GUI .exe + resources)
           mkdir -p staging_portable_gui
@@ -188,40 +139,9 @@ jobs:
             cp "$GUI_EXE" staging_portable_gui/PaperPilot.exe
           fi
           cp README.md staging_portable_gui/ || true
-          (cd staging_portable_gui && 7z a "../release_pkgs/PaperPilot-windows-portable-x86_64.zip" *)
+          (cd staging_portable_gui && 7z a "../gui_pkgs/PaperPilot-windows-portable-x86_64.zip" *)
 
-          # 3. CLI standalone zip
-          mkdir -p staging_cli
-          cp "${TARGET_DIR}/paperpilot.exe" staging_cli/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli.exe" staging_cli/paperpilot.exe 2>/dev/null || true
-          cp README.md staging_cli/ || true
-          (cd staging_cli && 7z a "../release_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.zip" *)
-
-          # 4. MCP standalone zip
-          mkdir -p staging_mcp
-          cp "${TARGET_DIR}/paperpilot-mcp.exe" staging_mcp/ 2>/dev/null || true
-          cp README.md staging_mcp/ || true
-          (cd staging_mcp && 7z a "../release_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.zip" *)
-
-          # 5. Gateway standalone zip
-          mkdir -p staging_gateway
-          cp "${TARGET_DIR}/paperpilot-gateway.exe" staging_gateway/ 2>/dev/null || true
-          cp README.md staging_gateway/ || true
-          (cd staging_gateway && 7z a "../release_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.zip" *)
-
-          # 6. All-in-One Suite (GUI app + CLI + Gateway + MCP + Installers)
-          mkdir -p staging_all
-          cp "${TARGET_DIR}/paperpilot.exe" staging_all/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli.exe" staging_all/paperpilot.exe 2>/dev/null || true
-          cp "${TARGET_DIR}/paperpilot-gateway.exe" staging_all/ 2>/dev/null || true
-          cp "${TARGET_DIR}/paperpilot-mcp.exe" staging_all/ 2>/dev/null || true
-          if [ -f "$GUI_EXE" ]; then
-            cp "$GUI_EXE" staging_all/PaperPilot.exe
-          fi
-          find . -type f \( -name "*setup.exe" -o -name "*Setup.exe" -o -name "*.msi" \) -path "*/bundle/*" -exec cp {} staging_all/ \; 2>/dev/null || true
-          cp README.md staging_all/ || true
-          (cd staging_all && 7z a "../release_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.zip" *)
-
-          # Checksums
-          cd release_pkgs
+          cd gui_pkgs
           for file in *; do
             if [ -f "$file" ] && [[ "$file" != *.sha256 ]]; then
               sha256sum "$file" > "${file}.sha256" || shasum -a 256 "$file" > "${file}.sha256"
@@ -229,14 +149,171 @@ jobs:
           done
           cd ..
 
-      - name: Upload Platform Package Artifact
+      - name: Upload Desktop GUI Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-assets-${{ matrix.artifact_name }}
           path: |
-            release_pkgs/*
+            gui_pkgs/*
           if-no-files-found: error
 
+  # =========================================================================
+  # 2. PARALLEL BACKEND BINARIES (CLI, Microservice Gateway & MCP Server)
+  #    Streamlined: Pure Rust, NO Node.js, NO WebKit/GTK setup
+  # =========================================================================
+  build-backend-binaries:
+    name: Backend Binaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact_name: paperpilot-backend-linux-x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: paperpilot-backend-windows-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: paperpilot-backend-macos-aarch64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: backend-${{ matrix.target }}
+
+      - name: Install Linux Build Prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev pkg-config
+
+      - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
+        run: |
+          cargo build --release --locked --target ${{ matrix.target }} -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp
+
+      - name: Ad-Hoc Code Sign macOS Binaries
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          TARGET_DIR="target/${{ matrix.target }}/release"
+          [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
+          SIGN_ID="${APPLE_SIGNING_IDENTITY:--}"
+          for bin in paperpilot paperpilot-cli paperpilot-gateway paperpilot-mcp; do
+            if [ -f "${TARGET_DIR}/${bin}" ]; then
+              xattr -cr "${TARGET_DIR}/${bin}" || true
+              codesign --force --sign "$SIGN_ID" "${TARGET_DIR}/${bin}" || true
+            fi
+          done
+
+      - name: Package Backend Assets (Linux / macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p backend_pkgs
+          TARGET_DIR="target/${{ matrix.target }}/release"
+          [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
+
+          # CLI standalone tarball
+          mkdir -p staging_cli
+          cp "${TARGET_DIR}/paperpilot" staging_cli/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli" staging_cli/paperpilot 2>/dev/null || true
+          cp README.md staging_cli/ || true
+          tar -czvf "backend_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_cli .
+
+          # MCP standalone tarball
+          mkdir -p staging_mcp
+          cp "${TARGET_DIR}/paperpilot-mcp" staging_mcp/ 2>/dev/null || true
+          cp README.md staging_mcp/ || true
+          tar -czvf "backend_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_mcp .
+
+          # Gateway standalone tarball
+          mkdir -p staging_gateway
+          cp "${TARGET_DIR}/paperpilot-gateway" staging_gateway/ 2>/dev/null || true
+          cp README.md staging_gateway/ || true
+          tar -czvf "backend_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_gateway .
+
+          # All-in-One Suite (CLI + Gateway + MCP)
+          mkdir -p staging_all
+          cp "${TARGET_DIR}/paperpilot" staging_all/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli" staging_all/paperpilot 2>/dev/null || true
+          cp "${TARGET_DIR}/paperpilot-gateway" staging_all/ 2>/dev/null || true
+          cp "${TARGET_DIR}/paperpilot-mcp" staging_all/ 2>/dev/null || true
+          if [ "${RUNNER_OS}" = "macOS" ]; then
+            printf "#!/bin/bash\nset -e\nDIR=\"\$(cd \"\$(dirname \"\$0\")\" && pwd)\"\nxattr -cr \"\$DIR\" 2>/dev/null || true\necho \"macOS Gatekeeper quarantine cleared for PaperPilot.\"\n" > staging_all/macos-unquarantine.command
+            chmod +x staging_all/macos-unquarantine.command 2>/dev/null || true
+          fi
+          cp README.md staging_all/ || true
+          tar -czvf "backend_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.tar.gz" -C staging_all .
+
+          cd backend_pkgs
+          for file in *; do
+            if [ -f "$file" ] && [[ "$file" != *.sha256 ]]; then
+              shasum -a 256 "$file" > "${file}.sha256" || sha256sum "$file" > "${file}.sha256"
+            fi
+          done
+          cd ..
+
+      - name: Package Backend Assets (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p backend_pkgs
+          TARGET_DIR="target/${{ matrix.target }}/release"
+          [ -d "$TARGET_DIR" ] || TARGET_DIR="target/release"
+
+          # CLI standalone zip
+          mkdir -p staging_cli
+          cp "${TARGET_DIR}/paperpilot.exe" staging_cli/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli.exe" staging_cli/paperpilot.exe 2>/dev/null || true
+          cp README.md staging_cli/ || true
+          (cd staging_cli && 7z a "../backend_pkgs/paperpilot-cli-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # MCP standalone zip
+          mkdir -p staging_mcp
+          cp "${TARGET_DIR}/paperpilot-mcp.exe" staging_mcp/ 2>/dev/null || true
+          cp README.md staging_mcp/ || true
+          (cd staging_mcp && 7z a "../backend_pkgs/paperpilot-mcp-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # Gateway standalone zip
+          mkdir -p staging_gateway
+          cp "${TARGET_DIR}/paperpilot-gateway.exe" staging_gateway/ 2>/dev/null || true
+          cp README.md staging_gateway/ || true
+          (cd staging_gateway && 7z a "../backend_pkgs/paperpilot-gateway-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          # All-in-One Suite (CLI + Gateway + MCP)
+          mkdir -p staging_all
+          cp "${TARGET_DIR}/paperpilot.exe" staging_all/ 2>/dev/null || cp "${TARGET_DIR}/paperpilot-cli.exe" staging_all/paperpilot.exe 2>/dev/null || true
+          cp "${TARGET_DIR}/paperpilot-gateway.exe" staging_all/ 2>/dev/null || true
+          cp "${TARGET_DIR}/paperpilot-mcp.exe" staging_all/ 2>/dev/null || true
+          cp README.md staging_all/ || true
+          (cd staging_all && 7z a "../backend_pkgs/paperpilot-all-${{ matrix.os }}-${{ matrix.target }}.zip" *)
+
+          cd backend_pkgs
+          for file in *; do
+            if [ -f "$file" ] && [[ "$file" != *.sha256 ]]; then
+              sha256sum "$file" > "${file}.sha256" || shasum -a 256 "$file" > "${file}.sha256"
+            fi
+          done
+          cd ..
+
+      - name: Upload Backend Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.artifact_name }}
+          path: |
+            backend_pkgs/*
+          if-no-files-found: error
+
+  # =========================================================================
+  # 3. WASM PACKAGE (Web, Edge & Browser Extension)
+  # =========================================================================
   build-wasm-package:
     name: Build WASM Package (Web & Edge)
     runs-on: ubuntu-latest
@@ -258,8 +335,6 @@ jobs:
           which wasm-pack || cargo install wasm-pack --locked
 
       - name: Build WASM Package
-        env:
-          CARGO_BUILD_JOBS: 4
         run: |
           wasm-pack build --target web --release paperpilot-wasm
 
@@ -281,6 +356,9 @@ jobs:
             release_pkgs/*
           if-no-files-found: error
 
+  # =========================================================================
+  # 4. ANDROID APK (Mobile)
+  # =========================================================================
   build-android-apk:
     name: Build Android APK (Mobile)
     runs-on: ubuntu-latest
@@ -332,7 +410,6 @@ jobs:
       - name: Build Android Release APK
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
-          CARGO_BUILD_JOBS: 4
         run: |
           cd apps/desktop
           rm -f pnpm-workspace.yaml
@@ -343,7 +420,6 @@ jobs:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           mkdir -p release_pkgs
-          # Copy universal release apk or arm64 apk
           APK_PATH=$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | head -n 1)
           if [ -n "$APK_PATH" ]; then
             cp "$APK_PATH" "release_pkgs/paperpilot-android-aarch64-${INPUT_VERSION}.apk"
@@ -360,9 +436,12 @@ jobs:
             release_pkgs/*
           if-no-files-found: error
 
+  # =========================================================================
+  # 5. AGGREGATE & PUBLISH GITHUB RELEASE
+  # =========================================================================
   publish-github-release:
     name: Publish GitHub Release
-    needs: [build-platform-release, build-wasm-package, build-android-apk]
+    needs: [build-desktop-gui, build-backend-binaries, build-wasm-package, build-android-apk]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -397,7 +476,7 @@ jobs:
               - Windows: `PaperPilot-windows-portable-x86_64.zip` (standalone portable - no install needed), `.exe` (NSIS setup installer), and `.msi`
               - macOS: `.dmg` (Apple Silicon disk image installer)
             - **CLI & Backend Microservices**:
-              - `paperpilot` (CLI Engine with 50+ PDF & document tools)
+              - `paperpilot` (CLI Engine with 91 PDF & document tools)
               - `paperpilot-gateway` (HTTP/REST Microservice API)
               - `paperpilot-mcp` (Model Context Protocol server for AI agent integration)
               - `paperpilot-all-*.tar.gz` (Complete bundle of CLI, Gateway, and MCP servers)
@@ -421,5 +500,3 @@ jobs:
 
             ### Checksums
             SHA-256 checksums are attached alongside each installer, binary package, and APK artifact.
-
-
