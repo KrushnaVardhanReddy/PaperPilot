@@ -344,8 +344,26 @@
       </div>
     </div>
 
-    <!-- Connection Status Badge -->
+    <!-- Actions & Connection Badge -->
     <div class="header-right">
+      <button
+        class="icon-btn-expand"
+        title="Open PaperPilot in a Full Tab (Prevents auto-closing)"
+        onclick={() => {
+          if (typeof chrome !== 'undefined' && chrome.tabs) {
+            chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
+          } else {
+            window.open(window.location.href, '_blank');
+          }
+        }}
+      >
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </button>
+
       {#if gatewayConnected}
         <button
           class="badge badge-desktop"
@@ -712,6 +730,32 @@
   .version-label {
     font-size: 10px;
     color: #64748b;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .icon-btn-expand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .icon-btn-expand:hover {
+    color: #38bdf8;
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
   }
 
   .badge {
