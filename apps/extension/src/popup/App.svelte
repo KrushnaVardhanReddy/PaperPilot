@@ -146,6 +146,8 @@
     const input = e.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       handleFile(input.files[0]);
+      // Reset input value so re-selecting same file triggers change
+      input.value = '';
     }
   }
 
@@ -432,14 +434,13 @@
         </div>
 
         <!-- Drop Zone in Quick Actions -->
-        <div
+        <label
+          for="pdf-upload"
           class="dropzone"
           class:drag-over={isDragOver}
           ondragover={(e) => { e.preventDefault(); isDragOver = true; }}
           ondragleave={() => (isDragOver = false)}
           ondrop={onDrop}
-          role="region"
-          aria-label="PDF drop zone"
         >
           <input
             type="file"
@@ -448,7 +449,7 @@
             class="file-input"
             onchange={onFileInput}
           />
-          <label for="pdf-upload" class="dropzone-label">
+          <div class="dropzone-label">
             <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" class="upload-icon">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="17 8 12 3 7 8" />
@@ -460,8 +461,8 @@
             <span class="dropzone-secondary">
               {metadata ? `${metadata.pageCount} pages • ${metadata.version} • ${(currentFile!.size / 1024).toFixed(1)} KB` : '100% private in-browser WASM processing'}
             </span>
-          </label>
-        </div>
+          </div>
+        </label>
       </section>
     {/if}
 
