@@ -21,6 +21,35 @@
         ],
         "type": "object"
       },
+      "ChunkResultSchema": {
+        "properties": {
+          "chunks": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentChunkSchema"
+            },
+            "type": "array"
+          },
+          "execution_time_ms": {
+            "format": "double",
+            "type": "number"
+          },
+          "total_chunks": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "total_tokens": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_chunks",
+          "total_tokens",
+          "chunks",
+          "execution_time_ms"
+        ],
+        "type": "object"
+      },
       "CompareJsonRequest": {
         "properties": {
           "file1": {
@@ -135,6 +164,46 @@
           "timestamp",
           "status",
           "checks"
+        ],
+        "type": "object"
+      },
+      "DocumentChunkSchema": {
+        "properties": {
+          "chunk_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "estimated_tokens": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "headings_context": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "page_end": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "page_start": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "chunk_index",
+          "page_start",
+          "page_end",
+          "estimated_tokens",
+          "text",
+          "headings_context"
         ],
         "type": "object"
       },
@@ -352,6 +421,54 @@
         "type": "object"
       },
       "PdfChangePermissionsJsonRequest": {
+        "type": "object"
+      },
+      "PdfChunkJsonRequest": {
+        "properties": {
+          "break_on_headings": {
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {
+            "example": "tests/e2e_fixtures/real/single_page.pdf",
+            "type": "string"
+          },
+          "output": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overlap_tokens": {
+            "example": 50,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "strip_boilerplate": {
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "target_tokens": {
+            "example": 500,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "input"
+        ],
         "type": "object"
       },
       "PdfClassifyTypeJsonRequest": {
@@ -1288,6 +1405,58 @@
           }
         },
         "summary": "Modify PDF Permissions [Configure user and owner permissions for printing, copying, and modification.] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/chunk": {
+      "post": {
+        "operationId": "pdf_chunk_endpoint",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfChunkJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration or multipart form",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChunkResultSchema"
+                }
+              }
+            },
+            "description": "Execution successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Invalid input arguments"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Engine execution errors"
+          }
+        },
+        "summary": "Execute pdf_chunk operation",
         "tags": [
           "PDF Operations"
         ]
