@@ -89,35 +89,38 @@
 
   // Handle PDF file selection / drop
   async function handleFile(file: File) {
-    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+    if (!file) return;
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+    if (!isPdf) {
       setStatus('Please select a valid PDF document.', 'error');
       return;
     }
 
+    isProcessing = true;
+    currentFile = file;
+    metadata = {
+      pageCount: 1,
+      version: '1.7',
+      encrypted: false,
+      title: file.name,
+      author: '',
+    };
+    setStatus(`Loading ${file.name}...`);
+    // Immediately switch to tools tab so user sees the file is loaded
+    activeTab = 'tools';
+
     try {
-      isProcessing = true;
-      setStatus(`Loading ${file.name}...`);
-      currentFile = file;
       const buffer = await file.arrayBuffer();
       fileBytes = new Uint8Array(buffer);
       try {
-        metadata = await extractMetadata(fileBytes);
-        setStatus(`Loaded "${file.name}" (${metadata.pageCount} pages)`, 'success');
+        const meta = await extractMetadata(fileBytes);
+        metadata = meta;
+        setStatus(`Loaded "${file.name}" (${meta.pageCount} pages)`, 'success');
       } catch (metaErr) {
-        // Fallback metadata so UI is never blocked
-        metadata = {
-          pageCount: 1,
-          version: '1.7',
-          encrypted: false,
-          title: file.name,
-          author: '',
-        };
         setStatus(`Loaded "${file.name}"`, 'success');
       }
-      // Automatically switch to tools tab so user can immediately perform actions!
-      activeTab = 'tools';
     } catch (err: any) {
-      setStatus(`Failed to read PDF: ${err.message || err}`, 'error');
+      setStatus(`Failed to read PDF buffer: ${err.message || err}`, 'error');
     } finally {
       isProcessing = false;
     }
@@ -136,6 +139,7 @@
 
   function onDrop(e: DragEvent) {
     e.preventDefault();
+    e.stopPropagation();
     isDragOver = false;
     if (e.dataTransfer && e.dataTransfer.files.length > 0) {
       handleFile(e.dataTransfer.files[0]);
@@ -143,10 +147,10 @@
   }
 
   function onFileInput(e: Event) {
+    e.stopPropagation();
     const input = e.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       handleFile(input.files[0]);
-      // Reset input value so re-selecting same file triggers change
       input.value = '';
     }
   }
