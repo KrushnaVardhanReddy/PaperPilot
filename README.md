@@ -18,13 +18,47 @@ PaperPilot is a PDF and document toolkit written in Rust. The same engine runs a
 
 | Surface | Use it for |
 |---|---|
-| **MCP server** | Give Codex, Claude Code, Kimi Code, Pi, Claude Desktop, Cursor, or any MCP client the ability to merge, split, OCR, and compress PDFs |
-| **CLI** | Batch and scripted workflows |
-| **Browser (WASM)** | Zero-install tools; files are processed in browser memory, nothing is uploaded |
-| **Desktop app** | Tauri + Svelte GUI with viewer, markup, and diff |
-| **Local REST API** | Call it from Python, Node, or n8n at `localhost:7823` |
+| **MCP server** | Give Codex, Claude Code, Gemini CLI, Cursor, Claude Desktop, or any MCP client instant document superpowers |
+| **CLI** | High-speed batch workflows and automated terminal pipelines |
+| **Browser Extension** | In-tab right-click actions on web/arXiv PDFs, clean article capture, and WASM toolkit |
+| **Browser (WASM)** | Zero-install web tools; files are processed in browser memory, nothing is uploaded |
+| **Desktop app** | Tauri + Svelte 5 GUI with interactive canvas, viewer, and pipeline builder |
+| **Local REST API** | Call it from Python, Node.js, n8n, LangChain, or LlamaIndex at `localhost:7823` |
 
 No Chromium, no C++ runtime, no cloud calls.
+
+---
+
+## ⚡ 10-Second Installation
+
+### Homebrew (macOS & Linux)
+```bash
+brew install KrushnaVardhanReddy/tap/paperpilot
+```
+
+### One-Line Install Script
+**macOS & Linux (POSIX):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | sh
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+```
+
+### Self-Healing System Diagnostics
+Verify your environment, gateway port, temp storage, and OCR models with one command:
+```bash
+paperpilot doctor
+# PaperPilot System Diagnostics (v0.1.0)
+# ==================================================
+# Status:    Healthy
+# [✓] Temp Directory: /tmp (writable & ephemeral cleanup verified)
+# [✓] Gateway Port: 7823 available
+# [✓] OCR Models: models/ocr/ppocrv4 (det.onnx, rec.onnx found)
+# [✓] Disk Space: > 5 GB available
+```
 
 **Open-WebUI integration (source builds):** use the local gateway as a
 PDF-only Tika-compatible extraction server. See the
@@ -63,19 +97,26 @@ Restart Claude and try: *"Merge these two PDFs and compress the result."*
 ### 2. Use the CLI
 
 ```bash
-# Merge
+# Semantic Chunking for AI Agents & RAG (Spec 159)
+paperpilot pdf-chunk --input contract.pdf --target-tokens 500 --overlap 50 --json
+
+# Merge multiple documents
 paperpilot merge --inputs doc1.pdf doc2.pdf --output merged.pdf
 
-# Compress
+# High-efficiency compression
 paperpilot compress --input in.pdf --quality 75 --output compressed.pdf
+
+# Search pattern or keywords across document pages
+paperpilot search --input in.pdf --query "Invoice" --json
 
 # Rotate pages 1, 3–5 by 90°
 paperpilot rotate --input in.pdf --pages 1,3-5 --angle 90 --output out.pdf
 ```
 
-### 3. Use it in the browser
+### 3. Use it in the browser & extension
 
-Go to [usepaperpilot.com](https://usepaperpilot.com). Open your browser's Network tab while you work — you'll see no file uploads.
+- **Web App**: Go to [usepaperpilot.com](https://usepaperpilot.com) for zero-install client-side WebAssembly tools.
+- **Companion Extension**: Load the Manifest V3 browser extension from [`apps/extension`](apps/extension) for in-tab context menus, right-click PDF actions, and clean web article capture.
 
 ### 4. Build from source
 
@@ -95,13 +136,30 @@ Requires Rust 1.75+, Node.js, and pnpm.
 
 ---
 
-## What it can do today (v0.6)
+## What it can do (91 Tools Across 5 Interfaces)
 
-- **Organize & Layout:** merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid, multi-sheet poster tile slicing (`pdf_posterize`)
-- **Optimize & Compress:** lossy compression, stream deduplication, CMYK safety guards
-- **Extract & Ingest:** structured text, detected Markdown tables, native Open-WebUI & Apache Tika ingestion adapter (`/tika/text`, `/tika/json/md`, `/rmeta/text`), pure-Rust OCR (PaddleOCR via `rten`)
-- **Security & Analysis:** watermark, validate signatures, remove signatures, PII scan, deep sanitize, malformed fuzzing & panic-free error handling
-- **Office Data:** Excel → JSON, Excel → CSV
+- **AI Agent Intelligence & RAG**:
+  - `pdf_chunk`: Structure-aware semantic chunker respecting `#`/`##` headings, `\n\n` paragraphs, and keeping Markdown tables (`|...|`) atomic with dynamic overlap rewinding and boilerplate running header/footer suppression.
+  - `pdf_search` & `workspace_search`: Sub-millisecond grep and pattern searching across multi-document repositories.
+  - `pdf_extract_patterns`: High-precision regex and pattern extraction for invoices, order IDs, tracking numbers, and dates.
+  - `pdf_classify_type`: Automatic document classification (invoices, receipts, legal briefs, tax filings, research papers).
+- **Core Layout & Imposition**:
+  - Merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid, and multi-sheet poster tile slicing (`pdf_posterize`).
+  - Interactive forms: fill (`pdf_form_fill`), extract form fields (`pdf_form_extract`), and flatten.
+  - Digital signatures (`pdf_sign`), bookmarks/TOC (`pdf_bookmarks`), and crop/margins (`pdf_crop`, `pdf_margin`).
+- **Office & Cross-Format Transformations**:
+  - Bidirectional PDF ⇄ Word (`pdf_to_docx`, `docx_to_pdf`).
+  - Bidirectional PDF ⇄ Excel (`pdf_to_xlsx`, `excel_to_csv`, `excel_to_json`).
+  - PowerPoint slides (`pdf_to_pptx`), HTML (`pdf_to_html`), and clean Markdown (`pdf_to_markdown`, `office_to_markdown`).
+- **OCR & Document Vision**:
+  - Neural PP-OCRv4 detection & recognition via `rten` and `ocrs` (det.onnx + rec.onnx).
+  - Searchable OCR text layer injection (`pdf_ocr_layer`) and auto-deskewing (`pdf_deskew`).
+- **Security & PII Redaction**:
+  - Automated PII scanning (`pdf_pii_scanner`) detecting SSNs, credit cards, emails, phone numbers.
+  - Cryptographic validation & hashing (`pdf_validate`, `pdf_hash`), password protection (`pdf_protect`, `pdf_unlock`), and irreversible redaction (`pdf_redact`).
+- **Zero-Copy High Performance Engine**:
+  - Zero-copy memory-mapped I/O (`DocumentSource` via `memmap2`) for files $\ge 10\text{ MB}$, keeping resident memory flat (< 100 MB) during search, chunking, and PII scanning of 500+ page documents.
+  - Universal streaming page batching (`PageBatchIterator`) to prevent OOM errors.
 
 ---
 
