@@ -193,11 +193,17 @@ jobs:
         with:
           key: backend-${{ matrix.target }}
 
-      - name: Install Zig and cargo-zigbuild
+      - name: Install Zig
+        if: runner.os == 'Linux'
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.13.0
+
+      - name: Install cargo-zigbuild
         if: runner.os == 'Linux'
         uses: taiki-e/install-action@v2
         with:
-          tool: zig,cargo-zigbuild
+          tool: cargo-zigbuild
 
       - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
         run: |
