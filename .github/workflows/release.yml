@@ -66,10 +66,15 @@ jobs:
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
         run: |
+          # Fix Azure runner DNS outage by adding Google & Cloudflare DNS
+          echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf.new
+          echo "nameserver 1.1.1.1" | sudo tee -a /etc/resolv.conf.new
+          cat /etc/resolv.conf >> /etc/resolv.conf.new 2>/dev/null || true
+          sudo mv /etc/resolv.conf.new /etc/resolv.conf
           sudo sed -i 's|http://azure.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
           sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
-          for i in 1 2 3; do sudo apt-get update -o Acquire::Retries=3 && break || sleep 5; done
-          sudo apt-get install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libfuse2
+          sudo apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::ForceIPv4=true install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libfuse2
 
       - name: Set up Node.js & pnpm
         uses: pnpm/action-setup@v4
