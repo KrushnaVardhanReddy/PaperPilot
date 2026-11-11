@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveToolName } from './toolRegistry';
+import { resolveToolName, rankToolsByContext } from './toolRegistry';
 import { allTools } from '../types/toolList';
 
 describe('toolRegistry', () => {
@@ -41,5 +41,12 @@ describe('toolRegistry', () => {
             expect(resolved).not.toContain('pdf_pdf_');
             expect(resolved.length).toBeGreaterThan(0);
         }
+    });
+
+    it('ranks image tools as recommended when image documents are present', () => {
+        const dummyImage = new File(['mock'], 'scan.png', { type: 'image/png' });
+        const { recommended } = rankToolsByContext(allTools, [dummyImage], []);
+        const recommendedIds = recommended.map(t => resolveToolName(t.id));
+        expect(recommendedIds).toContain('pdf_images_to_pdf');
     });
 });

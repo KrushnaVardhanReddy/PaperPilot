@@ -1,3 +1,5 @@
+import { isImageFile } from '$lib/utils/fileType';
+
 // Explicit mappings for tools with unconventional IDs or legacy names
 const TOOL_NAME_ALIASES: Record<string, string> = {
   md_to_pdf: 'pdf_convert_markdown',
@@ -85,6 +87,7 @@ export function rankToolsByContext(
   const hasMarkdown = documents.some(f => f.name.toLowerCase().endsWith('.md') || f.name.toLowerCase().endsWith('.markdown'));
   const hasHtml = documents.some(f => f.name.toLowerCase().endsWith('.html') || f.name.toLowerCase().endsWith('.htm'));
   const hasTextWeb = hasMarkdown || hasHtml;
+  const hasImage = documents.some(f => isImageFile(f.name));
 
   const allPdf = documents.length > 0 && documents.every(f => f.name.toLowerCase().endsWith('.pdf'));
 
@@ -94,6 +97,20 @@ export function rankToolsByContext(
 
     if (documents.length === 0) {
       if (['img_to_pdf', 'json_to_pdf', 'md_to_pdf', 'html_to_pdf'].includes(tool.id)) {
+        isRecommended = true;
+        contextMatches = true;
+      }
+    } else if (hasImage) {
+      if ([
+        'img_to_pdf',
+        'pdf_images_to_pdf',
+        'ocr',
+        'pdf_ocr',
+        'extract_text',
+        'pdf_extract_text',
+        'watermark',
+        'pdf_watermark'
+      ].includes(tool.id)) {
         isRecommended = true;
         contextMatches = true;
       }
