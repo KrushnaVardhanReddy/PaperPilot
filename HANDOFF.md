@@ -76,23 +76,15 @@
 
 ---
 
-### 🥉 Tier 3: Growth & Virality — Ecosystem & Editor Extensions (Phase 11 & Phase 12)
-*Goal: Bring PaperPilot directly into everyday user workflows inside Chrome/Edge/Firefox tabs and VS Code/Cursor editor workspaces.*
+### 🥉 Tier 3: Growth & Virality — Browser Companion Extension (Phase 11)
+*Goal: Bring PaperPilot directly into everyday user workflows inside Chrome, Edge, and Firefox tabs.*
 
 6. **Phase 11: Manifest V3 Companion Browser Extension (`apps/extension`)**
-   - Toolbar popup & context-menu actions ("PaperPilot: OCR / Sign / Redact / Convert / Chunk") for in-tab PDFs (arXiv, invoices, web PDFs).
-   - One-click Web Clean-Article to PDF/A & Markdown capture.
-   - Dual-mode architecture: In-browser client WASM toolkit (`paperpilot-wasm`) for instant client-side operations + REST bridge to local daemon (`localhost:7823`) for heavy neural OCR & mmap processing.
-
-7. **Phase 12: VS Code & Cursor IDE Extension (`apps/vscode-extension`)**
-   - File Explorer context menus on `.pdf` files:
-     - *"PaperPilot: Semantic Chunk for AI / RAG Context"*
-     - *"PaperPilot: Convert to Markdown"*
-     - *"PaperPilot: Extract Tables to CSV/JSON"*
-     - *"PaperPilot: Scan & Redact PII"*
-   - Custom Editor / Side-by-Side View: Interactive PDF preview with synchronized extracted Markdown text and table inspection.
-   - Status bar diagnostic indicator connecting to `paperpilot doctor` and local Gateway.
-   - MCP Server auto-registration for Cursor and Claude Code in VS Code settings.
+   - **WASM-First Zero-Install Architecture**: Uses `paperpilot-wasm` for instant, in-tab document manipulation (split, merge, rotate, watermark, metadata, text extract) with 0 native installation required.
+   - **Optional Desktop Gateway Bridge**: Seamlessly detects local PaperPilot daemon (`localhost:7823`) for heavy neural OCR (`ppocrv4`), zero-copy mmap, and full conversions when available.
+   - **In-Tab Context Menus**: Right-click on any web PDF (arXiv, Stripe invoices, receipts) ➔ *"PaperPilot: Clean Text / Chunk / Redact / Convert"*.
+   - **Web Clean-Article Exporter**: One-click in-browser capture converting ad-cluttered web articles into clean PDF/A or vector-ready Markdown with preserved heading hierarchies.
+   - **Distribution**: Bundled extension package ready for Chrome Web Store, Edge Add-ons, and Firefox AMO. Note: Editor/IDE workflows are officially served via `paperpilot-mcp` (Spec 162), eliminating the need for a separate VS Code extension.
 
 ---
 
