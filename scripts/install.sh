@@ -3,7 +3,7 @@
 set -e
 
 REPO="KrushnaVardhanReddy/PaperPilot"
-GITHUB_API="https://api.github.com/repos/${REPO}/releases/latest"
+GITHUB_RELEASES_API="https://api.github.com/repos/${REPO}/releases"
 GITHUB_DL="https://github.com/${REPO}/releases/download"
 
 echo "Detecting operating system..."
@@ -14,15 +14,15 @@ TARGET=""
 case "${OS}" in
     Linux)
         case "${ARCH}" in
-            x86_64) TARGET="paperpilot-x86_64-unknown-linux-gnu" ;;
-            aarch64|arm64) TARGET="paperpilot-aarch64-unknown-linux-gnu" ;;
+            x86_64) TARGET="ubuntu-latest-x86_64-unknown-linux-gnu" ;;
+            aarch64|arm64) TARGET="ubuntu-latest-aarch64-unknown-linux-gnu" ;;
             *) echo "Unsupported architecture: ${ARCH}"; exit 1 ;;
         esac
         ;;
     Darwin)
         case "${ARCH}" in
-            x86_64) TARGET="paperpilot-x86_64-apple-darwin" ;;
-            aarch64|arm64) TARGET="paperpilot-aarch64-apple-darwin" ;;
+            x86_64) TARGET="macos-latest-x86_64-apple-darwin" ;;
+            aarch64|arm64) TARGET="macos-latest-aarch64-apple-darwin" ;;
             *) echo "Unsupported architecture: ${ARCH}"; exit 1 ;;
         esac
         ;;
@@ -36,7 +36,8 @@ echo "Target architecture identified as: ${TARGET}"
 
 if [ -z "${VERSION}" ]; then
     echo "Fetching latest release version..."
-    VERSION=$(curl -sSL "${GITHUB_API}" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    # Query /releases (which includes pre-releases) rather than /releases/latest
+    VERSION=$(curl -sSL "${GITHUB_RELEASES_API}" | grep '"tag_name":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
 fi
 
 if [ -z "${VERSION}" ]; then
@@ -46,7 +47,9 @@ fi
 
 echo "Installing version: ${VERSION}"
 
-FILENAME="${TARGET}.tar.gz"
+# Try primary asset name pattern: paperpilot-cli-${TARGET}.tar.gz
+# Fallback patterns: paperpilot-${TARGET}.tar.gz or paperpilot-all-${TARGET}.tar.gz
+FILENAME="paperpilot-cli-${TARGET}.tar.gz"
 DOWNLOAD_URL="${GITHUB_DL}/${VERSION}/${FILENAME}"
 CHECKSUM_URL="${DOWNLOAD_URL}.sha256"
 
@@ -64,10 +67,24 @@ cd "${TMP_DIR}" || exit 1
 
 echo "Downloading ${FILENAME}..."
 if ! curl -fL -sS -o "${FILENAME}" "${DOWNLOAD_URL}"; then
-    echo "Failed to download ${DOWNLOAD_URL}"
-    cd /
-    rm -rf "${TMP_DIR}"
-    exit 1
+    # Try legacy or alternative naming fallback
+    ALT_FILENAME="paperpilot-${TARGET}.tar.gz"
+    ALT_URL="${GITHUB_DL}/${VERSION}/${ALT_FILENAME}"
+    echo "Primary asset not found. Trying alternative: ${ALT_FILENAME}..."
+    if ! curl -fL -sS -o "${FILENAME}" "${ALT_URL}"; then
+        ALL_FILENAME="paperpilot-all-${TARGET}.tar.gz"
+        ALL_URL="${GITHUB_DL}/${VERSION}/${ALL_FILENAME}"
+        echo "Trying all-in-one suite asset: ${ALL_FILENAME}..."
+        if ! curl -fL -sS -o "${FILENAME}" "${ALL_URL}"; then
+            echo "Failed to download release asset from ${DOWNLOAD_URL}"
+            cd /
+            rm -rf "${TMP_DIR}"
+            exit 1
+        fi
+        CHECKSUM_URL="${ALL_URL}.sha256"
+    else
+        CHECKSUM_URL="${ALT_URL}.sha256"
+    fi
 fi
 
 echo "Downloading checksum file..."
@@ -99,6 +116,21 @@ fi
 echo "Extracting ${FILENAME}..."
 tar -xzf "${FILENAME}"
 
+# Locate the CLI executable extracted (paperpilot or paperpilot-cli)
+CLI_BIN=""
+if [ -f "./paperpilot" ]; then
+    CLI_BIN="./paperpilot"
+elif [ -f "./paperpilot-cli" ]; then
+    CLI_BIN="./paperpilot-cli"
+fi
+
+if [ -z "${CLI_BIN}" ]; then
+    echo "Error: CLI executable not found in extracted archive."
+    cd /
+    rm -rf "${TMP_DIR}"
+    exit 1
+fi
+
 INSTALL_DIR="/usr/local/bin"
 if [ "$(id -u)" -ne 0 ] && [ ! -w "${INSTALL_DIR}" ]; then
     INSTALL_DIR="${HOME}/.local/bin"
@@ -107,10 +139,10 @@ fi
 
 echo "Installing to ${INSTALL_DIR}..."
 if [ -w "${INSTALL_DIR}" ]; then
-    mv paperpilot "${INSTALL_DIR}/"
+    mv "${CLI_BIN}" "${INSTALL_DIR}/paperpilot"
     chmod +x "${INSTALL_DIR}/paperpilot"
 else
-    sudo mv paperpilot "${INSTALL_DIR}/"
+    sudo mv "${CLI_BIN}" "${INSTALL_DIR}/paperpilot"
     sudo chmod +x "${INSTALL_DIR}/paperpilot"
 fi
 
