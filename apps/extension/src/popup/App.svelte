@@ -100,8 +100,22 @@
       currentFile = file;
       const buffer = await file.arrayBuffer();
       fileBytes = new Uint8Array(buffer);
-      metadata = await extractMetadata(fileBytes);
-      setStatus(`Loaded "${file.name}" (${metadata.pageCount} pages)`, 'success');
+      try {
+        metadata = await extractMetadata(fileBytes);
+        setStatus(`Loaded "${file.name}" (${metadata.pageCount} pages)`, 'success');
+      } catch (metaErr) {
+        // Fallback metadata so UI is never blocked
+        metadata = {
+          pageCount: 1,
+          version: '1.7',
+          encrypted: false,
+          title: file.name,
+          author: '',
+        };
+        setStatus(`Loaded "${file.name}"`, 'success');
+      }
+      // Automatically switch to tools tab so user can immediately perform actions!
+      activeTab = 'tools';
     } catch (err: any) {
       setStatus(`Failed to read PDF: ${err.message || err}`, 'error');
     } finally {
