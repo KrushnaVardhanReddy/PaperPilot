@@ -66,8 +66,10 @@ jobs:
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libfuse2
+          sudo sed -i 's|http://azure.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          for i in 1 2 3; do sudo apt-get update -o Acquire::Retries=3 && break || sleep 5; done
+          sudo apt-get install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libfuse2
 
       - name: Set up Node.js & pnpm
         uses: pnpm/action-setup@v4
@@ -194,8 +196,10 @@ jobs:
       - name: Install Linux Build Prerequisites
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev pkg-config
+          sudo sed -i 's|http://azure.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          for i in 1 2 3; do sudo apt-get update -o Acquire::Retries=3 && break || sleep 5; done
+          sudo apt-get install -y --fix-missing libssl-dev pkg-config
 
       - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
         run: |

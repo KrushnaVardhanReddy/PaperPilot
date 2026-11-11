@@ -25,8 +25,10 @@ jobs:
 
       - name: Install Linux GUI Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+          sudo sed -i 's|http://azure.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          for i in 1 2 3; do sudo apt-get update -o Acquire::Retries=3 && break || sleep 5; done
+          sudo apt-get install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
 
       - name: Check Formatting
         run: cargo fmt --all -- --check
@@ -54,8 +56,10 @@ jobs:
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev qpdf
+          sudo sed -i 's|http://azure.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          for i in 1 2 3; do sudo apt-get update -o Acquire::Retries=3 && break || sleep 5; done
+          sudo apt-get install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev qpdf
 
       - name: Build Workspace
         run: cargo build --workspace --all-targets
