@@ -35,4 +35,4 @@ base64 = "0.23.1"
 tokio-util = { version = "0.7.20", features = ["rt"] }
 
 [dev-dependencies]
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
