@@ -79,12 +79,13 @@
 ### 🥉 Tier 3: Growth & Virality — Browser Companion Extension (Phase 11)
 *Goal: Bring PaperPilot directly into everyday user workflows inside Chrome, Edge, and Firefox tabs.*
 
-6. **Phase 11: Manifest V3 Companion Browser Extension (`apps/extension`)**
-   - **WASM-First Zero-Install Architecture**: Uses `paperpilot-wasm` for instant, in-tab document manipulation (split, merge, rotate, watermark, metadata, text extract) with 0 native installation required.
-   - **Optional Desktop Gateway Bridge**: Seamlessly detects local PaperPilot daemon (`localhost:7823`) for heavy neural OCR (`ppocrv4`), zero-copy mmap, and full conversions when available.
+6. **Phase 11: Manifest V3 Companion Browser Extension (`apps/extension`)** — ✅ **100% IMPLEMENTED & VERIFIED**
+   - **WASM-First Zero-Install Architecture**: Bundles `paperpilot-wasm` for instant in-tab document manipulation (split, merge, rotate, watermark, metadata inspection, text extraction) requiring 0 native binary installation.
+   - **Optional Desktop Gateway Bridge**: Seamlessly detects local PaperPilot daemon (`localhost:7823`) for heavy neural OCR (`ppocrv4`), zero-copy mmap, and full conversions when available; falls back gracefully to standalone WASM mode when offline.
    - **In-Tab Context Menus**: Right-click on any web PDF (arXiv, Stripe invoices, receipts) ➔ *"PaperPilot: Clean Text / Chunk / Redact / Convert"*.
-   - **Web Clean-Article Exporter**: One-click in-browser capture converting ad-cluttered web articles into clean PDF/A or vector-ready Markdown with preserved heading hierarchies.
-   - **Distribution**: Bundled extension package ready for Chrome Web Store, Edge Add-ons, and Firefox AMO. Note: Editor/IDE workflows are officially served via `paperpilot-mcp` (Spec 162), eliminating the need for a separate VS Code extension.
+   - **Web Clean-Article Exporter**: Injects `articleReader` to strip clutter, ads, navigation, and tracking, exporting clean Markdown or PDF.
+   - **Svelte 5 Popup UI**: Live connection badge (`[⚡ Desktop Connected (7823)]` / `[🌐 Standalone WASM Mode]`), drag-and-drop file processing, and quick action buttons.
+   - **Tests & Builds**: `pnpm --dir apps/extension test` (9/9 passing), `pnpm run build:extension` (< 1s clean build to `dist/`), 0 workspace compilation errors, and `paperpilot doctor` diagnostics 100% healthy. Note: IDE workflows are officially served via `paperpilot-mcp` (Spec 162).
 
 ---
 

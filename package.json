@@ -1,5 +1,10 @@
 {
-	"devDependencies": {
-		"playwright": "^1.65.0"
-	}
+  "name": "paperpilot-monorepo",
+  "private": true,
+  "scripts": {
+    "build:extension": "pnpm --dir apps/extension build"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
 }
