@@ -200,9 +200,12 @@ jobs:
           sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
           for i in 1 2 3; do sudo apt-get update -o Acquire::Retries=3 && break || sleep 5; done
           sudo apt-get install -y --fix-missing libssl-dev pkg-config
-          # Install Zig and cargo-zigbuild for maximum glibc backwards compatibility & cross-compilation
-          pip install cargo-zigbuild
-          sudo snap install zig --classic --beta || true
+
+      - name: Install Zig and cargo-zigbuild
+        if: runner.os == 'Linux'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: zig,cargo-zigbuild
 
       - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
         run: |
