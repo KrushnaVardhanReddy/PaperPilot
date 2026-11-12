@@ -54,6 +54,9 @@ pub fn sanitize_pdf(
 
     // 1. Strip Document Information Dictionary (/Info) & Metadata XMP
     if options.remove_metadata {
+        if let Ok(info_id) = doc.trailer.get(b"Info").and_then(|o| o.as_reference()) {
+            doc.delete_object(info_id);
+        }
         doc.trailer.remove(b"Info");
         // Remove /Metadata from Catalog and Pages
         if let Ok(catalog_id) = doc.catalog_mut() {
