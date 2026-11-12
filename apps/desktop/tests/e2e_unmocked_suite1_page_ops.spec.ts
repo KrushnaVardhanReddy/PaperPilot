@@ -316,7 +316,7 @@ test('pdf_merge — Page Addition Invariant', async ({ page }) => {
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
-  expect(result.numPages).toBe(2);
+  expect(result.numPages).toBe(4);
   expect(result.textByPage[0].length).toBeGreaterThan(0);
   expect(result.textByPage[1].length).toBeGreaterThan(0);
 

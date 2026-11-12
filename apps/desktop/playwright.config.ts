@@ -26,8 +26,8 @@ export default defineConfig({
       fullyParallel: false,
       use: {
         ...devices['Desktop Chrome'],
-        headless: false,
-        slowMo: 500,
+        headless: process.env.HEADED === 'true' ? false : true,
+        slowMo: process.env.HEADED === 'true' ? 500 : 0,
         video: 'on',
         screenshot: 'on',
         launchOptions: {
