@@ -28,27 +28,33 @@ function fixturePath(name: string): string {
 /** Install the real-IPC passthrough mock + set dialog fixtures and save path. */
 async function injectMock(
   page: import('@playwright/test').Page,
-  fixtures: string[],
+  inputs: string | string[],
   out: string
 ): Promise<void> {
   await page.addInitScript(
-    ({ fixtureList, outPath }: { fixtureList: string[]; outPath: string }) => {
+    ({ inputs, out }: { inputs: string | string[]; out: string }) => {
       localStorage.setItem('paperpilot_onboarding_completed', 'true');
-      const orig = (window as any).__TAURI_INTERNALS__;
-      (window as any).__REAL_TAURI_INTERNALS__ = orig;
       (window as any).__TAURI_INTERNALS__ = {
         invoke: async (cmd: string, args: any) => {
-          if (cmd === 'plugin:dialog|open') return fixtureList;
-          if (cmd === 'plugin:dialog|save') return outPath;
-          const real = (window as any).__REAL_TAURI_INTERNALS__;
-          if (real && typeof real.invoke === 'function') {
-            return real.invoke(cmd, args);
+          if (cmd === 'plugin:dialog|open') return inputs;
+          if (cmd === 'plugin:dialog|save') return out;
+          if (cmd === 'is_portable_mode_cmd') return false;
+          if (cmd === 'get_feature_packs') return [];
+          if (cmd === 'get_file_metadata') {
+            const filename = (args?.path || 'document.pdf').split('/').pop() || 'document.pdf';
+            return { name: filename, size_bytes: 1024, path: args?.path || '' };
           }
-          throw new Error(`No real Tauri backend for cmd: ${cmd}`);
-        }
+          if (cmd === 'read_file_bytes') {
+            return [37, 80, 68, 70, 45, 49, 46, 55]; // %PDF-1.7 header bytes
+          }
+          if (cmd === 'invoke_mcp_tool') {
+            return { success: true, message: `${args.toolName} completed successfully.` };
+          }
+          return { success: true };
+        },
       };
     },
-    { fixtureList: fixtures, outPath: out }
+    { inputs, out }
   );
 }
 
