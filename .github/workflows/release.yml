@@ -114,7 +114,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p gui_pkgs
-          find target/ -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.dmg" \) -path "*/bundle/*" -exec cp {} gui_pkgs/ \; 2>/dev/null || true
+          # Search for bundles across both root target/ and apps/desktop/
+          find . -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.dmg" \) -path "*/bundle/*" -exec cp {} gui_pkgs/ \; 2>/dev/null || true
 
           cd gui_pkgs
           for file in *; do
@@ -477,6 +478,75 @@ jobs:
       - name: List Release Assets
         run: |
           ls -la release-assets
+
+      - name: Assemble All-in-One Suites with GUI Bundles
+        shell: bash
+        run: |
+          cd release-assets
+
+          # 1. Linux All-in-One Suite (CLI + Gateway + MCP + AppImage + Deb + Desktop Launcher + Icon)
+          LINUX_TAR=$(ls paperpilot-all-ubuntu-*.tar.gz 2>/dev/null | head -n 1)
+          if [ -n "$LINUX_TAR" ]; then
+            echo "Assembling full Linux all-in-one suite into $LINUX_TAR..."
+            mkdir -p /tmp/linux_suite
+            tar -xzf "$LINUX_TAR" -C /tmp/linux_suite
+
+            # Copy AppImage and deb into the suite
+            find . -maxdepth 1 \( -name "*.AppImage" -o -name "*.deb" \) -exec cp {} /tmp/linux_suite/ \; 2>/dev/null || true
+
+            # Copy desktop launcher icon and desktop entry
+            cp ../apps/desktop/src-tauri/icons/icon.png /tmp/linux_suite/PaperPilot.png 2>/dev/null || true
+            printf "[Desktop Entry]\nName=PaperPilot\nComment=Fast, privacy-first PDF manipulation toolkit\nExec=./paperpilot ui\nIcon=PaperPilot\nTerminal=false\nType=Application\nCategories=Office;Utility;\n" > /tmp/linux_suite/PaperPilot.desktop
+            chmod +x /tmp/linux_suite/PaperPilot.desktop 2>/dev/null || true
+            cp ../README.md /tmp/linux_suite/ || true
+
+            tar -czvf "$LINUX_TAR" -C /tmp/linux_suite .
+            shasum -a 256 "$LINUX_TAR" > "${LINUX_TAR}.sha256" || sha256sum "$LINUX_TAR" > "${LINUX_TAR}.sha256"
+            rm -rf /tmp/linux_suite
+          fi
+
+          # 2. Windows All-in-One Suite (CLI + Gateway + MCP + Portable GUI .exe + Installers)
+          WIN_ZIP=$(ls paperpilot-all-windows-*.zip 2>/dev/null | head -n 1)
+          if [ -n "$WIN_ZIP" ]; then
+            echo "Assembling full Windows all-in-one suite into $WIN_ZIP..."
+            mkdir -p /tmp/win_suite
+            7z x -y "$WIN_ZIP" -o/tmp/win_suite >/dev/null
+
+            # Extract GUI executable from windows portable zip if available
+            WIN_PORTABLE=$(ls PaperPilot-windows-portable-*.zip 2>/dev/null | head -n 1)
+            if [ -n "$WIN_PORTABLE" ]; then
+              7z e -y "$WIN_PORTABLE" "PaperPilot.exe" -o/tmp/win_suite >/dev/null || true
+            fi
+
+            # Copy installer packages (.exe setup and .msi)
+            find . -maxdepth 1 \( -name "*setup.exe" -o -name "*Setup.exe" -o -name "*.msi" \) -exec cp {} /tmp/win_suite/ \; 2>/dev/null || true
+            cp ../README.md /tmp/win_suite/ || true
+
+            rm -f "$WIN_ZIP"
+            (cd /tmp/win_suite && 7z a "../$WIN_ZIP" *) >/dev/null
+            mv "/tmp/$WIN_ZIP" "$WIN_ZIP"
+            sha256sum "$WIN_ZIP" > "${WIN_ZIP}.sha256" || shasum -a 256 "$WIN_ZIP" > "${WIN_ZIP}.sha256"
+            rm -rf /tmp/win_suite
+          fi
+
+          # 3. macOS All-in-One Suite (CLI + Gateway + MCP + DMG + Unquarantine helper)
+          MAC_TAR=$(ls paperpilot-all-macos-*.tar.gz 2>/dev/null | head -n 1)
+          if [ -n "$MAC_TAR" ]; then
+            echo "Assembling full macOS all-in-one suite into $MAC_TAR..."
+            mkdir -p /tmp/mac_suite
+            tar -xzf "$MAC_TAR" -C /tmp/mac_suite
+
+            find . -maxdepth 1 -name "*.dmg" -exec cp {} /tmp/mac_suite/ \; 2>/dev/null || true
+            cp ../README.md /tmp/mac_suite/ || true
+
+            tar -czvf "$MAC_TAR" -C /tmp/mac_suite .
+            shasum -a 256 "$MAC_TAR" > "${MAC_TAR}.sha256" || sha256sum "$MAC_TAR" > "${MAC_TAR}.sha256"
+            rm -rf /tmp/mac_suite
+          fi
+
+          echo "Final assembled release assets:"
+          ls -la
+          cd ..
 
       - name: Create / Update GitHub Release
         uses: softprops/action-gh-release@v2
