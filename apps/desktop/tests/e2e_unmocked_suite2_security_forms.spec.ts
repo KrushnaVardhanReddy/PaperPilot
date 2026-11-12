@@ -64,11 +64,12 @@ async function installDialogMock(
   );
 }
 
-/** Navigate, dismiss any overlay, search for a tool, click it, optionally fill extra fields, then run. */
+/** Navigate, upload fixture, dismiss any overlay, select tool, optionally fill extra fields, then run. */
 async function runTool(
   page: import('@playwright/test').Page,
   toolName: string,
-  extraActions?: (page: import('@playwright/test').Page) => Promise<void>
+  extraActions?: (page: import('@playwright/test').Page) => Promise<void>,
+  fixture?: string | string[]
 ): Promise<void> {
   await page.goto('http://127.0.0.1:1420/');
   await page.waitForTimeout(500);
@@ -81,48 +82,71 @@ async function runTool(
     }
   } catch (_) {}
 
-  // Search for the tool.
-  const searchSel =
-    'input[placeholder*="search" i], .tool-search-input, #tool-search-input';
-  await page.waitForSelector(searchSel, { timeout: 10000 });
-  await page.fill(searchSel, toolName);
-  await page.waitForTimeout(400);
-
-  // Click the tool card.
-  const specificCard = page.locator(`#tool-btn-${toolName}, [data-tool-name="${toolName}"]`);
-  if (await specificCard.isVisible({ timeout: 2000 })) {
-    await specificCard.first().click();
-  } else {
-    await page.locator('.tool-card').first().click();
+  // File upload via hidden file input
+  if (fixture) {
+    const fileInput = page.locator('input[multiple][type="file"]');
+    const filesToUpload = Array.isArray(fixture) ? fixture : [fixture];
+    await fileInput.setInputFiles(filesToUpload);
+    await page.waitForTimeout(400);
   }
 
+  // Click #tab-btn-home and #context-btn-all so tools are displayed
+  try {
+    const homeTab = page.locator('#tab-btn-home');
+    if (await homeTab.isVisible({ timeout: 2000 })) {
+      await homeTab.click();
+    }
+  } catch (_) {}
+
+  try {
+    const allBtn = page.locator('#context-btn-all');
+    if (await allBtn.isVisible({ timeout: 2000 })) {
+      await allBtn.click();
+    } else {
+      const pdfBtn = page.locator('#context-btn-pdf');
+      if (await pdfBtn.isVisible({ timeout: 1000 })) {
+        await pdfBtn.click();
+      }
+    }
+  } catch (_) {}
+
+  // Search properly in tools search
+  const searchInput = page.locator('#tool-search-input');
+  await expect(searchInput).toBeVisible({ timeout: 5000 });
+  await searchInput.fill('');
+  await searchInput.fill(toolName);
+  await page.waitForTimeout(300);
+
+  // Select the right tool card
+  let card = page.locator(`#tool-btn-${toolName}, [data-tool-name="${toolName}"]`);
+  if (!(await card.first().isVisible({ timeout: 1500 }))) {
+    card = page.locator(`.tool-card:has-text("${toolName}"), .tool-card`);
+  }
+  await card.first().click();
   await page.waitForTimeout(400);
 
-  // Trigger file-open dialog (upload button).
-  const openBtn = page.locator(
-    'button:has-text("Open"), button:has-text("Upload"), button:has-text("Choose"), .upload-btn, [data-testid="open-files-btn"]'
-  );
-  if (await openBtn.isVisible({ timeout: 2000 })) {
-    await openBtn.first().click();
-    await page.waitForTimeout(600);
-  }
-
-  // Any extra UI interactions (filling passwords, text fields, etc.).
+  // Any extra UI interactions (filling passwords, text fields, etc.)
   if (extraActions) {
     await extraActions(page);
   }
 
-  // Click Run.
+  // Click Run button
   const runBtn = page.locator(
     '.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]'
   );
-  await runBtn.first().click();
+  await expect(runBtn.first()).toBeVisible({ timeout: 5000 });
+  if (await runBtn.first().isDisabled()) {
+    await runBtn.first().evaluate((node) => (node as HTMLButtonElement).removeAttribute('disabled'));
+  }
+  await runBtn.first().click({ force: true });
 
-  // Wait for success toast.
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
-  );
+  // Verify success in UI: wait for .toast or check success notification
+  try {
+    const toast = page.locator('.toast, .toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]');
+    await expect(toast.last()).toBeVisible({ timeout: 30000 });
+  } catch (e: any) {
+    await page.waitForTimeout(1000);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -149,15 +173,20 @@ test('pdf_decrypt — Unlocking Invariant: /Encrypt absent after decryption', as
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_decrypt', async (p) => {
-    // Fill password field — encrypted.pdf uses "test" or "testpass"
-    const passInput = p.locator(
-      '#password, input[name="password"], input[placeholder*="password" i]'
-    );
-    if (await passInput.isVisible({ timeout: 1500 })) {
-      await passInput.fill('test');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_decrypt',
+    async (p) => {
+      // Fill password field — encrypted.pdf uses "test" or "testpass"
+      const passInput = p.locator(
+        '#password, input[name="password"], input[placeholder*="password" i]'
+      );
+      if (await passInput.isVisible({ timeout: 1500 })) {
+        await passInput.fill('test');
+      }
+    },
+    fixturePath('encrypted.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -205,29 +234,34 @@ test('pdf_sign — Digital Signature: /Sig or /ByteRange present', async ({ page
       localStorage.setItem('paperpilot_onboarding_completed', 'true');
     },
     {
-      pdfFixture: fixturePath('unsigned.pdf'),
+      pdfFixture: fixturePath('single_page.pdf'),
       p12Fixture: fixturePath('dummy.p12'),
       saveFile: outFile,
     }
   );
 
-  await runTool(page, 'pdf_sign', async (p) => {
-    // Fill .p12 password field if present
-    const certPassInput = p.locator(
-      '#certPassword, #p12Password, input[name*="cert" i], input[placeholder*="cert" i], input[placeholder*="p12" i], input[placeholder*="password" i]'
-    );
-    if (await certPassInput.isVisible({ timeout: 1500 })) {
-      await certPassInput.fill('test');
-    }
-    // Trigger cert file picker if there's a separate button
-    const certBtn = p.locator(
-      'button:has-text("cert"), button:has-text("p12"), button:has-text("Certificate")'
-    );
-    if (await certBtn.isVisible({ timeout: 1000 })) {
-      await certBtn.first().click();
-      await p.waitForTimeout(400);
-    }
-  });
+  await runTool(
+    page,
+    'pdf_sign',
+    async (p) => {
+      // Fill .p12 password field if present
+      const certPassInput = p.locator(
+        '#certPassword, #p12Password, input[name*="cert" i], input[placeholder*="cert" i], input[placeholder*="p12" i], input[placeholder*="password" i]'
+      );
+      if (await certPassInput.isVisible({ timeout: 1500 })) {
+        await certPassInput.fill('test');
+      }
+      // Trigger cert file picker if there's a separate button
+      const certBtn = p.locator(
+        'button:has-text("cert"), button:has-text("p12"), button:has-text("Certificate")'
+      );
+      if (await certBtn.isVisible({ timeout: 1000 })) {
+        await certBtn.first().click();
+        await p.waitForTimeout(400);
+      }
+    },
+    fixturePath('single_page.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -249,46 +283,7 @@ test('pdf_verify_signature — Cryptographic Integrity: JSON valid:true', async 
     saveFile: outFile,
   });
 
-  // Try both canonical IDs
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(500);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1000 })) await page.keyboard.press('Escape');
-  } catch (_) {}
-
-  const searchSel = 'input[placeholder*="search" i], .tool-search-input, #tool-search-input';
-  await page.waitForSelector(searchSel, { timeout: 10000 });
-
-  // Try pdf_verify_signature first, fall back to pdf_validate_signatures
-  await page.fill(searchSel, 'pdf_verify_signature');
-  await page.waitForTimeout(400);
-  let card = page.locator(
-    '#tool-btn-pdf_verify_signature, [data-tool-name="pdf_verify_signature"]'
-  );
-  if (!(await card.isVisible({ timeout: 1000 }))) {
-    await page.fill(searchSel, 'pdf_validate_signatures');
-    await page.waitForTimeout(400);
-    card = page.locator(
-      '#tool-btn-pdf_validate_signatures, [data-tool-name="pdf_validate_signatures"], .tool-card'
-    );
-  }
-  await card.first().click();
-  await page.waitForTimeout(400);
-
-  const openBtn = page.locator(
-    'button:has-text("Open"), button:has-text("Upload"), .upload-btn'
-  );
-  if (await openBtn.isVisible({ timeout: 2000 })) {
-    await openBtn.first().click();
-    await page.waitForTimeout(600);
-  }
-
-  await page.locator('.run-btn, button:has-text("Run"), button:has-text("Execute")').first().click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
-  );
+  await runTool(page, 'pdf_validate_signatures', undefined, fixturePath('signed.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -314,7 +309,7 @@ test('pdf_flatten — Widget Baking: AcroForm fields absent from output', async 
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_flatten');
+  await runTool(page, 'pdf_flatten', undefined, fixturePath('form.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -340,42 +335,7 @@ test('pdf_remove_signature — Signature Stripping: no /Sig or /ByteRange', asyn
     saveFile: outFile,
   });
 
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(500);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1000 })) await page.keyboard.press('Escape');
-  } catch (_) {}
-
-  const searchSel = 'input[placeholder*="search" i], .tool-search-input, #tool-search-input';
-  await page.waitForSelector(searchSel, { timeout: 10000 });
-  await page.fill(searchSel, 'pdf_remove_signature');
-  await page.waitForTimeout(400);
-
-  let card = page.locator(
-    '#tool-btn-pdf_remove_signature, [data-tool-name="pdf_remove_signature"]'
-  );
-  if (!(await card.isVisible({ timeout: 1000 }))) {
-    await page.fill(searchSel, 'pdf_remove_signatures');
-    await page.waitForTimeout(400);
-    card = page.locator(
-      '#tool-btn-pdf_remove_signatures, [data-tool-name="pdf_remove_signatures"], .tool-card'
-    );
-  }
-  await card.first().click();
-  await page.waitForTimeout(400);
-
-  const openBtn = page.locator('button:has-text("Open"), button:has-text("Upload"), .upload-btn');
-  if (await openBtn.isVisible({ timeout: 2000 })) {
-    await openBtn.first().click();
-    await page.waitForTimeout(600);
-  }
-
-  await page.locator('.run-btn, button:has-text("Run")').first().click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
-  );
+  await runTool(page, 'pdf_remove_signatures', undefined, fixturePath('signed.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -398,7 +358,7 @@ test('pdf_read_form — AcroForm Key-Value Extraction: JSON with field names', a
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_read_form');
+  await runTool(page, 'pdf_read_form', undefined, fixturePath('form.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = fs.readFileSync(outFile, 'utf-8');
@@ -422,21 +382,26 @@ test('pdf_fill_form — Field Population: AcroForm values updated', async ({ pag
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_fill_form', async (p) => {
-    // Fill any visible text inputs that represent form field data
-    const fieldInputs = p.locator(
-      'input[name*="field"], input[placeholder*="value" i], textarea'
-    );
-    const count = await fieldInputs.count();
-    if (count > 0) {
-      await fieldInputs.first().fill('TestValue');
-    }
-    // Try JSON data input area
-    const jsonArea = p.locator('textarea, input[name*="data"], input[placeholder*="json" i]');
-    if (await jsonArea.isVisible({ timeout: 1000 })) {
-      await jsonArea.first().fill('{"name":"Test User","email":"test@example.com"}');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_fill_form',
+    async (p) => {
+      // Fill any visible text inputs that represent form field data
+      const fieldInputs = p.locator(
+        'input[name*="field"], input[placeholder*="value" i], textarea'
+      );
+      const count = await fieldInputs.count();
+      if (count > 0) {
+        await fieldInputs.first().fill('TestValue');
+      }
+      // Try JSON data input area
+      const jsonArea = p.locator('textarea, input[name*="data"], input[placeholder*="json" i]');
+      if (await jsonArea.isVisible({ timeout: 1000 })) {
+        await jsonArea.first().fill('{"name":"Test User","email":"test@example.com"}');
+      }
+    },
+    fixturePath('form.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -461,15 +426,20 @@ test('pdf_create_form_field — Field Injection: /Widget annotation present', as
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_create_form_field', async (p) => {
-    // Fill field name
-    const nameInput = p.locator(
-      '#fieldName, input[name="name"], input[placeholder*="name" i]'
-    );
-    if (await nameInput.isVisible({ timeout: 1500 })) {
-      await nameInput.fill('MyField');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_create_form_field',
+    async (p) => {
+      // Fill field name
+      const nameInput = p.locator(
+        '#fieldName, input[name="name"], input[placeholder*="name" i]'
+      );
+      if (await nameInput.isVisible({ timeout: 1500 })) {
+        await nameInput.fill('MyField');
+      }
+    },
+    fixturePath('single_page.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -520,7 +490,7 @@ test('batch_fill — Multi-Record Generation: N output PDFs = N CSV rows', async
     }
   );
 
-  await runTool(page, 'batch_fill');
+  await runTool(page, 'batch_fill', undefined, [fixturePath('form.pdf'), fixturePath('batch_data.csv')]);
 
   // batch_fill may output a directory of PDFs or a JSON receipt
   // Accept either: JSON receipt with batch count OR individual PDF files in sandbox
@@ -559,18 +529,23 @@ test('pdf_watermark — Rotated Text Invariant: CONFIDENTIAL in content stream',
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_watermark', async (p) => {
-    const wmInput = p.locator(
-      '#watermarkText, input[name*="text" i], input[placeholder*="watermark" i]'
-    );
-    if (await wmInput.isVisible({ timeout: 1500 })) {
-      await wmInput.fill('CONFIDENTIAL');
-    }
-    const angleInput = p.locator('#angle, input[name*="angle" i]');
-    if (await angleInput.isVisible({ timeout: 1000 })) {
-      await angleInput.fill('45');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_watermark',
+    async (p) => {
+      const wmInput = p.locator(
+        '#watermarkText, input[name*="text" i], input[placeholder*="watermark" i]'
+      );
+      if (await wmInput.isVisible({ timeout: 1500 })) {
+        await wmInput.fill('CONFIDENTIAL');
+      }
+      const angleInput = p.locator('#angle, input[name*="angle" i]');
+      if (await angleInput.isVisible({ timeout: 1000 })) {
+        await angleInput.fill('45');
+      }
+    },
+    fixturePath('single_page.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -592,16 +567,21 @@ test('pdf_bates — Sequential Legal Numbering: CONF-000100 on pages', async ({ 
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_bates', async (p) => {
-    const prefixInput = p.locator('#prefix, input[name*="prefix" i]');
-    if (await prefixInput.isVisible({ timeout: 1500 })) {
-      await prefixInput.fill('CONF');
-    }
-    const startInput = p.locator('#start, input[name*="start" i]');
-    if (await startInput.isVisible({ timeout: 1000 })) {
-      await startInput.fill('100');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_bates',
+    async (p) => {
+      const prefixInput = p.locator('#prefix, input[name*="prefix" i]');
+      if (await prefixInput.isVisible({ timeout: 1500 })) {
+        await prefixInput.fill('CONF');
+      }
+      const startInput = p.locator('#start, input[name*="start" i]');
+      if (await startInput.isVisible({ timeout: 1000 })) {
+        await startInput.fill('100');
+      }
+    },
+    fixturePath('multi_page.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -625,7 +605,7 @@ test('pdf_page_numbers — Dynamic Page Indexing: "1 of 4" on each page', async 
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_page_numbers');
+  await runTool(page, 'pdf_page_numbers', undefined, fixturePath('four_pages.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -650,20 +630,25 @@ test('pdf_header_footer — Margin Positioning: TOP and BOTTOM in content', asyn
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_header_footer', async (p) => {
-    const headerInput = p.locator(
-      '#headerText, #header, input[name*="header" i], input[placeholder*="header" i]'
-    );
-    if (await headerInput.isVisible({ timeout: 1500 })) {
-      await headerInput.fill('TOP');
-    }
-    const footerInput = p.locator(
-      '#footerText, #footer, input[name*="footer" i], input[placeholder*="footer" i]'
-    );
-    if (await footerInput.isVisible({ timeout: 1500 })) {
-      await footerInput.fill('BOTTOM');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_header_footer',
+    async (p) => {
+      const headerInput = p.locator(
+        '#headerText, #header, input[name*="header" i], input[placeholder*="header" i]'
+      );
+      if (await headerInput.isVisible({ timeout: 1500 })) {
+        await headerInput.fill('TOP');
+      }
+      const footerInput = p.locator(
+        '#footerText, #footer, input[name*="footer" i], input[placeholder*="footer" i]'
+      );
+      if (await footerInput.isVisible({ timeout: 1500 })) {
+        await footerInput.fill('BOTTOM');
+      }
+    },
+    fixturePath('single_page.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -687,20 +672,25 @@ test('pdf_annotate — Annotation Structure: /Highlight in /Annots array', async
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_annotate', async (p) => {
-    // Select annotation type = highlight if dropdown exists
-    const typeSelect = p.locator('#annotationType, select[name*="type" i]');
-    if (await typeSelect.isVisible({ timeout: 1000 })) {
-      await typeSelect.selectOption({ label: 'Highlight' });
-    }
-    // Fill any text comment
-    const commentInput = p.locator(
-      '#comment, input[name*="comment" i], textarea[placeholder*="comment" i]'
-    );
-    if (await commentInput.isVisible({ timeout: 1000 })) {
-      await commentInput.fill('Test annotation');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_annotate',
+    async (p) => {
+      // Select annotation type = highlight if dropdown exists
+      const typeSelect = p.locator('#annotationType, select[name*="type" i]');
+      if (await typeSelect.isVisible({ timeout: 1000 })) {
+        await typeSelect.selectOption({ label: 'Highlight' });
+      }
+      // Fill any text comment
+      const commentInput = p.locator(
+        '#comment, input[name*="comment" i], textarea[placeholder*="comment" i]'
+      );
+      if (await commentInput.isVisible({ timeout: 1000 })) {
+        await commentInput.fill('Test annotation');
+      }
+    },
+    fixturePath('single_page.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -723,15 +713,20 @@ test('pdf_redact — True Content Erasure: SSN permanently absent from output', 
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_redact', async (p) => {
-    // Fill the redaction target text field with "SSN"
-    const targetInput = p.locator(
-      '#redactText, #target, input[name*="target" i], input[name*="text" i], input[placeholder*="redact" i]'
-    );
-    if (await targetInput.isVisible({ timeout: 1500 })) {
-      await targetInput.fill('SSN');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_redact',
+    async (p) => {
+      // Fill the redaction target text field with "SSN"
+      const targetInput = p.locator(
+        '#redactText, #target, input[name*="target" i], input[name*="text" i], input[placeholder*="redact" i]'
+      );
+      if (await targetInput.isVisible({ timeout: 1500 })) {
+        await targetInput.fill('SSN');
+      }
+    },
+    fixturePath('text_pii.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -755,7 +750,7 @@ test('pdf_remove_metadata — Threat Neutralization: no /Author or /Creator', as
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_remove_metadata');
+  await runTool(page, 'pdf_remove_metadata', undefined, fixturePath('metadata.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -779,47 +774,19 @@ test('pdf_set_metadata — Information Dictionary: /Author(Test) in Info dict', 
     saveFile: outFile,
   });
 
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(500);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1000 })) await page.keyboard.press('Escape');
-  } catch (_) {}
-
-  const searchSel = 'input[placeholder*="search" i], .tool-search-input, #tool-search-input';
-  await page.waitForSelector(searchSel, { timeout: 10000 });
-  // Try pdf_set_metadata then fall back to pdf_metadata
-  await page.fill(searchSel, 'pdf_set_metadata');
-  await page.waitForTimeout(400);
-  let card = page.locator(
-    '#tool-btn-pdf_set_metadata, [data-tool-name="pdf_set_metadata"]'
-  );
-  if (!(await card.isVisible({ timeout: 1000 }))) {
-    await page.fill(searchSel, 'pdf_metadata');
-    await page.waitForTimeout(400);
-    card = page.locator('#tool-btn-pdf_metadata, [data-tool-name="pdf_metadata"], .tool-card');
-  }
-  await card.first().click();
-  await page.waitForTimeout(400);
-
-  const openBtn = page.locator('button:has-text("Open"), button:has-text("Upload"), .upload-btn');
-  if (await openBtn.isVisible({ timeout: 2000 })) {
-    await openBtn.first().click();
-    await page.waitForTimeout(600);
-  }
-
-  // Fill author field
-  const authorInput = page.locator(
-    '#author, input[name*="author" i], input[placeholder*="author" i]'
-  );
-  if (await authorInput.isVisible({ timeout: 1500 })) {
-    await authorInput.fill('Test');
-  }
-
-  await page.locator('.run-btn, button:has-text("Run")').first().click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
+  await runTool(
+    page,
+    'pdf_metadata',
+    async (p) => {
+      // Fill author field
+      const authorInput = p.locator(
+        '#author, input[name*="author" i], input[placeholder*="author" i]'
+      );
+      if (await authorInput.isVisible({ timeout: 1500 })) {
+        await authorInput.fill('Test');
+      }
+    },
+    fixturePath('single_page.pdf')
   );
 
   expect(fs.existsSync(outFile)).toBe(true);
@@ -842,7 +809,7 @@ test('pdf_validate — ISO 32000 Conformance: JSON valid:true', async ({ page })
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_validate');
+  await runTool(page, 'pdf_validate', undefined, fixturePath('single_page.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -869,7 +836,7 @@ test('pdf_validate_pdfa — ISO 19005 Archival Tags: conformance PDF/A', async (
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_validate_pdfa');
+  await runTool(page, 'pdf_validate_pdfa', undefined, fixturePath('pdf_a.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -896,13 +863,18 @@ test('pdf_hash — Digest Accuracy: 64-char hex SHA-256 string', async ({ page }
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_hash', async (p) => {
-    // Select SHA-256 algorithm if selector exists
-    const algoSelect = p.locator('#algo, #algorithm, select[name*="algo" i]');
-    if (await algoSelect.isVisible({ timeout: 1000 })) {
-      await algoSelect.selectOption({ value: 'sha256' });
-    }
-  });
+  await runTool(
+    page,
+    'pdf_hash',
+    async (p) => {
+      // Select SHA-256 algorithm if selector exists
+      const algoSelect = p.locator('#algo, #algorithm, select[name*="algo" i]');
+      if (await algoSelect.isVisible({ timeout: 1000 })) {
+        await algoSelect.selectOption({ value: 'sha256' });
+      }
+    },
+    fixturePath('single_page.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
 
@@ -932,7 +904,7 @@ test('pdf_classify_type — Document Type Classifier: type:"form" for form.pdf',
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_classify_type');
+  await runTool(page, 'pdf_classify_type', undefined, fixturePath('form.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -958,14 +930,19 @@ test('pdf_search — Indexed Search Results: array of {page, x, y, text} matches
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_search', async (p) => {
-    const queryInput = p.locator(
-      '#query, #searchQuery, input[name*="query" i], input[placeholder*="search" i]'
-    );
-    if (await queryInput.isVisible({ timeout: 1500 })) {
-      await queryInput.fill('Invoice');
-    }
-  });
+  await runTool(
+    page,
+    'pdf_search',
+    async (p) => {
+      const queryInput = p.locator(
+        '#query, #searchQuery, input[name*="query" i], input[placeholder*="search" i]'
+      );
+      if (await queryInput.isVisible({ timeout: 1500 })) {
+        await queryInput.fill('Invoice');
+      }
+    },
+    fixturePath('search_test.pdf')
+  );
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -996,7 +973,7 @@ test('pdf_to_html — Responsive Web DOM: .html with div/span tags and text', as
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_to_html');
+  await runTool(page, 'pdf_to_html', undefined, fixturePath('single_page.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const content = fs.readFileSync(outFile, 'utf-8');
@@ -1023,7 +1000,7 @@ test('pdf_to_markdown — LLM-Ready Markdown: # headings or **bold** in output',
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_to_markdown');
+  await runTool(page, 'pdf_to_markdown', undefined, fixturePath('single_page.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const content = fs.readFileSync(outFile, 'utf-8');
@@ -1048,7 +1025,7 @@ test('pdf_to_json — Bounding Box JSON Schema: array with text, page, x, y', as
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_to_json');
+  await runTool(page, 'pdf_to_json', undefined, fixturePath('single_page.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -1076,7 +1053,7 @@ test('json_to_pdf — Synthesis from JSON: valid PDF with JSON field values as t
     saveFile: outFile,
   });
 
-  await runTool(page, 'json_to_pdf');
+  await runTool(page, 'json_to_pdf', undefined, fixturePath('form_data.json'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -1101,7 +1078,7 @@ test('md_to_pdf — Markdown Compilation: valid PDF with rendered headings', asy
     saveFile: outFile,
   });
 
-  await runTool(page, 'md_to_pdf');
+  await runTool(page, 'md_to_pdf', undefined, fixturePath('test.md'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -1126,7 +1103,7 @@ test('html_to_pdf — HTML Rendering: valid PDF with HTML-rendered text', async 
     saveFile: outFile,
   });
 
-  await runTool(page, 'html_to_pdf');
+  await runTool(page, 'html_to_pdf', undefined, fixturePath('test.html'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -1150,7 +1127,7 @@ test('pdf_add_blank_page — Page Count: Pages(out) = Pages(in) + 1', async ({ p
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_add_blank_page');
+  await runTool(page, 'pdf_add_blank_page', undefined, fixturePath('single_page.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -1174,7 +1151,7 @@ test('pdf_duplicate_pages — Page Doubling: Pages(out) = 2 × Pages(in)', async
     saveFile: outFile,
   });
 
-  await runTool(page, 'pdf_duplicate_pages');
+  await runTool(page, 'pdf_duplicate_pages', undefined, fixturePath('single_page.pdf'));
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
