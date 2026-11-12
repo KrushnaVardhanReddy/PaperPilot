@@ -58,15 +58,17 @@ pub fn run_local_agent(
         return Ok(());
     }
 
+    let compact_prompt = format!("/compact\n\n{}", prompt_content);
+
     let mut cmd = Command::new(&agy_bin);
 
     if interactive {
         println!("🚀 Launching interactive pair programming session with Gemini CLI...");
-        cmd.arg("-i").arg(prompt_content);
+        cmd.arg("-i").arg(&compact_prompt);
     } else {
         println!("🚀 Executing non-interactive autonomous pair programming turn...");
         cmd.arg("-p")
-            .arg(prompt_content)
+            .arg(&compact_prompt)
             .arg("--dangerously-skip-permissions");
     }
 

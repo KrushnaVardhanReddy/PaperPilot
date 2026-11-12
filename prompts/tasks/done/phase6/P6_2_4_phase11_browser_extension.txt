@@ -1,0 +1,64 @@
+### Task: Implement Phase 11 PaperPilot Browser Companion Extension (`apps/extension`)
+
+#### Context
+Spec 164 (`specs/164-phase11-browser-companion-extension/spec.md`) defines the PaperPilot Browser Companion Extension for Chrome, Edge, and Firefox.
+The extension adopts a **WASM-First, Hybrid Architecture**:
+1. Standalone client-side WASM engine (`paperpilot-wasm`) for instant document operations (merge, split, rotate, watermark, extract text, metadata) without requiring any installed native binary.
+2. Local Desktop Gateway Bridge (`http://127.0.0.1:7823`) for heavy neural OCR, semantic chunking (`pdf_chunk`), and conversions when the PaperPilot daemon is running.
+3. In-tab context menus on web PDFs (arXiv, invoices, receipts).
+4. Web clean-article capture to Markdown/PDF.
+
+#### Implementation Requirements
+
+1. **Directory Structure (`apps/extension`)**:
+   Create `apps/extension` with:
+   - `package.json` configured with Vite, TypeScript, and Svelte 5.
+   - `vite.config.ts` bundling:
+     - `src/background/index.ts` -> `dist/background.js` (service worker)
+     - `src/content/index.ts` -> `dist/content.js` (content script)
+     - `src/popup/popup.html` -> `dist/popup.html`
+     - Asset copying for icons and `manifest.json`.
+   - `manifest.json` (Manifest V3):
+     - Name: "PaperPilot: Universal Document & AI Companion"
+     - Permissions: `["activeTab", "contextMenus", "storage", "scripting"]`
+     - Host permissions: `["http://127.0.0.1:7823/*", "http://localhost:7823/*"]`
+     - Action popup: `popup.html`
+     - Background service worker: `background.js`
+
+2. **Background Service Worker (`src/background/`)**:
+   - Register context menus:
+     - "PaperPilot: Extract Clean Text"
+     - "PaperPilot: Semantic Chunk for AI"
+     - "PaperPilot: Clean Article to Markdown"
+     - "PaperPilot: Open in Desktop App"
+   - Implement Gateway Bridge:
+     - Periodically / on-demand checks `GET http://127.0.0.1:7823/health`.
+     - Relays requests from popup/content scripts to the local daemon when available.
+
+3. **Client WASM Engine (`src/wasm/wasmBridge.ts`)**:
+   - Load `paperpilot-wasm` from `../../paperpilot-wasm/pkg` (or as bundled WASM).
+   - Provide client-side functions: `splitPdf`, `mergePdfs`, `rotatePdf`, `extractText`, `extractMetadata`, `watermarkPdf`.
+   - Include graceful fallback handling if WASM is initializing or unsupported.
+
+4. **Content Script (`src/content/`)**:
+   - `articleReader.ts`: Extract primary page text, sanitize out `<script>`, `<style>`, `<nav>`, `<aside>`, ads, and format into clean Markdown.
+   - Responds to messages from background worker to capture current page content.
+
+5. **Popup UI (`src/popup/App.svelte` & `main.ts`)**:
+   - Svelte 5 popup with modern dark/light styling matching PaperPilot brand:
+     - Header with PaperPilot logo, title, and connection badge:
+       - `[⚡ Desktop Connected (7823)]` (green) if Gateway running.
+       - `[🌐 Standalone WASM Mode]` (blue) if Gateway offline.
+     - Quick Action Buttons:
+       - "Extract Active Tab to Markdown"
+       - "Chunk for AI Context"
+       - "Quick PDF Tools" (Split, Merge, Watermark, Compress)
+     - File drag-and-drop zone allowing users to drop a local PDF directly into the popup.
+
+6. **Root Project Wiring & Testing**:
+   - Add `"build:extension": "pnpm --dir apps/extension build"` in root `package.json`.
+   - Add Playwright or Vitest test in `apps/extension/tests/` verifying extension build and manifest schema.
+   - Run build: `pnpm --dir apps/extension build` ensuring `dist/manifest.json` and bundled assets exist.
+   - Verify workspace compilation: `cargo check --workspace --all-targets -j 4`.
+   - Ensure zero regressions on `cargo check -p paperpilot-wasm --target wasm32-unknown-unknown -j 4`.
+

@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:1420',
     trace: 'on-first-retry',
@@ -17,6 +17,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
+          slowMo: process.env.PW_SLOWMO ? parseInt(process.env.PW_SLOWMO, 10) : undefined,
           args: ['--proxy-bypass-list=<-loopback>'],
         },
       },

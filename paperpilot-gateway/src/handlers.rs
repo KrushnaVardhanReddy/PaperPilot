@@ -445,6 +445,39 @@ pub struct RagChunksJsonRequest {
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
+pub struct PdfChunkJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+    pub input: String,
+    #[schema(example = 500)]
+    pub target_tokens: Option<usize>,
+    #[schema(example = 50)]
+    pub overlap_tokens: Option<usize>,
+    #[schema(example = true)]
+    pub strip_boilerplate: Option<bool>,
+    #[schema(example = true)]
+    pub break_on_headings: Option<bool>,
+    pub output: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct DocumentChunkSchema {
+    pub chunk_index: usize,
+    pub page_start: u32,
+    pub page_end: u32,
+    pub estimated_tokens: usize,
+    pub text: String,
+    pub headings_context: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ChunkResultSchema {
+    pub total_chunks: usize,
+    pub total_tokens: usize,
+    pub chunks: Vec<DocumentChunkSchema>,
+    pub execution_time_ms: f64,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct McpExecRequest {
     #[schema(example = "pdf_metadata")]
     pub tool: String,
@@ -807,9 +840,25 @@ pub async fn handle_tool(
         || tool_name == "excel_to_json"
         || tool_name == "excel_to_csv"
         || tool_name == "json_to_pdf"
+        || tool_name == "html_to_pdf"
+        || tool_name == "md_to_pdf"
+        || tool_name == "to_epub"
+        || tool_name == "to_pdf_a"
+        || tool_name == "comic_archive"
+        || tool_name == "extract_images"
+        || tool_name == "convert_excel"
         || tool_name == "workspace_search"
+        || tool_name == "semantic_search"
         || tool_name.starts_with("office_")
         || tool_name == "document_pii_scan"
+        || tool_name == "batch_fill"
+        || tool_name == "cli_fill_batch"
+        || tool_name == "document_workflow"
+        || tool_name == "recipe_run"
+        || tool_name == "cli_ask"
+        || tool_name == "watcher_start"
+        || tool_name == "watcher_stop"
+        || tool_name == "watcher_list"
     {
         tool_name.clone()
     } else {
@@ -906,8 +955,28 @@ pub async fn handle_tool(
                     "docx" => "pdf_to_docx".to_string(),
                     "xlsx" => "pdf_to_xlsx".to_string(),
                     "pptx" => "pdf_to_pptx".to_string(),
-                    "html" => "pdf_convert_html".to_string(),
-                    "markdown" => "pdf_convert_markdown".to_string(),
+                    "html" => {
+                        let input_is_pdf = args
+                            .get("input")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| s.ends_with(".pdf"));
+                        if input_is_pdf {
+                            "pdf_to_html".to_string()
+                        } else {
+                            "pdf_convert_html".to_string()
+                        }
+                    }
+                    "markdown" | "md" => {
+                        let input_is_pdf = args
+                            .get("input")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| s.ends_with(".pdf"));
+                        if input_is_pdf {
+                            "pdf_to_markdown".to_string()
+                        } else {
+                            "pdf_convert_markdown".to_string()
+                        }
+                    }
                     "excel" | "csv" => "pdf_convert_excel".to_string(),
                     "pdf" => {
                         let has_json_ext = args
@@ -962,11 +1031,55 @@ pub async fn handle_tool(
         if !args.contains_key("start_number") {
             args.insert("start_number".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
         }
+        if !args.contains_key("prefix") {
+            args.insert("prefix".to_string(), serde_json::Value::String("CONF-".to_string()));
+        }
+    } else if resolved_name == "pdf_annotate" {
+        if !args.contains_key("annotations") && !args.contains_key("data") {
+            args.insert("annotations".to_string(), serde_json::Value::Array(vec![]));
+        }
+    } else if resolved_name == "pdf_page_numbers" {
+        if !args.contains_key("position") {
+            args.insert("position".to_string(), serde_json::Value::String("bottom-center".to_string()));
+        }
+        if !args.contains_key("format") {
+            args.insert("format".to_string(), serde_json::Value::String("Page {n} of {total}".to_string()));
+        }
+    } else if resolved_name == "pdf_header_footer" {
+        if !args.contains_key("text") && !args.contains_key("header_left") && !args.contains_key("footer_center") {
+            args.insert("text".to_string(), serde_json::Value::String("Header Notice".to_string()));
+        }
     } else if resolved_name == "pdf_validate_signatures" {
         if let Some(val) = args.get("output") {
             if val.as_str().unwrap_or("") == "" {
                 args.remove("output");
             }
+        }
+    } else if resolved_name == "document_workflow" {
+        if !args.contains_key("preset") && !args.contains_key("recipe") {
+            args.insert("preset".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "recipe_run" {
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "cli_ask" {
+        if !args.contains_key("prompt") {
+            args.insert("prompt".to_string(), serde_json::Value::String("rotate 90 degrees".to_string()));
+        }
+        if !args.contains_key("dry_run") {
+            args.insert("dry_run".to_string(), serde_json::Value::Bool(true));
+        }
+    } else if resolved_name == "watcher_start" {
+        if !args.contains_key("dir") {
+            args.insert("dir".to_string(), serde_json::Value::String(".".to_string()));
+        }
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-legal-discovery".to_string()));
+        }
+    } else if resolved_name == "watcher_stop" {
+        if !args.contains_key("watcher_id") {
+            args.insert("watcher_id".to_string(), serde_json::Value::String("default".to_string()));
         }
     }
 
@@ -1839,10 +1952,62 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
     use paperpilot_pdf::document::LopdfDocument;
 
     let path = std::path::PathBuf::from(input);
-    let mut doc = match LopdfDocument::load(&path) {
-        Ok(d) => d,
-        Err(e) => {
-            return (
+    let mut matches = Vec::new();
+    if path.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(&path) {
+            for entry in entries.flatten() {
+                let ep = entry.path();
+                if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                    if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+                        if op.execute(&mut doc).is_ok() {
+                            let p = op.match_pages.lock().unwrap().clone();
+                            matches.extend(p);
+                        }
+                    }
+                }
+            }
+        }
+        (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({ "matches": matches })),
+                error: None,
+            }),
+        )
+            .into_response()
+    } else {
+        let mut doc = match LopdfDocument::load(&path) {
+            Ok(d) => d,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiResponse {
+                        success: false,
+                        result: None,
+                        error: Some(e.to_string()),
+                    }),
+                )
+                    .into_response();
+            }
+        };
+
+        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+        match op.execute(&mut doc) {
+            Ok(_) => {
+                let matches = op.match_pages.lock().unwrap().clone();
+                (
+                    StatusCode::OK,
+                    Json(ApiResponse {
+                        success: true,
+                        result: Some(serde_json::json!({ "matches": matches })),
+                        error: None,
+                    }),
+                )
+                    .into_response()
+            }
+            Err(e) => (
                 StatusCode::BAD_REQUEST,
                 Json(ApiResponse {
                     success: false,
@@ -1850,33 +2015,8 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
                     error: Some(e.to_string()),
                 }),
             )
-                .into_response();
+                .into_response(),
         }
-    };
-
-    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
-    match op.execute(&mut doc) {
-        Ok(_) => {
-            let matches = op.match_pages.lock().unwrap().clone();
-            (
-                StatusCode::OK,
-                Json(ApiResponse {
-                    success: true,
-                    result: Some(serde_json::json!({ "matches": matches })),
-                    error: None,
-                }),
-            )
-                .into_response()
-        }
-        Err(e) => (
-            StatusCode::BAD_REQUEST,
-            Json(ApiResponse {
-                success: false,
-                result: None,
-                error: Some(e.to_string()),
-            }),
-        )
-            .into_response(),
     }
 }
 
@@ -3214,6 +3354,112 @@ pub async fn pdf_rag_chunks(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_rag_chunks".to_string()), req).await
 }
 
+/// Execute pdf_chunk operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/chunk",
+    tag = "PDF Operations",
+    request_body(content = PdfChunkJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ChunkResultSchema),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_chunk_endpoint(req: axum::extract::Request) -> impl IntoResponse {
+    let content_type = req
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if content_type.starts_with("application/json") {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+            Ok(b) => b,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Failed to read request body: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let payload: PdfChunkJsonRequest = match serde_json::from_slice(&body_bytes) {
+            Ok(p) => p,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Invalid JSON payload: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let target_tokens = payload.target_tokens.unwrap_or(500);
+        let overlap_tokens = payload.overlap_tokens.unwrap_or(50);
+        let strip_boilerplate = payload.strip_boilerplate.unwrap_or(true);
+        let break_on_headings = payload.break_on_headings.unwrap_or(true);
+
+        let options = paperpilot_pdf::operations::pdf_chunk::ChunkOptions {
+            target_tokens,
+            overlap_tokens,
+            strip_boilerplate,
+            break_on_headings,
+        };
+
+        let doc_source = match paperpilot_core::document_source::DocumentSource::open(&payload.input, None) {
+            Ok(ds) => ds,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Failed to open document: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let result = match paperpilot_pdf::operations::pdf_chunk::PdfChunkOperation::chunk_source(&doc_source, options) {
+            Ok(r) => r,
+            Err(e) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Chunking failed: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        if let Some(ref out_path) = payload.output {
+            let out_p = std::path::Path::new(out_path);
+            if let Some(parent) = out_p.parent() {
+                if !parent.as_os_str().is_empty() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+            }
+            if let Ok(json_str) = serde_json::to_string_pretty(&result) {
+                let _ = std::fs::write(out_p, json_str);
+            }
+        }
+
+        (StatusCode::OK, Json(result)).into_response()
+    } else {
+        handle_tool(Path("pdf_chunk".to_string()), req).await.into_response()
+    }
+}
+
 /// Execute workspace_search operation
 #[utoipa::path(
     post,
@@ -3244,4 +3490,53 @@ pub async fn workspace_search(req: axum::extract::Request) -> impl IntoResponse 
 )]
 pub async fn semantic_search(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("semantic_search".to_string()), req).await
+}
+/// Extract Keywords & Patterns [Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]] [Input: .pdf | Output: .json]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/extract-patterns",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Extract Keywords & Patterns completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_extract_patterns(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_patterns".to_string()), req).await
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DoctorCheckResultSchema {
+    #[schema(example = "Temp Directory: /tmp (writable & ephemeral cleanup verified)")]
+    pub name: String,
+    #[schema(example = true)]
+    pub passed: bool,
+    #[schema(example = "Temp directory is writable and files can be cleanly deleted.")]
+    pub message: String,
+    #[schema(nullable)]
+    pub suggestion: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DoctorReportSchema {
+    #[schema(example = "1794345649")]
+    pub timestamp: String,
+    #[schema(example = "Healthy")]
+    pub status: String,
+    pub checks: Vec<DoctorCheckResultSchema>,
+}
+
+/// Run system diagnostics and offline dependency checks
+#[utoipa::path(
+    get,
+    path = "/api/v1/doctor",
+    tag = "Health",
+    responses(
+        (status = 200, description = "System diagnostics report", body = DoctorReportSchema)
+    )
+)]
+pub async fn doctor() -> impl IntoResponse {
+    let report = paperpilot_core::diagnostics::run_diagnostics();
+    (StatusCode::OK, Json(report))
 }

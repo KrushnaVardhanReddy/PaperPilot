@@ -6,6 +6,7 @@
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
   import PdfAnnotationLayer from './PdfAnnotationLayer.svelte';
   import PdfSearchBar from './PdfSearchBar.svelte';
+  import SignatureStampLayer, { type PlacedStamp, type ArmedSignature } from './signature/SignatureStampLayer.svelte';
   import type { Annotation } from '$lib/api/pdf';
 
   if (typeof window !== 'undefined') {
@@ -23,11 +24,26 @@
     pageNum = $bindable(1),
     scale = $bindable(1.2),
     activeTool = 'none',
-    annotations = $bindable([] as Annotation[])
-  } = $props();
+    annotations = $bindable([] as Annotation[]),
+    armedSignature = $bindable(null as ArmedSignature | null),
+    placedStamps = $bindable([] as PlacedStamp[]),
+    onStampPlaced = (stamp: PlacedStamp) => {}
+  } = $props<{
+    fileUrl?: string;
+    file?: File | Blob | null;
+    pdfDoc?: any;
+    pageNum?: number;
+    scale?: number;
+    activeTool?: string;
+    annotations?: Annotation[];
+    armedSignature?: ArmedSignature | null;
+    placedStamps?: PlacedStamp[];
+    onStampPlaced?: (stamp: PlacedStamp) => void;
+  }>();
 
   let canvas: HTMLCanvasElement;
   let isRendering = false; // Not a $state to prevent infinite loops in effects
+  let pageDimensions = $state({ width: 595.28, height: 841.89 });
 
   // Password prompt state
   let showPasswordModal = $state(false);
@@ -122,6 +138,8 @@
     try {
       const page = await doc.getPage(currentPage);
       const viewport = page.getViewport({ scale: currentScale });
+      const unscaledVp = page.getViewport({ scale: 1.0 });
+      pageDimensions = { width: unscaledVp.width, height: unscaledVp.height };
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -305,6 +323,14 @@
            {/each}
         </div>
       {/if}
+      <SignatureStampLayer
+        {scale}
+        {pageNum}
+        pageDimensions={pageDimensions}
+        bind:armedSignature
+        bind:placedStamps
+        {onStampPlaced}
+      />
       <PdfAnnotationLayer {scale} {pageNum} bind:annotations {activeTool} />
     </div>
   </div>

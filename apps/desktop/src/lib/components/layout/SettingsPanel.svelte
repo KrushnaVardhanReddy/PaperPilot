@@ -3,12 +3,14 @@
   import WatchedFoldersPanel from './WatchedFoldersPanel.svelte';
   import OcrModelDownloader from '$lib/components/settings/OcrModelDownloader.svelte';
   import ModelDownloader from '$lib/components/settings/ModelDownloader.svelte';
+  import SystemDoctorModal from '$lib/components/settings/SystemDoctorModal.svelte';
   import { aiConfig } from '$lib/state/aiConfig.svelte';
 
   type SettingsCategory = 'automations' | 'ai' | 'packs' | 'ocr' | 'general' | 'developer' | 'privacy';
   let activeCategory = $state<SettingsCategory>('ai');
 
   let outputDir = $state('');
+  let showDoctorModal = $state(false);
 
   function handleBrowse() {
     // Mock browse action
@@ -408,8 +410,29 @@
             </div>
           {/if}
         </div>
+
+        <div class="setting-group" id="setting-group-system-doctor">
+          <h4>System Health & Diagnostics</h4>
+          <p class="help-text">
+            Audit offline neural model caches, gateway ports, temp directory permissions, and disk storage.
+          </p>
+          <div class="doctor-action-row" style="margin-top: 0.75rem;">
+            <button
+              class="btn primary"
+              id="run-system-diagnostics-btn"
+              onclick={() => (showDoctorModal = true)}
+            >
+              🩺 Run System Diagnostics
+            </button>
+          </div>
+        </div>
       </div>
     {/if}
+
+    <SystemDoctorModal
+      isOpen={showDoctorModal}
+      onClose={() => (showDoctorModal = false)}
+    />
   </main>
 </div>
 

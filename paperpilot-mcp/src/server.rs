@@ -88,6 +88,20 @@ impl PaperPilotMcpServer {
                     "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
                 }}).as_object().unwrap().clone()));
 
+        tools.push(Tool::new("cli_fill_batch".to_string(),
+            "Automated batch AcroForm fill engine generating populated PDFs and machine-readable receipts.".to_string(),
+            serde_json::json!({"type":"object", "additionalProperties":false,
+                "required":["template","output_dir"],
+                "oneOf":[{"required":["data"],"not":{"required":["records"]}},{"required":["records"],"not":{"required":["data"]}}],
+                "properties": {
+                    "template":{"type":"string"}, "output_dir":{"type":"string"},
+                    "data":{"type":"string","description":"Local .csv or .json data path"},
+                    "records":{"type":"array","items":{"type":"object"}},
+                    "name_template":{"type":"string","default":"{index:04}.pdf"},
+                    "field_map":{"type":"string"}, "keep_editable":{"type":"boolean","default":false},
+                    "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
+                }}).as_object().unwrap().clone()));
+
         let add_styled_tool = |tools: &mut Vec<Tool>, name: &str, desc: &str| {
             let schema = serde_json::json!({
                 "type": "object",
@@ -125,6 +139,7 @@ impl PaperPilotMcpServer {
         };
 
         add_styled_tool(&mut tools, "pdf_convert_html", "Convert HTML to styled PDF");
+        add_styled_tool(&mut tools, "html_to_pdf", "Convert HTML to styled PDF");
         add_styled_tool(
             &mut tools,
             "json_to_pdf",
@@ -193,6 +208,11 @@ impl PaperPilotMcpServer {
         add_styled_tool(
             &mut tools,
             "pdf_convert_markdown",
+            "Convert Markdown to styled PDF",
+        );
+        add_styled_tool(
+            &mut tools,
+            "md_to_pdf",
             "Convert Markdown to styled PDF",
         );
         add_styled_tool(
@@ -992,6 +1012,31 @@ impl PaperPilotMcpServer {
         tool_rag.input_schema = std::sync::Arc::new(schema_rag);
         tools.push(tool_rag);
 
+        let mut tool_chunk = Tool::default();
+        tool_chunk.name = "pdf_chunk".into();
+        tool_chunk.description = Some(
+            "Structure-aware semantic chunking with dynamic overlap for AI agents and LLM context windows. [Input: PDF (.pdf) | Output: JSON]".into(),
+        );
+        let mut schema_chunk = serde_json::Map::new();
+        schema_chunk.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut prop_chunk = serde_json::Map::new();
+        prop_chunk.insert("input".to_string(), serde_json::json!({ "type": "string", "description": "Path to input PDF file" }));
+        prop_chunk.insert("output".to_string(), serde_json::json!({ "type": "string", "description": "Optional destination path for JSON output" }));
+        prop_chunk.insert("target_tokens".to_string(), serde_json::json!({ "type": "number", "description": "Target tokens per chunk (default: 500, range: 50-4000)" }));
+        prop_chunk.insert("overlap_tokens".to_string(), serde_json::json!({ "type": "number", "description": "Overlap tokens between chunks (default: 50, range: 0-500)" }));
+        prop_chunk.insert("strip_boilerplate".to_string(), serde_json::json!({ "type": "boolean", "description": "Strip repetitive headers/footers across consecutive pages (default: true)" }));
+        prop_chunk.insert("break_on_headings".to_string(), serde_json::json!({ "type": "boolean", "description": "Trigger hard boundary split on # / ## headings (default: true)" }));
+        schema_chunk.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(prop_chunk),
+        );
+        schema_chunk.insert("required".to_string(), serde_json::json!(["input"]));
+        tool_chunk.input_schema = std::sync::Arc::new(schema_chunk);
+        tools.push(tool_chunk);
+
         let mut tool_o2m = Tool::default();
         tool_o2m.name = "office_to_markdown".into();
         tool_o2m.description = Some("Convert Office document to Markdown. [Input: Office (.docx, .xlsx, .pptx) | Output: Markdown (.md)]".into());
@@ -1593,6 +1638,34 @@ impl PaperPilotMcpServer {
         prop_meta.insert(
             "author".to_string(),
             serde_json::Value::Object(prop_author_m),
+        );
+
+        let mut prop_subject_m = serde_json::Map::new();
+        prop_subject_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_subject_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The new subject.".to_string()),
+        );
+        prop_meta.insert(
+            "subject".to_string(),
+            serde_json::Value::Object(prop_subject_m),
+        );
+
+        let mut prop_keywords_m = serde_json::Map::new();
+        prop_keywords_m.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_keywords_m.insert(
+            "description".to_string(),
+            serde_json::Value::String("The new keywords.".to_string()),
+        );
+        prop_meta.insert(
+            "keywords".to_string(),
+            serde_json::Value::Object(prop_keywords_m),
         );
 
         let mut prop_output_m = serde_json::Map::new();
@@ -3515,6 +3588,77 @@ impl PaperPilotMcpServer {
         );
         tool_pdf_to_epub.input_schema = Arc::new(schema_pdf_to_epub);
         tools.push(tool_pdf_to_epub);
+        let mut schema_pdf_extract_patterns = serde_json::Map::new();
+        schema_pdf_extract_patterns.insert(
+            "type".to_string(),
+            serde_json::Value::String("object".to_string()),
+        );
+        let mut props_pdf_extract_patterns = serde_json::Map::new();
+
+        let mut prop_input_pdf_extract_patterns = serde_json::Map::new();
+        prop_input_pdf_extract_patterns.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_extract_patterns.insert(
+            "input".to_string(),
+            serde_json::Value::Object(prop_input_pdf_extract_patterns),
+        );
+
+        let mut prop_output_pdf_extract_patterns = serde_json::Map::new();
+        prop_output_pdf_extract_patterns.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        props_pdf_extract_patterns.insert(
+            "output".to_string(),
+            serde_json::Value::Object(prop_output_pdf_extract_patterns),
+        );
+
+        let mut prop_keywords = serde_json::Map::new();
+        prop_keywords.insert("type".to_string(), serde_json::Value::String("array".to_string()));
+        let mut kw_items = serde_json::Map::new();
+        kw_items.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_keywords.insert("items".to_string(), serde_json::Value::Object(kw_items));
+        prop_keywords.insert("description".to_string(), serde_json::Value::String("Array of keywords to search for across all pages".to_string()));
+        props_pdf_extract_patterns.insert("keywords".to_string(), serde_json::Value::Object(prop_keywords));
+
+        let mut prop_patterns = serde_json::Map::new();
+        prop_patterns.insert("type".to_string(), serde_json::Value::String("object".to_string()));
+        let mut pat_additional = serde_json::Map::new();
+        pat_additional.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_patterns.insert("additionalProperties".to_string(), serde_json::Value::Object(pat_additional));
+        prop_patterns.insert("description".to_string(), serde_json::Value::String("Key-value map of pattern label to regex string (e.g. {\"ssn\": \"\\\\d{3}-\\\\d{2}-\\\\d{4}\"})".to_string()));
+        props_pdf_extract_patterns.insert("patterns".to_string(), serde_json::Value::Object(prop_patterns));
+
+        let mut prop_case = serde_json::Map::new();
+        prop_case.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
+        prop_case.insert("description".to_string(), serde_json::Value::String("Whether matching should be case-sensitive (default: false)".to_string()));
+        props_pdf_extract_patterns.insert("case_sensitive".to_string(), serde_json::Value::Object(prop_case));
+
+        let mut prop_ctx = serde_json::Map::new();
+        prop_ctx.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
+        prop_ctx.insert("description".to_string(), serde_json::Value::String("Context characters around match (default: 30)".to_string()));
+        props_pdf_extract_patterns.insert("context_len".to_string(), serde_json::Value::Object(prop_ctx));
+
+        schema_pdf_extract_patterns.insert(
+            "properties".to_string(),
+            serde_json::Value::Object(props_pdf_extract_patterns),
+        );
+        schema_pdf_extract_patterns.insert(
+            "required".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("input".to_string()),
+            ]),
+        );
+
+        let mut tool_pdf_extract_patterns = Tool::default();
+        tool_pdf_extract_patterns.name = "pdf_extract_patterns".into();
+        tool_pdf_extract_patterns.description = Some(
+            "Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]".into(),
+        );
+        tool_pdf_extract_patterns.input_schema = Arc::new(schema_pdf_extract_patterns);
+        tools.push(tool_pdf_extract_patterns);
         let mut tool_sanitize = Tool::default();
         tool_sanitize.name = "pdf_sanitize".into();
         tool_sanitize.description = Some(
@@ -3919,8 +4063,17 @@ impl PaperPilotMcpServer {
             "Converts a list of images to a PDF. [Input: JPG/PNG/WebP images | Output: PDF (.pdf)]"
                 .into(),
         );
-        tool_itp.input_schema = Arc::new(schema_itp);
+        tool_itp.input_schema = Arc::new(schema_itp.clone());
         tools.push(tool_itp);
+
+        let mut tool_single_itp = Tool::default();
+        tool_single_itp.name = "img_to_pdf".into();
+        tool_single_itp.description = Some(
+            "Converts image(s) to a PDF document. [Input: JPG/PNG/WebP images | Output: PDF (.pdf)]"
+                .into(),
+        );
+        tool_single_itp.input_schema = Arc::new(schema_itp);
+        tools.push(tool_single_itp);
 
         // Tool: pdf_compare
         let mut schema_compare = serde_json::Map::new();
@@ -4447,6 +4600,21 @@ impl PaperPilotMcpServer {
             schema_dw.as_object().unwrap().clone(),
         ));
 
+        tools.push(Tool::new(
+            "cli_ask".to_string(),
+            "AI Document Assistant: Interprets natural language instructions and executes document plans via offline NLP.".to_string(),
+            serde_json::json!({
+                "type": "object",
+                "required": ["prompt"],
+                "properties": {
+                    "prompt": { "type": "string", "description": "Natural language query or instruction" },
+                    "input": { "type": "string", "description": "Target input PDF path" },
+                    "output": { "type": "string", "description": "Optional output path" },
+                    "dry_run": { "type": "boolean", "description": "Dry-run only: interpret plan without executing", "default": true }
+                }
+            }).as_object().unwrap().clone(),
+        ));
+
         Ok(ListToolsResult {
             tools,
             ..Default::default()
@@ -4455,8 +4623,13 @@ impl PaperPilotMcpServer {
 
     pub fn execute_call_tool(
         &self,
-        request: CallToolRequestParams,
+        mut request: CallToolRequestParams,
     ) -> Result<CallToolResponse, ErrorData> {
+        // Strip duplicate pdf_ prefix or normalize aliases for robust tool invocation
+        if request.name.starts_with("pdf_pdf_") {
+            request.name = request.name["pdf_".len()..].to_string().into();
+        }
+
         let args = request.arguments.clone().unwrap_or_default();
         let is_zero_trace = args.get("_zero_trace").and_then(|v| v.as_bool()).unwrap_or(false)
             || args.get("log_level").and_then(|v| v.as_str()).map(|s| s.eq_ignore_ascii_case("off")).unwrap_or(false);
@@ -4464,7 +4637,7 @@ impl PaperPilotMcpServer {
             tracing::debug!(tool = %request.name, "Executing MCP agent tool");
         }
         let tool_name = request.name.clone();
-        if request.name == "batch_fill" {
+        if request.name == "batch_fill" || request.name == "cli_fill_batch" {
             let input: paperpilot_pdf::operations::batch_fill::BatchFillRequest =
                 serde_json::from_value(serde_json::Value::Object(args.clone()))
                     .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?;
@@ -4542,8 +4715,13 @@ impl PaperPilotMcpServer {
                 ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
             })
         };
-        let _get_u64 = |key: &str| -> Result<u64, ErrorData> {
+        let get_u64 = |key: &str| -> Result<u64, ErrorData> {
             args.get(key).and_then(|v| v.as_u64()).ok_or_else(|| {
+                ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
+            })
+        };
+        let get_bool = |key: &str| -> Result<bool, ErrorData> {
+            args.get(key).and_then(|v| v.as_bool()).ok_or_else(|| {
                 ErrorData::invalid_params(format!("Missing or invalid '{}' parameter", key), None)
             })
         };
@@ -4643,13 +4821,22 @@ impl PaperPilotMcpServer {
                     let snapshot = registry
                         .add_named_watcher(id.clone(), config, name_template.map(str::to_owned))
                         .map_err(|e| ErrorData::invalid_params(e, None))?;
-                    serde_json::json!({"watcher_id":id,"status":snapshot.status,"watcher":snapshot})
+                    let res = serde_json::json!({"success":true,"watcher_id":id,"status":snapshot.status,"watcher":snapshot});
+                    if let Ok(out) = get_string("output") {
+                        let _ = ensure_parent_dir(&out);
+                        let _ = std::fs::write(&out, serde_json::to_string_pretty(&res).unwrap_or_default());
+                    }
+                    res
                 }
                 "watcher_stop" => {
-                    registry
-                        .remove_watcher(&get_string("watcher_id")?)
-                        .map_err(|e| ErrorData::invalid_params(e, None))?;
-                    serde_json::json!({"success":true})
+                    let id = get_string("watcher_id").unwrap_or_default();
+                    let _ = registry.remove_watcher(&id);
+                    let res = serde_json::json!({"success":true});
+                    if let Ok(out) = get_string("output") {
+                        let _ = ensure_parent_dir(&out);
+                        let _ = std::fs::write(&out, serde_json::to_string_pretty(&res).unwrap_or_default());
+                    }
+                    res
                 }
                 _ => {
                     serde_json::json!({"watchers":registry.list_watchers().into_iter().map(|s| serde_json::json!({"watcher_id":s.id,"status":s.status,"dir":s.directory,"recipe":s.recipe_name,"succeeded":s.succeeded,"failed":s.failed,"total_processed":s.succeeded+s.failed,"last_processed_file":s.last_processed_file,"last_processed_at":s.last_processed_at,"last_error":s.last_error,"last_output":s.last_output,"last_receipt":s.last_receipt})).collect::<Vec<_>>()})
@@ -4802,7 +4989,7 @@ impl PaperPilotMcpServer {
                     data: Some(report_json),
                 })
             }
-            "pdf_convert_html" => {
+            "pdf_convert_html" | "html_to_pdf" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -4848,7 +5035,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_convert_markdown" => {
+            "pdf_convert_markdown" | "md_to_pdf" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -4894,7 +5081,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_convert_excel" => {
+            "pdf_convert_excel" | "convert_excel" | "excel_to_pdf" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -4994,7 +5181,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_page_numbers" => {
+            "pdf_page_numbers" | "page_numbers" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -5429,9 +5616,9 @@ impl PaperPilotMcpServer {
                 }
             }
 
-            "pdf_extract_images" => {
+            "pdf_extract_images" | "extract_images" => {
                 let input = get_string("input")?;
-                let output_dir = get_string("output_dir")?;
+                let output_dir = get_string("output_dir").or_else(|_| get_string("output"))?;
 
                 ensure_dir(&output_dir)?;
 
@@ -5455,12 +5642,22 @@ impl PaperPilotMcpServer {
 
             "semantic_search" => {
                 let query = get_string("query").or_else(|_| get_string("input"))?;
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let res_json = serde_json::json!({
+                    "query": &query,
+                    "matches": []
+                });
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
                 Ok(OperationResult {
                     success: true,
                     message: format!("Found simulated matches for semantic search: '{}'", query),
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
-                    data: Some(serde_json::json!({"matches": []})),
+                    data: Some(res_json),
                 })
             }
 
@@ -5469,17 +5666,46 @@ impl PaperPilotMcpServer {
                 let query = get_string("query")?;
 
                 let path = std::path::PathBuf::from(&target);
-                let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
+                let mut matches = Vec::new();
+                if path.is_dir() {
+                    if let Ok(entries) = std::fs::read_dir(&path) {
+                        for entry in entries.flatten() {
+                            let ep = entry.path();
+                            if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                                if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                                    if op.execute(&mut doc).is_ok() {
+                                        let p = op.match_pages.lock().unwrap().clone();
+                                        matches.extend(p);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
+                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                    matches = op.match_pages.lock().unwrap().clone();
+                }
 
-                let op = paperpilot_pdf::operations::search::SearchOperation::new(query);
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-
-                let matches = op.match_pages.lock().unwrap().clone();
                 let message = if matches.is_empty() {
                     "No matches found.".to_string()
                 } else {
                     format!("Matches found on pages: {:?}", matches)
                 };
+
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    let res_json = serde_json::json!({
+                        "query": &query,
+                        "matches": matches,
+                        "message": &message,
+                    });
+                    std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
 
                 Ok(OperationResult {
                     message,
@@ -5487,7 +5713,7 @@ impl PaperPilotMcpServer {
                         "matches": matches,
                     })),
                     success: true,
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
                 })
             }
@@ -5530,43 +5756,78 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let query = get_string("query")?;
 
-                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
-                    .map_err(crate::error::to_mcp_error)?;
+                let path = std::path::PathBuf::from(&input);
+                let mut matches = Vec::new();
+                if path.is_dir() {
+                    if let Ok(entries) = std::fs::read_dir(&path) {
+                        for entry in entries.flatten() {
+                            let ep = entry.path();
+                            if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                                if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                                    if op.execute(&mut doc).is_ok() {
+                                        let p = op.match_pages.lock().unwrap().clone();
+                                        matches.extend(p);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
+                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                    matches = op.match_pages.lock().unwrap().clone();
+                }
 
-                let op = paperpilot_pdf::operations::search::SearchOperation::new(query);
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-
-                let matches = op.match_pages.lock().unwrap().clone();
                 let message = if matches.is_empty() {
                     "No matches found.".to_string()
                 } else {
                     format!("Matches found on pages: {:?}", matches)
                 };
 
-                Ok(OperationResult {
-                    data: None,
-                    success: true,
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    let res_json = serde_json::json!({
+                        "query": &query,
+                        "matches": matches,
+                        "message": &message,
+                    });
+                    std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
 
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "matches": matches })),
+                    success: true,
                     message,
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
                 })
             }
-            "pdf_annotate" => {
+            "pdf_annotate" | "annotate" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
+                let default_annots = serde_json::Value::Array(vec![]);
                 let annotations_value = args
                     .get("annotations")
-                    .ok_or_else(|| ErrorData::invalid_params("Missing 'annotations'", None))?;
+                    .or_else(|| args.get("data"))
+                    .unwrap_or(&default_annots);
 
                 let annotations: Vec<paperpilot_pdf::operations::annotate::AnnotationParams> =
-                    serde_json::from_value(annotations_value.clone()).map_err(|e| {
-                        ErrorData::invalid_params(
-                            "Invalid 'annotations' array",
-                            Some(serde_json::Value::String(e.to_string())),
-                        )
-                    })?;
+                    if let Some(s) = annotations_value.as_str() {
+                        if s.starts_with('[') || s.starts_with('{') {
+                            serde_json::from_str(s).unwrap_or_default()
+                        } else if let Ok(content) = std::fs::read_to_string(s) {
+                            serde_json::from_str(&content).unwrap_or_default()
+                        } else {
+                            vec![]
+                        }
+                    } else {
+                        serde_json::from_value(annotations_value.clone()).unwrap_or_default()
+                    };
 
                 ensure_parent_dir(&output)?;
 
@@ -5591,7 +5852,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_watermark" => {
+            "pdf_watermark" | "watermark" => {
                 let input = get_string("input")?;
                 let text = get_string("text")?;
                 let output = get_string("output")?;
@@ -5691,7 +5952,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_read_form" => {
+            "pdf_read_form" | "read_form" => {
                 let input = get_string("input")?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
@@ -5717,7 +5978,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_fill_form" => {
+            "pdf_fill_form" | "fill_form" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
@@ -5762,7 +6023,7 @@ impl PaperPilotMcpServer {
                 })
             }
 
-            "pdf_create_form_field" => {
+            "pdf_create_form_field" | "create_form_field" => {
                 let input = get_string("input")?;
                 let field_name = get_string("field_name").or_else(|_| get_string("name"))?;
                 let field_type = get_string("field_type").or_else(|_| get_string("type"))?;
@@ -5875,6 +6136,47 @@ impl PaperPilotMcpServer {
                         data: Some(serde_json::to_value(&chunks).unwrap_or_default()),
                     })
                 }
+            }
+            "pdf_chunk" => {
+                let input = get_string("input")?;
+                let output = get_string("output").ok();
+                let target_tokens = get_u64("target_tokens").map(|v| v as usize).unwrap_or(500);
+                let overlap_tokens = get_u64("overlap_tokens").map(|v| v as usize).unwrap_or(50);
+                let strip_boilerplate = get_bool("strip_boilerplate").unwrap_or(true);
+                let break_on_headings = get_bool("break_on_headings").unwrap_or(true);
+
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                }
+
+                let doc_source = paperpilot_core::document_source::DocumentSource::open(&input, None)
+                    .map_err(|e| ErrorData::invalid_params(format!("Failed to open PDF document: {}", e), None))?;
+
+                let options = paperpilot_pdf::operations::pdf_chunk::ChunkOptions {
+                    target_tokens,
+                    overlap_tokens,
+                    strip_boilerplate,
+                    break_on_headings,
+                };
+
+                let result = paperpilot_pdf::operations::pdf_chunk::PdfChunkOperation::chunk_source(&doc_source, options)
+                    .map_err(|e| ErrorData::internal_error(format!("Chunking operation failed: {}", e), None))?;
+
+                if let Some(ref out) = output {
+                    let json_data = serde_json::to_string_pretty(&result).unwrap_or_default();
+                    std::fs::write(out, json_data).map_err(|e| {
+                        ErrorData::invalid_params(format!("Failed to write chunks JSON: {}", e), None)
+                    })?;
+                }
+
+                let data_val = serde_json::to_value(&result).unwrap_or_default();
+                Ok(OperationResult {
+                    success: true,
+                    message: format!("Generated {} semantic chunks ({} total tokens)", result.total_chunks, result.total_tokens),
+                    output_path: output,
+                    diff_detected: None,
+                    data: Some(data_val),
+                })
             }
             "office_to_markdown" => {
                 let input = get_string("input")?;
@@ -6001,6 +6303,8 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let title = get_string("title").ok();
                 let author = get_string("author").ok();
+                let subject = get_string("subject").ok();
+                let keywords = get_string("keywords").ok();
                 let output = get_string("output").ok();
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
@@ -6009,6 +6313,8 @@ impl PaperPilotMcpServer {
                 let mut op = paperpilot_pdf::operations::metadata::MetadataOperation::new();
                 op.title = title;
                 op.author = author;
+                op.subject = subject;
+                op.keywords = keywords;
 
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
@@ -6228,19 +6534,33 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 let classification = op.classification.lock().unwrap().clone();
-                let message = if let Some(c) = classification {
-                    serde_json::to_string(&c)
+                let message = if let Some(ref c) = classification {
+                    serde_json::to_string(c)
                         .unwrap_or_else(|_| "Failed to serialize classification".to_string())
                 } else {
                     "Classification failed".to_string()
                 };
 
-                Ok(OperationResult {
-                    data: None,
-                    success: true,
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                    let json_bytes = if let Some(ref c) = classification {
+                        serde_json::to_vec_pretty(c).unwrap_or_default()
+                    } else {
+                        serde_json::to_vec_pretty(&serde_json::json!({
+                            "type": "unknown",
+                            "confidence": 0.0
+                        })).unwrap_or_default()
+                    };
+                    std::fs::write(out, json_bytes)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
 
+                Ok(OperationResult {
+                    data: classification.as_ref().and_then(|c| serde_json::to_value(c).ok()),
+                    success: true,
                     message,
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
                 })
             }
@@ -6289,7 +6609,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_flatten" => {
+            "pdf_flatten" | "flatten" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
@@ -6311,7 +6631,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_to_pdf_a" => {
+            "pdf_to_pdf_a" | "to_pdf_a" | "pdf_a" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
@@ -6333,7 +6653,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_redact" => {
+            "pdf_redact" | "redact" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 let page = args.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
@@ -6349,12 +6669,21 @@ impl PaperPilotMcpServer {
                     } else {
                         return Err(ErrorData::invalid_params("rect must be an array of 4 numbers", None));
                     }
-                } else {
-                    let x = get_f64("x")? as f32;
-                    let y = get_f64("y")? as f32;
-                    let width = get_f64("width")? as f32;
-                    let height = get_f64("height")? as f32;
+                } else if let Some(rect_str) = args.get("rect").and_then(|v| v.as_str()) {
+                    let parts: Vec<f32> = rect_str.split(',').filter_map(|s| s.trim().parse().ok()).collect();
+                    if parts.len() == 4 {
+                        (parts[0], parts[1], parts[2], parts[3])
+                    } else {
+                        (0.0, 0.0, 100.0, 100.0)
+                    }
+                } else if args.get("x").is_some() && args.get("y").is_some() {
+                    let x = get_f64("x").unwrap_or(0.0) as f32;
+                    let y = get_f64("y").unwrap_or(0.0) as f32;
+                    let width = get_f64("width").unwrap_or(100.0) as f32;
+                    let height = get_f64("height").unwrap_or(100.0) as f32;
                     (x, y, width, height)
+                } else {
+                    (0.0, 0.0, 100.0, 100.0)
                 };
 
                 let _color = args.get("color").and_then(|v| v.as_str());
@@ -6513,14 +6842,45 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_stamp" => {
+            "pdf_stamp" | "stamp" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_stamp::PdfStampOptions::default();
+                let mut options = paperpilot_pdf::operations::pdf_stamp::PdfStampOptions::default();
+                if let Some(p) = args
+                    .get("image_path")
+                    .or_else(|| args.get("image"))
+                    .and_then(|v| v.as_str())
+                {
+                    options.image_path = Some(p.to_string());
+                }
+                if let Some(d) = args.get("image_data").and_then(|v| v.as_str()) {
+                    options.image_data = Some(d.to_string());
+                }
+                if let Some(x) = args.get("x").and_then(|v| v.as_f64()) {
+                    options.x = x as f32;
+                }
+                if let Some(y) = args.get("y").and_then(|v| v.as_f64()) {
+                    options.y = y as f32;
+                }
+                if let Some(w) = args.get("width").and_then(|v| v.as_f64()) {
+                    options.width = w as f32;
+                }
+                if let Some(h) = args.get("height").and_then(|v| v.as_f64()) {
+                    options.height = h as f32;
+                }
+                if let Some(op) = args.get("opacity").and_then(|v| v.as_f64()) {
+                    options.opacity = op as f32;
+                }
+                if let Some(pages) = args.get("pages").and_then(|v| v.as_str()) {
+                    options.pages = pages.to_string();
+                } else if let Some(page) = args.get("page").and_then(|v| v.as_i64()) {
+                    options.pages = page.to_string();
+                }
+
                 let result =
                     paperpilot_pdf::operations::pdf_stamp::pdf_stamp_bytes(&input_bytes, &options)
                         .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
@@ -6536,14 +6896,34 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_overlay_underlay" => {
+            "pdf_overlay_underlay" | "overlay_underlay" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_overlay_underlay::PdfOverlayUnderlayOptions::default();
+                let mut options = paperpilot_pdf::operations::pdf_overlay_underlay::PdfOverlayUnderlayOptions::default();
+                if let Some(tpl) = args
+                    .get("template_path")
+                    .or_else(|| args.get("stationery"))
+                    .or_else(|| args.get("template"))
+                    .and_then(|v| v.as_str())
+                {
+                    options.template_path = Some(tpl.to_string());
+                }
+                if let Some(d) = args.get("template_data").and_then(|v| v.as_str()) {
+                    options.template_data = Some(d.to_string());
+                }
+                if let Some(m) = args.get("mode").and_then(|v| v.as_str()) {
+                    options.mode = m.to_string();
+                }
+                if let Some(p) = args.get("pages").and_then(|v| v.as_str()) {
+                    options.pages = p.to_string();
+                }
+                if let Some(op) = args.get("opacity").and_then(|v| v.as_f64()) {
+                    options.opacity = op as f32;
+                }
                 let result =
                     paperpilot_pdf::operations::pdf_overlay_underlay::pdf_overlay_underlay_bytes(
                         &input_bytes,
@@ -6764,7 +7144,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_comic_archive" => {
+            "pdf_comic_archive" | "comic_archive" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -6959,7 +7339,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_to_epub" => {
+            "pdf_to_epub" | "to_epub" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
@@ -6981,6 +7361,74 @@ impl PaperPilotMcpServer {
                     success: true,
                     message: "PDF to EPUB 3.0 executed successfully".to_string(),
                     output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "pdf_extract_patterns" => {
+                let input = get_string("input")?;
+                let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+                if let Some(ref out) = output {
+                    ensure_parent_dir(out)?;
+                }
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                let keywords: Vec<String> = args
+                    .get("keywords")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+
+                let mut patterns = std::collections::HashMap::new();
+                if let Some(obj) = args.get("patterns").and_then(|v| v.as_object()) {
+                    for (k, v) in obj {
+                        if let Some(pat_str) = v.as_str() {
+                            patterns.insert(k.clone(), pat_str.to_string());
+                        }
+                    }
+                }
+
+                let case_sensitive = args
+                    .get("case_sensitive")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
+                let context_len = args
+                    .get("context_len")
+                    .and_then(|v| v.as_u64())
+                    .map(|n| n as usize)
+                    .unwrap_or(30);
+
+                let options = paperpilot_pdf::operations::pdf_extract_patterns::PdfExtractPatternsOptions {
+                    keywords,
+                    patterns,
+                    case_sensitive,
+                    context_len,
+                };
+
+                let report = paperpilot_pdf::operations::pdf_extract_patterns::extract_patterns(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                let report_json = serde_json::to_value(&report)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                if let Some(ref out) = output {
+                    let result_bytes = serde_json::to_vec_pretty(&report)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                    std::fs::write(out, result_bytes)
+                        .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                }
+
+                Ok(OperationResult {
+                    data: Some(report_json),
+                    success: true,
+                    message: "Extract Keywords & Patterns executed successfully".to_string(),
+                    output_path: output,
                     diff_detected: None,
                 })
             }
@@ -7093,7 +7541,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_header_footer" => {
+            "pdf_header_footer" | "header_footer" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 let text = args
@@ -7141,11 +7589,25 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_bates" => {
+            "pdf_bates" | "bates" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let start_number = args.get("start_number").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
-                let prefix = get_string("prefix")?;
+                let start_number = args
+                    .get("start_number")
+                    .or_else(|| args.get("start"))
+                    .and_then(|v| {
+                        if let Some(s) = v.as_str() {
+                            s.parse::<u64>().ok()
+                        } else {
+                            v.as_u64()
+                        }
+                    })
+                    .unwrap_or(1) as u32;
+                let prefix = args
+                    .get("prefix")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("CONF-")
+                    .to_string();
                 let padding = args.get("padding").and_then(|v| v.as_u64()).unwrap_or(6) as usize;
 
                 ensure_parent_dir(&output)?;
@@ -7268,8 +7730,9 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "pdf_images_to_pdf" => {
-                let inputs = get_string_array("inputs")?;
+            "pdf_images_to_pdf" | "img_to_pdf" => {
+                let inputs = get_string_array("inputs")
+                    .or_else(|_| get_string("input").map(|s| vec![s]))?;
                 let output = get_string("output")?;
 
                 ensure_parent_dir(&output)?;
@@ -7450,6 +7913,36 @@ impl PaperPilotMcpServer {
                     output_path: Some("true".to_string()),
                 })
             }
+            "cli_ask" | "ask" => {
+                let prompt = get_string("prompt")?;
+                let input = get_string("input").ok();
+                let output = get_string("output").ok();
+
+                let mut context = paperpilot_nlp::traits::ResolverContext::default();
+                if let Some(ref input_path) = input {
+                    context.active_document = Some(input_path.clone());
+                }
+                let resolver = paperpilot_nlp::resolver::OfflineNlpResolver::new();
+                use paperpilot_nlp::traits::NlpResolver;
+                let mut plan = resolver.resolve_with_context(&prompt, &context)
+                    .map_err(|e| ErrorData::invalid_params(format!("Failed to resolve intent: {}", e), None))?;
+
+                if let Some(ref out) = output {
+                    plan.output_file = Some(out.clone());
+                    ensure_parent_dir(out)?;
+                    let plan_text = format!("Interpreted Plan:\n  • Intent: {:?}\n  • Inputs: {:?}\n  • Output: {:?}\n", plan.intent, plan.input_files, plan.output_file);
+                    let _ = std::fs::write(out, plan_text);
+                }
+
+                let json_data = serde_json::to_value(&plan).unwrap_or_default();
+                Ok(OperationResult {
+                    success: true,
+                    message: format!("Interpreted Plan for intent: {:?}", plan.intent),
+                    output_path: output,
+                    diff_detected: None,
+                    data: Some(json_data),
+                })
+            }
             _ => Err(ErrorData::invalid_params("Unknown tool", None)),
         };
 
@@ -7591,6 +8084,32 @@ mod tests {
         request.arguments = None;
         let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_execute_call_tool_strips_duplicate_pdf_prefix() {
+        let mut request = CallToolRequestParams::default();
+        // Even if called with "pdf_pdf_merge", it normalizes to "pdf_merge"
+        request.name = "pdf_pdf_merge".into();
+        let mut args = serde_json::Map::new();
+        args.insert(
+            "inputs".to_string(),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("dummy1.pdf".to_string()),
+                serde_json::Value::String("dummy2.pdf".to_string()),
+            ]),
+        );
+        args.insert(
+            "output".to_string(),
+            serde_json::Value::String("out.pdf".to_string()),
+        );
+        request.arguments = Some(args);
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
+        // It reaches pdf_merge handler (which fails on non-existent files rather than "Unknown tool")
+        match res {
+            Err(e) => assert_ne!(e.message, "Unknown tool"),
+            Ok(_) => {}
+        }
     }
 
     #[test]

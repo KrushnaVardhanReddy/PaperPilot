@@ -10,6 +10,7 @@ use std::path::PathBuf;
 #[derive(Subcommand, Debug)]
 pub enum OfficeCommands {
     /// Convert an Office document (DOCX, XLSX, PPTX) to Markdown
+    #[command(alias = "to_markdown", alias = "to-md", alias = "office-to-markdown", alias = "office_to_markdown")]
     ToMarkdown {
         #[arg(long, required = true)]
         input: PathBuf,
@@ -17,7 +18,7 @@ pub enum OfficeCommands {
         output: PathBuf,
     },
     /// Extract text from an Office document
-    #[command(alias = "extract-text")]
+    #[command(alias = "extract-text", alias = "extract_text", alias = "office-extract-text", alias = "office_extract_text")]
     Extract {
         #[arg(long, required = true)]
         input: PathBuf,
@@ -25,6 +26,7 @@ pub enum OfficeCommands {
         output: PathBuf,
     },
     /// Modernize legacy binary Office documents (DOC/XLS/PPT) to modern formats
+    #[command(alias = "modernize-legacy", alias = "modernize_legacy", alias = "office-modernize-legacy", alias = "office_modernize_legacy")]
     Modernize {
         #[arg(long, required = true)]
         input: PathBuf,
@@ -32,6 +34,7 @@ pub enum OfficeCommands {
         output: PathBuf,
     },
     /// Ingest Excel spreadsheet and output structured JSON
+    #[command(alias = "excel_to_json", alias = "to-json", alias = "to_json")]
     ExcelToJson {
         #[arg(long, required = true)]
         input: PathBuf,
@@ -43,6 +46,7 @@ pub enum OfficeCommands {
         no_headers: bool,
     },
     /// Export Excel spreadsheet sheet to CSV
+    #[command(alias = "excel_to_csv", alias = "to-csv", alias = "to_csv")]
     ExcelToCsv {
         #[arg(long, required = true)]
         input: PathBuf,

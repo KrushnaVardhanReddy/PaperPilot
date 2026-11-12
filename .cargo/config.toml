@@ -1,6 +1,20 @@
 [build]
 rustflags = ["-Csymbol-mangling-version=v0"]
 
+# Linux: Use gold or clang/lld for faster incremental linking
+[target.x86_64-unknown-linux-gnu]
+rustflags = [
+    "-Csymbol-mangling-version=v0",
+    "-C", "link-arg=-fuse-ld=gold",
+]
+
+# macOS: Unpacked split debuginfo for faster incremental linking
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "split-debuginfo=unpacked"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "split-debuginfo=unpacked"]
+
 [target.'cfg(all(windows, target_env = "msvc"))']
 rustflags = [
     "-Csymbol-mangling-version=v0",

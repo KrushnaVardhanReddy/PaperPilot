@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="preview-section">
-                    <label class="input-label">Step Sequence Preview</label>
+                    <span class="input-label">Step Sequence Preview</span>
                     <div class="step-badges">
                         {#each pipelineState.steps as step, i}
                             <span class="step-badge">[{i + 1}] {step.icon} {step.label}</span>
@@ -97,12 +97,12 @@
     .modal-drawer {
         width: 450px;
         height: 100%;
-        background: #0f172a;
+        background: var(--bg-surface, #0f172a);
         box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
         display: flex;
         flex-direction: column;
-        color: #f8fafc;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary, #f8fafc);
+        border-left: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     }
 
     .modal-header {

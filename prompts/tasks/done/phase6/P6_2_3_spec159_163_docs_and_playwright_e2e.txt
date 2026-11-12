@@ -1,0 +1,47 @@
+### Task: Update Docs & Playwright E2E Suites for Spec 159 (`pdf_chunk`) & Spec 163 (`DocumentSource` mmap)
+
+#### Context
+Spec 159 (`pdf_chunk`) and Spec 163 (`DocumentSource` zero-copy memory mapping & page batching) have been merged into `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`, and `apps/desktop`.
+Now we need to update the public documentation site (`apps/docs/src/content`) and the Playwright / Desktop E2E test suites (`apps/desktop/tests/`) to ensure full test and documentation parity.
+
+#### Requirements
+
+1. **Documentation Updates (`apps/docs/src/content`)**:
+   - Create `apps/docs/src/content/docs/reference/tools/pdf_chunk.md`:
+     - Frontmatter: `title: "pdf_chunk"`, `description: "Reference, CLI, MCP, and REST API commands for pdf_chunk intelligent semantic chunking."`, `sidebar: { order: 36 }`.
+     - Description: Explains structure-aware chunking (`#`, `##`, paragraphs, Markdown tables `|...|`), configurable target/overlap tokens, boilerplate suppression for repetitive running headers/footers, and heading context tracking.
+     - CLI examples:
+       ```bash
+       paperpilot pdf-chunk --input document.pdf --target-tokens 500 --overlap 50 --strip-boilerplate --json
+       ```
+     - MCP JSON-RPC example for tool `pdf_chunk` with arguments (`input`, `target_tokens`, `overlap_tokens`, `strip_boilerplate`, `break_on_headings`).
+     - REST API example:
+       ```bash
+       curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/chunk \
+         -H 'Content-Type: application/json' \
+         -d '{"input": "document.pdf", "target_tokens": 500, "overlap_tokens": 50, "strip_boilerplate": true}'
+       ```
+   - Update `apps/docs/src/content/docs/reference/tools-handbook.md`:
+     - Add `pdf_chunk` section detailing the options (`target_tokens`, `overlap_tokens`, `strip_boilerplate`, `break_on_headings`), return structure (`total_chunks`, `total_tokens`, `chunks` with `page_start`, `page_end`, `estimated_tokens`, `text`, `headings_context`).
+   - Create or update architecture documentation in `apps/docs/src/content/docs/architecture/` (or performance guide) explaining **Spec 163 Zero-Copy `DocumentSource` & Universal Page Batching**:
+     - Automatic 10MB memory-mapped I/O (`memmap2`) on native platforms (Linux, macOS, Windows).
+     - Streaming batch execution via `PageBatchIterator` to prevent out-of-memory errors on 500+ page documents.
+     - Pure fallback on WASM / browser runtimes.
+
+2. **Playwright & Real Desktop E2E Suites (`apps/desktop/tests/`)**:
+   - Update `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`:
+     - Include `pdf_chunk` in the operations list and CLI execution generator:
+       `cliCmd = \`${cliBin} pdf-chunk --input ../../tests/e2e_fixtures/real/single_page.pdf --target-tokens 500 --overlap 50 --json --output \${mockFileJSON}\`;`
+     - Verify it is recognized under JSON-producing tools.
+   - Update `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`:
+     - Add `{ name: 'pdf_chunk', title: 'Semantic Chunking', type: 'pdf', ext: 'json' }` to the operations matrix.
+     - Add case for `pdf_chunk` to set appropriate UI sliders / parameters if tested, or execute cleanly.
+   - Run vitest tests:
+     `export PATH=$PATH:/home/krushna/.nvm/versions/node/v26.12.1/bin && pnpm --dir apps/desktop test`
+     Ensure all unit tests continue to pass.
+
+3. **Workspace Verification**:
+   - Check workspace compilation: `cargo check --workspace --all-targets -j 4`.
+   - Ensure zero WASM regressions: `cargo check -p paperpilot-wasm --target wasm32-unknown-unknown -j 4`.
+   - Update `graphify-rs` knowledge graph if applicable.
+

@@ -1,4 +1,4 @@
-export type FileCategory = 'pdf' | 'spreadsheet' | 'document' | 'presentation' | 'other';
+export type FileCategory = 'pdf' | 'spreadsheet' | 'document' | 'presentation' | 'image' | 'other';
 
 export interface FileTypeInfo {
   category: FileCategory;
@@ -62,6 +62,54 @@ const EXTENSION_MAP: Record<string, { category: FileCategory; mimeType: string; 
     mimeType: 'application/vnd.ms-powerpoint',
     icon: '📽️',
     label: 'PowerPoint 97-2004 (.ppt)'
+  },
+  png: {
+    category: 'image',
+    mimeType: 'image/png',
+    icon: '🖼️',
+    label: 'PNG Image (.png)'
+  },
+  jpg: {
+    category: 'image',
+    mimeType: 'image/jpeg',
+    icon: '🖼️',
+    label: 'JPEG Image (.jpg)'
+  },
+  jpeg: {
+    category: 'image',
+    mimeType: 'image/jpeg',
+    icon: '🖼️',
+    label: 'JPEG Image (.jpeg)'
+  },
+  webp: {
+    category: 'image',
+    mimeType: 'image/webp',
+    icon: '🖼️',
+    label: 'WebP Image (.webp)'
+  },
+  gif: {
+    category: 'image',
+    mimeType: 'image/gif',
+    icon: '🖼️',
+    label: 'GIF Image (.gif)'
+  },
+  bmp: {
+    category: 'image',
+    mimeType: 'image/bmp',
+    icon: '🖼️',
+    label: 'Bitmap Image (.bmp)'
+  },
+  tiff: {
+    category: 'image',
+    mimeType: 'image/tiff',
+    icon: '🖼️',
+    label: 'TIFF Image (.tiff)'
+  },
+  tif: {
+    category: 'image',
+    mimeType: 'image/tiff',
+    icon: '🖼️',
+    label: 'TIFF Image (.tif)'
   }
 };
 
@@ -94,6 +142,10 @@ export function isPdfFile(fileName: string): boolean {
 
 export function isSpreadsheetFile(fileName: string): boolean {
   return getFileTypeInfo(fileName).category === 'spreadsheet';
+}
+
+export function isImageFile(fileName: string): boolean {
+  return getFileTypeInfo(fileName).category === 'image';
 }
 
 export function getFileIcon(fileName: string): string {

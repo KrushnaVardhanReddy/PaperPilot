@@ -1,4 +1,67 @@
 {
+  "batch_fill": {
+    "additionalProperties": false,
+    "oneOf": [
+      {
+        "not": {
+          "required": [
+            "records"
+          ]
+        },
+        "required": [
+          "data"
+        ]
+      },
+      {
+        "not": {
+          "required": [
+            "data"
+          ]
+        },
+        "required": [
+          "records"
+        ]
+      }
+    ],
+    "properties": {
+      "data": {
+        "description": "Local .csv or .json data path",
+        "type": "string"
+      },
+      "date": {
+        "description": "Optional YYYY-MM-DD UTC date override",
+        "type": "string"
+      },
+      "field_map": {
+        "type": "string"
+      },
+      "keep_editable": {
+        "default": false,
+        "type": "boolean"
+      },
+      "name_template": {
+        "default": "{index:04}.pdf",
+        "type": "string"
+      },
+      "output_dir": {
+        "type": "string"
+      },
+      "records": {
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "template": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "template",
+      "output_dir"
+    ],
+    "type": "object"
+  },
   "document_pii_scan": {
     "properties": {
       "input": {
@@ -26,6 +89,155 @@
     "required": [
       "input"
     ],
+    "type": "object"
+  },
+  "document_workflow": {
+    "properties": {
+      "input": {
+        "description": "Path to input PDF file",
+        "type": "string"
+      },
+      "name_template": {
+        "description": "Optional basename template; output is then a directory",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to output PDF file",
+        "type": "string"
+      },
+      "preset": {
+        "description": "Preset workflow ID (e.g. preset-legal-discovery, preset-clean-scan, preset-redact-protect)",
+        "type": "string"
+      },
+      "recipe": {
+        "description": "Path to TOML .ppflow / JSON recipe, raw JSON, or multiline TOML",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "excel_to_csv": {
+    "properties": {
+      "input": {
+        "description": "Path to the input Excel file",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to save the output CSV file",
+        "type": "string"
+      },
+      "sheet": {
+        "description": "Optional specific sheet name to export",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "excel_to_json": {
+    "properties": {
+      "has_headers": {
+        "description": "Whether the first row contains headers (defaults to true)",
+        "type": "boolean"
+      },
+      "input": {
+        "description": "Path to the input Excel file",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination path to save extracted JSON to disk",
+        "type": "string"
+      },
+      "sheet": {
+        "description": "Optional specific sheet name to extract",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
+  "execution_receipt_get": {
+    "properties": {
+      "directory": {
+        "type": "string"
+      },
+      "limit": {
+        "default": 50,
+        "maximum": 1000,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "receipt_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "directory",
+      "receipt_id"
+    ],
+    "type": "object"
+  },
+  "execution_receipt_list": {
+    "properties": {
+      "directory": {
+        "type": "string"
+      },
+      "limit": {
+        "default": 50,
+        "maximum": 1000,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "receipt_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "directory"
+    ],
+    "type": "object"
+  },
+  "json_to_pdf": {
+    "properties": {
+      "custom_css": {
+        "description": "Custom CSS rules to apply",
+        "type": "string"
+      },
+      "input": {
+        "description": "Path to input file",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to output PDF file",
+        "type": "string"
+      },
+      "page_size": {
+        "description": "Page size format (e.g. A4, Letter)",
+        "type": "string"
+      },
+      "preset": {
+        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "list_workflows": {
+    "properties": {},
+    "required": [],
     "type": "object"
   },
   "office_extract_text": {
@@ -69,6 +281,28 @@
     "required": [
       "input",
       "output"
+    ],
+    "type": "object"
+  },
+  "pdf_annotate": {
+    "properties": {
+      "annotations": {
+        "description": "A list of annotation objects to apply.",
+        "type": "array"
+      },
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output",
+      "annotations"
     ],
     "type": "object"
   },
@@ -161,6 +395,82 @@
     ],
     "type": "object"
   },
+  "pdf_bookmarks": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_burst": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output_dir": {
+        "description": "The directory where individual files will be saved.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output_dir"
+    ],
+    "type": "object"
+  },
+  "pdf_change_permissions": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_classify_type": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
+  "pdf_comic_archive": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_compare": {
     "properties": {
       "file1": {
@@ -215,6 +525,145 @@
     ],
     "type": "object"
   },
+  "pdf_convert_excel": {
+    "properties": {
+      "custom_css": {
+        "description": "Custom CSS rules to apply",
+        "type": "string"
+      },
+      "input": {
+        "description": "Path to input file",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to output PDF file",
+        "type": "string"
+      },
+      "page_size": {
+        "description": "Page size format (e.g. A4, Letter)",
+        "type": "string"
+      },
+      "preset": {
+        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_convert_html": {
+    "properties": {
+      "custom_css": {
+        "description": "Custom CSS rules to apply",
+        "type": "string"
+      },
+      "input": {
+        "description": "Path to input file",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to output PDF file",
+        "type": "string"
+      },
+      "page_size": {
+        "description": "Page size format (e.g. A4, Letter)",
+        "type": "string"
+      },
+      "preset": {
+        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_convert_markdown": {
+    "properties": {
+      "custom_css": {
+        "description": "Custom CSS rules to apply",
+        "type": "string"
+      },
+      "input": {
+        "description": "Path to input file",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to output PDF file",
+        "type": "string"
+      },
+      "page_size": {
+        "description": "Page size format (e.g. A4, Letter)",
+        "type": "string"
+      },
+      "preset": {
+        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_create_form_field": {
+    "properties": {
+      "field_name": {
+        "description": "Field name.",
+        "type": "string"
+      },
+      "field_type": {
+        "description": "Field type.",
+        "type": "string"
+      },
+      "height": {
+        "description": "Height.",
+        "type": "number"
+      },
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "page": {
+        "description": "Page number.",
+        "type": "integer"
+      },
+      "width": {
+        "description": "Width.",
+        "type": "number"
+      },
+      "x": {
+        "description": "X coordinate.",
+        "type": "number"
+      },
+      "y": {
+        "description": "Y coordinate.",
+        "type": "number"
+      }
+    },
+    "required": [
+      "input",
+      "field_name",
+      "field_type",
+      "page",
+      "x",
+      "y",
+      "width",
+      "height",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_crop": {
     "properties": {
       "box": {
@@ -255,6 +704,21 @@
     "required": [
       "input",
       "password",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_dedup_streams": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
       "output"
     ],
     "type": "object"
@@ -342,6 +806,23 @@
     ],
     "type": "object"
   },
+  "pdf_extract_tables": {
+    "properties": {
+      "format": {
+        "type": "string"
+      },
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
   "pdf_extract_text": {
     "properties": {
       "input": {
@@ -363,6 +844,28 @@
     ],
     "type": "object"
   },
+  "pdf_fill_form": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "values": {
+        "description": "Values to fill.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "input",
+      "values",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_flatten": {
     "properties": {
       "input": {
@@ -377,6 +880,18 @@
     "required": [
       "input",
       "output"
+    ],
+    "type": "object"
+  },
+  "pdf_hash": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
     ],
     "type": "object"
   },
@@ -427,6 +942,18 @@
     ],
     "type": "object"
   },
+  "pdf_info": {
+    "properties": {
+      "input": {
+        "description": "The path to the input PDF file.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
   "pdf_linearize": {
     "properties": {
       "input": {
@@ -464,6 +991,61 @@
     ],
     "type": "object"
   },
+  "pdf_merge_alternate": {
+    "properties": {
+      "input_a": {
+        "type": "string"
+      },
+      "input_b": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      },
+      "reverse_a": {
+        "type": "boolean"
+      },
+      "reverse_b": {
+        "type": "boolean"
+      },
+      "step": {
+        "type": "integer"
+      },
+      "step_b": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "input_a",
+      "input_b",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_metadata": {
+    "properties": {
+      "author": {
+        "description": "The new author.",
+        "type": "string"
+      },
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "title": {
+        "description": "The new title.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
   "pdf_nup": {
     "properties": {
       "input": {
@@ -496,6 +1078,21 @@
     ],
     "type": "object"
   },
+  "pdf_overlay_underlay": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_page_numbers": {
     "properties": {
       "format": {
@@ -514,6 +1111,65 @@
     "required": [
       "input",
       "output"
+    ],
+    "type": "object"
+  },
+  "pdf_posterize": {
+    "properties": {
+      "grid_cols": {
+        "type": "number"
+      },
+      "grid_rows": {
+        "type": "number"
+      },
+      "include_guides": {
+        "type": "boolean"
+      },
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      },
+      "overlap_pt": {
+        "type": "number"
+      },
+      "scale": {
+        "type": "number"
+      },
+      "target_sheet": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_rag_chunks": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
+  "pdf_read_form": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
     ],
     "type": "object"
   },
@@ -583,6 +1239,23 @@
         "type": "string"
       },
       "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_render": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output PDF file path.",
         "type": "string"
       }
     },
@@ -697,6 +1370,40 @@
     ],
     "type": "object"
   },
+  "pdf_search": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "query": {
+        "description": "The text to search for.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "query"
+    ],
+    "type": "object"
+  },
+  "pdf_sign": {
+    "properties": {
+      "input": {
+        "description": "Path to the PDF to sign.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to save the signed PDF.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_split": {
     "properties": {
       "input": {
@@ -711,6 +1418,51 @@
     "required": [
       "input",
       "output_dir"
+    ],
+    "type": "object"
+  },
+  "pdf_split_by_outline": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_split_scanned_book": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_stamp": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
     ],
     "type": "object"
   },
@@ -745,6 +1497,21 @@
     ],
     "type": "object"
   },
+  "pdf_timestamp": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_to_docx": {
     "properties": {
       "input": {
@@ -753,6 +1520,21 @@
       },
       "output": {
         "description": "The output file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_to_epub": {
+    "properties": {
+      "input": {
+        "type": "string"
+      },
+      "output": {
         "type": "string"
       }
     },
@@ -779,6 +1561,23 @@
     ],
     "type": "object"
   },
+  "pdf_to_json": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      },
+      "output": {
+        "description": "The output JSON file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_to_markdown": {
     "properties": {
       "input": {
@@ -787,6 +1586,23 @@
       },
       "output": {
         "description": "The output Markdown file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
+  "pdf_to_pdf_a": {
+    "properties": {
+      "input": {
+        "description": "Path to the PDF to convert to PDF/A.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Path to save the PDF/A file.",
         "type": "string"
       }
     },
@@ -827,6 +1643,18 @@
     "required": [
       "input",
       "output"
+    ],
+    "type": "object"
+  },
+  "pdf_validate": {
+    "properties": {
+      "input": {
+        "description": "The input PDF file path.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input"
     ],
     "type": "object"
   },
@@ -884,6 +1712,116 @@
       "input",
       "text",
       "output"
+    ],
+    "type": "object"
+  },
+  "recipe_run": {
+    "properties": {
+      "input": {
+        "description": "Absolute path to input PDF",
+        "type": "string"
+      },
+      "name_template": {
+        "description": "Optional dynamic output basename; requires explicit output directory",
+        "type": "string"
+      },
+      "output": {
+        "description": "Output file, or output directory with name_template",
+        "type": "string"
+      },
+      "recipe": {
+        "description": "Absolute path to .ppflow TOML recipe file",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "recipe"
+    ],
+    "type": "object"
+  },
+  "semantic_search": {
+    "properties": {
+      "input": {
+        "description": "Optional input document",
+        "type": "string"
+      },
+      "limit": {
+        "default": 5,
+        "description": "Max results (default 5)",
+        "type": "integer"
+      },
+      "query": {
+        "description": "Search query",
+        "type": "string"
+      }
+    },
+    "required": [
+      "query"
+    ],
+    "type": "object"
+  },
+  "watcher_list": {
+    "properties": {},
+    "required": [],
+    "type": "object"
+  },
+  "watcher_start": {
+    "properties": {
+      "dir": {
+        "description": "Absolute path to the directory to watch",
+        "type": "string"
+      },
+      "name_template": {
+        "description": "Output basename template; input, UTC date, SHA-256 and index tokens",
+        "type": "string"
+      },
+      "output_dir": {
+        "description": "Output directory; defaults to a separate processed subfolder",
+        "type": "string"
+      },
+      "recipe": {
+        "description": "Local .ppflow recipe path, preset ID, or serialized workflow",
+        "type": "string"
+      },
+      "settle_delay_ms": {
+        "default": 500,
+        "maximum": 60000,
+        "minimum": 50,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "dir",
+      "recipe"
+    ],
+    "type": "object"
+  },
+  "watcher_stop": {
+    "properties": {
+      "watcher_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "watcher_id"
+    ],
+    "type": "object"
+  },
+  "workspace_search": {
+    "properties": {
+      "dir": {
+        "type": "string"
+      },
+      "input": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "query"
     ],
     "type": "object"
   }

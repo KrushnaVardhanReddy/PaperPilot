@@ -1,0 +1,103 @@
+# Task P157: Automated Multi-Interface Marketing GIF Generation Pipeline
+
+## Background & Objective
+PaperPilot is a 100% offline, privacy-first PDF operating system with 5 unified interfaces:
+1. Native CLI (`paperpilot`)
+2. Local REST API Daemon (`paperpilot serve` on `:7823`)
+3. Model Context Protocol (`paperpilot-mcp` for AI Agents)
+4. Desktop UI (Tauri 2 + Svelte 5)
+5. Web Embed (WASM)
+
+To visually showcase these capabilities on the GitHub repository `README.md`, marketing pages, and documentation site, you will implement an automated pipeline that generates at least 5 high-quality, lightweight, animated GIFs using an **HTML/CSS/JS terminal simulation + Headless Chrome/Playwright + FFmpeg** architecture.
+
+---
+
+## Technical Constraints & Standards
+1. **Zero Fake Syntax**: All commands demonstrated in the GIFs MUST match real, working CLI/API syntax in PaperPilot. Do not use made-up flags.
+   - Merging uses `--input <files>... --output <file>`
+   - Natural language ask uses `paperpilot ask "<prompt>" <input_file> -o <output_file> -y`
+   - PII scan uses `paperpilot pii-scan --input <file>`
+   - Batch fill uses `paperpilot fill-batch --template <file> --data <file> --output-dir <dir>`
+   - REST API uses `POST http://127.0.0.1:7823/api/v1/pdf/<operation>`
+2. **Deterministic HTML-to-GIF Pipeline**:
+   - Create HTML/CSS templates in `scripts/gif_generators/templates/` styling a sleek dark-theme terminal window (macOS controls `🔴 🟡 🟢`, shadow, monospaced font, glowing accents).
+   - Use a JavaScript animation controller that types text sequentially, shows progress spinners, and displays outputs with syntax highlighting.
+   - Use Playwright (or Headless Chromium at `~/.cache/ms-playwright/chromium-*/chrome-linux64/chrome`) to record the animation to `.webm` or frame screenshots.
+   - Use `ffmpeg` with `palettegen` and `paletteuse` to convert frames into optimized `.gif` files (under 1.5MB each, no ugly color banding).
+3. **Artifact Output Location**:
+   Save all generated GIFs in `docs/assets/gifs/`:
+   - `demo_01_ask_natural_language.gif`
+   - `demo_02_pii_security_scan.gif`
+   - `demo_03_high_throughput_merge.gif`
+   - `demo_04_rest_api_gateway.gif`
+   - `demo_05_mcp_agent_workflow.gif`
+   - `demo_06_pipeline_conditional_workflow.gif`
+   - (Optional bonus: `demo_07_batch_acroform_fill.gif`)
+
+---
+
+## Detailed Implementation Steps
+
+### Step 1: Scenario Definition (`scripts/gif_generators/scenarios.json`)
+Define the exact typing sequence, delays, and outputs for all scenarios:
+- **Scenario 1 (`demo_01_ask_natural_language`)**:
+  - Prompt: `$ paperpilot ask "rotate 90 degrees and extract pages 1 to 3" invoice.pdf -o processed.pdf -y`
+  - Output: NLP offline intent resolved -> executed in 24ms -> `Operation completed successfully.`
+- **Scenario 2 (`demo_02_pii_security_scan`)**:
+  - Prompt: `$ paperpilot pii-scan --input medical_record.pdf`
+  - Output: Formatted JSON with colored finding chips: `{"total_findings": 2, "findings_by_category": {"SSN": 1, "EMAIL": 1}, "execution_time_ms": 28.5}` and privacy badge `[Zero-Trace: Memory Only]`.
+- **Scenario 3 (`demo_03_high_throughput_merge`)**:
+  - Prompt: `$ paperpilot merge --input quarterly_q1.pdf quarterly_q2.pdf quarterly_q3.pdf --output full_year.pdf`
+  - Output: `Concatenating 3 documents (142 pages)... Bookmarks preserved. Output written: 3.4 MB in 18ms.`
+- **Scenario 4 (`demo_04_rest_api_gateway`)**:
+  - Split screen or sequential view:
+    - Launching daemon: `$ paperpilot serve --port 7823` -> `Listening on http://127.0.0.1:7823`
+    - Client query: `$ curl -X POST http://127.0.0.1:7823/api/v1/pdf/rotate -H 'Content-Type: application/json' -d '{"input":"doc.pdf","angle":90,"output":"out.pdf"}'`
+    - Response: `{"status":"success","duration_ms":14,"pages_rotated":12}`
+- **Scenario 5 (`demo_05_mcp_agent_workflow`)**:
+  - AI Assistant calling MCP server tool:
+    - Shows JSON-RPC request: `{"jsonrpc":"2.0","method":"tools/call","params":{"name":"pdf_rotate","arguments":{"input":"scan.pdf","angle":90}}}`
+    - Response: `{"jsonrpc":"2.0","result":{"content":[{"type":"text","text":"Successfully rotated scan.pdf by 90 degrees."}]}}`
+- **Scenario 6 (`demo_06_pipeline_conditional_workflow`)**:
+  - Declarative Multi-Step Pipeline Execution:
+    - Prompt: `$ paperpilot run examples/workflows/conditional-invoice.ppflow invoice.pdf -o processed.pdf`
+    - Display pipeline stages executing in terminal:
+      - `[1/3] ocr-if-needed (condition: if_scanned = true) ... SKIPPED (native digital PDF)`
+      - `[2/3] compress-large (condition: if_page_count_gt = 50) ... EXECUTING (level: aggressive)`
+      - `[3/3] label (watermark: "PROCESSED") ... APPLIED (opacity: 0.3)`
+      - Result: `Pipeline completed in 32ms. Output saved: processed.pdf`
+
+### Step 2: HTML Generator Template (`scripts/gif_generators/templates/terminal.html`)
+Build a high-aesthetic, standalone web page that reads query params or scenario configs:
+- Modern font stack (Inter / JetBrains Mono / Fira Code / system-ui monospace).
+- Realistic blinking cursor, typing speed variations (randomized 30-70ms per char).
+- Clean dark theme (`#0f172a`, `#1e293b`, accents in `#38bdf8`, `#4ade80`, `#f43f5e`).
+
+### Step 3: Playwright / Node Recording Script (`scripts/gif_generators/capture.js`)
+- Write a Node.js script runnable with `node scripts/gif_generators/capture.js`:
+- Uses Playwright to load `terminal.html?scenario=X` at viewport `920x540`.
+- Records video using Playwright's `recordVideo` option, or takes sequential screenshots per frame.
+- Automatically invokes `ffmpeg` with two-pass palette filter:
+  ```bash
+  ffmpeg -y -i input.webm -vf "fps=20,scale=840:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" output.gif
+  ```
+
+### Step 4: Add Makefile Target
+In `Makefile`:
+```makefile
+.PHONY: generate-gifs
+generate-gifs:
+	node scripts/gif_generators/capture.js
+```
+
+### Step 5: Embed in README and Docs
+- Update `README.md` to display the primary GIF under the hero section.
+- Add showcase references in `docs/` or `apps/docs/src/content/docs/index.mdx`.
+
+---
+
+## Verification Criteria
+- All 5+ GIFs exist in `docs/assets/gifs/` and are valid, playable GIF files.
+- Each GIF is under 2.0 MB in file size (optimized for web & GitHub README loading).
+- Commands shown in GIFs are 100% syntactically valid in PaperPilot.
+- `make generate-gifs` completes successfully without errors.

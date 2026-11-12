@@ -25,7 +25,7 @@
           </tr>
           <tr>
             <td class="feature-name">Execution Speed (avg)</td>
-            <td class="highlight-col text-success">~15–35ms (Native Engine) / &lt;1.1s (Full UI &amp; IPC)</td>
+            <td class="highlight-col text-success">~60–80ms (Native Engine) / &lt;1.2s (Full UI &amp; IPC)</td>
             <td class="text-warning">Network/Queue Dependent (2–15s)</td>
           </tr>
           <tr>

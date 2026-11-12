@@ -39,16 +39,47 @@ pub fn handle_extract_images(
     op.execute(&mut doc)
 }
 
-pub fn handle_search(input: &std::path::Path, query: &str) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
-    op.execute(&mut doc)?;
-    let matches = op.match_pages.lock().unwrap().clone();
+pub fn handle_search(input: &std::path::Path, query: &str, output: Option<&std::path::Path>) -> OperationResult<()> {
+    let mut matches = Vec::new();
+    if input.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(input) {
+            for entry in entries.flatten() {
+                let ep = entry.path();
+                if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                    if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+                        if op.execute(&mut doc).is_ok() {
+                            let p = op.match_pages.lock().unwrap().clone();
+                            matches.extend(p);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        let mut doc = LopdfDocument::load(input)?;
+        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+        op.execute(&mut doc)?;
+        matches = op.match_pages.lock().unwrap().clone();
+    }
+
     if matches.is_empty() {
         println!("No matches found for '{}'.", query);
     } else {
         println!("Found '{}' on page(s): {:?}", query, matches);
     }
+
+    if let Some(out_path) = output {
+        if let Some(parent) = out_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let res_json = serde_json::json!({
+            "query": query,
+            "matches": matches,
+        });
+        let _ = std::fs::write(out_path, serde_json::to_string_pretty(&res_json).unwrap_or_default());
+    }
+
     Ok(())
 }
 

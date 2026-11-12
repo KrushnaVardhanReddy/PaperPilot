@@ -11,7 +11,6 @@ path = "src/main.rs"
 axum = { version = "0.8.9", features = ["multipart"] }
 bytes = "1.12.1"
 futures = "0.3.34"
-multipart = "0.18.0"
 paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
 paperpilot-mcp = { version = "0.1.0", path = "../paperpilot-mcp" }
 paperpilot-nlp = { version = "0.1.0", path = "../paperpilot-nlp" }
@@ -36,4 +35,4 @@ base64 = "0.23.1"
 tokio-util = { version = "0.7.20", features = ["rt"] }
 
 [dev-dependencies]
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }

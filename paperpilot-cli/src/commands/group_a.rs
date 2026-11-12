@@ -34,12 +34,66 @@ pub fn handle_split(
             total_pages,
         )
     } else {
+        let mut pts = Vec::new();
+        for part in pages.split(',') {
+            let part = part.trim();
+            if let Some((_start, end)) = part.split_once('-') {
+                if let Ok(end_num) = end.trim().parse::<u32>() {
+                    if !pts.contains(&end_num) {
+                        pts.push(end_num);
+                    }
+                }
+            } else if let Ok(pt) = part.parse::<u32>() {
+                if !pts.contains(&pt) {
+                    pts.push(pt);
+                }
+            }
+        }
+        pts.sort_unstable();
         paperpilot_pdf::operations::split::SplitOperation {
-            split_points: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
+            split_points: pts,
             output_dir: output.to_path_buf(),
         }
     };
     op.execute(&mut doc)
+}
+
+pub fn parse_page_indices(pages_str: &str, total_pages: Option<u32>) -> Vec<u32> {
+    if pages_str.trim().eq_ignore_ascii_case("all") {
+        if let Some(total) = total_pages {
+            return (1..=total).collect();
+        }
+    }
+    let mut result = Vec::new();
+    for part in pages_str.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+        if let Some((start_str, end_str)) = part.split_once('-') {
+            if let (Ok(start), Ok(end)) = (start_str.trim().parse::<u32>(), end_str.trim().parse::<u32>()) {
+                if start <= end {
+                    for p in start..=end {
+                        if !result.contains(&p) {
+                            result.push(p);
+                        }
+                    }
+                }
+            }
+        } else if let Ok(p) = part.parse::<u32>() {
+            if !result.contains(&p) {
+                result.push(p);
+            }
+        }
+    }
+    result
+}
+
+pub fn parse_page_order(order_str: &str) -> Vec<u32> {
+    order_str
+        .split(',')
+        .filter_map(|s| s.trim().parse::<u32>().ok())
+        .collect()
 }
 
 pub fn handle_extract(
@@ -48,8 +102,9 @@ pub fn handle_extract(
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
+    let total_pages = doc.page_count().ok();
     let op = paperpilot_pdf::operations::extract::ExtractPagesOperation {
-        page_indices: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
+        page_indices: parse_page_indices(pages, total_pages),
     };
     op.execute(&mut doc)?;
     doc.save(output)
@@ -61,8 +116,9 @@ pub fn handle_delete(
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
+    let total_pages = doc.page_count().ok();
     let op = paperpilot_pdf::operations::delete::DeletePagesOperation {
-        page_indices: pages.split(',').filter_map(|s| s.parse().ok()).collect(),
+        page_indices: parse_page_indices(pages, total_pages),
     };
     op.execute(&mut doc)?;
     doc.save(output)
@@ -75,7 +131,7 @@ pub fn handle_reorder(
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::reorder::ReorderPagesOperation {
-        new_order: order.split(',').filter_map(|s| s.parse().ok()).collect(),
+        new_order: parse_page_order(order),
     };
     op.execute(&mut doc)?;
     doc.save(output)
@@ -83,15 +139,27 @@ pub fn handle_reorder(
 
 pub fn handle_rotate(
     input: &std::path::Path,
-    _pages: &str,
+    pages: &str,
     degrees: i32,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
+    let total_pages = doc.page_count().ok();
+
+    let target_pages = if pages.trim().is_empty() || pages.trim().eq_ignore_ascii_case("all") {
+        None
+    } else {
+        let parsed = parse_page_indices(pages, total_pages);
+        if parsed.is_empty() {
+            None
+        } else {
+            Some(parsed)
+        }
+    };
 
     let op = paperpilot_pdf::operations::rotate::RotatePagesOperation::new(
         degrees.try_into().unwrap_or(0),
-        None,
+        target_pages,
     );
     op.execute(&mut doc)?;
     doc.save(output)
@@ -150,10 +218,11 @@ pub fn handle_burst(input: &std::path::Path, output: &std::path::Path) -> Operat
 
 pub fn handle_remove_blank(
     input: &std::path::Path,
+    sensitivity: u8,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(90);
+    let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(sensitivity);
     op.execute(&mut doc)?;
     doc.save(output)
 }

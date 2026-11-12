@@ -34,6 +34,11 @@ fn cancel_job(job_id: String) -> Result<(), DesktopError> {
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
+fn run_system_doctor() -> paperpilot_core::diagnostics::DiagnosticReport {
+    paperpilot_core::diagnostics::run_diagnostics()
+}
+
+#[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
@@ -386,6 +391,7 @@ pub fn run() {
         .manage(paperpilot_nlp::rag::DocumentationRagEngine::new())
         .invoke_handler(tauri::generate_handler![
             greet,
+            run_system_doctor,
             watch_commands::start_watch_folder,
             watch_commands::stop_watch_folder,
             watch_commands::list_watched_folders,

@@ -23,8 +23,9 @@
       const selected = await open({
         multiple: true,
         filters: [
-          { name: 'All Supported Documents', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'csv'] },
+          { name: 'All Supported Documents', extensions: ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff', 'tif', 'gif', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'csv', 'tsv'] },
           { name: 'PDF Documents', extensions: ['pdf'] },
+          { name: 'Image Files', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff', 'tif', 'gif'] },
           { name: 'Office Documents', extensions: ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'] }
         ]
       });
@@ -90,7 +91,7 @@
   <input
     bind:this={fileInputRef}
     type="file"
-    accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.tsv"
+    accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.tif,.gif,image/*,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.csv,.tsv"
     style="display: none;"
     onchange={handleFileInputChange}
   />

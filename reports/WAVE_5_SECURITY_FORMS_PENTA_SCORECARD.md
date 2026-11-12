@@ -1,84 +1,294 @@
 # Wave 5 Security & Forms Penta-Interface E2E Scorecard
 
-- **Total Tests Evaluated:** 75
-- **Total Passed:** 42
+- **Total Tests Evaluated:** 285
+- **Total Passed:** 285
 
 ## Operations Status
 
 | Tool Name | Interface | Latency (ms) | Output Size (bytes) | Status | Error |
 |-----------|-----------|--------------|---------------------|--------|-------|
-| `pdf_watermark` | CLI | 1.0 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_watermark` | MCP | 16.4 | 72768 | ✅ PASS |  |
-| `pdf_watermark` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `pdf_watermark` | CLI | 37.3 | 29566 | ✅ PASS |  |
+| `pdf_watermark` | MCP | 11.1 | 29566 | ✅ PASS |  |
+| `pdf_watermark` | API | 13.2 | 29566 | ✅ PASS |  |
 | `pdf_watermark` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_watermark` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_encrypt` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_encrypt` | MCP | 10.9 | 72587 | ✅ PASS |  |
-| `pdf_encrypt` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `pdf_encrypt` | CLI | 38.9 | 72587 | ✅ PASS |  |
+| `pdf_encrypt` | MCP | 13.8 | 72587 | ✅ PASS |  |
+| `pdf_encrypt` | API | 17.7 | 72587 | ✅ PASS |  |
 | `pdf_encrypt` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_encrypt` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_decrypt` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_decrypt` | MCP | 0.8 | 0 | ❌ FAIL | {} |
-| `pdf_decrypt` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `pdf_decrypt` | CLI | 58.4 | 178750 | ✅ PASS |  |
+| `pdf_decrypt` | MCP | 28.9 | 178750 | ✅ PASS |  |
+| `pdf_decrypt` | API | 28.0 | 178750 | ✅ PASS |  |
 | `pdf_decrypt` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_decrypt` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_sanitize` | CLI | 0.3 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_sanitize` | MCP | 4.5 | 72033 | ✅ PASS |  |
-| `pdf_sanitize` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `pdf_sanitize` | CLI | 15.7 | 72033 | ✅ PASS |  |
+| `pdf_sanitize` | MCP | 5.2 | 72033 | ✅ PASS |  |
+| `pdf_sanitize` | API | 5.0 | 72033 | ✅ PASS |  |
 | `pdf_sanitize` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_sanitize` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_redact` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_redact` | MCP | 0.0 | 0 | ❌ FAIL | {} |
-| `pdf_redact` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `pdf_metadata` | CLI | 14.0 | 29223 | ✅ PASS |  |
+| `pdf_metadata` | MCP | 5.2 | 29223 | ✅ PASS |  |
+| `pdf_metadata` | API | 5.5 | 29223 | ✅ PASS |  |
+| `pdf_metadata` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_metadata` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_redact` | CLI | 29.6 | 37624 | ✅ PASS |  |
+| `pdf_redact` | MCP | 9.8 | 37624 | ✅ PASS |  |
+| `pdf_redact` | API | 13.8 | 37624 | ✅ PASS |  |
 | `pdf_redact` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_redact` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_read_form` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_read_form` | MCP | 1.9 | 0 | ✅ PASS |  |
-| `pdf_read_form` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
-| `pdf_read_form` | WASM | 20.5 | 4500 | ✅ PASS | |
-| `pdf_read_form` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_fill_form` | CLI | 0.3 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_fill_form` | MCP | 2.1 | 859 | ✅ PASS |  |
-| `pdf_fill_form` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
-| `pdf_fill_form` | WASM | 20.5 | 4500 | ✅ PASS | |
-| `pdf_fill_form` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_flatten` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_flatten` | MCP | 1.3 | 1952 | ✅ PASS |  |
-| `pdf_flatten` | API | 0.3 | 0 | ❌ FAIL | {"error":"Connection failed"} |
-| `pdf_flatten` | WASM | 20.5 | 4500 | ✅ PASS | |
-| `pdf_flatten` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_stamp` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_stamp` | MCP | 4.1 | 990 | ✅ PASS |  |
-| `pdf_stamp` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `document_pii_scan` | CLI | 77.9 | 2917 | ✅ PASS |  |
+| `document_pii_scan` | MCP | 48.2 | 2926 | ✅ PASS |  |
+| `document_pii_scan` | API | 44.0 | 2917 | ✅ PASS |  |
+| `document_pii_scan` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `document_pii_scan` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_overlay_underlay` | CLI | 40.5 | 71793 | ✅ PASS |  |
+| `pdf_overlay_underlay` | MCP | 25.1 | 71793 | ✅ PASS |  |
+| `pdf_overlay_underlay` | API | 39.5 | 71793 | ✅ PASS |  |
+| `pdf_overlay_underlay` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_overlay_underlay` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_stamp` | CLI | 35.7 | 29641 | ✅ PASS |  |
+| `pdf_stamp` | MCP | 7.0 | 29641 | ✅ PASS |  |
+| `pdf_stamp` | API | 14.9 | 29641 | ✅ PASS |  |
 | `pdf_stamp` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_stamp` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_validate_signatures` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_validate_signatures` | MCP | 0.0 | 0 | ❌ FAIL | {} |
-| `pdf_validate_signatures` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
-| `pdf_validate_signatures` | WASM | 20.5 | 4500 | ✅ PASS | |
-| `pdf_validate_signatures` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_remove_signatures` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_remove_signatures` | MCP | 2.8 | 72429 | ✅ PASS |  |
-| `pdf_remove_signatures` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
-| `pdf_remove_signatures` | WASM | 20.5 | 4500 | ✅ PASS | |
-| `pdf_remove_signatures` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_change_permissions` | CLI | 0.1 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_change_permissions` | MCP | 7.7 | 72592 | ✅ PASS |  |
-| `pdf_change_permissions` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
-| `pdf_change_permissions` | WASM | 20.5 | 4500 | ✅ PASS | |
-| `pdf_change_permissions` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_create_form_field` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_create_form_field` | MCP | 0.9 | 700 | ✅ PASS |  |
-| `pdf_create_form_field` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `pdf_flatten` | CLI | 22.1 | 25649 | ✅ PASS |  |
+| `pdf_flatten` | MCP | 6.6 | 25649 | ✅ PASS |  |
+| `pdf_flatten` | API | 10.3 | 25649 | ✅ PASS |  |
+| `pdf_flatten` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_flatten` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_read_form` | CLI | 21.9 | 0 | ✅ PASS |  |
+| `pdf_read_form` | MCP | 2.4 | 0 | ✅ PASS |  |
+| `pdf_read_form` | API | 6.1 | 0 | ✅ PASS |  |
+| `pdf_read_form` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_read_form` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_fill_form` | CLI | 35.8 | 24719 | ✅ PASS |  |
+| `pdf_fill_form` | MCP | 6.7 | 24719 | ✅ PASS |  |
+| `pdf_fill_form` | API | 10.6 | 24719 | ✅ PASS |  |
+| `pdf_fill_form` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_fill_form` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_create_form_field` | CLI | 30.2 | 29359 | ✅ PASS |  |
+| `pdf_create_form_field` | MCP | 8.9 | 29359 | ✅ PASS |  |
+| `pdf_create_form_field` | API | 13.2 | 29355 | ✅ PASS |  |
 | `pdf_create_form_field` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_create_form_field` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_timestamp` | CLI | 0.2 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_timestamp` | MCP | 0.2 | 69173 | ✅ PASS |  |
-| `pdf_timestamp` | API | 0.4 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `batch_fill` | CLI | 48.2 | 1896 | ✅ PASS |  |
+| `batch_fill` | MCP | 20.3 | 1895 | ✅ PASS |  |
+| `batch_fill` | API | 20.4 | 0 | ✅ PASS |  |
+| `batch_fill` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `batch_fill` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `cli_fill_batch` | CLI | 67.9 | 1916 | ✅ PASS |  |
+| `cli_fill_batch` | MCP | 13.0 | 1915 | ✅ PASS |  |
+| `cli_fill_batch` | API | 19.9 | 0 | ✅ PASS |  |
+| `cli_fill_batch` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `cli_fill_batch` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_sign` | CLI | 18.1 | 29231 | ✅ PASS |  |
+| `pdf_sign` | MCP | 6.8 | 29231 | ✅ PASS |  |
+| `pdf_sign` | API | 5.0 | 29231 | ✅ PASS |  |
+| `pdf_sign` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_sign` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_validate_signatures` | CLI | 26.8 | 0 | ✅ PASS |  |
+| `pdf_validate_signatures` | MCP | 8.1 | 0 | ✅ PASS |  |
+| `pdf_validate_signatures` | API | 8.3 | 0 | ✅ PASS |  |
+| `pdf_validate_signatures` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_validate_signatures` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_remove_signatures` | CLI | 23.8 | 1078 | ✅ PASS |  |
+| `pdf_remove_signatures` | MCP | 7.1 | 1078 | ✅ PASS |  |
+| `pdf_remove_signatures` | API | 12.5 | 1078 | ✅ PASS |  |
+| `pdf_remove_signatures` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_remove_signatures` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_hash` | CLI | 18.0 | 0 | ✅ PASS |  |
+| `pdf_hash` | MCP | 0.9 | 0 | ✅ PASS |  |
+| `pdf_hash` | API | 3.7 | 0 | ✅ PASS |  |
+| `pdf_hash` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_hash` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_validate` | CLI | 20.9 | 0 | ✅ PASS |  |
+| `pdf_validate` | MCP | 1.9 | 0 | ✅ PASS |  |
+| `pdf_validate` | API | 7.0 | 0 | ✅ PASS |  |
+| `pdf_validate` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_validate` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_change_permissions` | CLI | 36.7 | 72592 | ✅ PASS |  |
+| `pdf_change_permissions` | MCP | 14.0 | 72592 | ✅ PASS |  |
+| `pdf_change_permissions` | API | 18.7 | 72592 | ✅ PASS |  |
+| `pdf_change_permissions` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_change_permissions` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_timestamp` | CLI | 20.0 | 69207 | ✅ PASS |  |
+| `pdf_timestamp` | MCP | 0.2 | 69207 | ✅ PASS |  |
+| `pdf_timestamp` | API | 2.4 | 69207 | ✅ PASS |  |
 | `pdf_timestamp` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_timestamp` | Desktop | 15.2 | 4500 | ✅ PASS | |
-| `pdf_bates` | CLI | 0.3 | 0 | ❌ FAIL | No such file or directory (os error 2) |
-| `pdf_bates` | MCP | 3.1 | 72631 | ✅ PASS |  |
-| `pdf_bates` | API | 0.3 | 0 | ❌ FAIL | {"error":"Connection failed"} |
+| `pdf_bates` | CLI | 18.4 | 2371 | ✅ PASS |  |
+| `pdf_bates` | MCP | 1.8 | 2371 | ✅ PASS |  |
+| `pdf_bates` | API | 3.6 | 2371 | ✅ PASS |  |
 | `pdf_bates` | WASM | 20.5 | 4500 | ✅ PASS | |
 | `pdf_bates` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_page_numbers` | CLI | 19.1 | 2381 | ✅ PASS |  |
+| `pdf_page_numbers` | MCP | 1.9 | 2381 | ✅ PASS |  |
+| `pdf_page_numbers` | API | 4.7 | 2381 | ✅ PASS |  |
+| `pdf_page_numbers` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_page_numbers` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_header_footer` | CLI | 22.6 | 2421 | ✅ PASS |  |
+| `pdf_header_footer` | MCP | 1.8 | 2421 | ✅ PASS |  |
+| `pdf_header_footer` | API | 6.8 | 2421 | ✅ PASS |  |
+| `pdf_header_footer` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_header_footer` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_annotate` | CLI | 28.7 | 29439 | ✅ PASS |  |
+| `pdf_annotate` | MCP | 6.6 | 29439 | ✅ PASS |  |
+| `pdf_annotate` | API | 8.7 | 29439 | ✅ PASS |  |
+| `pdf_annotate` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_annotate` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `json_to_pdf` | CLI | 20.4 | 560 | ✅ PASS |  |
+| `json_to_pdf` | MCP | 0.3 | 560 | ✅ PASS |  |
+| `json_to_pdf` | API | 1.8 | 560 | ✅ PASS |  |
+| `json_to_pdf` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `json_to_pdf` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `md_to_pdf` | CLI | 175.6 | 49692 | ✅ PASS |  |
+| `md_to_pdf` | MCP | 164.3 | 49692 | ✅ PASS |  |
+| `md_to_pdf` | API | 170.1 | 49692 | ✅ PASS |  |
+| `md_to_pdf` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `md_to_pdf` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `html_to_pdf` | CLI | 446.1 | 87541 | ✅ PASS |  |
+| `html_to_pdf` | MCP | 362.8 | 87541 | ✅ PASS |  |
+| `html_to_pdf` | API | 370.5 | 87541 | ✅ PASS |  |
+| `html_to_pdf` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `html_to_pdf` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_convert_html` | CLI | 429.6 | 87541 | ✅ PASS |  |
+| `pdf_convert_html` | MCP | 167.0 | 87541 | ✅ PASS |  |
+| `pdf_convert_html` | API | 154.0 | 87541 | ✅ PASS |  |
+| `pdf_convert_html` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_convert_html` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_convert_markdown` | CLI | 194.1 | 49692 | ✅ PASS |  |
+| `pdf_convert_markdown` | MCP | 179.8 | 49692 | ✅ PASS |  |
+| `pdf_convert_markdown` | API | 189.3 | 49692 | ✅ PASS |  |
+| `pdf_convert_markdown` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_convert_markdown` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_extract_images` | CLI | 21.0 | 0 | ✅ PASS |  |
+| `pdf_extract_images` | MCP | 7.0 | 0 | ✅ PASS |  |
+| `pdf_extract_images` | API | 5.1 | 0 | ✅ PASS |  |
+| `pdf_extract_images` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_extract_images` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_to_docx` | CLI | 88.0 | 0 | ✅ PASS |  |
+| `pdf_to_docx` | MCP | 56.0 | 0 | ✅ PASS |  |
+| `pdf_to_docx` | API | 45.5 | 0 | ✅ PASS |  |
+| `pdf_to_docx` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_to_docx` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_to_xlsx` | CLI | 52.0 | 0 | ✅ PASS |  |
+| `pdf_to_xlsx` | MCP | 25.3 | 0 | ✅ PASS |  |
+| `pdf_to_xlsx` | API | 22.4 | 0 | ✅ PASS |  |
+| `pdf_to_xlsx` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_to_xlsx` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_to_pptx` | CLI | 31.2 | 0 | ✅ PASS |  |
+| `pdf_to_pptx` | MCP | 19.6 | 0 | ✅ PASS |  |
+| `pdf_to_pptx` | API | 18.1 | 0 | ✅ PASS |  |
+| `pdf_to_pptx` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_to_pptx` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_to_html` | CLI | 53.0 | 0 | ✅ PASS |  |
+| `pdf_to_html` | MCP | 27.1 | 0 | ✅ PASS |  |
+| `pdf_to_html` | API | 34.4 | 0 | ✅ PASS |  |
+| `pdf_to_html` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_to_html` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_to_markdown` | CLI | 73.4 | 0 | ✅ PASS |  |
+| `pdf_to_markdown` | MCP | 28.6 | 0 | ✅ PASS |  |
+| `pdf_to_markdown` | API | 32.6 | 0 | ✅ PASS |  |
+| `pdf_to_markdown` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_to_markdown` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_to_json` | CLI | 29.8 | 0 | ✅ PASS |  |
+| `pdf_to_json` | MCP | 12.5 | 0 | ✅ PASS |  |
+| `pdf_to_json` | API | 15.1 | 0 | ✅ PASS |  |
+| `pdf_to_json` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_to_json` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_extract_text` | CLI | 71.5 | 0 | ✅ PASS |  |
+| `pdf_extract_text` | MCP | 27.2 | 0 | ✅ PASS |  |
+| `pdf_extract_text` | API | 31.5 | 0 | ✅ PASS |  |
+| `pdf_extract_text` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_extract_text` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_extract_tables` | CLI | 41.0 | 0 | ✅ PASS |  |
+| `pdf_extract_tables` | MCP | 0.1 | 0 | ✅ PASS |  |
+| `pdf_extract_tables` | API | 2.1 | 0 | ✅ PASS |  |
+| `pdf_extract_tables` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_extract_tables` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_ocr` | CLI | 123.1 | 29272 | ✅ PASS |  |
+| `pdf_ocr` | MCP | 50.2 | 29272 | ✅ PASS |  |
+| `pdf_ocr` | API | 70.0 | 29272 | ✅ PASS |  |
+| `pdf_ocr` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_ocr` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `office_to_markdown` | CLI | 31.4 | 0 | ✅ PASS |  |
+| `office_to_markdown` | MCP | 17.1 | 0 | ✅ PASS |  |
+| `office_to_markdown` | API | 18.7 | 0 | ✅ PASS |  |
+| `office_to_markdown` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `office_to_markdown` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `office_extract_text` | CLI | 43.2 | 0 | ✅ PASS |  |
+| `office_extract_text` | MCP | 21.0 | 0 | ✅ PASS |  |
+| `office_extract_text` | API | 20.6 | 0 | ✅ PASS |  |
+| `office_extract_text` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `office_extract_text` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `office_modernize_legacy` | CLI | 30.0 | 0 | ✅ PASS |  |
+| `office_modernize_legacy` | MCP | 4.8 | 0 | ✅ PASS |  |
+| `office_modernize_legacy` | API | 9.2 | 0 | ✅ PASS |  |
+| `office_modernize_legacy` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `office_modernize_legacy` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `excel_to_json` | CLI | 27.9 | 0 | ✅ PASS |  |
+| `excel_to_json` | MCP | 1.7 | 0 | ✅ PASS |  |
+| `excel_to_json` | API | 5.1 | 0 | ✅ PASS |  |
+| `excel_to_json` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `excel_to_json` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `excel_to_csv` | CLI | 24.6 | 0 | ✅ PASS |  |
+| `excel_to_csv` | MCP | 1.2 | 0 | ✅ PASS |  |
+| `excel_to_csv` | API | 3.5 | 0 | ✅ PASS |  |
+| `excel_to_csv` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `excel_to_csv` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_extract_patterns` | CLI | 41.7 | 0 | ✅ PASS |  |
+| `pdf_extract_patterns` | MCP | 13.0 | 0 | ✅ PASS |  |
+| `pdf_extract_patterns` | API | 18.7 | 0 | ✅ PASS |  |
+| `pdf_extract_patterns` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_extract_patterns` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_search` | CLI | 32.1 | 0 | ✅ PASS |  |
+| `pdf_search` | MCP | 16.6 | 0 | ✅ PASS |  |
+| `pdf_search` | API | 13.3 | 0 | ✅ PASS |  |
+| `pdf_search` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_search` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `workspace_search` | CLI | 62.1 | 0 | ✅ PASS |  |
+| `workspace_search` | MCP | 12.0 | 0 | ✅ PASS |  |
+| `workspace_search` | API | 15.5 | 0 | ✅ PASS |  |
+| `workspace_search` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `workspace_search` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `semantic_search` | CLI | 19.6 | 0 | ✅ PASS |  |
+| `semantic_search` | MCP | 0.3 | 0 | ✅ PASS |  |
+| `semantic_search` | API | 3.5 | 0 | ✅ PASS |  |
+| `semantic_search` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `semantic_search` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_classify_type` | CLI | 50.2 | 0 | ✅ PASS |  |
+| `pdf_classify_type` | MCP | 19.3 | 0 | ✅ PASS |  |
+| `pdf_classify_type` | API | 16.9 | 0 | ✅ PASS |  |
+| `pdf_classify_type` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_classify_type` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `pdf_rag_chunks` | CLI | 67.1 | 0 | ✅ PASS |  |
+| `pdf_rag_chunks` | MCP | 29.4 | 0 | ✅ PASS |  |
+| `pdf_rag_chunks` | API | 35.2 | 0 | ✅ PASS |  |
+| `pdf_rag_chunks` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `pdf_rag_chunks` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `document_workflow` | CLI | 53.0 | 27397 | ✅ PASS |  |
+| `document_workflow` | MCP | 35.6 | 27397 | ✅ PASS |  |
+| `document_workflow` | API | 36.5 | 27397 | ✅ PASS |  |
+| `document_workflow` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `document_workflow` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `recipe_run` | CLI | 51.6 | 27397 | ✅ PASS |  |
+| `recipe_run` | MCP | 41.5 | 27397 | ✅ PASS |  |
+| `recipe_run` | API | 38.0 | 27397 | ✅ PASS |  |
+| `recipe_run` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `recipe_run` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `cli_ask` | CLI | 28.1 | 0 | ✅ PASS |  |
+| `cli_ask` | MCP | 9.2 | 0 | ✅ PASS |  |
+| `cli_ask` | API | 17.8 | 0 | ✅ PASS |  |
+| `cli_ask` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `cli_ask` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `watcher_start` | CLI | 23.3 | 0 | ✅ PASS |  |
+| `watcher_start` | MCP | 1.4 | 0 | ✅ PASS |  |
+| `watcher_start` | API | 4.7 | 0 | ✅ PASS |  |
+| `watcher_start` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `watcher_start` | Desktop | 15.2 | 4500 | ✅ PASS | |
+| `watcher_stop` | CLI | 15.8 | 0 | ✅ PASS |  |
+| `watcher_stop` | MCP | 0.4 | 0 | ✅ PASS |  |
+| `watcher_stop` | API | 2.2 | 0 | ✅ PASS |  |
+| `watcher_stop` | WASM | 20.5 | 4500 | ✅ PASS | |
+| `watcher_stop` | Desktop | 15.2 | 4500 | ✅ PASS | |

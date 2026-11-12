@@ -1,4 +1,5 @@
 use lopdf::Document;
+use paperpilot_core::document_source::DocumentSource;
 use paperpilot_core::error::PdfError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -234,6 +235,23 @@ pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanR
     Ok(report)
 }
 
+/// Executes PII scan on a zero-copy [`DocumentSource`].
+pub fn scan_pii_source(
+    source: &DocumentSource,
+    options: &PiiScanOptions,
+) -> Result<PiiScanReport, PdfError> {
+    scan_pii(source.as_ref(), options)
+}
+
+/// Opens a document using memory-mapping if above threshold, and performs PII scan.
+pub fn scan_pii_path<P: AsRef<std::path::Path>>(
+    path: P,
+    options: &PiiScanOptions,
+) -> Result<PiiScanReport, PdfError> {
+    let source = DocumentSource::open(path, None).map_err(PdfError::IoError)?;
+    scan_pii_source(&source, options)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -340,5 +358,14 @@ mod tests {
         let options = PiiScanOptions::default();
         let res = scan_pii(&bad_pdf, &options);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_scan_pii_source() {
+        let pdf = create_test_pdf_with_text("My SSN is 123-45-6789 and email is dev@paperpilot.rs");
+        let source = DocumentSource::from_bytes(pdf);
+        let options = PiiScanOptions::default();
+        let report = scan_pii_source(&source, &options).unwrap();
+        assert_eq!(report.total_findings, 2);
     }
 }

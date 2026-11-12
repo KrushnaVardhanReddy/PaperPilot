@@ -485,6 +485,14 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_TO_EPUB_REPORT.md",
             )?;
 
+            let res_pdf_extract_patterns = cases::pdf_extract_patterns::run_pdf_extract_patterns_suite().await?;
+            println!("Extract Keywords & Patterns finished: {} tests", res_pdf_extract_patterns.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Extract Keywords & Patterns)",
+                &res_pdf_extract_patterns,
+                "reports/PENTA_INTERFACE_E2E_PDF_EXTRACT_PATTERNS_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -492,6 +500,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_extract_patterns);
             all.extend(res_pdf_to_epub);
             all.extend(res_pdf_dedup_streams);
             all.extend(res_pdf_posterize);

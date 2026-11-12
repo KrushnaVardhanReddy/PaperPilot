@@ -1,0 +1,115 @@
+# Task 6.1.3: Spec 162 — AI Framework Integration Recipes
+
+## Goal
+Implement Spec 162 (Framework Integration Recipes) providing turnkey Python adapters, n8n workflows, and MCP configurations for third-party AI agents and pipelines.
+
+## Architecture Boundaries (Zero Merge Conflict)
+This task touches ONLY the `recipes/` directory and creates standalone documentation and files:
+- `recipes/langchain/paperpilot_loader.py`
+- `recipes/langchain/requirements.txt`
+- `recipes/llamaindex/paperpilot_reader.py`
+- `recipes/llamaindex/requirements.txt`
+- `recipes/n8n/invoice-auto-ocr-pipeline.json`
+- `recipes/mcp-presets/claude_desktop_config.json`
+- `recipes/mcp-presets/cursor_mcp_config.json`
+- `recipes/README.md`
+
+---
+
+## Detailed Implementation Steps
+
+### 1. LangChain Document Loader (`recipes/langchain/paperpilot_loader.py`)
+Implement `PaperPilotLoader` subclassing LangChain's `BaseLoader`:
+```python
+from typing import Iterator, List, Optional
+import requests
+from langchain_core.document_loaders import BaseLoader
+from langchain_core.documents import Document
+
+class PaperPilotLoader(BaseLoader):
+    """Load and semantically chunk PDFs using local PaperPilot Gateway."""
+
+    def __init__(
+        self,
+        file_path: str,
+        api_base: str = "http://127.0.0.1:7823",
+        strip_boilerplate: bool = True
+    ):
+        self.file_path = file_path
+        self.api_base = api_base
+        self.strip_boilerplate = strip_boilerplate
+
+    def lazy_load(self) -> Iterator[Document]:
+        url = f"{self.api_base}/api/v1/pdf/tools/pdf_rag_chunks"
+        payload = {
+            "input": self.file_path,
+            "chunk_size": 512
+        }
+        res = requests.post(url, json=payload, timeout=30)
+        res.raise_for_status()
+        data = res.json()
+        chunks = data.get("chunks", []) if isinstance(data, dict) else data
+
+        for chunk in chunks:
+            text = chunk.get("text", "")
+            metadata = {
+                "source": self.file_path,
+                "page": chunk.get("page", 1),
+                "tokens": chunk.get("tokens", 0)
+            }
+            yield Document(page_content=text, metadata=metadata)
+```
+
+### 2. LlamaIndex Reader (`recipes/llamaindex/paperpilot_reader.py`)
+Implement `PaperPilotReader` subclassing LlamaIndex `BaseReader`:
+- Loads document chunks via local PaperPilot Gateway `/api/v1/pdf/tools/pdf_rag_chunks` or `/api/v1/pdf/tools/pdf_extract_text`.
+- Returns `List[Document]` with rich metadata (page number, bounding boxes, file hashes).
+
+### 3. MCP Config Presets
+- `recipes/mcp-presets/claude_desktop_config.json`:
+  ```json
+  {
+    "mcpServers": {
+      "paperpilot": {
+        "command": "paperpilot-mcp",
+        "args": []
+      }
+    }
+  }
+  ```
+- `recipes/mcp-presets/cursor_mcp_config.json`:
+  ```json
+  {
+    "mcpServers": {
+      "paperpilot": {
+        "command": "paperpilot-mcp",
+        "args": []
+      }
+    }
+  }
+  ```
+
+### 4. n8n Hot-Folder OCR Pipeline (`recipes/n8n/invoice-auto-ocr-pipeline.json`)
+- Visual JSON workflow: Watch folder on disk $\to$ send to `http://localhost:7823/api/v1/pdf/tools/pdf_ocr` $\to$ extract patterns (invoices, dates, totals) $\to$ save summary JSON.
+
+### 5. Catalog Documentation (`recipes/README.md`)
+- Quickstart guide on connecting PaperPilot to LangChain, LlamaIndex, Claude Desktop, Cursor, and n8n in under 2 minutes.
+
+---
+
+## 🔒 Post-Validation Checks (MANDATORY)
+1. Verify Python files compile cleanly with syntax check:
+   ```bash
+   python3 -m py_compile recipes/langchain/paperpilot_loader.py
+   python3 -m py_compile recipes/llamaindex/paperpilot_reader.py
+   ```
+2. Validate JSON files syntax:
+   ```bash
+   python3 -m json.tool recipes/mcp-presets/claude_desktop_config.json > /dev/null
+   python3 -m json.tool recipes/mcp-presets/cursor_mcp_config.json > /dev/null
+   python3 -m json.tool recipes/n8n/invoice-auto-ocr-pipeline.json > /dev/null
+   ```
+3. Verify repository workspace compiles with zero errors:
+   ```bash
+   cargo check --workspace -j 4
+   ```

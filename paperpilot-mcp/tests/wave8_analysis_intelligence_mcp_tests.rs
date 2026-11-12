@@ -328,6 +328,24 @@ async fn test_wave8_analysis_intelligence_penta_interface() -> std::result::Resu
         &mut results
     );
 
+    // 16. pdf_extract_patterns
+    run_tool_test(
+        "pdf_extract_patterns",
+        &["pdf-extract-patterns", "--input", &sample_pdf, "--keywords", "PDF,Smallpdf", "--json"],
+        json!({"input": sample_pdf, "keywords": ["PDF", "Smallpdf"]}),
+        None,
+        &mut results
+    );
+
+    // 17. pdf_search
+    run_tool_test(
+        "pdf_search",
+        &["search", "--input", &sample_pdf, "--query", "PDF", "--json"],
+        json!({"input": sample_pdf, "query": "PDF"}),
+        None,
+        &mut results
+    );
+
     // Generate Markdown Report
     println!("Generating report...");
     let mut md = String::new();
@@ -341,7 +359,12 @@ async fn test_wave8_analysis_intelligence_penta_interface() -> std::result::Resu
     md.push_str("| Tool Name | Interface | Latency (ms) | Output Size (bytes) | Status | Error Notes |\n");
     md.push_str("|-----------|-----------|--------------|---------------------|--------|-------------|\n");
 
-    let tools = vec!["pdf_extract_text", "pdf_ocr", "pdf_extract_tables", "document_pii_scan", "pdf_bookmarks", "pdf_bates", "pdf_header_footer", "pdf_classify_type", "pdf_compare", "pdf_hash", "pdf_validate", "pdf_render", "pdf_rag_chunks", "workspace_search", "semantic_search"];
+    let tools = vec![
+        "pdf_extract_text", "pdf_ocr", "pdf_extract_tables", "document_pii_scan",
+        "pdf_bookmarks", "pdf_bates", "pdf_header_footer", "pdf_classify_type",
+        "pdf_compare", "pdf_hash", "pdf_validate", "pdf_render", "pdf_rag_chunks",
+        "workspace_search", "semantic_search", "pdf_extract_patterns", "pdf_search"
+    ];
 
     for tool in tools {
         for res in results.iter().filter(|r| r.tool_id == tool) {

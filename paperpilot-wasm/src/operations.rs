@@ -697,6 +697,7 @@ pub fn crop(
     for (_, page_id) in doc.get_pages() {
         if let Ok(lopdf::Object::Dictionary(dict)) = doc.get_object_mut(page_id) {
             dict.set("CropBox", lopdf::Object::Array(crop_box_array.clone()));
+            dict.set("MediaBox", lopdf::Object::Array(crop_box_array.clone()));
         }
     }
 
@@ -2972,4 +2973,10 @@ pub fn pdf_to_epub(input_bytes: &[u8], options_json: &str) -> OperationResult<Ve
         serde_json::from_str(options_json)
             .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
     paperpilot_pdf::operations::pdf_to_epub::pdf_to_epub_bytes(input_bytes, &options)
+}
+
+pub fn pdf_extract_patterns(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_extract_patterns::PdfExtractPatternsOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_extract_patterns::pdf_extract_patterns_bytes(input_bytes, &options)
 }

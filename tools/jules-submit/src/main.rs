@@ -8,6 +8,27 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use std::path::Path;
 
+fn prepare_prompt(raw_prompt: &str, is_local_agent: bool, force_include: bool, force_exclude: bool) -> String {
+    // Determine whether to prepend SYSTEM_PROMPT.md
+    // - If force_exclude is true: do not prepend
+    // - If force_include is true: prepend
+    // - Otherwise: default to true for Jules, default to true for local agent when system_prompt requested or sensible
+    let should_include = if force_exclude {
+        false
+    } else if force_include {
+        true
+    } else {
+        // Default behavior: include by default for cloud Jules
+        !is_local_agent
+    };
+
+    if should_include {
+        format!("{}\n\n---\n\n{}", api::get_system_prompt(), raw_prompt)
+    } else {
+        raw_prompt.to_string()
+    }
+}
+
 fn submit_file(
     filepath: &Path,
     label: Option<&str>,
@@ -16,18 +37,22 @@ fn submit_file(
     interactive: bool,
     dry_run: bool,
     api_key: Option<&str>,
+    system_prompt: bool,
+    no_system_prompt: bool,
 ) -> Result<()> {
     if !filepath.exists() {
         anyhow::bail!("❌ File not found: {}", filepath.display());
     }
 
-    let prompt_content = std::fs::read_to_string(filepath)
+    let raw_prompt = std::fs::read_to_string(filepath)
         .with_context(|| format!("Failed to read file {}", filepath.display()))?;
 
     let name = label.unwrap_or_else(|| filepath.file_name().unwrap().to_str().unwrap());
+    let is_local = agent == "gemini" || agent == "agy" || agent == "local";
+    let prompt_content = prepare_prompt(&raw_prompt, is_local, system_prompt, no_system_prompt);
 
     // Check target agent engine
-    if agent == "gemini" || agent == "agy" || agent == "local" {
+    if is_local {
         local_agent::run_local_agent(&prompt_content, name, interactive, dry_run)?;
         if !dry_run {
             fs::archive_prompt(filepath)?;
@@ -93,6 +118,8 @@ fn main() -> Result<()> {
             args.interactive,
             args.dry_run,
             api_key.as_deref(),
+            args.system_prompt,
+            args.no_system_prompt,
         )?;
         return Ok(());
     }
@@ -107,6 +134,8 @@ fn main() -> Result<()> {
             args.interactive,
             args.dry_run,
             api_key.as_deref(),
+            args.system_prompt,
+            args.no_system_prompt,
         )?;
         return Ok(());
     }
@@ -135,6 +164,8 @@ fn main() -> Result<()> {
                 args.interactive,
                 args.dry_run,
                 api_key.as_deref(),
+                args.system_prompt,
+                args.no_system_prompt,
             )?;
         }
         return Ok(());

@@ -96,6 +96,10 @@ impl PdfOperation for CreateFormFieldOperation {
 
         let ft = if self.field_type == "checkbox" {
             b"Btn".to_vec()
+        } else if self.field_type == "choice" || self.field_type == "dropdown" {
+            b"Ch".to_vec()
+        } else if self.field_type == "radio" {
+            b"Btn".to_vec()
         } else {
             b"Tx".to_vec()
         };
@@ -117,6 +121,21 @@ impl PdfOperation for CreateFormFieldOperation {
 
         if self.field_type == "checkbox" {
             widget_dict.set("V", Object::Name(b"Off".to_vec()));
+        } else if self.field_type == "choice" || self.field_type == "dropdown" {
+            widget_dict.set("Ff", Object::Integer(131072)); // Combo box
+            widget_dict.set(
+                "Opt",
+                Object::Array(vec![
+                    Object::string_literal("Enterprise"),
+                    Object::string_literal("Individual"),
+                    Object::string_literal("Government"),
+                ]),
+            );
+            widget_dict.set("V", Object::string_literal("Enterprise"));
+            widget_dict.set("DV", Object::string_literal("Enterprise"));
+        } else if self.field_type == "radio" {
+            widget_dict.set("Ff", Object::Integer(32768)); // Radio
+            widget_dict.set("V", Object::Name(b"Enterprise".to_vec()));
         }
 
         let widget_id = doc.inner.add_object(widget_dict);

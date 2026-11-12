@@ -20,8 +20,11 @@
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
   import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
+  import ImageViewer from '$lib/components/workspace/ImageViewer.svelte';
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
-  import { isPdfFile, isSpreadsheetFile, getMimeType } from '$lib/utils/fileType';
+  import SignatureModal, { type AdoptedSignature } from '$lib/components/signature/SignatureModal.svelte';
+  import type { PlacedStamp, ArmedSignature } from '$lib/components/signature/SignatureStampLayer.svelte';
+  import { isPdfFile, isSpreadsheetFile, isImageFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
 
   let drawerMode = $state<'auto' | 'files' | 'pages'>('auto');
@@ -296,13 +299,151 @@
   let pdfDoc: any = $state(null);
   let pageNum = $state(1);
   let scale = $state(1.2);
-  let isOperationsDrawerOpen = $state(false);
+  let isOperationsDrawerOpen = $derived(appState.isOperationsDrawerOpen);
   let numPages = $derived(pdfDoc ? pdfDoc.numPages : 0);
   let formValues = $state<Record<string, any>>({});
   let hasFormFields = $state(false);
 
   let activeTool = $state('none');
   let annotations = $state<Annotation[]>([]);
+
+  // Spec 152: Interactive Signature & Stamp State
+  let showSignatureModal = $state(false);
+  let signatureModalInitialTab = $state<'type' | 'draw' | 'upload'>('type');
+  let showSignatureMenu = $state(false);
+  let armedSignature = $state<ArmedSignature | null>(null);
+  let placedStamps = $state<PlacedStamp[]>([]);
+  let isBakingSignature = $state(false);
+
+  function getSavedSignatures(): AdoptedSignature[] {
+    if (typeof localStorage === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('paperpilot:saved_signatures');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function handleSignPillClick() {
+    const saved = getSavedSignatures();
+    if (saved.length === 0 && !armedSignature) {
+      signatureModalInitialTab = 'type';
+      showSignatureModal = true;
+      showSignatureMenu = false;
+    } else {
+      showSignatureMenu = !showSignatureMenu;
+    }
+  }
+
+  function handleAdoptSignature(sig: AdoptedSignature) {
+    armedSignature = {
+      dataUrl: sig.dataUrl,
+      width: sig.width,
+      height: sig.height,
+      label: sig.label,
+      isInitials: sig.isInitials
+    };
+    showSignatureModal = false;
+    showSignatureMenu = false;
+    toastState.info(`Signature armed. Click anywhere on Page ${pageNum} to place it.`);
+  }
+
+  function handlePlaceSignatureClick() {
+    showSignatureMenu = false;
+    const saved = getSavedSignatures();
+    const sig = saved.find(s => !s.isInitials) || saved[0];
+    if (sig) {
+      armedSignature = {
+        dataUrl: sig.dataUrl,
+        width: sig.width,
+        height: sig.height,
+        label: sig.label,
+        isInitials: false
+      };
+      toastState.info(`Signature armed. Click on Page ${pageNum} to place it.`);
+    } else {
+      signatureModalInitialTab = 'type';
+      showSignatureModal = true;
+    }
+  }
+
+  function handlePlaceInitialsClick() {
+    showSignatureMenu = false;
+    const saved = getSavedSignatures();
+    const initialsSig = saved.find(s => s.isInitials);
+    if (initialsSig) {
+      armedSignature = {
+        dataUrl: initialsSig.dataUrl,
+        width: initialsSig.width,
+        height: initialsSig.height,
+        label: initialsSig.label,
+        isInitials: true
+      };
+      toastState.info(`Initials armed. Click on Page ${pageNum} to place them.`);
+    } else {
+      signatureModalInitialTab = 'type';
+      showSignatureModal = true;
+    }
+  }
+
+  function handleFreehandPenClick() {
+    showSignatureMenu = false;
+    armedSignature = null;
+    activeTool = activeTool === 'pen' ? 'none' : 'pen';
+  }
+
+  function handleWindowClick(e: MouseEvent) {
+    if (showSignatureMenu) {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.signature-menu-popover') && !target.closest('#btn-sign-annotate')) {
+        showSignatureMenu = false;
+      }
+    }
+  }
+
+  async function handleApplySignatureToDocument() {
+    if (placedStamps.length === 0 || appState.selectedDocumentIndex === null) return;
+    const docIdx = appState.selectedDocumentIndex;
+    const file = appState.documents[docIdx];
+    if (!file) return;
+    const path = appState.documentPaths[docIdx] || (file as any)._localPath || file.name;
+
+    isBakingSignature = true;
+    appState.setLoading(true);
+
+    try {
+      for (const stamp of placedStamps) {
+        await safeInvoke('invoke_mcp_tool', {
+          toolName: 'pdf_stamp',
+          arguments: {
+            input: path,
+            output: path,
+            image_data: stamp.dataUrl,
+            x: stamp.x,
+            y: stamp.y,
+            width: stamp.width,
+            height: stamp.height,
+            pages: String(stamp.page),
+            opacity: 1.0
+          }
+        });
+      }
+
+      toastState.success(`Signature successfully applied to Page ${placedStamps[0]?.page || pageNum}!`);
+      placedStamps = [];
+      armedSignature = null;
+
+      await refreshCurrentDocument();
+    } catch (err: any) {
+      console.error('Failed to bake signature:', err);
+      const formatted = formatUserFriendlyError(err, 'Apply Signature');
+      toastState.error(formatted.headline, formatted.actionHint, formatted.technicalDetails);
+    } finally {
+      isBakingSignature = false;
+      appState.setLoading(false);
+    }
+  }
 
   let activePackIds = $derived(
     appState.featurePacks.filter((p: any) => p.is_enabled).map((p: any) => p.id)
@@ -386,7 +527,9 @@
   });
 </script>
 
-<svelte:window onkeydown={(e) => {
+<svelte:window
+  onclick={handleWindowClick}
+  onkeydown={(e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
     e.preventDefault();
     appState.toggleDiffView();
@@ -449,6 +592,9 @@
           {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
             {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
             <SpreadsheetViewer file={selectedDoc} />
+          {:else if appState.selectedDocumentIndex !== null && isImageFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+            {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+            <ImageViewer file={selectedDoc} fileUrl={currentFileUrl} />
           {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
             {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
             <div class="viewer-wrapper">
@@ -462,21 +608,129 @@
                     bind:scale
                     activeTool={activeTool}
                     bind:annotations
+                    bind:armedSignature
+                    bind:placedStamps
+                    onStampPlaced={(stamp: PlacedStamp) => {
+                      toastState.info(`Signature placed on Page ${stamp.page}. Click 'Apply to Document' to bake it.`);
+                    }}
                   />
                   <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
                 </div>
               </div>
 
-              <!-- Floating Action Pill -->
-              <div class="floating-action-pill">
-                <button title="Zoom Out" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-out'))}>🔍 -</button>
-                <button title="Zoom In" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'))}>🔍 +</button>
-                <div class="divider"></div>
-                <button title="Rotate 90°" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:rotate-single-page', { detail: { page: pageNum, angle: 90 } }))}>↻</button>
-                <div class="divider"></div>
-                <button title="Sign / Annotate" onclick={() => activeTool = (activeTool === 'sign' ? 'none' : 'sign')}>✍</button>
-                <div class="divider"></div>
-                <button title="Tool Settings" class:active={isOperationsDrawerOpen} onclick={() => isOperationsDrawerOpen = !isOperationsDrawerOpen}>⚙️ Tools</button>
+              <!-- Floating Action Pill Wrapper with Spec 152 Signature Bar & Popover -->
+              <div class="floating-action-pill-wrapper">
+                {#if placedStamps.length > 0}
+                  <div class="signature-action-bar" role="region" aria-label="Signature Action Bar">
+                    <span class="sig-status-text">
+                      ✍️ {placedStamps.length} signature{placedStamps.length > 1 ? 's' : ''} placed on Page {pageNum}
+                    </span>
+                    <div class="sig-action-btns">
+                      <button type="button" class="btn-cancel-stamps" onclick={() => { placedStamps = []; armedSignature = null; }}>
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-apply-stamps"
+                        onclick={handleApplySignatureToDocument}
+                        disabled={isBakingSignature}
+                      >
+                        {#if isBakingSignature}
+                          ⏳ Applying...
+                        {:else}
+                          Apply to Document
+                        {/if}
+                      </button>
+                    </div>
+                  </div>
+                {/if}
+
+                {#if showSignatureMenu}
+                  <div class="signature-menu-popover" role="menu">
+                    <div class="menu-header">Sign & Stamp</div>
+                    <button
+                      type="button"
+                      class="sig-menu-item"
+                      role="menuitem"
+                      onclick={handlePlaceSignatureClick}
+                    >
+                      <span class="item-icon">✍</span>
+                      <div class="item-text">
+                        <span class="item-title">Place Signature</span>
+                        <span class="item-subtitle">Stamp saved full signature</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      class="sig-menu-item"
+                      role="menuitem"
+                      onclick={handlePlaceInitialsClick}
+                    >
+                      <span class="item-icon">📝</span>
+                      <div class="item-text">
+                        <span class="item-title">Place Initials</span>
+                        <span class="item-subtitle">Stamp saved initials</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      class="sig-menu-item"
+                      role="menuitem"
+                      onclick={handleFreehandPenClick}
+                    >
+                      <span class="item-icon">✏️</span>
+                      <div class="item-text">
+                        <span class="item-title">Freehand Pen</span>
+                        <span class="item-subtitle">Draw annotations on document</span>
+                      </div>
+                    </button>
+                    <div class="menu-divider"></div>
+                    <button
+                      type="button"
+                      class="sig-menu-item primary-action"
+                      role="menuitem"
+                      onclick={() => { showSignatureMenu = false; signatureModalInitialTab = 'type'; showSignatureModal = true; }}
+                    >
+                      <span class="item-icon">➕</span>
+                      <div class="item-text">
+                        <span class="item-title">Create New Signature...</span>
+                        <span class="item-subtitle">Type, draw, or upload</span>
+                      </div>
+                    </button>
+                    {#if placedStamps.length > 0}
+                      <div class="menu-divider"></div>
+                      <button
+                        type="button"
+                        class="sig-menu-item danger-action"
+                        role="menuitem"
+                        onclick={() => { placedStamps = []; armedSignature = null; showSignatureMenu = false; }}
+                      >
+                        <span class="item-icon">🗑️</span>
+                        <div class="item-text">
+                          <span class="item-title">Clear Placed Stamps</span>
+                        </div>
+                      </button>
+                    {/if}
+                  </div>
+                {/if}
+
+                <div class="floating-action-pill">
+                  <button title="Zoom Out" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-out'))}>🔍 -</button>
+                  <button title="Zoom In" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'))}>🔍 +</button>
+                  <div class="divider"></div>
+                  <button title="Rotate 90°" onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:rotate-single-page', { detail: { page: pageNum, angle: 90 } }))}>↻</button>
+                  <div class="divider"></div>
+                  <button
+                    id="btn-sign-annotate"
+                    title="Sign / Annotate"
+                    class:active={showSignatureMenu || !!armedSignature || activeTool === 'pen'}
+                    onclick={handleSignPillClick}
+                  >
+                    ✍
+                  </button>
+                  <div class="divider"></div>
+                  <button title="Tool Settings" class:active={isOperationsDrawerOpen} onclick={() => appState.toggleOperationsDrawer()}>⚙️ Tools</button>
+                </div>
               </div>
             </div>
           {:else}
@@ -503,7 +757,7 @@
         <div class="right-drawer" class:open={isOperationsDrawerOpen}>
           <div class="right-drawer-header">
             <h3>Tools & Actions</h3>
-            <button class="close-btn" onclick={() => isOperationsDrawerOpen = false} title="Close tools">✕</button>
+            <button class="close-btn" onclick={() => appState.toggleOperationsDrawer(false)} title="Close tools">✕</button>
           </div>
           <div class="right-drawer-content">
             <OperationsPanel embedded={true} />
@@ -529,6 +783,13 @@
 {#if appState.isMobile && (appState.activeTool || appState.activeTab === 'tools')}
   <OperationsPanel />
 {/if}
+
+<SignatureModal
+  isOpen={showSignatureModal}
+  initialTab={signatureModalInitialTab}
+  onAdopt={handleAdoptSignature}
+  onClose={() => showSignatureModal = false}
+/>
 
 <style>
   .page-container {
@@ -607,10 +868,10 @@
   .drawer-tab-btn.active {
     background: var(--bg-surface);
     color: var(--text-primary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
   .drawer-tab-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
   }
   .collapse-btn {
@@ -650,11 +911,186 @@
     padding: 24px;
   }
 
-  .floating-action-pill {
+  .floating-action-pill-wrapper {
     position: absolute;
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .floating-action-pill-wrapper > * {
+    pointer-events: auto;
+  }
+
+  .signature-action-bar {
+    background: var(--bg-surface, #1e1e24);
+    color: var(--text-primary, #ffffff);
+    padding: 8px 16px;
+    border-radius: 24px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+    box-shadow: var(--shadow-lg, 0 10px 25px -5px rgba(0, 0, 0, 0.4));
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: pillSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes pillSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .sig-status-text {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  .sig-action-btns {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-cancel-stamps {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #cbd5e1;
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-cancel-stamps:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  .btn-apply-stamps {
+    background: #2563eb;
+    border: 1px solid #1d4ed8;
+    color: #ffffff;
+    border-radius: 14px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+  }
+
+  .btn-apply-stamps:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+
+  .btn-apply-stamps:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .signature-menu-popover {
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #cbd5e1;
+    width: 240px;
+    overflow: hidden;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: pillSlideUp 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .menu-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 6px 10px 4px;
+  }
+
+  .sig-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background 0.15s ease;
+  }
+
+  .sig-menu-item:hover {
+    background: #f1f5f9;
+  }
+
+  .item-icon {
+    font-size: 16px;
+    width: 22px;
+    text-align: center;
+  }
+
+  .item-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #0f172a;
+  }
+
+  .item-subtitle {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .menu-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0;
+  }
+
+  .primary-action:hover {
+    background: #eff6ff;
+  }
+
+  .primary-action .item-title {
+    color: #2563eb;
+    font-weight: 600;
+  }
+
+  .danger-action:hover {
+    background: #fee2e2;
+  }
+
+  .danger-action .item-title {
+    color: #dc2626;
+  }
+
+  .floating-action-pill {
+    position: relative;
     display: flex;
     align-items: center;
     background: rgba(30, 30, 30, 0.85);
@@ -663,7 +1099,6 @@
     border-radius: 24px;
     padding: 4px 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    z-index: 100;
   }
 
   .floating-action-pill button {

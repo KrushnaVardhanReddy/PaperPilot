@@ -11,6 +11,7 @@ use utoipa_swagger_ui::SwaggerUi;
 #[openapi(
     paths(
         handlers::health,
+        handlers::doctor,
         handlers::tika,
         handlers::tika_text,
         handlers::tika_markdown,
@@ -36,6 +37,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::pdf_extract_patterns,
         handlers::pdf_to_epub,
         handlers::pdf_dedup_streams,
         handlers::pdf_posterize,
@@ -61,13 +63,16 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::start_watcher,
         handlers::list_watchers,
         handlers::stop_watcher,
-        handlers::run_recipe_once
+        handlers::run_recipe_once,
+        handlers::pdf_chunk_endpoint
     ),
     components(
         schemas(
         handlers::PdfInvertColorsJsonRequest,
             handlers::PdfSplitScannedBookJsonRequest,
             handlers::HealthResponse,
+            handlers::DoctorReportSchema,
+            handlers::DoctorCheckResultSchema,
             handlers::McpExecRequest,
             handlers::ApiResponse,
             handlers::TikaMetadata,
@@ -95,7 +100,10 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::StartWatcherResponse,
             handlers::WatcherListResponse,
             handlers::WatcherSummary,
-            handlers::RunRecipeOnceResponse
+            handlers::RunRecipeOnceResponse,
+            handlers::PdfChunkJsonRequest,
+            handlers::ChunkResultSchema,
+            handlers::DocumentChunkSchema
         ,
             handlers::PdfEncryptJsonRequest,
             handlers::PdfDecryptJsonRequest,
@@ -304,6 +312,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/api/v1/doctor", get(handlers::doctor))
         .route("/tika", put(handlers::tika))
         .route("/tika/text", put(handlers::tika_text))
         .route("/tika/json/md", put(handlers::tika_markdown))
@@ -335,6 +344,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/extract-patterns", post(handlers::pdf_extract_patterns) )
         .route("/api/v1/pdf/to-epub", post(handlers::pdf_to_epub))
         .route(
             "/api/v1/pdf/dedup-streams",
@@ -489,6 +499,8 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/pdf_validate", post(handlers::pdf_validate))
         .route("/api/v1/pdf/pdf_render", post(handlers::pdf_render))
         .route("/api/v1/pdf/pdf_rag_chunks", post(handlers::pdf_rag_chunks))
+        .route("/api/v1/pdf/chunk", post(handlers::pdf_chunk_endpoint))
+        .route("/api/v1/pdf/pdf_chunk", post(handlers::pdf_chunk_endpoint))
 
         .route("/api/v1/search/semantic_search", post(handlers::semantic_search))
 
