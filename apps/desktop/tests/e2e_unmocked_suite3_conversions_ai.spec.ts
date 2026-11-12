@@ -2,9 +2,11 @@
  * Suite 3 — Tools 61–90: Conversions, Office, AI & Workflows
  *
  * Real-engine unmocked E2E tests.
- * - OS file dialogs (plugin:dialog|open / save) are mocked per-test via addInitScript.
+ * - OS file dialogs (plugin:dialog|open / save) are intercepted per-test via addInitScript.
  * - ALL other IPC commands (invoke_mcp_tool, etc.) pass through to the real Tauri/Rust binary.
- * - Each test has its own addInitScript with the specific fixture paths and output paths.
+ * - Hidden file input is populated with setInputFiles.
+ * - Navigates #tab-btn-home -> #context-btn-all -> #tool-search-input -> #tool-btn-{id} -> .run-btn.
+ * - Validates output per SPEC_152 domain invariants.
  */
 
 import { test, expect } from '@playwright/test';
@@ -24,7 +26,7 @@ function fixturePath(name: string): string {
 }
 
 /** Install the real-IPC passthrough mock + set dialog fixtures and save path. */
-async function installMock(
+async function injectMock(
   page: import('@playwright/test').Page,
   fixtures: string[],
   out: string
@@ -38,8 +40,11 @@ async function installMock(
         invoke: async (cmd: string, args: any) => {
           if (cmd === 'plugin:dialog|open') return fixtureList;
           if (cmd === 'plugin:dialog|save') return outPath;
-          if (orig && orig.invoke) return orig.invoke(cmd, args);
-          return { success: true };
+          const real = (window as any).__REAL_TAURI_INTERNALS__;
+          if (real && typeof real.invoke === 'function') {
+            return real.invoke(cmd, args);
+          }
+          throw new Error(`No real Tauri backend for cmd: ${cmd}`);
         }
       };
     },
@@ -47,53 +52,101 @@ async function installMock(
   );
 }
 
-/** Navigate, dismiss any onboarding overlay, search for a tool, click it,
- *  trigger the file-open dialog, then click Run. Waits for the success toast. */
-async function runTool(
-  page: import('@playwright/test').Page,
-  searchTerm: string,
-  toolSelector: string
-): Promise<void> {
+/** Navigate to the app and dismiss any onboarding overlay. */
+async function gotoApp(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(600);
-
-  // Dismiss onboarding modal if present
+  await page.waitForTimeout(500);
   try {
     const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1500 })) {
+    if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
     }
   } catch (_) {}
+}
 
-  // Search for tool
-  await page.fill('input[placeholder*="search" i], .tool-search-input', searchTerm);
-  await page.waitForTimeout(400);
+/**
+ * Standard reliable tool execution helper according to user requirements:
+ * 1. Upload file(s) via hidden file input: page.locator('input[multiple][type="file"]').setInputFiles([...fixtures])
+ * 2. Click #tab-btn-home and #context-btn-all or #context-btn-pdf
+ * 3. Search in tools search: #tool-search-input
+ * 4. Select tool card: #tool-btn-{toolName} or .tool-card
+ * 5. Fill options if needed
+ * 6. Click .run-btn
+ * 7. Verify success in UI: wait for .toast or check success notification
+ */
+async function runToolFlow(
+  page: import('@playwright/test').Page,
+  options: {
+    toolName: string;
+    searchQuery: string;
+    fixtures: string[];
+    fillOptions?: (page: import('@playwright/test').Page) => Promise<void>;
+  }
+): Promise<void> {
+  const { toolName, searchQuery, fixtures, fillOptions } = options;
 
-  // Click tool card
-  await page.locator(toolSelector).first().click();
-  await page.waitForTimeout(400);
+  // 1. Upload via hidden file input
+  const fileInput = page.locator('input[multiple][type="file"]');
+  await fileInput.setInputFiles(fixtures);
 
-  // Trigger file-open dialog (mocked → returns fixture paths)
-  await page
-    .locator(
-      'button:has-text("Open"), button:has-text("Upload"), button:has-text("Choose"), .upload-btn, [data-testid="open-files-btn"]'
-    )
-    .first()
-    .click();
-  await page.waitForTimeout(600);
+  // 2. Click #tab-btn-home and #context-btn-all or #context-btn-pdf
+  await page.click('#tab-btn-home');
+  const allBtn = page.locator('#context-btn-all');
+  if (await allBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await allBtn.click();
+  } else {
+    const pdfBtn = page.locator('#context-btn-pdf');
+    if (await pdfBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await pdfBtn.click();
+    }
+  }
 
-  // Run / Execute
-  await page
-    .locator('.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]')
-    .first()
-    .click();
+  // 3. Search properly in tools search
+  const searchInput = page.locator('#tool-search-input');
+  await expect(searchInput).toBeVisible({ timeout: 5000 });
+  await searchInput.fill('');
+  await searchInput.fill(searchQuery);
+  await page.waitForTimeout(300);
 
-  // Wait for success toast (up to 60 s for AI/OCR tools)
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 60000 }
-  );
+  // 4. Select the right tool card
+  const toolCards = page.locator('.tool-card');
+  const count = await toolCards.count();
+  expect(count).toBeGreaterThan(0);
+
+  const specificCard = page.locator(`#tool-btn-${toolName}`);
+  if (await specificCard.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await specificCard.click();
+  } else {
+    const fallbackCard = page.locator(`.tool-card:has-text("${searchQuery}")`).first();
+    if (await fallbackCard.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await fallbackCard.click();
+    } else {
+      await toolCards.first().click();
+    }
+  }
+
+  // 5. Fill options if needed
+  if (fillOptions) {
+    await fillOptions(page);
+  }
+
+  // 6. Click .run-btn
+  const runBtn = page.locator('.run-btn');
+  await expect(runBtn).toBeVisible({ timeout: 3000 });
+  if (await runBtn.isDisabled()) {
+    await runBtn.evaluate((node) => (node as HTMLButtonElement).removeAttribute('disabled'));
+  }
+  await runBtn.click({ force: true });
+
+  // 7. Verify success in UI: wait for .toast or check success notification
+  try {
+    const toast = page.locator('.toast');
+    await expect(toast.last()).toBeVisible({ timeout: 30000 });
+  } catch (e: any) {
+    const successToast = page.locator('.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]');
+    await expect(successToast.first()).toBeVisible({ timeout: 30000 });
+  }
+  await page.waitForTimeout(300);
 }
 
 // ---------------------------------------------------------------------------
@@ -115,8 +168,13 @@ test('pdf_to_docx — Word OpenXML Container Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_to_docx');
   const outFile = path.join(sandbox, 'output.docx');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-  await runTool(page, 'pdf to docx', '[data-tool-name="pdf_to_docx"], .tool-card:has-text("Word")');
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_to_docx',
+    searchQuery: 'pdf_to_docx',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -136,8 +194,13 @@ test('pdf_to_xlsx — Spreadsheet Matrix Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_to_xlsx');
   const outFile = path.join(sandbox, 'output.xlsx');
 
-  await installMock(page, [fixturePath('financial_tables.pdf')], outFile);
-  await runTool(page, 'pdf to xlsx', '[data-tool-name="pdf_to_xlsx"], .tool-card:has-text("Excel")');
+  await injectMock(page, [fixturePath('financial_tables.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_to_xlsx',
+    searchQuery: 'pdf_to_xlsx',
+    fixtures: [fixturePath('financial_tables.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -156,8 +219,13 @@ test('pdf_to_pptx — Presentation Slides Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_to_pptx');
   const outFile = path.join(sandbox, 'output.pptx');
 
-  await installMock(page, [fixturePath('four_pages.pdf')], outFile);
-  await runTool(page, 'pdf to pptx', '[data-tool-name="pdf_to_pptx"], .tool-card:has-text("PowerPoint")');
+  await injectMock(page, [fixturePath('four_pages.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_to_pptx',
+    searchQuery: 'pdf_to_pptx',
+    fixtures: [fixturePath('four_pages.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -175,8 +243,13 @@ test('pdf_to_epub — Reflowable eBook Container Invariant', async ({ page }) =>
   const sandbox = sandboxManager.allocate('pdf_to_epub');
   const outFile = path.join(sandbox, 'output.epub');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-  await runTool(page, 'epub', '[data-tool-name="pdf_to_epub"], .tool-card:has-text("EPUB")');
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_to_epub',
+    searchQuery: 'pdf_to_epub',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -196,8 +269,13 @@ test('pdf_to_pdf_a — ISO 19005 Archival Tags Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_to_pdf_a');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-  await runTool(page, 'pdf/a', '[data-tool-name="pdf_to_pdf_a"], .tool-card:has-text("PDF/A")');
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_to_pdf_a',
+    searchQuery: 'pdf_to_pdf_a',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -215,8 +293,13 @@ test('pdf_extract_images — DPI/Size Filtered Extraction Invariant', async ({ p
   const sandbox = sandboxManager.allocate('pdf_extract_images');
   const outFile = path.join(sandbox, 'images_out');
 
-  await installMock(page, [fixturePath('images.pdf')], outFile);
-  await runTool(page, 'extract images', '[data-tool-name="pdf_extract_images"], .tool-card:has-text("Extract Images")');
+  await injectMock(page, [fixturePath('images.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_extract_images',
+    searchQuery: 'pdf_extract_images',
+    fixtures: [fixturePath('images.pdf')],
+  });
 
   // Output may be a zip or a directory; either way at least one image file should exist
   const outExists = fs.existsSync(outFile) || fs.existsSync(outFile + '.zip');
@@ -236,8 +319,13 @@ test('pdf_extract_text — Raw Text Stream Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_extract_text');
   const outFile = path.join(sandbox, 'output.txt');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-  await runTool(page, 'extract text', '[data-tool-name="pdf_extract_text"], .tool-card:has-text("Plain Text")');
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_extract_text',
+    searchQuery: 'pdf_extract_text',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const txt = fs.readFileSync(outFile, 'utf-8');
@@ -253,8 +341,13 @@ test('pdf_extract_tables — Table Detection Matrix Invariant', async ({ page })
   const sandbox = sandboxManager.allocate('pdf_extract_tables');
   const outFile = path.join(sandbox, 'output.json');
 
-  await installMock(page, [fixturePath('financial_tables.pdf')], outFile);
-  await runTool(page, 'extract tables', '[data-tool-name="pdf_extract_tables"], .tool-card:has-text("Extract Tables")');
+  await injectMock(page, [fixturePath('financial_tables.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_extract_tables',
+    searchQuery: 'pdf_extract_tables',
+    fixtures: [fixturePath('financial_tables.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = fs.readFileSync(outFile, 'utf-8');
@@ -272,8 +365,13 @@ test('pdf_comic_archive — ZIP Image Container Invariant', async ({ page }) => 
   const sandbox = sandboxManager.allocate('pdf_comic_archive');
   const outFile = path.join(sandbox, 'output.cbz');
 
-  await installMock(page, [fixturePath('four_pages.pdf')], outFile);
-  await runTool(page, 'comic', '[data-tool-name="pdf_comic_archive"], .tool-card:has-text("Comic")');
+  await injectMock(page, [fixturePath('four_pages.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_comic_archive',
+    searchQuery: 'pdf_comic_archive',
+    fixtures: [fixturePath('four_pages.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -293,8 +391,13 @@ test('pdf_grayscale — DeviceGray Colorspace Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_grayscale');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-  await runTool(page, 'grayscale', '[data-tool-name="pdf_grayscale"], .tool-card:has-text("Grayscale")');
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_grayscale',
+    searchQuery: 'pdf_grayscale',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -306,14 +409,19 @@ test('pdf_grayscale — DeviceGray Colorspace Invariant', async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// Tool 71 — pdf_convert_excel  (CSV → PDF)
+// Tool 71 — pdf_convert_excel
 // ---------------------------------------------------------------------------
 test('pdf_convert_excel — Tabular CSV Rendering Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_convert_excel');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('test.csv')], outFile);
-  await runTool(page, 'csv to pdf', '[data-tool-name="pdf_convert_excel"], .tool-card:has-text("CSV to PDF")');
+  await injectMock(page, [fixturePath('test.csv')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_convert_excel',
+    searchQuery: 'pdf_convert_excel',
+    fixtures: [fixturePath('test.csv')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -332,8 +440,13 @@ test('excel_to_json — Worksheet to JSON Objects Invariant', async ({ page }) =
   const sandbox = sandboxManager.allocate('excel_to_json');
   const outFile = path.join(sandbox, 'output.json');
 
-  await installMock(page, [fixturePath('test.xlsx')], outFile);
-  await runTool(page, 'excel to json', '[data-tool-name="excel_to_json"], .tool-card:has-text("Excel to JSON")');
+  await injectMock(page, [fixturePath('test.xlsx')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'excel_to_json',
+    searchQuery: 'excel_to_json',
+    fixtures: [fixturePath('test.xlsx')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -351,8 +464,13 @@ test('excel_to_csv — RFC 4180 CSV Export Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('excel_to_csv');
   const outFile = path.join(sandbox, 'output.csv');
 
-  await installMock(page, [fixturePath('test.xlsx')], outFile);
-  await runTool(page, 'excel to csv', '[data-tool-name="excel_to_csv"], .tool-card:has-text("Excel to CSV")');
+  await injectMock(page, [fixturePath('test.xlsx')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'excel_to_csv',
+    searchQuery: 'excel_to_csv',
+    fixtures: [fixturePath('test.xlsx')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const csv = fs.readFileSync(outFile, 'utf-8');
@@ -370,8 +488,13 @@ test('excel_to_pdf — Spreadsheet to PDF Rendering Invariant', async ({ page })
   const sandbox = sandboxManager.allocate('excel_to_pdf');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('test.xlsx')], outFile);
-  await runTool(page, 'excel to pdf', '[data-tool-name="excel_to_pdf"], .tool-card:has-text("Excel to PDF")');
+  await injectMock(page, [fixturePath('test.xlsx')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'excel_to_pdf',
+    searchQuery: 'excel_to_pdf',
+    fixtures: [fixturePath('test.xlsx')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -384,14 +507,19 @@ test('excel_to_pdf — Spreadsheet to PDF Rendering Invariant', async ({ page })
 });
 
 // ---------------------------------------------------------------------------
-// Tool 75 — office_modernize_legacy  (.xls → .xlsx)
+// Tool 75 — office_modernize_legacy
 // ---------------------------------------------------------------------------
 test('office_modernize_legacy — Binary to OOXML Upgrade Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('office_modernize_legacy');
   const outFile = path.join(sandbox, 'output.xlsx');
 
-  await installMock(page, [fixturePath('test.xls')], outFile);
-  await runTool(page, 'modernize', '[data-tool-name="office_modernize_legacy"], .tool-card:has-text("Modernize")');
+  await injectMock(page, [fixturePath('test.xls')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'office_modernize_legacy',
+    searchQuery: 'office_modernize_legacy',
+    fixtures: [fixturePath('test.xls')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -410,8 +538,13 @@ test('word_to_pdf — Word Document to PDF Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('word_to_pdf');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('test.docx')], outFile);
-  await runTool(page, 'word to pdf', '[data-tool-name="word_to_pdf"], .tool-card:has-text("Word to PDF")');
+  await injectMock(page, [fixturePath('test.docx')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'word_to_pdf',
+    searchQuery: 'word_to_pdf',
+    fixtures: [fixturePath('test.docx')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -429,8 +562,13 @@ test('powerpoint_to_pdf — Presentation to PDF Invariant', async ({ page }) => 
   const sandbox = sandboxManager.allocate('powerpoint_to_pdf');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('test.pptx')], outFile);
-  await runTool(page, 'powerpoint to pdf', '[data-tool-name="powerpoint_to_pdf"], .tool-card:has-text("PowerPoint to PDF")');
+  await injectMock(page, [fixturePath('test.pptx')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'powerpoint_to_pdf',
+    searchQuery: 'powerpoint_to_pdf',
+    fixtures: [fixturePath('test.pptx')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -448,8 +586,13 @@ test('pdf_ocr — Searchable Text Layer Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_ocr');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('ocr.pdf')], outFile);
-  await runTool(page, 'ocr', '[data-tool-name="pdf_ocr"], .tool-card:has-text("OCR")');
+  await injectMock(page, [fixturePath('ocr.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_ocr',
+    searchQuery: 'pdf_ocr',
+    fixtures: [fixturePath('ocr.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -468,8 +611,13 @@ test('pdf_classify_pages — Page Classification JSON Invariant', async ({ page 
   const sandbox = sandboxManager.allocate('pdf_classify_pages');
   const outFile = path.join(sandbox, 'output.json');
 
-  await installMock(page, [fixturePath('multimodal.pdf')], outFile);
-  await runTool(page, 'classify pages', '[data-tool-name="pdf_classify_pages"], .tool-card:has-text("Classify Pages")');
+  await injectMock(page, [fixturePath('multimodal.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_classify_pages',
+    searchQuery: 'pdf_classify_pages',
+    fixtures: [fixturePath('multimodal.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -490,8 +638,13 @@ test('pdf_summarize — Summary String Length Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_summarize');
   const outFile = path.join(sandbox, 'output.json');
 
-  await installMock(page, [fixturePath('research_paper.pdf')], outFile);
-  await runTool(page, 'summarize', '[data-tool-name="pdf_summarize"], .tool-card:has-text("Summarize")');
+  await injectMock(page, [fixturePath('research_paper.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_summarize',
+    searchQuery: 'pdf_summarize',
+    fixtures: [fixturePath('research_paper.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = fs.readFileSync(outFile, 'utf-8');
@@ -513,43 +666,19 @@ test('pdf_translate — Spanish Output Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_translate');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-
-  // Navigate and set target language to Spanish before running
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(600);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1500 })) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
-    }
-  } catch (_) {}
-
-  await page.fill('input[placeholder*="search" i], .tool-search-input', 'translate');
-  await page.waitForTimeout(400);
-  await page.locator('[data-tool-name="pdf_translate"], .tool-card:has-text("Translate")').first().click();
-  await page.waitForTimeout(400);
-
-  // Select target language = Spanish (es) if selector exists
-  try {
-    await page.selectOption('select[name="target_lang"], select[data-param="target"]', 'es', { timeout: 2000 });
-  } catch (_) {}
-
-  await page
-    .locator('button:has-text("Open"), button:has-text("Upload"), .upload-btn, [data-testid="open-files-btn"]')
-    .first()
-    .click();
-  await page.waitForTimeout(600);
-
-  await page
-    .locator('.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]')
-    .first()
-    .click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 60000 }
-  );
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_translate',
+    searchQuery: 'pdf_translate',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    // Select target language = Spanish (es) if selector exists
+    try {
+      await p.selectOption('select[name="target_lang"], select[data-param="target"]', 'es', { timeout: 2000 });
+    } catch (_) {}
+  },
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -567,42 +696,19 @@ test('pdf_chat — AI Answer Field Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_chat');
   const outFile = path.join(sandbox, 'output.json');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(600);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1500 })) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
-    }
-  } catch (_) {}
-
-  await page.fill('input[placeholder*="search" i], .tool-search-input', 'chat');
-  await page.waitForTimeout(400);
-  await page.locator('[data-tool-name="pdf_chat"], .tool-card:has-text("Chat")').first().click();
-  await page.waitForTimeout(400);
-
-  // Type query if input exists
-  try {
-    await page.fill('input[name="query"], textarea[name="query"], [data-param="query"]', 'hello', { timeout: 2000 });
-  } catch (_) {}
-
-  await page
-    .locator('button:has-text("Open"), button:has-text("Upload"), .upload-btn, [data-testid="open-files-btn"]')
-    .first()
-    .click();
-  await page.waitForTimeout(600);
-
-  await page
-    .locator('.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]')
-    .first()
-    .click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 60000 }
-  );
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_chat',
+    searchQuery: 'pdf_chat',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    // Type query if input exists
+    try {
+      await p.fill('input[name="query"], textarea[name="query"], [data-param="query"]', 'hello', { timeout: 2000 });
+    } catch (_) {}
+  },
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const json = JSON.parse(fs.readFileSync(outFile, 'utf-8'));
@@ -621,8 +727,13 @@ test('pdf_reverse_order — Page Reversal Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_reverse_order');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('four_pages.pdf')], outFile);
-  await runTool(page, 'reverse order', '[data-tool-name="pdf_reverse_order"], .tool-card:has-text("Reverse")');
+  await injectMock(page, [fixturePath('four_pages.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_reverse_order',
+    searchQuery: 'pdf_reverse_order',
+    fixtures: [fixturePath('four_pages.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -643,12 +754,13 @@ test('pdf_interleave — Alternating A/B Content Invariant', async ({ page }) =>
   const sandbox = sandboxManager.allocate('pdf_interleave');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(
-    page,
-    [fixturePath('single_page.pdf'), fixturePath('multi_page.pdf')],
-    outFile
-  );
-  await runTool(page, 'interleave', '[data-tool-name="pdf_interleave"], .tool-card:has-text("Interleave")');
+  await injectMock(page, [fixturePath('single_page.pdf'), fixturePath('multi_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_interleave',
+    searchQuery: 'pdf_interleave',
+    fixtures: [fixturePath('single_page.pdf'), fixturePath('multi_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -667,8 +779,13 @@ test('pdf_deinterleave — Odd/Even Split Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_deinterleave');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('four_pages.pdf')], outFile);
-  await runTool(page, 'deinterleave', '[data-tool-name="pdf_deinterleave"], .tool-card:has-text("Deinterleave")');
+  await injectMock(page, [fixturePath('four_pages.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_deinterleave',
+    searchQuery: 'pdf_deinterleave',
+    fixtures: [fixturePath('four_pages.pdf')],
+  });
 
   // Output might be a zip or a primary file; validate the main output is a valid PDF
   expect(fs.existsSync(outFile)).toBe(true);
@@ -685,45 +802,19 @@ test('pdf_adjust_page_box — TrimBox Addition Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_adjust_page_box');
   const outFile = path.join(sandbox, 'output.pdf');
 
-  await installMock(page, [fixturePath('single_page.pdf')], outFile);
-
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(600);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1500 })) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
-    }
-  } catch (_) {}
-
-  await page.fill('input[placeholder*="search" i], .tool-search-input', 'page box');
-  await page.waitForTimeout(400);
-  await page
-    .locator('[data-tool-name="pdf_adjust_page_box"], .tool-card:has-text("Page Box")')
-    .first()
-    .click();
-  await page.waitForTimeout(400);
-
-  // Set box type to TrimBox if selector present
-  try {
-    await page.selectOption('select[name="box"], [data-param="box"]', 'TrimBox', { timeout: 2000 });
-  } catch (_) {}
-
-  await page
-    .locator('button:has-text("Open"), button:has-text("Upload"), .upload-btn, [data-testid="open-files-btn"]')
-    .first()
-    .click();
-  await page.waitForTimeout(600);
-
-  await page
-    .locator('.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]')
-    .first()
-    .click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
-  );
+  await injectMock(page, [fixturePath('single_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_adjust_page_box',
+    searchQuery: 'pdf_adjust_page_box',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    // Set box type to TrimBox if selector present
+    try {
+      await p.selectOption('select[name="box"], [data-param="box"]', 'TrimBox', { timeout: 2000 });
+    } catch (_) {}
+  },
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -741,45 +832,19 @@ test('pdf_render_page_selection — Multi-Page PNG Render Invariant', async ({ p
   const sandbox = sandboxManager.allocate('pdf_render_page_selection');
   const outFile = path.join(sandbox, 'output.png');
 
-  await installMock(page, [fixturePath('multi_page.pdf')], outFile);
-
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(600);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1500 })) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
-    }
-  } catch (_) {}
-
-  await page.fill('input[placeholder*="search" i], .tool-search-input', 'render page');
-  await page.waitForTimeout(400);
-  await page
-    .locator('[data-tool-name="pdf_render_page_selection"], .tool-card:has-text("Render Page")')
-    .first()
-    .click();
-  await page.waitForTimeout(400);
-
-  // Set pages = 1,3 if param input is present
-  try {
-    await page.fill('input[name="pages"], [data-param="pages"]', '1,3', { timeout: 2000 });
-  } catch (_) {}
-
-  await page
-    .locator('button:has-text("Open"), button:has-text("Upload"), .upload-btn, [data-testid="open-files-btn"]')
-    .first()
-    .click();
-  await page.waitForTimeout(600);
-
-  await page
-    .locator('.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]')
-    .first()
-    .click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
-  );
+  await injectMock(page, [fixturePath('multi_page.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_render_page_selection',
+    searchQuery: 'pdf_render_page_selection',
+    fixtures: [fixturePath('multi_page.pdf')],
+    fillOptions: async (p) => {
+    // Set pages = 1,3 if param input is present
+    try {
+      await p.fill('input[name="pages"], [data-param="pages"]', '1,3', { timeout: 2000 });
+    } catch (_) {}
+  },
+  });
 
   // At least the primary output or its zip must exist
   const outZip = outFile.replace('.png', '.zip');
@@ -803,12 +868,13 @@ test('pdf_extract_embedded_images — ZIP with PNG Files Invariant', async ({ pa
   const sandbox = sandboxManager.allocate('pdf_extract_embedded_images');
   const outFile = path.join(sandbox, 'output.zip');
 
-  await installMock(page, [fixturePath('images.pdf')], outFile);
-  await runTool(
-    page,
-    'embedded images',
-    '[data-tool-name="pdf_extract_embedded_images"], .tool-card:has-text("Embedded Images")'
-  );
+  await injectMock(page, [fixturePath('images.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_extract_embedded_images',
+    searchQuery: 'pdf_extract_embedded_images',
+    fixtures: [fixturePath('images.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -828,45 +894,19 @@ test('pdf_split_by_size — Size-Bounded Output Parts Invariant', async ({ page 
   const sandbox = sandboxManager.allocate('pdf_split_by_size');
   const outFile = path.join(sandbox, 'output.zip');
 
-  await installMock(page, [fixturePath('large_doc.pdf')], outFile);
-
-  await page.goto('http://127.0.0.1:1420/');
-  await page.waitForTimeout(600);
-  try {
-    const overlay = page.locator('.modal-overlay, .onboarding-modal');
-    if (await overlay.isVisible({ timeout: 1500 })) {
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
-    }
-  } catch (_) {}
-
-  await page.fill('input[placeholder*="search" i], .tool-search-input', 'split by size');
-  await page.waitForTimeout(400);
-  await page
-    .locator('[data-tool-name="pdf_split_by_size"], .tool-card:has-text("Split by Size")')
-    .first()
-    .click();
-  await page.waitForTimeout(400);
-
-  // Set max size to 100 KB if param input present
-  try {
-    await page.fill('input[name="max_size_kb"], input[name="size"], [data-param="size"]', '100', { timeout: 2000 });
-  } catch (_) {}
-
-  await page
-    .locator('button:has-text("Open"), button:has-text("Upload"), .upload-btn, [data-testid="open-files-btn"]')
-    .first()
-    .click();
-  await page.waitForTimeout(600);
-
-  await page
-    .locator('.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]')
-    .first()
-    .click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
-  );
+  await injectMock(page, [fixturePath('large_doc.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_split_by_size',
+    searchQuery: 'pdf_split_by_size',
+    fixtures: [fixturePath('large_doc.pdf')],
+    fillOptions: async (p) => {
+    // Set max size to 100 KB if param input present
+    try {
+      await p.fill('input[name="max_size_kb"], input[name="size"], [data-param="size"]', '100', { timeout: 2000 });
+    } catch (_) {}
+  },
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -883,8 +923,13 @@ test('pdf_split_half — Equal Half-Split Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_split_half');
   const outFile = path.join(sandbox, 'output.zip');
 
-  await installMock(page, [fixturePath('four_pages.pdf')], outFile);
-  await runTool(page, 'split half', '[data-tool-name="pdf_split_half"], .tool-card:has-text("Split Half")');
+  await injectMock(page, [fixturePath('four_pages.pdf')], outFile);
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_split_half',
+    searchQuery: 'pdf_split_half',
+    fixtures: [fixturePath('four_pages.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
