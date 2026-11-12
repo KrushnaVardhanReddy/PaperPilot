@@ -10,6 +10,9 @@ apps/desktop/tests/e2e_all_tools_real_execution.spec.ts
 apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts
 apps/desktop/tests/e2e_suite_1_page_operations.spec.ts
 apps/desktop/tests/e2e_suite_2_security_forms.spec.ts
+apps/desktop/tests/e2e_unmocked_suite1_page_ops.spec.ts
+apps/desktop/tests/e2e_unmocked_suite2_security_forms.spec.ts
+apps/desktop/tests/e2e_unmocked_suite3_conversions_ai.spec.ts
 
 # Android standard main launcher activity must be exported=true for OS intent launching
 apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml
