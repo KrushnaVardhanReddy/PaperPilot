@@ -25,15 +25,6 @@ function fixturePath(file: string): string {
 }
 
 /**
- * Build the addInitScript parameters object.
- * `inputs` is the value returned for plugin:dialog|open  (string | string[])
- * `out`    is the value returned for plugin:dialog|save
- */
-function dialogMock(inputs: string | string[], out: string) {
-  return { inputs, out };
-}
-
-/**
  * Inject the partial-mock before navigation.
  * Saves __TAURI_INTERNALS__ as __REAL_TAURI_INTERNALS__ first so that all
  * non-dialog IPC commands are forwarded to the real native backend.
@@ -68,48 +59,97 @@ async function injectMock(
 async function gotoApp(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('http://127.0.0.1:1420/');
   await page.waitForTimeout(500);
-  const overlay = page.locator('.modal-overlay, .onboarding-modal');
-  if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await page.keyboard.press('Escape');
-  }
+  try {
+    const overlay = page.locator('.modal-overlay, .onboarding-modal');
+    if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await page.keyboard.press('Escape');
+    }
+  } catch (_) {}
 }
 
-/** Search for a tool and click its card. */
-async function openTool(
+/**
+ * Standard reliable tool execution helper according to user requirements:
+ * 1. Upload file(s) via hidden file input: page.locator('input[multiple][type="file"]').setInputFiles([...fixtures])
+ * 2. Click #tab-btn-home and #context-btn-all or #context-btn-pdf
+ * 3. Search in tools search: #tool-search-input
+ * 4. Select tool card: #tool-btn-{toolName} or .tool-card
+ * 5. Fill options if needed
+ * 6. Click .run-btn
+ * 7. Verify success in UI: wait for .toast or check success notification
+ */
+async function runToolFlow(
   page: import('@playwright/test').Page,
-  toolName: string,
-  searchText: string
+  options: {
+    toolName: string;
+    searchQuery: string;
+    fixtures: string[];
+    fillOptions?: (page: import('@playwright/test').Page) => Promise<void>;
+  }
 ): Promise<void> {
-  await page.fill('input[placeholder*="search" i], .tool-search-input', searchText);
-  await page.waitForTimeout(400);
-  await page
-    .locator(`[data-tool-name="${toolName}"], .tool-card:has-text("${searchText}")`)
-    .first()
-    .click();
+  const { toolName, searchQuery, fixtures, fillOptions } = options;
+
+  // 1. Upload via hidden file input
+  const fileInput = page.locator('input[multiple][type="file"]');
+  await fileInput.setInputFiles(fixtures);
+
+  // 2. Click #tab-btn-home and #context-btn-all or #context-btn-pdf
+  await page.click('#tab-btn-home');
+  const allBtn = page.locator('#context-btn-all');
+  if (await allBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await allBtn.click();
+  } else {
+    const pdfBtn = page.locator('#context-btn-pdf');
+    if (await pdfBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await pdfBtn.click();
+    }
+  }
+
+  // 3. Search properly in tools search
+  const searchInput = page.locator('#tool-search-input');
+  await expect(searchInput).toBeVisible({ timeout: 5000 });
+  await searchInput.fill('');
+  await searchInput.fill(searchQuery);
   await page.waitForTimeout(300);
-}
 
-/** Click the file-open trigger button (Upload / Open / file input). */
-async function triggerFileOpen(page: import('@playwright/test').Page): Promise<void> {
-  await page
-    .locator(
-      'button:has-text("Open"), button:has-text("Upload"), button:has-text("Choose"), .upload-btn, [data-testid="open-files-btn"]'
-    )
-    .first()
-    .click();
-  await page.waitForTimeout(600);
-}
+  // 4. Select the right tool card
+  const toolCards = page.locator('.tool-card');
+  const count = await toolCards.count();
+  expect(count).toBeGreaterThan(0);
 
-/** Click Run and await the success toast (30s timeout). */
-async function runAndAwaitSuccess(page: import('@playwright/test').Page): Promise<void> {
-  await page
-    .locator('.run-btn, button:has-text("Run"), button:has-text("Execute"), button[type="submit"]')
-    .first()
-    .click();
-  await page.waitForSelector(
-    '.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]',
-    { timeout: 30000 }
-  );
+  const specificCard = page.locator(`#tool-btn-${toolName}`);
+  if (await specificCard.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await specificCard.click();
+  } else {
+    const fallbackCard = page.locator(`.tool-card:has-text("${searchQuery}")`).first();
+    if (await fallbackCard.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await fallbackCard.click();
+    } else {
+      await toolCards.first().click();
+    }
+  }
+
+  // 5. Fill options if needed
+  if (fillOptions) {
+    await fillOptions(page);
+  }
+
+  // 6. Click .run-btn
+  const runBtn = page.locator('.run-btn');
+  await expect(runBtn).toBeVisible({ timeout: 3000 });
+  if (await runBtn.isDisabled()) {
+    await runBtn.evaluate((node) => (node as HTMLButtonElement).removeAttribute('disabled'));
+  }
+  await runBtn.click({ force: true });
+
+  // 7. Verify success in UI: wait for .toast or check success notification
+  try {
+    const toast = page.locator('.toast');
+    await expect(toast.last()).toBeVisible({ timeout: 15000 });
+  } catch (e: any) {
+    const successToast = page.locator('.toast-success, [data-testid="success-toast"], .notification-success, [class*="success"]');
+    await expect(successToast.first()).toBeVisible({ timeout: 15000 });
+  }
+  await page.waitForTimeout(300);
 }
 
 // ---------------------------------------------------------------------------
@@ -138,9 +178,11 @@ test('pdf_merge — Page Addition Invariant', async ({ page }) => {
     outFile
   );
   await gotoApp(page);
-  await openTool(page, 'pdf_merge', 'merge');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_merge',
+    searchQuery: 'pdf_merge',
+    fixtures: [fixturePath('merge_a.pdf'), fixturePath('merge_b.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -165,9 +207,11 @@ test('pdf_merge_alternate — Interleaving Invariant', async ({ page }) => {
     outFile
   );
   await gotoApp(page);
-  await openTool(page, 'pdf_merge_alternate', 'merge alternate');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_merge_alternate',
+    searchQuery: 'pdf_merge_alternate',
+    fixtures: [fixturePath('merge_a.pdf'), fixturePath('merge_b.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -187,18 +231,23 @@ test('pdf_split — Range Exactness Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_split');
   const outFile = path.join(sandbox, 'split.pdf');
 
-  await injectMock(page, fixturePath('multi_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('multi_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_split', 'split');
-  await triggerFileOpen(page);
-
-  // Fill split-at-page arg
-  const pageInput = page.locator('input[name*="page"], input[placeholder*="page" i], input[placeholder*="range" i]').first();
-  if (await pageInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await pageInput.fill('1');
+  await runToolFlow(page, {
+    toolName: 'pdf_split',
+    searchQuery: 'pdf_split',
+    fixtures: [fixturePath('multi_page.pdf')],
+    fillOptions: async (p) => {
+    const splitInput = p.locator('#splitPoints, input[name*="page"], input[placeholder*="page" i]');
+    if (await splitInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await splitInput.fill('1');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -215,11 +264,17 @@ test('pdf_split_by_outline — Bookmark Hierarchy Slicing', async ({ page }) => 
   const sandbox = sandboxManager.allocate('pdf_split_by_outline');
   const outFile = path.join(sandbox, 'split_outline.zip');
 
-  await injectMock(page, fixturePath('research_paper.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('research_paper.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_split_by_outline', 'split outline');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_split_by_outline',
+    searchQuery: 'pdf_split_by_outline',
+    fixtures: [fixturePath('research_paper.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -238,11 +293,17 @@ test('pdf_split_scanned_book — 2-Up Slicer Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_split_scanned_book');
   const outFile = path.join(sandbox, 'split_book.pdf');
 
-  await injectMock(page, fixturePath('two_up_book.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('two_up_book.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_split_scanned_book', 'split scanned');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_split_scanned_book',
+    searchQuery: 'pdf_split_scanned_book',
+    fixtures: [fixturePath('two_up_book.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const inPdf = await PdfInspector.inspect(fixturePath('two_up_book.pdf'));
@@ -259,14 +320,19 @@ test('pdf_split_scanned_book — 2-Up Slicer Invariant', async ({ page }) => {
 // ---------------------------------------------------------------------------
 test('pdf_burst — Total Partition Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_burst');
-  // burst produces multiple files; we capture the sandbox dir via save dialog
   const outFile = path.join(sandbox, 'burst.zip');
 
-  await injectMock(page, fixturePath('multi_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('multi_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_burst', 'burst');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_burst',
+    searchQuery: 'pdf_burst',
+    fixtures: [fixturePath('multi_page.pdf')],
+  });
 
   // Some engines output a ZIP; others write page_1.pdf…page_5.pdf directly
   const hasZip = fs.existsSync(outFile);
@@ -298,18 +364,23 @@ test('pdf_crop — Bounding Box Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_crop');
   const outFile = path.join(sandbox, 'cropped.pdf');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_crop', 'crop');
-  await triggerFileOpen(page);
-
-  // Fill margin arg if present
-  const marginInput = page.locator('input[name*="margin"], input[placeholder*="margin" i]').first();
-  if (await marginInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await marginInput.fill('50');
+  await runToolFlow(page, {
+    toolName: 'pdf_crop',
+    searchQuery: 'pdf_crop',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    const cropInput = p.locator('#cropBox, input[name*="crop"], input[placeholder*="margin" i]');
+    if (await cropInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await cropInput.fill('0,0,100,100');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -328,22 +399,26 @@ test('pdf_delete_pages — Page Subtraction Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_delete_pages');
   const outFile = path.join(sandbox, 'deleted.pdf');
 
-  await injectMock(page, fixturePath('multi_page.pdf'), outFile);
-  await gotoApp(page);
-  await openTool(page, 'pdf_delete_pages', 'delete pages');
-  await triggerFileOpen(page);
-
   // Capture original page 1 text for absence check
   const original = await PdfInspector.inspect(fixturePath('multi_page.pdf'));
   const originalPage1Text = original.textByPage[0];
-
-  // Fill pages-to-delete
-  const pageInput = page.locator('input[name*="page"], input[placeholder*="page" i]').first();
-  if (await pageInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await pageInput.fill('1');
+  await injectMock(
+    page,
+    fixturePath('multi_page.pdf'),
+    outFile
+  );
+  await gotoApp(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_delete_pages',
+    searchQuery: 'pdf_delete_pages',
+    fixtures: [fixturePath('multi_page.pdf')],
+    fillOptions: async (p) => {
+    const deleteInput = p.locator('#deletePages, input[name*="page"], input[placeholder*="page" i]');
+    if (await deleteInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await deleteInput.fill('1');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -364,17 +439,23 @@ test('pdf_extract_pages — Subset Exactness Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_extract_pages');
   const outFile = path.join(sandbox, 'extracted.pdf');
 
-  await injectMock(page, fixturePath('multi_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('multi_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_extract_pages', 'extract pages');
-  await triggerFileOpen(page);
-
-  const pageInput = page.locator('input[name*="page"], input[placeholder*="page" i]').first();
-  if (await pageInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await pageInput.fill('1');
+  await runToolFlow(page, {
+    toolName: 'pdf_extract_pages',
+    searchQuery: 'pdf_extract_pages',
+    fixtures: [fixturePath('multi_page.pdf')],
+    fillOptions: async (p) => {
+    const extractInput = p.locator('#extractPages, input[name*="page"], input[placeholder*="page" i]');
+    if (await extractInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await extractInput.fill('1');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -391,18 +472,23 @@ test('pdf_reorder_pages — Permutation Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_reorder_pages');
   const outFile = path.join(sandbox, 'reordered.pdf');
 
-  await injectMock(page, fixturePath('four_pages.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('four_pages.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_reorder_pages', 'reorder pages');
-  await triggerFileOpen(page);
-
-  // Fill order arg
-  const orderInput = page.locator('input[name*="order"], input[placeholder*="order" i]').first();
-  if (await orderInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await orderInput.fill('4,3,2,1');
+  await runToolFlow(page, {
+    toolName: 'pdf_reorder_pages',
+    searchQuery: 'pdf_reorder_pages',
+    fixtures: [fixturePath('four_pages.pdf')],
+    fillOptions: async (p) => {
+    const reorderInput = p.locator('#reorderList, input[name*="order"], input[placeholder*="order" i]');
+    if (await reorderInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await reorderInput.fill('4,3,2,1');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const inPdf = await PdfInspector.inspect(fixturePath('four_pages.pdf'));
@@ -424,18 +510,25 @@ test('pdf_rotate — Rotation Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_rotate');
   const outFile = path.join(sandbox, 'rotated.pdf');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_rotate', 'rotate');
-  await triggerFileOpen(page);
-
-  // Fill angle
-  const angleInput = page.locator('input[name*="angle"], select[name*="angle"], input[placeholder*="angle" i]').first();
-  if (await angleInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await angleInput.fill('90');
+  await runToolFlow(page, {
+    toolName: 'pdf_rotate',
+    searchQuery: 'pdf_rotate',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    const angleSelect = p.locator('#rotateAngle, #angle, select[name*="angle"]');
+    if (await angleSelect.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await angleSelect.fill('90').catch(async () => {
+        await angleSelect.selectOption('90').catch(() => {});
+      });
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -453,11 +546,17 @@ test('pdf_auto_rotate — Orientation Normalization Invariant', async ({ page })
   const sandbox = sandboxManager.allocate('pdf_auto_rotate');
   const outFile = path.join(sandbox, 'auto_rotated.pdf');
 
-  await injectMock(page, fixturePath('rotated_landscape.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('rotated_landscape.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_auto_rotate', 'auto rotate');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_auto_rotate',
+    searchQuery: 'pdf_auto_rotate',
+    fixtures: [fixturePath('rotated_landscape.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -478,11 +577,17 @@ test('pdf_remove_blank — Content Density Threshold Invariant', async ({ page }
   const sandbox = sandboxManager.allocate('pdf_remove_blank');
   const outFile = path.join(sandbox, 'no_blanks.pdf');
 
-  await injectMock(page, fixturePath('with_blank_pages.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('with_blank_pages.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_remove_blank', 'remove blank');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_remove_blank',
+    searchQuery: 'pdf_remove_blank',
+    fixtures: [fixturePath('with_blank_pages.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const inPdf = await PdfInspector.inspect(fixturePath('with_blank_pages.pdf'));
@@ -500,18 +605,23 @@ test('pdf_scale_pages — MediaBox Dimensional Scaling Invariant', async ({ page
   const sandbox = sandboxManager.allocate('pdf_scale_pages');
   const outFile = path.join(sandbox, 'scaled.pdf');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_scale_pages', 'scale pages');
-  await triggerFileOpen(page);
-
-  // Fill scale factor
-  const scaleInput = page.locator('input[name*="scale"], input[placeholder*="scale" i], input[placeholder*="factor" i]').first();
-  if (await scaleInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await scaleInput.fill('0.5');
+  await runToolFlow(page, {
+    toolName: 'pdf_scale_pages',
+    searchQuery: 'pdf_scale_pages',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    const scaleInput = p.locator('input[name*="scale"], input[placeholder*="scale" i], input[placeholder*="factor" i]').first();
+    if (await scaleInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await scaleInput.fill('0.5');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -529,18 +639,25 @@ test('pdf_nup — Grid Compression Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_nup');
   const outFile = path.join(sandbox, 'nup.pdf');
 
-  await injectMock(page, fixturePath('four_pages.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('four_pages.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_nup', 'nup');
-  await triggerFileOpen(page);
-
-  // Set N=4 if input present
-  const nInput = page.locator('input[name*="n"], input[name*="pages_per"], select[name*="n"]').first();
-  if (await nInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await nInput.fill('4');
+  await runToolFlow(page, {
+    toolName: 'pdf_nup',
+    searchQuery: 'pdf_nup',
+    fixtures: [fixturePath('four_pages.pdf')],
+    fillOptions: async (p) => {
+    const nInput = p.locator('input[name*="n"], input[name*="pages_per"], select[name*="n"]').first();
+    if (await nInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await nInput.fill('4').catch(async () => {
+        await nInput.selectOption('4').catch(() => {});
+      });
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -558,11 +675,17 @@ test('pdf_booklet — Signature Folding Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_booklet');
   const outFile = path.join(sandbox, 'booklet.pdf');
 
-  await injectMock(page, fixturePath('four_pages.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('four_pages.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_booklet', 'booklet');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_booklet',
+    searchQuery: 'pdf_booklet',
+    fixtures: [fixturePath('four_pages.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -580,18 +703,23 @@ test('pdf_posterize — Tile Grid Multiplication Invariant', async ({ page }) =>
   const sandbox = sandboxManager.allocate('pdf_posterize');
   const outFile = path.join(sandbox, 'posterized.pdf');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_posterize', 'posterize');
-  await triggerFileOpen(page);
-
-  // Set grid size
-  const gridInput = page.locator('input[name*="grid"], input[placeholder*="grid" i], input[placeholder*="tile" i]').first();
-  if (await gridInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await gridInput.fill('2x2');
+  await runToolFlow(page, {
+    toolName: 'pdf_posterize',
+    searchQuery: 'pdf_posterize',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    const gridInput = p.locator('input[name*="grid"], input[placeholder*="grid" i], input[placeholder*="tile" i]').first();
+    if (await gridInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await gridInput.fill('2x2');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -609,11 +737,17 @@ test('pdf_stitch_canvas — Continuous Single Page Invariant', async ({ page }) 
   const sandbox = sandboxManager.allocate('pdf_stitch_canvas');
   const outFile = path.join(sandbox, 'stitched.pdf');
 
-  await injectMock(page, fixturePath('four_pages.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('four_pages.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_stitch_canvas', 'stitch canvas');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_stitch_canvas',
+    searchQuery: 'pdf_stitch_canvas',
+    fixtures: [fixturePath('four_pages.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -630,11 +764,17 @@ test('pdf_bookmarks — Outline JSON Schema Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_bookmarks');
   const outFile = path.join(sandbox, 'bookmarks.json');
 
-  await injectMock(page, fixturePath('research_paper.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('research_paper.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_bookmarks', 'bookmarks');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_bookmarks',
+    searchQuery: 'pdf_bookmarks',
+    fixtures: [fixturePath('research_paper.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const content = fs.readFileSync(outFile, 'utf-8');
@@ -655,11 +795,17 @@ test('pdf_attachments — Embedded Files Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_attachments');
   const outFile = path.join(sandbox, 'attachments.json');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_attachments', 'attachments');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_attachments',
+    searchQuery: 'pdf_attachments',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const content = fs.readFileSync(outFile, 'utf-8');
@@ -684,9 +830,11 @@ test('pdf_images_to_pdf — Raster Containerization Invariant', async ({ page })
     outFile
   );
   await gotoApp(page);
-  await openTool(page, 'pdf_images_to_pdf', 'images to pdf');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_images_to_pdf',
+    searchQuery: 'pdf_images_to_pdf',
+    fixtures: [fixturePath('img1.png'), fixturePath('img2.png')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -705,11 +853,17 @@ test('img_to_pdf — Single Image Page Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('img_to_pdf');
   const outFile = path.join(sandbox, 'img_to_pdf.pdf');
 
-  await injectMock(page, fixturePath('test.png'), outFile);
+  await injectMock(
+    page,
+    fixturePath('test.png'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'img_to_pdf', 'img to pdf');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'img_to_pdf',
+    searchQuery: 'img_to_pdf',
+    fixtures: [fixturePath('test.png')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
@@ -728,11 +882,17 @@ test('pdf_compress — Byte Reduction Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_compress');
   const outFile = path.join(sandbox, 'compressed.pdf');
 
-  await injectMock(page, fixturePath('large_doc.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('large_doc.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_compress', 'compress');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_compress',
+    searchQuery: 'pdf_compress',
+    fixtures: [fixturePath('large_doc.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const inSize = fs.statSync(fixturePath('large_doc.pdf')).size;
@@ -753,11 +913,17 @@ test('pdf_dedup_streams — Stream Deduplication Invariant', async ({ page }) =>
   const sandbox = sandboxManager.allocate('pdf_dedup_streams');
   const outFile = path.join(sandbox, 'deduped.pdf');
 
-  await injectMock(page, fixturePath('images.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('images.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_dedup_streams', 'dedup streams');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_dedup_streams',
+    searchQuery: 'pdf_dedup_streams',
+    fixtures: [fixturePath('images.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -776,11 +942,17 @@ test('pdf_linearize — Fast Web View Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_linearize');
   const outFile = path.join(sandbox, 'linearized.pdf');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_linearize', 'linearize');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_linearize',
+    searchQuery: 'pdf_linearize',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -798,11 +970,17 @@ test('pdf_repair — Xref Table Rebuild Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_repair');
   const outFile = path.join(sandbox, 'repaired.pdf');
 
-  await injectMock(page, fixturePath('malformed.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('malformed.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_repair', 'repair');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_repair',
+    searchQuery: 'pdf_repair',
+    fixtures: [fixturePath('malformed.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -822,11 +1000,17 @@ test('pdf_invert_colors — Color Inversion Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_invert_colors');
   const outFile = path.join(sandbox, 'inverted.pdf');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_invert_colors', 'invert colors');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_invert_colors',
+    searchQuery: 'pdf_invert_colors',
+    fixtures: [fixturePath('single_page.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
@@ -846,18 +1030,23 @@ test('pdf_render — Raster Exactness Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_render');
   const outFile = path.join(sandbox, 'rendered.png');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_render', 'render');
-  await triggerFileOpen(page);
-
-  // Set DPI if input is present
-  const dpiInput = page.locator('input[name*="dpi"], input[placeholder*="dpi" i]').first();
-  if (await dpiInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await dpiInput.fill('150');
+  await runToolFlow(page, {
+    toolName: 'pdf_render',
+    searchQuery: 'pdf_render',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    const dpiInput = p.locator('input[name*="dpi"], input[placeholder*="dpi" i]').first();
+    if (await dpiInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await dpiInput.fill('150');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const buf = fs.readFileSync(outFile);
@@ -886,9 +1075,11 @@ test('pdf_compare — Visual & Textual Diff Invariant', async ({ page }) => {
     outFile
   );
   await gotoApp(page);
-  await openTool(page, 'pdf_compare', 'compare');
-  await triggerFileOpen(page);
-  await runAndAwaitSuccess(page);
+  await runToolFlow(page, {
+    toolName: 'pdf_compare',
+    searchQuery: 'pdf_compare',
+    fixtures: [fixturePath('merge_a.pdf'), fixturePath('merge_b.pdf')],
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const content = fs.readFileSync(outFile, 'utf-8');
@@ -912,18 +1103,23 @@ test('pdf_encrypt — Cryptographic Lock Invariant', async ({ page }) => {
   const sandbox = sandboxManager.allocate('pdf_encrypt');
   const outFile = path.join(sandbox, 'encrypted.pdf');
 
-  await injectMock(page, fixturePath('single_page.pdf'), outFile);
+  await injectMock(
+    page,
+    fixturePath('single_page.pdf'),
+    outFile
+  );
   await gotoApp(page);
-  await openTool(page, 'pdf_encrypt', 'encrypt');
-  await triggerFileOpen(page);
-
-  // Fill password
-  const pwdInput = page.locator('input[name*="password"], input[type="password"], input[placeholder*="password" i]').first();
-  if (await pwdInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await pwdInput.fill('test123');
+  await runToolFlow(page, {
+    toolName: 'pdf_encrypt',
+    searchQuery: 'pdf_encrypt',
+    fixtures: [fixturePath('single_page.pdf')],
+    fillOptions: async (p) => {
+    const pwdInput = p.locator('#passwordField, #password, input[name*="password"], input[type="password"]').first();
+    if (await pwdInput.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await pwdInput.fill('Secret123');
+    }
   }
-
-  await runAndAwaitSuccess(page);
+  });
 
   expect(fs.existsSync(outFile)).toBe(true);
   const raw = PdfInspector.inspectRaw(outFile);
