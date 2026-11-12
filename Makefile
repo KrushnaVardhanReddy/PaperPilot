@@ -179,18 +179,18 @@ test-e2e:
 test-e2e-ui:
 	cd apps/desktop && npx playwright test --ui
 
-# Real-engine unmocked E2E tests — all 90 tools (visible browser, slow motion)
+# Real-engine unmocked E2E tests — all 90 tools (visible browser, slow motion, one-by-one)
 test-e2e-real-90:
-	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test --project=real-engine-90tools
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test --project=real-engine-90tools --workers=1
 
 test-e2e-real-s1:
-	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite1_page_ops --project=real-engine-90tools
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite1_page_ops --project=real-engine-90tools --workers=1
 
 test-e2e-real-s2:
-	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite2_security_forms --project=real-engine-90tools
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite2_security_forms --project=real-engine-90tools --workers=1
 
 test-e2e-real-s3:
-	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite3_conversions_ai --project=real-engine-90tools
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite3_conversions_ai --project=real-engine-90tools --workers=1
 
 # Run conformance tests (requires qpdf, verapdf optional)
 .PHONY: test-conformance test-cleanroom-top12 test-cleanroom-all50

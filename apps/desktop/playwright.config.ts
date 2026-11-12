@@ -23,10 +23,11 @@ export default defineConfig({
     },
     {
       name: 'real-engine-90tools',
+      fullyParallel: false,
       use: {
         ...devices['Desktop Chrome'],
         headless: false,
-        slowMo: 400,
+        slowMo: 500,
         video: 'on',
         screenshot: 'on',
         launchOptions: {
@@ -40,7 +41,7 @@ export default defineConfig({
     command: 'npm run dev',
     cwd: './',
     url: 'http://127.0.0.1:1420',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     env: {
       NO_PROXY: 'localhost,127.0.0.1',
       no_proxy: 'localhost,127.0.0.1',
