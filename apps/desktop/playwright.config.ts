@@ -21,6 +21,20 @@ export default defineConfig({
         },
       },
     },
+    {
+      name: 'real-engine-90tools',
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: false,
+        slowMo: 400,
+        video: 'on',
+        screenshot: 'on',
+        launchOptions: {
+          args: ['--proxy-bypass-list=<-loopback>'],
+        },
+      },
+      testMatch: ['**/e2e_unmocked_suite*.spec.ts'],
+    },
   ],
   webServer: {
     command: 'npm run dev',

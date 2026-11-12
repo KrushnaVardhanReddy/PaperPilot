@@ -1,4 +1,4 @@
-.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
+.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all test-e2e-real-90 test-e2e-real-s1 test-e2e-real-s2 test-e2e-real-s3
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -178,6 +178,19 @@ test-e2e:
 # Run Playwright in UI mode to manually step through and test every feature/button
 test-e2e-ui:
 	cd apps/desktop && npx playwright test --ui
+
+# Real-engine unmocked E2E tests — all 90 tools (visible browser, slow motion)
+test-e2e-real-90:
+	cd apps/desktop && npx playwright test --project=real-engine-90tools
+
+test-e2e-real-s1:
+	cd apps/desktop && npx playwright test e2e_unmocked_suite1_page_ops --project=real-engine-90tools
+
+test-e2e-real-s2:
+	cd apps/desktop && npx playwright test e2e_unmocked_suite2_security_forms --project=real-engine-90tools
+
+test-e2e-real-s3:
+	cd apps/desktop && npx playwright test e2e_unmocked_suite3_conversions_ai --project=real-engine-90tools
 
 # Run conformance tests (requires qpdf, verapdf optional)
 .PHONY: test-conformance test-cleanroom-top12 test-cleanroom-all50
