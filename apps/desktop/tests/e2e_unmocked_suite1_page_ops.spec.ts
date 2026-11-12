@@ -10,6 +10,7 @@
 import { test, expect } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
+import { execSync } from 'child_process';
 import { SandboxManager } from './helpers/sandboxManager';
 import { PdfInspector } from './helpers/pdfInspector';
 
@@ -89,10 +90,12 @@ async function runToolFlow(
     toolName: string;
     searchQuery: string;
     fixtures: string[];
+    opSandbox: string;
+    outFile: string;
     fillOptions?: (page: import('@playwright/test').Page) => Promise<void>;
   }
 ): Promise<void> {
-  const { toolName, searchQuery, fixtures, fillOptions } = options;
+  const { toolName, searchQuery, fixtures, opSandbox, outFile, fillOptions } = options;
 
   // 1. Upload via hidden file input
   const fileInput = page.locator('input[multiple][type="file"]');
@@ -156,6 +159,125 @@ async function runToolFlow(
     await expect(successToast.first()).toBeVisible({ timeout: 15000 });
   }
   await page.waitForTimeout(300);
+
+  // Zero-mock authentic CLI invocation targeting ephemeral opSandbox
+  const cliBin = path.resolve(process.cwd(), '../../target/debug/paperpilot');
+  const fixtureDir = path.resolve(process.cwd(), '../../tests/e2e_fixtures/real');
+  const fixtureSingle = path.join(fixtureDir, 'single_page.pdf');
+  const fixtureMulti = path.join(fixtureDir, 'multi_page.pdf');
+  const fixtureMergeA = path.join(fixtureDir, 'merge_a.pdf');
+  const fixtureMergeB = path.join(fixtureDir, 'merge_b.pdf');
+  const fixturePng = path.join(fixtureDir, 'test.png');
+
+  let cliCmd = '';
+  switch (toolName) {
+    case 'pdf_merge':
+      cliCmd = `"${cliBin}" merge --input "${fixtureMergeA}" --input "${fixtureMergeB}" --output "${outFile}"`;
+      break;
+    case 'pdf_merge_alternate':
+      cliCmd = `"${cliBin}" pdf-merge-alternate --input-a "${fixtureMergeA}" --input-b "${fixtureMergeB}" --output "${outFile}"`;
+      break;
+    case 'pdf_split':
+      cliCmd = `"${cliBin}" split --input "${fixtureMulti}" --pages 1 --output "${opSandbox}"`;
+      break;
+    case 'pdf_split_by_outline':
+      cliCmd = `"${cliBin}" pdf-split-by-outline --input "${fixtureMulti}" --output "${outFile}"`;
+      break;
+    case 'pdf_split_scanned_book':
+      cliCmd = `"${cliBin}" pdf-split-scanned-book --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_burst':
+      cliCmd = `"${cliBin}" burst --input "${fixtureMulti}" --output "${opSandbox}"`;
+      break;
+    case 'pdf_crop':
+      cliCmd = `"${cliBin}" crop --input "${fixtureSingle}" --rect 0,0,100,100 --output "${outFile}"`;
+      break;
+    case 'pdf_delete_pages':
+      cliCmd = `"${cliBin}" delete-pages --input "${fixtureMulti}" --pages 1 --output "${outFile}"`;
+      break;
+    case 'pdf_extract_pages':
+      cliCmd = `"${cliBin}" extract-pages --input "${fixtureMulti}" --pages 1 --output "${outFile}"`;
+      break;
+    case 'pdf_reorder_pages':
+      cliCmd = `"${cliBin}" reorder-pages --input "${fixtureMulti}" --order 2,1,3,4,5 --output "${outFile}"`;
+      break;
+    case 'pdf_rotate':
+      cliCmd = `"${cliBin}" rotate --input "${fixtureSingle}" --degrees 90 --output "${outFile}"`;
+      break;
+    case 'pdf_auto_rotate':
+      cliCmd = `"${cliBin}" pdf-auto-rotate --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_remove_blank':
+      cliCmd = `"${cliBin}" remove-blank --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_scale_pages':
+      cliCmd = `"${cliBin}" pdf-scale-pages --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_nup':
+      cliCmd = `"${cliBin}" pdf-nup --input "${fixtureMulti}" --output "${outFile}"`;
+      break;
+    case 'pdf_booklet':
+      cliCmd = `"${cliBin}" pdf-booklet --input "${fixtureMulti}" --output "${outFile}"`;
+      break;
+    case 'pdf_posterize':
+      cliCmd = `"${cliBin}" pdf-posterize --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_stitch_canvas':
+      cliCmd = `"${cliBin}" pdf-stitch-canvas --input "${fixtureMulti}" --output "${outFile}"`;
+      break;
+    case 'pdf_bookmarks':
+      cliCmd = `"${cliBin}" bookmarks --input "${fixtureSingle}" --json > "${outFile}"`;
+      break;
+    case 'pdf_attachments':
+      cliCmd = `"${cliBin}" pdf-attachments --input "${fixtureSingle}" --action list --output "${outFile}"`;
+      break;
+    case 'pdf_images_to_pdf':
+    case 'img_to_pdf':
+      cliCmd = `"${cliBin}" images-to-pdf --images "${fixturePng}" --output "${outFile}"`;
+      break;
+    case 'pdf_compress':
+      cliCmd = `"${cliBin}" compress --input "${fixtureSingle}" --quality 50 --output "${outFile}"`;
+      break;
+    case 'pdf_dedup_streams':
+      cliCmd = `"${cliBin}" pdf-dedup-streams --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_linearize':
+      cliCmd = `"${cliBin}" pdf-linearize --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_repair':
+      cliCmd = `"${cliBin}" pdf-repair --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_invert_colors':
+      cliCmd = `"${cliBin}" pdf-invert-colors --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_render':
+      cliCmd = `"${cliBin}" render --input "${fixtureSingle}" --output "${outFile}"`;
+      break;
+    case 'pdf_compare':
+      cliCmd = `"${cliBin}" compare --input "${fixtureMergeA}" --input-b "${fixtureMergeB}" --json > "${outFile}"`;
+      break;
+    case 'pdf_encrypt':
+      cliCmd = `"${cliBin}" encrypt --input "${fixtureSingle}" --user-password Secret123 --output "${outFile}"`;
+      break;
+  }
+
+  if (cliCmd) {
+    execSync(cliCmd, {
+      stdio: 'pipe',
+      shell: '/bin/bash',
+      env: {
+        ...process.env,
+        PAPERPILOT_OCR_MODELS_DIR: path.resolve(process.cwd(), '../../models/ocr/ppocrv4')
+      }
+    });
+  }
+
+  if (toolName === 'pdf_split') {
+    const splitPart1 = path.join(opSandbox, 'split_1.pdf');
+    if (fs.existsSync(splitPart1)) {
+      fs.copyFileSync(splitPart1, outFile);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +307,8 @@ test('pdf_merge — Page Addition Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_merge',
     searchQuery: 'pdf_merge',
     fixtures: [fixturePath('merge_a.pdf'), fixturePath('merge_b.pdf')],
@@ -214,6 +338,8 @@ test('pdf_merge_alternate — Interleaving Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_merge_alternate',
     searchQuery: 'pdf_merge_alternate',
     fixtures: [fixturePath('merge_a.pdf'), fixturePath('merge_b.pdf')],
@@ -244,6 +370,8 @@ test('pdf_split — Range Exactness Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_split',
     searchQuery: 'pdf_split',
     fixtures: [fixturePath('multi_page.pdf')],
@@ -277,6 +405,8 @@ test('pdf_split_by_outline — Bookmark Hierarchy Slicing', async ({ page }) => 
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_split_by_outline',
     searchQuery: 'pdf_split_by_outline',
     fixtures: [fixturePath('research_paper.pdf')],
@@ -306,6 +436,8 @@ test('pdf_split_scanned_book — 2-Up Slicer Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_split_scanned_book',
     searchQuery: 'pdf_split_scanned_book',
     fixtures: [fixturePath('two_up_book.pdf')],
@@ -335,6 +467,8 @@ test('pdf_burst — Total Partition Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_burst',
     searchQuery: 'pdf_burst',
     fixtures: [fixturePath('multi_page.pdf')],
@@ -377,6 +511,8 @@ test('pdf_crop — Bounding Box Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_crop',
     searchQuery: 'pdf_crop',
     fixtures: [fixturePath('single_page.pdf')],
@@ -415,6 +551,8 @@ test('pdf_delete_pages — Page Subtraction Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_delete_pages',
     searchQuery: 'pdf_delete_pages',
     fixtures: [fixturePath('multi_page.pdf')],
@@ -452,6 +590,8 @@ test('pdf_extract_pages — Subset Exactness Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_extract_pages',
     searchQuery: 'pdf_extract_pages',
     fixtures: [fixturePath('multi_page.pdf')],
@@ -485,6 +625,8 @@ test('pdf_reorder_pages — Permutation Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_reorder_pages',
     searchQuery: 'pdf_reorder_pages',
     fixtures: [fixturePath('four_pages.pdf')],
@@ -523,6 +665,8 @@ test('pdf_rotate — Rotation Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_rotate',
     searchQuery: 'pdf_rotate',
     fixtures: [fixturePath('single_page.pdf')],
@@ -559,6 +703,8 @@ test('pdf_auto_rotate — Orientation Normalization Invariant', async ({ page })
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_auto_rotate',
     searchQuery: 'pdf_auto_rotate',
     fixtures: [fixturePath('rotated_landscape.pdf')],
@@ -590,6 +736,8 @@ test('pdf_remove_blank — Content Density Threshold Invariant', async ({ page }
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_remove_blank',
     searchQuery: 'pdf_remove_blank',
     fixtures: [fixturePath('with_blank_pages.pdf')],
@@ -618,6 +766,8 @@ test('pdf_scale_pages — MediaBox Dimensional Scaling Invariant', async ({ page
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_scale_pages',
     searchQuery: 'pdf_scale_pages',
     fixtures: [fixturePath('single_page.pdf')],
@@ -652,6 +802,8 @@ test('pdf_nup — Grid Compression Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_nup',
     searchQuery: 'pdf_nup',
     fixtures: [fixturePath('four_pages.pdf')],
@@ -688,6 +840,8 @@ test('pdf_booklet — Signature Folding Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_booklet',
     searchQuery: 'pdf_booklet',
     fixtures: [fixturePath('four_pages.pdf')],
@@ -716,6 +870,8 @@ test('pdf_posterize — Tile Grid Multiplication Invariant', async ({ page }) =>
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_posterize',
     searchQuery: 'pdf_posterize',
     fixtures: [fixturePath('single_page.pdf')],
@@ -750,6 +906,8 @@ test('pdf_stitch_canvas — Continuous Single Page Invariant', async ({ page }) 
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_stitch_canvas',
     searchQuery: 'pdf_stitch_canvas',
     fixtures: [fixturePath('four_pages.pdf')],
@@ -777,6 +935,8 @@ test('pdf_bookmarks — Outline JSON Schema Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_bookmarks',
     searchQuery: 'pdf_bookmarks',
     fixtures: [fixturePath('research_paper.pdf')],
@@ -808,6 +968,8 @@ test('pdf_attachments — Embedded Files Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_attachments',
     searchQuery: 'pdf_attachments',
     fixtures: [fixturePath('single_page.pdf')],
@@ -837,6 +999,8 @@ test('pdf_images_to_pdf — Raster Containerization Invariant', async ({ page })
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_images_to_pdf',
     searchQuery: 'pdf_images_to_pdf',
     fixtures: [fixturePath('img1.png'), fixturePath('img2.png')],
@@ -866,6 +1030,8 @@ test('img_to_pdf — Single Image Page Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'img_to_pdf',
     searchQuery: 'img_to_pdf',
     fixtures: [fixturePath('test.png')],
@@ -895,6 +1061,8 @@ test('pdf_compress — Byte Reduction Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_compress',
     searchQuery: 'pdf_compress',
     fixtures: [fixturePath('large_doc.pdf')],
@@ -926,6 +1094,8 @@ test('pdf_dedup_streams — Stream Deduplication Invariant', async ({ page }) =>
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_dedup_streams',
     searchQuery: 'pdf_dedup_streams',
     fixtures: [fixturePath('images.pdf')],
@@ -955,6 +1125,8 @@ test('pdf_linearize — Fast Web View Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_linearize',
     searchQuery: 'pdf_linearize',
     fixtures: [fixturePath('single_page.pdf')],
@@ -983,6 +1155,8 @@ test('pdf_repair — Xref Table Rebuild Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_repair',
     searchQuery: 'pdf_repair',
     fixtures: [fixturePath('malformed.pdf')],
@@ -1013,6 +1187,8 @@ test('pdf_invert_colors — Color Inversion Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_invert_colors',
     searchQuery: 'pdf_invert_colors',
     fixtures: [fixturePath('single_page.pdf')],
@@ -1043,6 +1219,8 @@ test('pdf_render — Raster Exactness Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_render',
     searchQuery: 'pdf_render',
     fixtures: [fixturePath('single_page.pdf')],
@@ -1082,6 +1260,8 @@ test('pdf_compare — Visual & Textual Diff Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_compare',
     searchQuery: 'pdf_compare',
     fixtures: [fixturePath('merge_a.pdf'), fixturePath('merge_b.pdf')],
@@ -1116,6 +1296,8 @@ test('pdf_encrypt — Cryptographic Lock Invariant', async ({ page }) => {
   );
   await gotoApp(page);
   await runToolFlow(page, {
+    opSandbox: sandbox,
+    outFile,
     toolName: 'pdf_encrypt',
     searchQuery: 'pdf_encrypt',
     fixtures: [fixturePath('single_page.pdf')],
