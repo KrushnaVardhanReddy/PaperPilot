@@ -427,11 +427,19 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
     switch (activeTool.id) {
       case 'md_to_pdf':
+        customOutputPath = getOutputPath(`${base}_converted.pdf`);
+        break;
       case 'html_to_pdf':
+        customOutputPath = getOutputPath(`${base}_converted.pdf`);
+        break;
       case 'img_to_pdf':
       case 'pdf_images_to_pdf':
+        customOutputPath = applyToAllFiles && appState.documents.length > 1
+          ? getOutputPath('images_combined.pdf')
+          : getOutputPath(`${base}_converted.pdf`);
+        break;
       case 'json_to_pdf':
-        customOutputPath = getOutputPath(`${base}_converted.pdf`);
+        customOutputPath = getOutputPath(`${base}_synthesized.pdf`);
         break;
       case 'office_to_markdown':  customOutputPath = getOutputPath(`${base}.md`);       break;
       case 'office_extract_text': customOutputPath = getOutputPath(`${base}.txt`);      break;
@@ -626,7 +634,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       return;
     }
 
-    const isBatchExecution = applyToAllFiles && (activeTool.rule?.isBatchable ?? false) && appState.documents.length > 1;
+    const isCombineTool = ['merge', 'pdf_merge', 'img_to_pdf', 'pdf_images_to_pdf'].includes(activeTool.id);
+    const isBatchExecution = !isCombineTool && applyToAllFiles && (activeTool.rule?.isBatchable ?? false) && appState.documents.length > 1;
 
     isRunning = true;
     elapsedSeconds = 0;
@@ -900,6 +909,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           allDocuments: appState.documents,
           getOutputPath,
           customOutputPath,
+          applyToAllFiles,
           splitPoints,
           deletePages,
           extractPages,
@@ -1225,13 +1235,18 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       order: reorderList || ''
     };
 
+    const isImgCombineTool = rawToolId === 'img_to_pdf' || rawToolId === 'pdf_images_to_pdf';
+    const resolvedInputs = isImgCombineTool
+      ? (applyToAllFiles && appState.documentPaths.length > 0 ? appState.documentPaths : [docPath])
+      : (appState.documentPaths.length > 0 ? appState.documentPaths : [docPath]);
+
     return {
       toolId,
       intent: activeTool.title,
       params,
       inputFile: docPath,
       outputFile: output,
-      inputs: appState.documentPaths.length > 0 ? appState.documentPaths : [docPath]
+      inputs: resolvedInputs
     } as SnippetTarget;
   });
 
@@ -1404,9 +1419,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool.id === 'merge' || activeTool.id === 'pdf_merge'}
+      {#if activeTool.id === 'merge' || activeTool.id === 'pdf_merge' || ((activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf') && applyToAllFiles)}
         <div class="operation-config">
-          <p class="section-desc">Reorder open documents for merging:</p>
+          <p class="section-desc">
+            {activeTool.id === 'merge' || activeTool.id === 'pdf_merge' ? 'Reorder open documents for merging:' : 'Reorder open images for combining into PDF:'}
+          </p>
           {#if appState.documents.length === 0}
             <div class="empty-list">No documents added.</div>
           {:else}
@@ -2656,16 +2673,20 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if appState.documents.length > 1 && activeTool.rule?.isBatchable}
+      {#if appState.documents.length > 1 && (activeTool.rule?.isBatchable || activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf') && activeTool.id !== 'merge' && activeTool.id !== 'pdf_merge'}
         <div class="batch-scope-banner">
           <div class="batch-scope-header">
-            <span class="batch-scope-icon">⚡</span>
+            <span class="batch-scope-icon">{activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf' ? '🖼️' : '⚡'}</span>
             <span class="batch-scope-title">Execution Mode</span>
           </div>
           <div class="batch-scope-options">
             <label class="scope-option">
               <input type="radio" name="batchScope" checked={applyToAllFiles} onchange={() => applyToAllFiles = true} />
-              <span>Apply to all <strong>{appState.documents.length} files</strong> in queue</span>
+              {#if activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf'}
+                <span>Combine all <strong>{appState.documents.length} images</strong> into one PDF</span>
+              {:else}
+                <span>Apply to all <strong>{appState.documents.length} files</strong> in queue</span>
+              {/if}
             </label>
             <label class="scope-option">
               <input type="radio" name="batchScope" checked={!applyToAllFiles} onchange={() => applyToAllFiles = false} />
@@ -2675,7 +2696,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'search' && !((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
+      {#if activeTool && activeTool.id !== 'search' && !((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1 && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'pdf_images_to_pdf')}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Output folder:' : 'Output file:'}

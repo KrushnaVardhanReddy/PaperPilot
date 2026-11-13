@@ -147,6 +147,21 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_compress', ${JSON.stringify(mcpArgs)});`;
       break;
     }
+    case 'pdf_images_to_pdf':
+    case 'pdf_img_to_pdf':
+    case 'img_to_pdf':
+    case 'images_to_pdf': {
+      const imgInputs = inputs && inputs.length > 0 ? inputs : [input];
+      const cliImages = imgInputs.map(f => `"${f}"`).join(' ');
+      cli = `paperpilot images-to-pdf --images ${cliImages} --output "${output}"`;
+      curl = `curl -X POST http://localhost:8080/api/v1/tools/images-to-pdf ${imgInputs.map(f => `-F "files=@${f}"`).join(' ')}`;
+
+      const mcpArgs = { inputs: imgInputs, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_images_to_pdf", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Combine the following images in order: [${imgInputs.join(', ')}] into "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_images_to_pdf', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_merge':
     case 'merge': {
       const docInputs = inputs && inputs.length > 0 ? inputs : [input];

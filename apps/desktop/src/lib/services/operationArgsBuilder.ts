@@ -8,6 +8,7 @@ export interface OperationContext {
     allDocuments: { name: string }[];
     getOutputPath: (filename: string) => string;
     customOutputPath: string;
+    applyToAllFiles?: boolean;
     action?: string;
     file_name?: string;
     description?: string;
@@ -284,26 +285,35 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         }
         case 'img_to_pdf':
         case 'pdf_images_to_pdf': {
+            const allImages = (context.allDocumentPaths || [])
+                .map((p, i) => p || context.allDocuments?.[i]?.name || '')
+                .filter(p => /\.(png|jpg|jpeg|webp|bmp|gif)$/i.test(p));
+
             let inputPaths: string[] = [];
-            if (docPath && (docPath.match(/\.(png|jpg|jpeg|webp)$/i))) {
+            if (context.applyToAllFiles !== false && allImages.length > 0) {
+                inputPaths = allImages;
+            } else if (docPath && /\.(png|jpg|jpeg|webp|bmp|gif)$/i.test(docPath)) {
                 inputPaths = [docPath];
             }
-            let outputPath = customOutputPath ? customOutputPath : null;
 
-            if (inputPaths.length === 0 || !outputPath) {
+            const defaultOutName = inputPaths.length > 1
+                ? 'images_combined.pdf'
+                : `${docName.replace(/\.[^.]+$/i, '')}_converted.pdf`;
+            let outputPath: string | null = customOutputPath || getOutputPath(defaultOutName);
+
+            if (inputPaths.length === 0) {
                 try {
                     const { open, save } = await import('@tauri-apps/plugin-dialog');
-                    if (inputPaths.length === 0) {
-                        const selected = await open({
-                            title: 'Select Images',
-                            multiple: true,
-                            filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
-                        });
-                        if (!selected || selected.length === 0) return null;
-                        inputPaths = Array.isArray(selected) ? selected : [selected];
-                    }
+                    const selected = await open({
+                        title: 'Select Images',
+                        multiple: true,
+                        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }]
+                    });
+                    if (!selected || selected.length === 0) return null;
+                    inputPaths = Array.isArray(selected) ? selected : [selected];
+
                     if (!outputPath) {
-                        const suggested = getOutputPath('output.pdf');
+                        const suggested = getOutputPath('images_combined.pdf');
                         outputPath = await save({
                             title: 'Save PDF As...',
                             defaultPath: suggested,
