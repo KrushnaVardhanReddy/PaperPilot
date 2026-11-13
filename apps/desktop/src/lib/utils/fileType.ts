@@ -158,6 +158,11 @@ export function isMarkdownFile(fileName: string): boolean {
   return ext === 'md' || ext === 'markdown';
 }
 
+export function isHtmlFile(fileName: string): boolean {
+  const ext = (fileName || '').split('.').pop()?.toLowerCase() ?? '';
+  return ext === 'html' || ext === 'htm';
+}
+
 export function getFileIcon(fileName: string): string {
   return getFileTypeInfo(fileName).icon;
 }
