@@ -163,6 +163,11 @@ export function isHtmlFile(fileName: string): boolean {
   return ext === 'html' || ext === 'htm';
 }
 
+export function isDocxFile(fileName: string): boolean {
+  const ext = (fileName || '').split('.').pop()?.toLowerCase() ?? '';
+  return ext === 'docx' || ext === 'doc';
+}
+
 export function getFileIcon(fileName: string): string {
   return getFileTypeInfo(fileName).icon;
 }
