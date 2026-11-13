@@ -1221,7 +1221,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       prefix: batesPrefix || 'BATES-',
       start_number: batesStart || 1,
       padding: batesPadding || 6,
-      quality: compressQuality || 80
+      quality: compressQuality || 80,
+      order: reorderList || ''
     };
 
     return {

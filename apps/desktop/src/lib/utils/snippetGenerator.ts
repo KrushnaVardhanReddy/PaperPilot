@@ -110,6 +110,20 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_encrypt', ${JSON.stringify({ input, password, output })});`;
       break;
     }
+    case 'pdf_reorder_pages':
+    case 'reorder_pages':
+    case 'reorder': {
+      const order = params.order || '';
+      const orderArg = order ? ` --order "${order}"` : '';
+      cli = `paperpilot reorder-pages --input "${input}"${orderArg} --output "${output}"`;
+      curl = `curl -X POST http://localhost:8080/api/v1/tools/reorder -F "file=@${input}" -F "order=${order}"`;
+
+      const mcpArgs = { input, order, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_reorder_pages", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Reorder pages of "${input}" to order [${order}] and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_reorder_pages', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_compress': {
       cli = `paperpilot compress --input "${input}" --quality 80 --output "${output}"`;
       curl = `curl -X POST http://localhost:8080/api/v1/tools/compress -F "file=@${input}" -F "quality=80"`;
