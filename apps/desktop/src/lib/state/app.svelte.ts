@@ -30,6 +30,8 @@ export class AppState {
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
   showDiffView = $state(false);
+  diffDocAIndex = $state(0);
+  diffDocBIndex = $state(1);
   isOperationsDrawerOpen = $state(false);
 
   // Global Export Code Modal state

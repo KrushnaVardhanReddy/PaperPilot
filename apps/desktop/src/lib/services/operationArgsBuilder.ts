@@ -89,6 +89,7 @@ export interface OperationContext {
     renderDpi?: number;
     invertMode?: string;
     invertPages?: string;
+    compareInputA?: string;
     compareInputB?: string;
     metadataAuthor?: string;
     metadataSubject?: string;
@@ -656,9 +657,10 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             break;
         case 'compare':
         case 'pdf_compare': {
+            const firstDoc = context.compareInputA || (context.allDocumentPaths && context.allDocumentPaths.length > 0 ? context.allDocumentPaths[0] : docPath);
             const secondDoc = context.compareInputB || (context.allDocumentPaths && context.allDocumentPaths.length > 1 ? context.allDocumentPaths[1] : docPath);
             args = {
-                input_a: docPath,
+                input_a: firstDoc,
                 input_b: secondDoc,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_diff_report.json`)
             };

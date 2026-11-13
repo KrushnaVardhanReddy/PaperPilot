@@ -3,6 +3,7 @@
   import * as pdfjsLib from 'pdfjs-dist';
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
   import { appState } from '$lib/state/app.svelte';
+  import { safeInvoke } from '$lib/utils/tauri';
 
   if (typeof window !== 'undefined') {
     try {
@@ -19,8 +20,8 @@
   } = $props();
 
   // Selected document indices for comparison
-  let docAIndex = $state<number>(0);
-  let docBIndex = $state<number>(appState.documents.length > 1 ? 1 : 0);
+  let docAIndex = $state<number>(appState.diffDocAIndex ?? 0);
+  let docBIndex = $state<number>(appState.documents.length > 1 ? (appState.diffDocBIndex ?? 1) : 0);
 
   let pageNum = $state(1);
   let scale = $state(1.0);
@@ -56,8 +57,32 @@
   let textDiffLines = $state<DiffLine[]>([]);
   let textDiffStats = $state({ additions: 0, deletions: 0 });
 
-  async function loadDoc(file: File): Promise<any> {
-    const arrayBuffer = await file.arrayBuffer();
+  async function loadDoc(file: File, idx?: number): Promise<any> {
+    let targetFile = file;
+    const isLoaded = (targetFile as any)._isLoaded !== false && targetFile.size > 0;
+    if (!isLoaded || targetFile.size === 0) {
+      const path = (targetFile as any)._localPath || (idx !== undefined ? appState.documentPaths[idx] : '');
+      if (path) {
+        try {
+          const bytes: number[] = await safeInvoke('read_file_bytes', { path });
+          const mime = targetFile.type || 'application/pdf';
+          const blob = new Blob([new Uint8Array(bytes)], { type: mime });
+          const newFile = new File([blob], targetFile.name, { type: mime });
+          Object.defineProperty(newFile, 'size', { value: bytes.length, writable: false });
+          (newFile as any)._localPath = path;
+          (newFile as any)._isLoaded = true;
+          if (idx !== undefined && appState.documents[idx] === file) {
+            const oldInsp = appState.inspections.get(file);
+            if (oldInsp) appState.inspections.set(newFile, oldInsp);
+            appState.documents[idx] = newFile;
+          }
+          targetFile = newFile;
+        } catch (err) {
+          console.error('Failed to lazy-load PDF bytes in PdfVisualDiff:', err);
+        }
+      }
+    }
+    const arrayBuffer = await targetFile.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     return await loadingTask.promise;
   }
@@ -67,8 +92,8 @@
     const fileB = appState.documents[idxB];
 
     const [docA, docB] = await Promise.all([
-      fileA ? loadDoc(fileA).catch(e => { console.error("Doc A load fail", e); return null; }) : Promise.resolve(null),
-      fileB ? loadDoc(fileB).catch(e => { console.error("Doc B load fail", e); return null; }) : Promise.resolve(null)
+      fileA ? loadDoc(fileA, idxA).catch(e => { console.error("Doc A load fail", e); return null; }) : Promise.resolve(null),
+      fileB ? loadDoc(fileB, idxB).catch(e => { console.error("Doc B load fail", e); return null; }) : Promise.resolve(null)
     ]);
 
     pdfDocA = docA;
@@ -80,27 +105,36 @@
   async function handleDocAChange(newIdx: number | string) {
     const idx = Number(newIdx);
     docAIndex = idx;
-    const file = appState.documents[idx];
-    if (file) {
-      pdfDocA = await loadDoc(file);
-      await renderComparison(pageNum, scale);
-    }
+    appState.diffDocAIndex = idx;
+    await loadBothDocs(docAIndex, docBIndex);
   }
 
   async function handleDocBChange(newIdx: number | string) {
     const idx = Number(newIdx);
     docBIndex = idx;
-    const file = appState.documents[idx];
-    if (file) {
-      pdfDocB = await loadDoc(file);
-      await renderComparison(pageNum, scale);
-    }
+    appState.diffDocBIndex = idx;
+    await loadBothDocs(docAIndex, docBIndex);
   }
 
   // Initial mount load
   onMount(() => {
     if (appState.documents.length > 0) {
+      if (docBIndex === 0 && appState.documents.length > 1 && docAIndex === 0) {
+        docBIndex = 1;
+        appState.diffDocBIndex = 1;
+      }
       loadBothDocs(docAIndex, docBIndex);
+    }
+  });
+
+  // Sync when parent/OperationsPanel updates diffDocAIndex or diffDocBIndex
+  $effect(() => {
+    const extA = appState.diffDocAIndex;
+    const extB = appState.diffDocBIndex;
+    if (extA !== docAIndex || extB !== docBIndex) {
+      docAIndex = extA;
+      docBIndex = extB;
+      loadBothDocs(extA, extB);
     }
   });
 

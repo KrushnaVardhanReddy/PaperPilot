@@ -233,20 +233,28 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let excelSheet = $state('');
   let hasHeaders = $state(true);
 
-  // Alternating Merge parameter states
+  // Alternating Merge & Compare parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
   let mergeAlternateReverseB = $state(true);
   let mergeAlternateStep = $state(1);
   let mergeAlternateStepB = $state(1);
+  let compareDocA = $state('');
+  let compareDocB = $state('');
 
-  // Initialize or synchronize mergeAlternate inputs when documents change
+  // Initialize or synchronize mergeAlternate & compare inputs when documents change
   $effect(() => {
     if (appState.documentPaths.length > 0 && !mergeAlternateDocA) {
       mergeAlternateDocA = appState.documentPaths[0];
     }
     if (appState.documentPaths.length > 1 && !mergeAlternateDocB) {
       mergeAlternateDocB = appState.documentPaths[1];
+    }
+    if (appState.documentPaths.length > 0 && !compareDocA) {
+      compareDocA = appState.documentPaths[0];
+    }
+    if (appState.documentPaths.length > 1 && !compareDocB) {
+      compareDocB = appState.documentPaths[1];
     }
   });
 
@@ -630,8 +638,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     }
 
     if (activeTool.id === 'compare' || activeTool.id === 'pdf_compare') {
+      const idxA = appState.documentPaths.findIndex((p, i) => (p || appState.documents[i]?.name) === compareDocA);
+      const idxB = appState.documentPaths.findIndex((p, i) => (p || appState.documents[i]?.name) === compareDocB);
+      appState.diffDocAIndex = idxA >= 0 ? idxA : 0;
+      appState.diffDocBIndex = idxB >= 0 ? idxB : (appState.documents.length > 1 ? 1 : 0);
       appState.toggleDiffView(true);
-      return;
     }
 
     const isCombineTool = ['merge', 'pdf_merge', 'img_to_pdf', 'pdf_images_to_pdf'].includes(activeTool.id);
@@ -987,6 +998,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           mergeAlternateReverseB,
           mergeAlternateStep,
           mergeAlternateStepB,
+          compareInputA: compareDocA,
+          compareInputB: compareDocB,
           bookletBindingEdge,
           bookletSheetOrdering,
           posterGrid,
@@ -1232,7 +1245,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       start_number: batesStart || 1,
       padding: batesPadding || 6,
       quality: compressQuality || 80,
-      order: reorderList || ''
+      order: reorderList || '',
+      input_a: compareDocA || appState.documentPaths[0] || docPath,
+      input_b: compareDocB || appState.documentPaths[1] || docPath
     };
 
     const isImgCombineTool = rawToolId === 'img_to_pdf' || rawToolId === 'pdf_images_to_pdf';
@@ -2003,8 +2018,30 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {:else if activeTool.id === 'compare' || activeTool.id === 'pdf_compare'}
         <div class="operation-config">
-          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
-            Interactive comparison tool to visually inspect differences, slide between document revisions, or generate pixel discrepancy maps between two open PDFs.
+          <label for="compareDocA" class="section-desc">Base Document (Doc A):</label>
+          <select id="compareDocA" bind:value={compareDocA} class="form-input" style="margin-bottom: 12px;">
+            {#if appState.documents.length === 0}
+              <option value="">No documents loaded</option>
+            {:else}
+              {#each appState.documents as doc, i}
+                <option value={appState.documentPaths[i] || doc.name}>{doc.name}</option>
+              {/each}
+            {/if}
+          </select>
+
+          <label for="compareDocB" class="section-desc">Comparison Document (Doc B):</label>
+          <select id="compareDocB" bind:value={compareDocB} class="form-input" style="margin-bottom: 12px;">
+            {#if appState.documents.length === 0}
+              <option value="">No documents loaded</option>
+            {:else}
+              {#each appState.documents as doc, i}
+                <option value={appState.documentPaths[i] || doc.name}>{doc.name}</option>
+              {/each}
+            {/if}
+          </select>
+
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 4px;">
+            Opens the interactive visual & Git diff viewer and saves a structured JSON discrepancy report.
           </p>
         </div>
       {:else if activeTool.id === 'annotate' || activeTool.id === 'pdf_annotate'}
