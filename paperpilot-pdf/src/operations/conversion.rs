@@ -184,7 +184,14 @@ pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
 
 pub fn inject_css_into_html(html: &str, css: &str) -> String {
     let style_tag = format!("<style id=\"paperpilot-injected-css\">\n{}\n</style>", css);
-    if let Some(pos) = html.find("</head>") {
+    if let Some(pos) = html.find("<head>") {
+        // Inject right after opening <head> so user styles declared inside <head> take cascade precedence
+        let after_head = pos + 6;
+        let mut out = html[..after_head].to_string();
+        out.push_str(&style_tag);
+        out.push_str(&html[after_head..]);
+        out
+    } else if let Some(pos) = html.find("</head>") {
         let mut out = html[..pos].to_string();
         out.push_str(&style_tag);
         out.push_str(&html[pos..]);
