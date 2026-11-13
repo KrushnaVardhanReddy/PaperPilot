@@ -7886,20 +7886,32 @@ impl PaperPilotMcpServer {
 
             "pdf_hash" => {
                 let input = get_string("input")?;
+                let output = get_string("output").ok();
                 let op = paperpilot_pdf::operations::hash::IntegrityHashOperation::new(
                     std::path::PathBuf::from(&input),
                 );
                 let mut doc = paperpilot_pdf::document::LopdfDocument::new(); // Dummy doc
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
                 let result = op.hash_result.lock().unwrap();
-                let (hash, _size) = result.as_ref().unwrap();
+                let (hash, size) = result.as_ref().unwrap();
+
+                if let Some(ref out_path) = output {
+                    if !out_path.is_empty() {
+                        let _ = ensure_parent_dir(out_path);
+                        let content = format!(
+                            "Algorithm: SHA-256\nFile: {}\nHash: {}\nSize: {} bytes\n",
+                            input, hash, size
+                        );
+                        let _ = std::fs::write(out_path, content);
+                    }
+                }
+
                 Ok(OperationResult {
                     diff_detected: None,
-                    data: Some(serde_json::json!({"hash": hash.clone()})),
+                    data: Some(serde_json::json!({"hash": hash.clone(), "size": size})),
                     success: true,
-
-                    message: "Hash calculated".to_string(),
-                    output_path: Some(hash.clone()),
+                    message: format!("SHA-256: {}", hash),
+                    output_path: output.or_else(|| Some(hash.clone())),
                 })
             }
             "pdf_validate" => {
