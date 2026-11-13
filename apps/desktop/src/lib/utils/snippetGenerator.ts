@@ -110,6 +110,19 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_encrypt', ${JSON.stringify({ input, password, output })});`;
       break;
     }
+    case 'pdf_remove_blank':
+    case 'remove_blank':
+    case 'remove-blank': {
+      const sensitivity = params.sensitivity !== undefined ? params.sensitivity : 95;
+      cli = `paperpilot remove-blank --input "${input}" --sensitivity ${sensitivity} --output "${output}"`;
+      curl = `curl -X POST http://localhost:8080/api/v1/tools/remove-blank -F "file=@${input}" -F "sensitivity=${sensitivity}"`;
+
+      const mcpArgs = { input, sensitivity, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_remove_blank", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Remove blank pages from "${input}" with sensitivity ${sensitivity} and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_remove_blank', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_reorder_pages':
     case 'reorder_pages':
     case 'reorder': {
