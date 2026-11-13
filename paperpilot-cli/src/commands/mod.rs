@@ -313,8 +313,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             page: _,
             output,
         } => group_c::handle_render(&resolve_input_path(input)?, output),
-        Commands::Compare { input, input_b } => {
-            group_c::handle_compare(&resolve_input_path(input)?, &resolve_input_path(input_b)?)
+        Commands::Compare { input, input_b, output } => {
+            group_c::handle_compare(
+                &resolve_input_path(input)?,
+                &resolve_input_path(input_b)?,
+                output.as_deref(),
+            )
         }
         Commands::Ocr {
             input,

@@ -396,12 +396,14 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    /// Compare PDFs: Diff two documents and highlight changes [Input: 2 .pdfs | Output: .pdf]
+    /// Compare PDFs: Diff two documents and highlight changes [Input: 2 .pdfs | Output: .pdf / .json]
     Compare {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         input_b: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     /// OCR Text Recognition: Run OCR on scanned pages [Input: .pdf | Output: .txt / .pdf]
     Ocr {

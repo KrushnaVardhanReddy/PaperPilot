@@ -102,11 +102,29 @@ pub fn handle_render(input: &std::path::Path, output: &std::path::Path) -> Opera
     Ok(())
 }
 
-pub fn handle_compare(input: &std::path::Path, input_b: &std::path::Path) -> OperationResult<()> {
+pub fn handle_compare(
+    input: &std::path::Path,
+    input_b: &std::path::Path,
+    output: Option<&std::path::Path>,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let mut op = paperpilot_pdf::operations::compare::CompareOperation::new();
     op.input_b = Some(input_b.to_string_lossy().to_string());
-    op.execute(&mut doc)
+    op.execute(&mut doc)?;
+
+    if let Some(out) = output {
+        if let Some(parent) = out.parent() {
+            std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
+        }
+        let result_opt = op.result.lock().unwrap().take();
+        let diff_report = if let Some(res) = result_opt {
+            serde_json::to_string_pretty(&res).unwrap_or_else(|_| "{}".to_string())
+        } else {
+            "{}".to_string()
+        };
+        std::fs::write(out, diff_report).map_err(paperpilot_core::error::PdfError::IoError)?;
+    }
+    Ok(())
 }
 
 pub fn handle_ocr(

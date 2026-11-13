@@ -166,8 +166,9 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
     case 'compare': {
       const docA = params.input_a || (inputs && inputs.length > 0 ? inputs[0] : input);
       const docB = params.input_b || (inputs && inputs.length > 1 ? inputs[1] : input);
-      cli = `paperpilot compare --input "${docA}" --input-b "${docB}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/pdf/compare -F "file_a=@${docA}" -F "file_b=@${docB}"`;
+      const outArg = output ? ` --output "${output}"` : '';
+      cli = `paperpilot compare --input "${docA}" --input-b "${docB}"${outArg}`;
+      curl = `curl -X POST http://localhost:8080/api/v1/pdf/compare -F "file_a=@${docA}" -F "file_b=@${docB}" -F "output=${output}"`;
 
       const mcpArgs = { input_a: docA, input_b: docB, output };
       mcpToolCall = JSON.stringify({ name: "pdf_compare", arguments: mcpArgs }, null, 2);

@@ -363,7 +363,11 @@ pub fn handle_ask(
                     "Compare requires two input files".into(),
                 ));
             }
-            crate::commands::group_c::handle_compare(&inputs_paths[0], &inputs_paths[1])
+            crate::commands::group_c::handle_compare(
+                &inputs_paths[0],
+                &inputs_paths[1],
+                output_path.as_deref(),
+            )
         }
         Intent::Ocr => {
             if inputs_paths.is_empty() {
