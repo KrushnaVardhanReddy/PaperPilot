@@ -399,13 +399,13 @@ pub fn handle_ask(
                     "Validate requires an input file".into(),
                 ));
             }
-            crate::commands::validate::handle_validate(&inputs_paths[0])
+            crate::commands::validate::handle_validate(&inputs_paths[0], None)
         }
         Intent::Hash => {
             if inputs_paths.is_empty() {
                 return Err(PdfError::InvalidInput("Hash requires an input file".into()));
             }
-            crate::commands::validate::handle_hash(&inputs_paths[0])
+            crate::commands::validate::handle_hash(&inputs_paths[0], None)
         }
         Intent::FormRead => {
             if inputs_paths.is_empty() {

@@ -449,17 +449,21 @@ pub enum Commands {
         #[arg(long)]
         output: Option<PathBuf>,
     },
-    /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt]
+    /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt/.json]
     #[command(alias = "pdf-validate", alias = "pdf_validate")]
     Validate {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     /// Generate Hash: Calculate document checksums [Input: .pdf | Output: .txt]
     #[command(alias = "pdf-hash", alias = "pdf_hash")]
     Hash {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     Verify {
         #[arg(long)]

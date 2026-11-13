@@ -7916,19 +7916,35 @@ impl PaperPilotMcpServer {
             }
             "pdf_validate" => {
                 let input = get_string("input")?;
+                let output = get_string("output").ok();
                 let mut doc = paperpilot_pdf::document::LopdfDocument::load(
                     &std::path::PathBuf::from(&input),
                 )
                 .map_err(crate::error::to_mcp_error)?;
                 let op = paperpilot_pdf::operations::validate::ValidateOperation::new();
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                let is_valid = op.execute(&mut doc).is_ok();
+                let page_count = doc.page_count().unwrap_or(0);
+
+                let report = serde_json::json!({
+                    "file": input,
+                    "is_valid": is_valid,
+                    "page_count": page_count,
+                    "status": if is_valid { "VALID_PDF_STRUCTURE" } else { "CORRUPTED_OR_INVALID" }
+                });
+
+                if let Some(ref out_path) = output {
+                    if !out_path.is_empty() {
+                        let _ = ensure_parent_dir(out_path);
+                        let _ = std::fs::write(out_path, serde_json::to_string_pretty(&report).unwrap_or_default());
+                    }
+                }
+
                 Ok(OperationResult {
                     diff_detected: None,
-                    data: Some(serde_json::json!({"is_valid": true})),
-                    success: true,
-
-                    message: "Document is valid".to_string(),
-                    output_path: Some("true".to_string()),
+                    data: Some(report),
+                    success: is_valid,
+                    message: if is_valid { format!("PDF is valid ({} pages)", page_count) } else { "Document is corrupted or invalid".to_string() },
+                    output_path: output.or_else(|| Some("true".to_string())),
                 })
             }
             "cli_ask" | "ask" => {

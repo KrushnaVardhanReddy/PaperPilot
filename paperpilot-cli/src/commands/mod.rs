@@ -346,8 +346,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             data,
             output,
         } => annotate::handle_annotate(&resolve_input_path(input)?, data, output),
-        Commands::Validate { input } => validate::handle_validate(&resolve_input_path(input)?),
-        Commands::Hash { input } => validate::handle_hash(&resolve_input_path(input)?),
+        Commands::Validate { input, output } => validate::handle_validate(&resolve_input_path(input)?, output.clone()),
+        Commands::Hash { input, output } => validate::handle_hash(&resolve_input_path(input)?, output.clone()),
         Commands::Verify {
             input,
             expected_hash,
