@@ -95,7 +95,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let watermarkOrientation = $state('diagonal');
   let watermarkColor = $state('gray');
 
-  let password = $state('');
+  let password = $state('paperpilot');
+  let showPasswordText = $state(false);
   let metadataTitle = $state('');
 
   // New tool parameters
@@ -623,6 +624,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         customOutputPath = getOutputPath(`${base}_watcher.json`);
         break;
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
+    }
+
+    if (activeTool.id === 'encrypt' || activeTool.id === 'pdf_encrypt') {
+      if (!password) password = 'paperpilot';
     }
   });
 
@@ -1240,7 +1245,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       angle: parseInt(rotateAngle, 10) || 90,
       text: watermarkText || 'CONFIDENTIAL',
       opacity: watermarkOpacity / 100,
-      password: password || 'secure123',
+      password: password || 'paperpilot',
       prefix: batesPrefix || 'BATES-',
       start_number: batesStart || 1,
       padding: batesPadding || 6,
@@ -1619,9 +1624,30 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       {:else if activeTool.id === 'encrypt' || activeTool.id === 'pdf_encrypt' || activeTool.id === 'decrypt' || activeTool.id === 'pdf_decrypt'}
         <div class="operation-config">
           <label for="passwordField" class="section-desc">Password:</label>
-          <input id="passwordField" type="password" class="form-input" bind:value={password} placeholder="Enter document password" />
+          <div class="password-input-row">
+            <input
+              id="passwordField"
+              type={showPasswordText ? 'text' : 'password'}
+              class="form-input password-input-field"
+              bind:value={password}
+              placeholder={activeTool.id.includes('encrypt') ? 'e.g. paperpilot' : 'Enter document password'}
+            />
+            <button
+              type="button"
+              class="password-toggle-btn"
+              onclick={() => showPasswordText = !showPasswordText}
+              title={showPasswordText ? 'Hide password' : 'Show password'}
+              aria-label={showPasswordText ? 'Hide password' : 'Show password'}
+            >
+              {showPasswordText ? '🙈 Hide' : '👁️ View'}
+            </button>
+          </div>
           <input id="password" type="hidden" value={password} />
-          <span class="field-hint">Used to encrypt output with 256-bit AES encryption (or unlock protected documents).</span>
+          <span class="field-hint">
+            {activeTool.id.includes('encrypt')
+              ? 'Default: paperpilot (256-bit AES encryption standard).'
+              : 'Password required to unlock and decrypt the document.'}
+          </span>
         </div>
       {:else if activeTool.id === 'bates' || activeTool.id === 'pdf_bates'}
         <div class="operation-config">
@@ -3644,6 +3670,38 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     display: flex;
     gap: 8px;
     align-items: center;
+  }
+
+  .password-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .password-input-field {
+    flex: 1;
+  }
+
+  .password-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted, #9ca3af);
+    background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+
+  .password-toggle-btn:hover {
+    color: var(--text-primary, #ffffff);
+    background: var(--bg-surface-active, rgba(255, 255, 255, 0.1));
+    border-color: var(--accent-primary, #5e6ad2);
   }
 
   .output-path-input {

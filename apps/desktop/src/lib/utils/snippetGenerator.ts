@@ -100,7 +100,7 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       break;
     }
     case 'pdf_encrypt': {
-      const password = params.password || params.user_password || '';
+      const password = params.password || params.user_password || 'paperpilot';
       cli = `paperpilot encrypt --input "${input}" --password "${password}" --output "${output}"`;
       curl = `curl -X POST http://localhost:8080/api/v1/tools/encrypt -F "file=@${input}" -F "password=${password}"`;
 
