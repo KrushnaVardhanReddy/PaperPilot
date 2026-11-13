@@ -4,35 +4,37 @@ runtime-version: '46'
 sdk: org.gnome.Sdk
 command: paperpilot-desktop
 finish-args:
-  # X11 & Wayland display socket access
+  # Graphical display access
   - --share=ipc
-  - --socket=x11
   - --socket=fallback-x11
   - --socket=wayland
   # GPU acceleration
   - --device=dri
-  # Audio (notifications/alerts)
-  - --socket=pulseaudio
-  # Local document file access
+  # File access to user documents and downloads
   - --filesystem=xdg-download
   - --filesystem=xdg-documents
-  # Network access for local microservices / AI connectors
+  # Sandboxed network access (for local MCP/AI service communication)
   - --share=network
 
 modules:
   - name: paperpilot-desktop
     buildsystem: simple
     build-commands:
-      # Install the pre-built desktop binary
-      - install -D -m 755 PaperPilot /app/bin/paperpilot-desktop
-      # Install application icon and desktop launcher
-      - install -D -m 644 PaperPilot.png /app/share/icons/hicolor/256x256/apps/com.usepaperpilot.PaperPilot.png
+      # Unpack the release .deb archive
+      - ar -x paperpilot.deb
+      - tar -xf data.tar.*
+      # Install the binary
+      - install -D -m 755 usr/bin/desktop /app/bin/paperpilot-desktop || install -D -m 755 usr/bin/PaperPilot /app/bin/paperpilot-desktop
+      # Install desktop launcher, icons, and metainfo
+      - install -D -m 644 usr/share/icons/hicolor/256x256/apps/PaperPilot.png /app/share/icons/hicolor/256x256/apps/com.usepaperpilot.PaperPilot.png || install -D -m 644 usr/share/icons/hicolor/128x128/apps/desktop.png /app/share/icons/hicolor/128x128/apps/com.usepaperpilot.PaperPilot.png
       - install -D -m 644 com.usepaperpilot.PaperPilot.desktop /app/share/applications/com.usepaperpilot.PaperPilot.desktop
       - install -D -m 644 com.usepaperpilot.PaperPilot.metainfo.xml /app/share/metainfo/com.usepaperpilot.PaperPilot.metainfo.xml
     sources:
       - type: file
-        path: ../../apps/desktop/src-tauri/icons/icon.png
-        dest-filename: PaperPilot.png
+        url: https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v0.6.0/PaperPilot_0.6.0_amd64.deb
+        sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        dest-filename: paperpilot.deb
+        only-arches: [x86_64]
       - type: file
         path: com.usepaperpilot.PaperPilot.desktop
       - type: file
