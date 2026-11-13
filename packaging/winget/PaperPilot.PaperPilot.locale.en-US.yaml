@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: PaperPilot.PaperPilot
+PackageVersion: 0.6.0
+PackageLocale: en-US
+Publisher: PaperPilot
+PublisherUrl: https://usepaperpilot.com
+PublisherSupportUrl: https://github.com/KrushnaVardhanReddy/PaperPilot/issues
+PrivacyUrl: https://usepaperpilot.com/privacy
+Author: PaperPilot Contributors
+PackageName: PaperPilot
+PackageUrl: https://usepaperpilot.com
+License: MIT
+LicenseUrl: https://github.com/KrushnaVardhanReddy/PaperPilot/blob/main/LICENSE
+Copyright: © 2025-2026 PaperPilot Contributors
+ShortDescription: Privacy-first, local multi-surface PDF & document intelligence toolkit
+Description: |
+  PaperPilot is a fast, local-first document manipulation toolkit with over 90 operations.
+  Designed with privacy by design: your files never leave your device.
+  Features include PDF page operations, OCR, high-ratio compression, form filling,
+  digital signatures, and embedded Model Context Protocol (MCP) server support.
+Moniker: paperpilot
+Tags:
+  - pdf
+  - document
+  - ocr
+  - compression
+  - editor
+  - privacy
+  - open-source
+ReleaseNotesUrl: https://github.com/KrushnaVardhanReddy/PaperPilot/releases/tag/v0.6.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

@@ -1,0 +1,39 @@
+app-id: com.usepaperpilot.PaperPilot
+runtime: org.gnome.Platform
+runtime-version: '46'
+sdk: org.gnome.Sdk
+command: paperpilot-desktop
+finish-args:
+  # X11 & Wayland display socket access
+  - --share=ipc
+  - --socket=x11
+  - --socket=fallback-x11
+  - --socket=wayland
+  # GPU acceleration
+  - --device=dri
+  # Audio (notifications/alerts)
+  - --socket=pulseaudio
+  # Local document file access
+  - --filesystem=xdg-download
+  - --filesystem=xdg-documents
+  # Network access for local microservices / AI connectors
+  - --share=network
+
+modules:
+  - name: paperpilot-desktop
+    buildsystem: simple
+    build-commands:
+      # Install the pre-built desktop binary
+      - install -D -m 755 PaperPilot /app/bin/paperpilot-desktop
+      # Install application icon and desktop launcher
+      - install -D -m 644 PaperPilot.png /app/share/icons/hicolor/256x256/apps/com.usepaperpilot.PaperPilot.png
+      - install -D -m 644 com.usepaperpilot.PaperPilot.desktop /app/share/applications/com.usepaperpilot.PaperPilot.desktop
+      - install -D -m 644 com.usepaperpilot.PaperPilot.metainfo.xml /app/share/metainfo/com.usepaperpilot.PaperPilot.metainfo.xml
+    sources:
+      - type: file
+        path: ../../apps/desktop/src-tauri/icons/icon.png
+        dest-filename: PaperPilot.png
+      - type: file
+        path: com.usepaperpilot.PaperPilot.desktop
+      - type: file
+        path: com.usepaperpilot.PaperPilot.metainfo.xml

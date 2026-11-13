@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.usepaperpilot.PaperPilot</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>PaperPilot</name>
+  <summary>Privacy-first, local multi-surface PDF &amp; document intelligence toolkit</summary>
+  <description>
+    <p>
+      PaperPilot is a fast, local-first document manipulation toolkit with over 90 operations.
+      Designed with privacy by design: your files never leave your device.
+    </p>
+    <ul>
+      <li>Merge, split, rotate, organize, and reorder PDF pages</li>
+      <li>Local OCR text extraction and scanned document searchability</li>
+      <li>High-ratio compression and vector deduplication</li>
+      <li>Digital signatures, PIN encryption, and AcroForm processing</li>
+      <li>Integrated MCP server and HTTP microservice for local AI agent workflows</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">com.usepaperpilot.PaperPilot.desktop</launchable>
+  <url type="homepage">https://usepaperpilot.com</url>
+  <url type="bugtracker">https://github.com/KrushnaVardhanReddy/PaperPilot/issues</url>
+  <url type="help">https://docs.usepaperpilot.com</url>
+  <provides>
+    <binary>paperpilot-desktop</binary>
+  </provides>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.6.0" date="2026-11-13">
+      <description>
+        <p>Release 0.6.0 with 91 tools, unmocked Tauri GUI test coverage, and offline-first intelligence.</p>
+      </description>
+    </release>
+  </releases>
+</component>
