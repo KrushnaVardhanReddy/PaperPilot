@@ -175,7 +175,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = { input: docPath, output: customOutputPath || getOutputPath(`${docName.replace(/\.[^/.]+$/, "")}_modernized.${modernExt}`) };
             break;
         }
-        case 'merge': {
+        case 'merge':
+        case 'pdf_merge': {
             let outputPath: string | null = customOutputPath;
             const suggested = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_merged.pdf`);
             if (!outputPath && !appState.isMobile) {

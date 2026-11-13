@@ -414,18 +414,25 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
   // Auto-fill the output path whenever the active tool or selected document changes
   $effect(() => {
-    if (!activeTool || appState.documents.length === 0) {
+    if (!activeTool) {
       customOutputPath = '';
       return;
     }
     const docIndex = appState.selectedDocumentIndex ?? 0;
-    const docName = appState.documents[docIndex]?.name || '';
+    const docName = appState.documents[docIndex]?.name || 'document.pdf';
     const docPath = appState.documentPaths[docIndex] || docName;
     const docDir = docPath.includes('/') ? docPath.substring(0, docPath.lastIndexOf('/')) : '';
     const getOutputPath = (filename: string) => docDir ? `${docDir}/${filename}` : filename;
     const base = docName.replace(/\.[^.]+$/i, '');
 
     switch (activeTool.id) {
+      case 'md_to_pdf':
+      case 'html_to_pdf':
+      case 'img_to_pdf':
+      case 'pdf_images_to_pdf':
+      case 'json_to_pdf':
+        customOutputPath = getOutputPath(`${base}_converted.pdf`);
+        break;
       case 'office_to_markdown':  customOutputPath = getOutputPath(`${base}.md`);       break;
       case 'office_extract_text': customOutputPath = getOutputPath(`${base}.txt`);      break;
       case 'office_modernize_legacy': {
@@ -437,7 +444,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'excel_to_json':       customOutputPath = getOutputPath(`${base}.json`);     break;
       case 'excel_to_csv':        customOutputPath = getOutputPath(`${base}.csv`);      break;
       case 'merge':
-        customOutputPath = ''; // handled by native dialog
+      case 'pdf_merge':
+        customOutputPath = getOutputPath(`${base}_merged.pdf`);
         break;
       case 'split':
       case 'pdf_split':
@@ -2666,7 +2674,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'merge' && activeTool.id !== 'pdf_merge' && activeTool.id !== 'compare' && activeTool.id !== 'pdf_compare' && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'pdf_images_to_pdf' && activeTool.id !== 'search' && !((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
+      {#if activeTool && activeTool.id !== 'search' && !((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1)}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Output folder:' : 'Output file:'}

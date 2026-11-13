@@ -120,6 +120,19 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_compress', ${JSON.stringify(mcpArgs)});`;
       break;
     }
+    case 'pdf_merge':
+    case 'merge': {
+      const docInputs = inputs && inputs.length > 0 ? inputs : [input];
+      const cliInputs = docInputs.map(f => `"${f}"`).join(' ');
+      cli = `paperpilot merge --input ${cliInputs} --output "${output}"`;
+      curl = `curl -X POST http://localhost:8080/api/v1/tools/merge ${docInputs.map(f => `-F "files=@${f}"`).join(' ')}`;
+
+      const mcpArgs = { inputs: docInputs, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_merge", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Merge the following documents in order: [${docInputs.join(', ')}] into "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_merge', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     default: {
       // Fallback
       const subcommand = toolId.replace('pdf_', '');
