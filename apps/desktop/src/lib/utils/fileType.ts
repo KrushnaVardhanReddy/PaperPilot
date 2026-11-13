@@ -148,6 +148,16 @@ export function isImageFile(fileName: string): boolean {
   return getFileTypeInfo(fileName).category === 'image';
 }
 
+export function isJsonFile(fileName: string): boolean {
+  const ext = (fileName || '').split('.').pop()?.toLowerCase() ?? '';
+  return ext === 'json';
+}
+
+export function isMarkdownFile(fileName: string): boolean {
+  const ext = (fileName || '').split('.').pop()?.toLowerCase() ?? '';
+  return ext === 'md' || ext === 'markdown';
+}
+
 export function getFileIcon(fileName: string): string {
   return getFileTypeInfo(fileName).icon;
 }

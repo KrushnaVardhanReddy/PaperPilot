@@ -21,10 +21,12 @@
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
   import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
   import ImageViewer from '$lib/components/workspace/ImageViewer.svelte';
+  import JsonViewer from '$lib/components/workspace/JsonViewer.svelte';
+  import MarkdownViewer from '$lib/components/workspace/MarkdownViewer.svelte';
   import DocumentTabBar from '$lib/components/layout/DocumentTabBar.svelte';
   import SignatureModal, { type AdoptedSignature } from '$lib/components/signature/SignatureModal.svelte';
   import type { PlacedStamp, ArmedSignature } from '$lib/components/signature/SignatureStampLayer.svelte';
-  import { isPdfFile, isSpreadsheetFile, isImageFile, getMimeType } from '$lib/utils/fileType';
+  import { isPdfFile, isSpreadsheetFile, isImageFile, isJsonFile, isMarkdownFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
 
   let drawerMode = $state<'auto' | 'files' | 'pages'>('auto');
@@ -595,6 +597,12 @@
           {:else if appState.selectedDocumentIndex !== null && isImageFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
             {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
             <ImageViewer file={selectedDoc} fileUrl={currentFileUrl} />
+          {:else if appState.selectedDocumentIndex !== null && isJsonFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+            {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+            <JsonViewer file={selectedDoc} />
+          {:else if appState.selectedDocumentIndex !== null && isMarkdownFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+            {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
+            <MarkdownViewer file={selectedDoc} />
           {:else if appState.selectedDocumentIndex !== null && isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
             {@const selectedDoc = appState.documents[appState.selectedDocumentIndex]}
             <div class="viewer-wrapper">
