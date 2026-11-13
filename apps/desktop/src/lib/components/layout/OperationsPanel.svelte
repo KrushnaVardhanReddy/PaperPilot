@@ -629,6 +629,44 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
     if (activeTool.id === 'encrypt' || activeTool.id === 'pdf_encrypt') {
       if (!password) password = 'paperpilot';
     }
+
+    if (activeTool.id === 'metadata' || activeTool.id === 'pdf_metadata') {
+      // Pre-read existing metadata from current active document
+      const file = appState.documents[docIndex];
+      if (file && (file.name.toLowerCase().endsWith('.pdf') || (file.type && file.type.includes('pdf')))) {
+        (async () => {
+          try {
+            let targetFile = file;
+            if ((targetFile as any)._isLoaded === false || targetFile.size === 0) {
+              const path = (targetFile as any)._localPath || appState.documentPaths[docIndex];
+              if (path) {
+                const bytes = await invoke<number[]>('read_file_bytes', { path });
+                const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+                targetFile = new File([blob], file.name, { type: 'application/pdf' });
+              }
+            }
+            const buf = await targetFile.arrayBuffer();
+            if (buf && buf.byteLength > 0) {
+              const pdfjsLib = await import('pdfjs-dist');
+              const pdfjsWorker = (await import('pdfjs-dist/build/pdf.worker.mjs?url')).default;
+              if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfjsWorker, window.location.href).href;
+              }
+              const loadingTask = pdfjsLib.getDocument({ data: buf });
+              const pdf = await loadingTask.promise;
+              const meta = await pdf.getMetadata();
+              const info = meta?.info || {};
+              metadataTitle = info.Title || '';
+              metadataAuthor = info.Author || '';
+              metadataSubject = info.Subject || '';
+              metadataKeywords = info.Keywords || '';
+            }
+          } catch (err) {
+            console.warn('Failed to pre-read PDF metadata:', err);
+          }
+        })();
+      }
+    }
   });
 
   let applyToAllFiles = $state(true);
@@ -2112,6 +2150,22 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {:else if activeTool.id === 'metadata' || activeTool.id === 'pdf_metadata'}
         <div class="operation-config">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="section-desc" style="margin: 0;">Document Properties:</span>
+            <button
+              type="button"
+              class="password-toggle-btn"
+              onclick={() => {
+                metadataTitle = '';
+                metadataAuthor = '';
+                metadataSubject = '';
+                metadataKeywords = '';
+              }}
+              title="Clear all fields to sanitize metadata"
+            >
+              🧹 Clear All
+            </button>
+          </div>
           <label for="metadataTitle" class="section-desc">Document Title:</label>
           <input id="metadataTitle" type="text" class="form-input" bind:value={metadataTitle} placeholder="e.g. Verified Release 2026" />
           <div style="margin-top: 10px;">
@@ -2126,7 +2180,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <label for="metadataKeywords" class="section-desc">Keywords (comma-separated):</label>
             <input id="metadataKeywords" type="text" class="form-input" bind:value={metadataKeywords} placeholder="e.g. report, annual, verified" />
           </div>
-          <span class="field-hint">Updates the document /Info dictionary and XMP metadata stream.</span>
+          <span class="field-hint">Pre-filled with document's current properties. Edit or clear fields to sanitize.</span>
         </div>
       {:else if activeTool.id === 'sanitize' || activeTool.id === 'pdf_sanitize'}
         <div class="operation-config">

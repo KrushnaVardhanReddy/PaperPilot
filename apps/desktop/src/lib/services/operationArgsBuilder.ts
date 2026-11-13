@@ -718,10 +718,10 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_metadata':
             args = {
                 input: docPath,
-                title: metadataTitle || docName,
-                author: context.metadataAuthor || 'PaperPilot Author',
-                subject: context.metadataSubject || 'Document Subject',
-                keywords: context.metadataKeywords || 'paperpilot,pdf',
+                title: metadataTitle,
+                author: context.metadataAuthor !== undefined ? context.metadataAuthor : '',
+                subject: context.metadataSubject !== undefined ? context.metadataSubject : '',
+                keywords: context.metadataKeywords !== undefined ? context.metadataKeywords : '',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_metadata.pdf`)
             };
             break;
