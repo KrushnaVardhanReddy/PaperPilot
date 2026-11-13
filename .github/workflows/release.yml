@@ -92,6 +92,34 @@ jobs:
           cd apps/desktop
           pnpm install --no-frozen-lockfile || npm install
 
+      - name: Set Dynamic Version in Desktop App
+        shell: bash
+        run: |
+          CLEAN_VER="${{ inputs.version }}"
+          CLEAN_VER="${CLEAN_VER#v}"
+          echo "Setting desktop version to ${CLEAN_VER}..."
+          cd apps/desktop
+          node -e '
+            const fs = require("fs");
+            const ver = process.argv[1];
+            
+            // 1. Update package.json
+            const pkgPath = "package.json";
+            if (fs.existsSync(pkgPath)) {
+              const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+              pkg.version = ver;
+              fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+            }
+
+            // 2. Update tauri.conf.json
+            const tauriPath = "src-tauri/tauri.conf.json";
+            if (fs.existsSync(tauriPath)) {
+              const tauri = JSON.parse(fs.readFileSync(tauriPath, "utf8"));
+              tauri.version = ver;
+              fs.writeFileSync(tauriPath, JSON.stringify(tauri, null, 2) + "\n");
+            }
+          ' "$CLEAN_VER"
+
       - name: Build Desktop GUI Bundle (Tauri)
         shell: bash
         run: |
