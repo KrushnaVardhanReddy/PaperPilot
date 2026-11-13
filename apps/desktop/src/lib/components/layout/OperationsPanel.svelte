@@ -12,6 +12,7 @@
   import { resolveToolName, rankToolsByContext } from '$lib/services/toolRegistry';
 import { validatePreconditions } from '$lib/services/operationValidator';
 import { buildOperationArgs, type OperationContext } from '$lib/services/operationArgsBuilder';
+import { getPdfDetails } from '$lib/services/pdfInspector';
 import { onMount } from 'svelte';
 import type { SnippetTarget } from '$lib/utils/snippetGenerator';
 import AuditReportViewer from '../ui/AuditReportViewer.svelte';
@@ -179,9 +180,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let sanitizeMetadata = $state(true);
   let sanitizeAttachments = $state(true);
   let tsaServerUrl = $state('http://timestamp.digicert.com');
-  let allowPrinting = $state(false);
-  let allowCopying = $state(false);
-  let allowModifying = $state(false);
+  let allowPrinting = $state(true);
+  let allowCopying = $state(true);
+  let allowModifying = $state(true);
 
   // Digital Signatures, Hash & Conformance parameter states (Tools 36-40)
   let signPassword = $state('test');
@@ -630,39 +631,25 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       if (!password) password = 'paperpilot';
     }
 
-    if (activeTool.id === 'metadata' || activeTool.id === 'pdf_metadata') {
-      // Pre-read existing metadata from current active document
+    if (activeTool.id === 'metadata' || activeTool.id === 'pdf_metadata' || activeTool.id === 'change_permissions' || activeTool.id === 'pdf_change_permissions') {
+      // Pre-read existing metadata / permissions from current active document
       const file = appState.documents[docIndex];
       if (file && (file.name.toLowerCase().endsWith('.pdf') || (file.type && file.type.includes('pdf')))) {
         (async () => {
           try {
-            let targetFile = file;
-            if ((targetFile as any)._isLoaded === false || targetFile.size === 0) {
-              const path = (targetFile as any)._localPath || appState.documentPaths[docIndex];
-              if (path) {
-                const bytes = await invoke<number[]>('read_file_bytes', { path });
-                const blob = new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
-                targetFile = new File([blob], file.name, { type: 'application/pdf' });
-              }
-            }
-            const buf = await targetFile.arrayBuffer();
-            if (buf && buf.byteLength > 0) {
-              const pdfjsLib = await import('pdfjs-dist');
-              const pdfjsWorker = (await import('pdfjs-dist/build/pdf.worker.mjs?url')).default;
-              if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfjsWorker, window.location.href).href;
-              }
-              const loadingTask = pdfjsLib.getDocument({ data: buf });
-              const pdf = await loadingTask.promise;
-              const meta = await pdf.getMetadata();
-              const info = meta?.info || {};
-              metadataTitle = info.Title || '';
-              metadataAuthor = info.Author || '';
-              metadataSubject = info.Subject || '';
-              metadataKeywords = info.Keywords || '';
+            const details = await getPdfDetails(file);
+            if (activeTool.id === 'metadata' || activeTool.id === 'pdf_metadata') {
+              metadataTitle = details.metadata.title;
+              metadataAuthor = details.metadata.author;
+              metadataSubject = details.metadata.subject;
+              metadataKeywords = details.metadata.keywords;
+            } else if (activeTool.id === 'change_permissions' || activeTool.id === 'pdf_change_permissions') {
+              allowPrinting = details.permissions.allowPrinting;
+              allowCopying = details.permissions.allowCopying;
+              allowModifying = details.permissions.allowModifying;
             }
           } catch (err) {
-            console.warn('Failed to pre-read PDF metadata:', err);
+            console.warn('Failed to pre-read PDF info:', err);
           }
         })();
       }
@@ -2208,7 +2195,36 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1;">
             Configure granular document permissions and access control flags.
           </p>
-          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+
+          <!-- Quick Presets -->
+          <div style="display: flex; gap: 8px; margin-top: 8px; margin-bottom: 12px;">
+            <button
+              type="button"
+              class="tag-btn"
+              style="padding: 4px 10px; font-size: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 4px; color: #e2e8f0; cursor: pointer;"
+              onclick={() => { allowPrinting = true; allowCopying = true; allowModifying = true; }}
+            >
+              Allow All (Default)
+            </button>
+            <button
+              type="button"
+              class="tag-btn"
+              style="padding: 4px 10px; font-size: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 4px; color: #e2e8f0; cursor: pointer;"
+              onclick={() => { allowPrinting = true; allowCopying = false; allowModifying = false; }}
+            >
+              Read-Only (Print Only)
+            </button>
+            <button
+              type="button"
+              class="tag-btn"
+              style="padding: 4px 10px; font-size: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 4px; color: #e2e8f0; cursor: pointer;"
+              onclick={() => { allowPrinting = false; allowCopying = false; allowModifying = false; }}
+            >
+              Restrict All
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
             <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #e2e8f0; cursor: pointer;">
               <input id="allowPrinting" type="checkbox" bind:checked={allowPrinting} />
               <span>Allow high-resolution printing</span>
@@ -2222,7 +2238,41 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               <span>Allow document modifications</span>
             </label>
           </div>
-          <span class="field-hint">Configures standard PDF security /P bitmask to enforce read-only policies.</span>
+
+          <!-- Owner / Master Password -->
+          <div style="margin-top: 14px;">
+            <label for="permOwnerPassword" class="section-desc" style="display: block; margin-bottom: 4px;">Owner Password (to enforce or change permissions):</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input
+                id="permOwnerPassword"
+                type={showPasswordText ? 'text' : 'password'}
+                class="form-input"
+                bind:value={password}
+                placeholder="paperpilot"
+                style="width: 100%; padding-right: 40px;"
+              />
+              <button
+                type="button"
+                style="position: absolute; right: 8px; background: transparent; border: none; cursor: pointer; color: #94a3b8; padding: 4px; display: flex; align-items: center;"
+                onclick={() => showPasswordText = !showPasswordText}
+                title={showPasswordText ? 'Hide password' : 'Show password'}
+              >
+                {#if showPasswordText}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                {:else}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                {/if}
+              </button>
+            </div>
+            <span class="field-hint">Required to lock or later modify security flags. Defaults to 'paperpilot' if left unchanged.</span>
+          </div>
+          <span class="field-hint" style="margin-top: 6px;">Configures standard PDF security /P bitmask to enforce read-only policies.</span>
         </div>
       {:else if activeTool.id === 'timestamp' || activeTool.id === 'pdf_timestamp'}
         <div class="operation-config">

@@ -9,10 +9,6 @@ export interface OperationContext {
     getOutputPath: (filename: string) => string;
     customOutputPath: string;
     applyToAllFiles?: boolean;
-    action?: string;
-    file_name?: string;
-    description?: string;
-    file_data_base64?: string;
 
     // UI control values
     splitPoints: string;
@@ -965,9 +961,10 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_change_permissions':
             args = {
                 input: docPath,
-                allow_print: context.allowPrinting !== undefined ? context.allowPrinting : false,
-                allow_copy: context.allowCopying !== undefined ? context.allowCopying : false,
-                allow_modify: context.allowModifying !== undefined ? context.allowModifying : false,
+                allow_print: context.allowPrinting !== undefined ? context.allowPrinting : true,
+                allow_copy: context.allowCopying !== undefined ? context.allowCopying : true,
+                allow_modify: context.allowModifying !== undefined ? context.allowModifying : true,
+                owner_password: context.password || 'paperpilot',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_permissions.pdf`)
             };
             break;

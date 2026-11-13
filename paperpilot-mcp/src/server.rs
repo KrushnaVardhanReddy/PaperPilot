@@ -7098,7 +7098,13 @@ impl PaperPilotMcpServer {
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_change_permissions::PdfChangePermissionsOptions::default();
+                let mut options = paperpilot_pdf::operations::pdf_change_permissions::PdfChangePermissionsOptions::default();
+                options.allow_printing = get_bool("allow_print").ok().or_else(|| get_bool("allow_printing").ok());
+                options.allow_copying = get_bool("allow_copy").ok().or_else(|| get_bool("allow_copying").ok());
+                options.allow_modifying = get_bool("allow_modify").ok().or_else(|| get_bool("allow_modifying").ok());
+                options.owner_password = get_string("owner_password").ok().or_else(|| get_string("password").ok());
+                options.user_password = get_string("user_password").ok();
+
                 let result = paperpilot_pdf::operations::pdf_change_permissions::pdf_change_permissions_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
