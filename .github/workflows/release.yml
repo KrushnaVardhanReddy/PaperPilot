@@ -584,8 +584,17 @@ jobs:
           TODAY=$(date -u +'%Y-%m-%d')
           echo "Updating packaging manifests to version ${CLEAN_VER} (date: ${TODAY})..."
 
-          # 1. Update Flatpak AppStream metainfo release tag
+          # 1. Update Flatpak manifest URL and AppStream metainfo release tag
           sed -i "s|<release version=\"[^\"]*\" date=\"[^\"]*\">|<release version=\"${CLEAN_VER}\" date=\"${TODAY}\">|g" packaging/flatpak/com.usepaperpilot.PaperPilot.metainfo.xml 2>/dev/null || true
+          sed -i "s|download/v[^/]*/|download/${{ inputs.version }}/|g" packaging/flatpak/com.usepaperpilot.PaperPilot.yml 2>/dev/null || true
+          sed -i "s|PaperPilot_[0-9.]*_[a-zA-Z0-9_-]*.deb|PaperPilot_${CLEAN_VER}_amd64.deb|g" packaging/flatpak/com.usepaperpilot.PaperPilot.yml 2>/dev/null || true
+
+          # Inject real SHA256 for release .deb into Flatpak manifest
+          DEB_FILE=$(ls release-assets/*.deb 2>/dev/null | head -n 1)
+          if [ -n "$DEB_FILE" ]; then
+            DEB_HASH=$(sha256sum "$DEB_FILE" | awk '{print $1}')
+            sed -i "s|sha256: [0-9a-fA-F]\{64\}|sha256: ${DEB_HASH}|" packaging/flatpak/com.usepaperpilot.PaperPilot.yml 2>/dev/null || true
+          fi
 
           # 2. Update WinGet version and installer URLs
           sed -i "s|PackageVersion: .*|PackageVersion: ${CLEAN_VER}|g" packaging/winget/*.yaml 2>/dev/null || true
@@ -597,7 +606,12 @@ jobs:
           SETUP_EXE=$(ls release-assets/*setup.exe 2>/dev/null | head -n 1)
           if [ -n "$SETUP_EXE" ]; then
             EXE_HASH=$(sha256sum "$SETUP_EXE" | awk '{print $1}')
-            sed -i "s|InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000|InstallerSha256: ${EXE_HASH}|" packaging/winget/PaperPilot.PaperPilot.installer.yaml 2>/dev/null || true
+            sed -i "s|InstallerSha256: [0-9a-fA-F]\{64\}|InstallerSha256: ${EXE_HASH}|" packaging/winget/PaperPilot.PaperPilot.installer.yaml 2>/dev/null || true
+          fi
+          SETUP_MSI=$(ls release-assets/*.msi 2>/dev/null | head -n 1)
+          if [ -n "$SETUP_MSI" ]; then
+            MSI_HASH=$(sha256sum "$SETUP_MSI" | awk '{print $1}')
+            sed -i "s|InstallerSha256: [0-9a-fA-F]\{64\}|InstallerSha256: ${MSI_HASH}|" packaging/winget/PaperPilot.PaperPilot.installer.yaml 2>/dev/null || true
           fi
 
       - name: Create / Update GitHub Release
