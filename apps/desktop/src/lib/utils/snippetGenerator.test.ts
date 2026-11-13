@@ -17,7 +17,7 @@ describe('snippetGenerator', () => {
         const snippets = generateSnippets(target);
 
         expect(snippets.cli).toContain('paperpilot rotate --input "my_doc.pdf" --angle 180 --pages "1-5" --output "my_doc_rotated.pdf"');
-        expect(snippets.curl).toContain('curl -X POST http://localhost:8080/api/v1/tools/rotate -F "file=@my_doc.pdf" -F "angle=180"');
+        expect(snippets.curl).toContain('curl -X POST http://localhost:7823/api/v1/tools/rotate -F "file=@my_doc.pdf" -F "angle=180"');
         expect(snippets.mcpToolCall).toContain('"name": "pdf_rotate"');
         expect(snippets.mcpToolCall).toContain('"angle": 180');
         expect(snippets.mcpAgentPrompt).toContain('rotate "my_doc.pdf" by 180 degrees');
@@ -112,7 +112,7 @@ describe('snippetGenerator', () => {
         const snippets = generateSnippets(target);
 
         expect(snippets.cli).toContain('paperpilot split --input "book.pdf" --output "page_%d.pdf"');
-        expect(snippets.curl).toContain('curl -X POST http://localhost:8080/api/v1/tools/split');
+        expect(snippets.curl).toContain('curl -X POST http://localhost:7823/api/v1/tools/split');
         expect(snippets.mcpToolCall).toContain('"name": "pdf_split"');
         expect(snippets.mcpToolCall).toContain('"ranges": "1-2"');
         expect(snippets.mcpAgentPrompt).toContain('Perform Split on "book.pdf"');
