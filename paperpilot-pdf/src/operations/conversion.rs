@@ -3,7 +3,7 @@ use lopdf::dictionary;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 #[cfg(feature = "office")]
-use rust_xlsxwriter::Workbook;
+use rust_xlsxwriter::{Color, Format, FormatBorder, Workbook};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::path::PathBuf;
@@ -2040,6 +2040,14 @@ impl PdfToXlsxOperation {
 #[cfg(feature = "office")]
 impl PdfOperation for PdfToXlsxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        // Extract structured Markdown representation containing parsed tables
+        let markdown_op = PdfToMarkdownOperation::new();
+        markdown_op.execute(document)?;
+        let markdown = {
+            let guard = markdown_op.extracted_markdown.lock().unwrap();
+            guard.clone().unwrap_or_default()
+        };
+
         let lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
@@ -2047,48 +2055,132 @@ impl PdfOperation for PdfToXlsxOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-        let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
-        all_pages.sort_unstable();
+        use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
+
+        let header_format = Format::new()
+            .set_bold()
+            .set_background_color(Color::RGB(0x1E293B))
+            .set_font_color(Color::RGB(0xFFFFFF))
+            .set_border(FormatBorder::Thin);
+
+        let data_format = Format::new()
+            .set_border(FormatBorder::Thin);
+
         let mut current_row: u32 = 0;
-        let ws_regex = regex::Regex::new(r"\s{3,}").unwrap();
+        let mut current_col: u16 = 0;
+        let mut in_table_head = false;
+        let mut in_table_cell = false;
+        let mut cell_text = String::new();
+        let mut table_count = 0;
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
-                    for line in text.lines() {
-                        let line_trimmed = line.trim();
-                        if line_trimmed.is_empty() {
-                            continue;
-                        }
+        let parser = Parser::new_ext(&markdown, Options::all());
 
-                        let cols: Vec<&str> = ws_regex.split(line_trimmed).collect();
+        for event in parser {
+            match event {
+                Event::Start(Tag::Table(_)) => {
+                    if table_count > 0 {
+                        // Separate consecutive tables with 2 blank rows
+                        current_row += 2;
+                    }
+                    table_count += 1;
+                }
+                Event::End(TagEnd::Table) => {}
+                Event::Start(Tag::TableHead) => {
+                    in_table_head = true;
+                    current_col = 0;
+                }
+                Event::End(TagEnd::TableHead) => {
+                    in_table_head = false;
+                    current_row += 1;
+                }
+                Event::Start(Tag::TableRow) => {
+                    current_col = 0;
+                }
+                Event::End(TagEnd::TableRow) => {
+                    current_row += 1;
+                }
+                Event::Start(Tag::TableCell) => {
+                    in_table_cell = true;
+                    cell_text.clear();
+                }
+                Event::End(TagEnd::TableCell) => {
+                    in_table_cell = false;
+                    let text = cell_text.trim();
+                    let is_header = in_table_head;
 
-                        for (col_idx, val) in cols.iter().enumerate() {
-                            worksheet
-                                .write_string(current_row, col_idx as u16, *val)
-                                .map_err(|e| {
-                                    PdfError::Other(format!("Failed to write XLSX cell: {}", e))
-                                })?;
-                        }
-                        current_row += 1;
+                    if is_header {
+                        worksheet
+                            .write_string_with_format(current_row, current_col, text, &header_format)
+                            .map_err(|e| PdfError::Other(format!("Failed to write XLSX header: {e}")))?;
+                    } else if let Ok(num) = text.parse::<f64>() {
+                        worksheet
+                            .write_number_with_format(current_row, current_col, num, &data_format)
+                            .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                    } else {
+                        worksheet
+                            .write_string_with_format(current_row, current_col, text, &data_format)
+                            .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                    }
+
+                    current_col += 1;
+                }
+                Event::Text(txt) => {
+                    if in_table_cell {
+                        cell_text.push_str(&txt);
                     }
                 }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
+                Event::Code(txt) => {
+                    if in_table_cell {
+                        cell_text.push_str(&txt);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Graceful fallback if PDF had no structured markdown tables
+        if table_count == 0 {
+            let inner = &mut lopdf_doc.inner;
+            let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+            all_pages.sort_unstable();
+
+            let ws_regex = regex::Regex::new(r"\s{3,}").unwrap();
+
+            for page_id in all_pages {
+                match inner.extract_text(&[page_id]) {
+                    Ok(text) => {
+                        for line in text.lines() {
+                            let line_trimmed = line.trim();
+                            if line_trimmed.is_empty() {
+                                continue;
+                            }
+
+                            let cols: Vec<&str> = ws_regex.split(line_trimmed).collect();
+                            for (col_idx, val) in cols.iter().enumerate() {
+                                worksheet
+                                    .write_string(current_row, col_idx as u16, *val)
+                                    .map_err(|e| {
+                                        PdfError::Other(format!("Failed to write fallback XLSX cell: {e}"))
+                                    })?;
+                            }
+                            current_row += 1;
+                        }
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract fallback text from page {page_id}: {e}"
+                        )));
+                    }
                 }
             }
         }
 
         workbook
             .save(&self.output_path)
-            .map_err(|e| PdfError::Other(format!("Failed to save XLSX: {}", e)))?;
+            .map_err(|e| PdfError::Other(format!("Failed to save XLSX: {e}")))?;
 
         Ok(())
     }
@@ -2492,6 +2584,38 @@ mod tests {
 
         assert!(path.exists());
         assert!(path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn test_pdf_to_xlsx_table_extraction() {
+        let md = "# Report\n\n| Col A | Col B |\n| --- | --- |\n| 10 | hello |\n| 20 | world |\n";
+        let dir = tempfile::tempdir().unwrap();
+        let pdf_path = dir.path().join("table_sample.pdf");
+        let xlsx_path = dir.path().join("table_sample.xlsx");
+
+        let md_op = MarkdownToPdfOperation::new(
+            md.to_string(),
+            pdf_path.clone(),
+            HtmlToPdfOptions::default(),
+        );
+        md_op.render().unwrap();
+
+        let mut doc = LopdfDocument::load(&pdf_path).unwrap();
+        let xlsx_op = PdfToXlsxOperation::new(xlsx_path.clone());
+        assert!(xlsx_op.execute(&mut doc).is_ok());
+        assert!(xlsx_path.exists());
+
+        // Validate sheet content with calamine
+        #[cfg(feature = "office")]
+        {
+            use calamine::{Data, Reader, Xlsx, open_workbook};
+            let mut excel: Xlsx<_> = open_workbook(&xlsx_path).unwrap();
+            let sheet = excel.worksheet_range("Sheet1").unwrap();
+            assert_eq!(sheet.get_value((0, 0)), Some(&Data::String("Col A".to_string())));
+            assert_eq!(sheet.get_value((0, 1)), Some(&Data::String("Col B".to_string())));
+            assert_eq!(sheet.get_value((1, 0)), Some(&Data::Float(10.0)));
+            assert_eq!(sheet.get_value((1, 1)), Some(&Data::String("hello".to_string())));
+        }
     }
 
     #[test]
