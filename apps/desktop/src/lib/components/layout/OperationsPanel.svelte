@@ -1734,9 +1734,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {:else if activeTool.id === 'crop' || activeTool.id === 'pdf_crop'}
         <div class="operation-config">
-          <label for="cropBox" class="section-desc">Crop Box (x,y,w,h):</label>
-          <input id="cropBox" type="text" class="form-input" bind:value={cropBox} placeholder="e.g. 10,10,200,200" />
-          <span class="field-hint">Specify boundaries as x,y,width,height in points (72 points = 1 inch).</span>
+          <label for="cropBox" class="section-desc">Crop Box (left, bottom, right, top):</label>
+          <input id="cropBox" type="text" class="form-input" bind:value={cropBox} placeholder="e.g. 50,200,550,800" />
+          <span class="field-hint">Specify boundaries as <strong>left, bottom, right, top</strong> in PDF points (origin (0,0) is bottom-left). For A4: 0–595 width, 0–842 height.</span>
         </div>
       {:else if activeTool.id === 'sign' || activeTool.id === 'pdf_sign'}
         <div class="operation-config">
