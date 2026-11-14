@@ -585,6 +585,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'extract_images':
       case 'pdf_extract_images': customOutputPath = getOutputPath(`${base}_images`);       break;
       case 'pdf_comic_archive': customOutputPath = getOutputPath(cbzArchiveName || `${base}_output.cbz`); break;
+      case 'split_by_outline':
+      case 'pdf_split_by_outline': customOutputPath = getOutputPath(`${base}_outline_split.zip`); break;
       case 'pdf_to_epub':     customOutputPath = getOutputPath(`${base}_output.epub`);     break;
       case 'pdf_to_pdf_a':    customOutputPath = getOutputPath(`${base}_pdfa.pdf`);        break;
       case 'pdf_convert_excel': customOutputPath = getOutputPath(`${base}_table.pdf`);     break;
@@ -738,7 +740,6 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             pageNumberStart: 1,
             pageNumberFormat,
             convertPreset,
-          convertOrientation,
             convertOrientation,
             scaleTargetSize,
             scaleFactor,
