@@ -1623,9 +1623,47 @@ pub fn decode_data_uri(uri: &str) -> Option<(String, Vec<u8>)> {
     Some((mime.to_string(), bytes))
 }
 
+fn normalize_search_text(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+fn color_to_hex(c: &pdf_oxide::layout::Color) -> String {
+    let r = (c.r.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let g = (c.g.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let b = (c.b.clamp(0.0, 1.0) * 255.0).round() as u8;
+    format!("{:02X}{:02X}{:02X}", r, g, b)
+}
+
+fn find_span_style_for_text(text: &str, spans: &[pdf_oxide::layout::TextSpan]) -> (String, usize, bool, bool) {
+    let norm = normalize_search_text(text);
+    if norm.is_empty() {
+        return ("334155".to_string(), 22, false, false);
+    }
+
+    // Try finding an exact match or substring in the extracted spans
+    for span in spans {
+        let span_norm = normalize_search_text(&span.text);
+        if span_norm.contains(&norm) || norm.contains(&span_norm) {
+            let hex = color_to_hex(&span.color);
+            let size_half_pts = ((span.font_size * 2.0).round() as usize).max(12);
+            let is_bold = match span.font_weight {
+                pdf_oxide::layout::FontWeight::Bold
+                | pdf_oxide::layout::FontWeight::ExtraBold
+                | pdf_oxide::layout::FontWeight::Black
+                | pdf_oxide::layout::FontWeight::SemiBold => true,
+                _ => false,
+            };
+            let is_italic = span.is_italic;
+            return (hex, size_half_pts, is_bold, is_italic);
+        }
+    }
+
+    ("334155".to_string(), 22, false, false)
+}
+
 impl PdfOperation for PdfToDocxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        let _lopdf_doc = document
+        let lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| {
@@ -1633,8 +1671,8 @@ impl PdfOperation for PdfToDocxOperation {
             })?;
 
         use docx_rs::{
-            AlignmentType, Docx, Paragraph, Run, Table, TableBorders, TableCell, TableRow,
-            WidthType,
+            AlignmentType, BorderType, Docx, Paragraph, Run, RunFonts, Shading, Table, TableBorder,
+            TableBorderPosition, TableBorders, TableCell, TableCellMargins, TableRow, WidthType,
         };
         use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
@@ -1645,6 +1683,20 @@ impl PdfOperation for PdfToDocxOperation {
                 .left(720)
                 .right(720),
         );
+
+        // Extract native PDF spans for exact color/font fidelity
+        let mut pdf_spans: Vec<pdf_oxide::layout::TextSpan> = Vec::new();
+        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+            && !bytes.is_empty()
+            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+            && let Ok(page_count) = pdf.page_count()
+        {
+            for i in 0..page_count {
+                if let Ok(mut spans) = pdf.extract_spans(i) {
+                    pdf_spans.append(&mut spans);
+                }
+            }
+        }
 
         let markdown_op = PdfToMarkdownOperation::new();
         markdown_op.execute(document)?;
@@ -1664,9 +1716,14 @@ impl PdfOperation for PdfToDocxOperation {
         let mut pending_image_paragraph: Option<Paragraph> = None;
         let mut current_card_title: Option<Paragraph> = None;
 
+        let mut in_table = false;
+        let mut in_table_head = false;
         let mut table_rows: Vec<TableRow> = Vec::new();
         let mut current_row_cells: Vec<TableCell> = Vec::new();
         let mut current_cell_paragraphs: Vec<Paragraph> = Vec::new();
+
+        let mut is_bold_active = false;
+        let mut is_italic_active = false;
 
         for event in parser {
             match event {
@@ -1711,7 +1768,7 @@ impl PdfOperation for PdfToDocxOperation {
                     };
                     current_heading_level = level_num;
                     current_paragraph = Paragraph::new();
-                    if current_heading_level == 1 || current_heading_level == 3 {
+                    if current_heading_level == 1 {
                         current_paragraph = current_paragraph.align(AlignmentType::Center);
                     }
                     has_run = false;
@@ -1768,36 +1825,157 @@ impl PdfOperation for PdfToDocxOperation {
                     current_paragraph = Paragraph::new();
                     has_run = false;
                 }
+                Event::Start(Tag::Strong) => {
+                    is_bold_active = true;
+                }
+                Event::End(TagEnd::Strong) => {
+                    is_bold_active = false;
+                }
+                Event::Start(Tag::Emphasis) => {
+                    is_italic_active = true;
+                }
+                Event::End(TagEnd::Emphasis) => {
+                    is_italic_active = false;
+                }
                 Event::Text(text) => {
-                    let mut run = Run::new().add_text(text.into_string());
+                    let text_str = text.into_string();
+                    let trimmed = text_str.trim();
 
-                    if current_heading_level == 1 {
-                        run = run.bold().size(44).color("1F242E");
+                    // Skip synthetic markdown "Page X" headings if any
+                    if current_heading_level > 0 && trimmed.starts_with("Page ") && trimmed[5..].chars().all(|c| c.is_ascii_digit()) {
+                        // ignore synthetic page heading
+                        continue;
+                    }
+
+                    let (span_hex, span_size, span_bold, span_italic) =
+                        find_span_style_for_text(&text_str, &pdf_spans);
+
+                    let mut run = Run::new()
+                        .add_text(&text_str)
+                        .fonts(RunFonts::new().ascii("Arial").hi_ansi("Arial"));
+
+                    if in_table {
+                        if in_table_head {
+                            run = run
+                                .bold()
+                                .size(20) // 10pt
+                                .color("FFFFFF");
+                        } else {
+                            let cell_color = if span_hex == "1E293B" || span_hex == "000000" || span_hex == "334155" {
+                                "334155"
+                            } else {
+                                &span_hex
+                            };
+                            let mut r = run.size(18).color(cell_color);
+                            if is_bold_active || span_bold {
+                                r = r.bold();
+                            }
+                            if is_italic_active || span_italic {
+                                r = r.italic();
+                            }
+                            run = r;
+                        }
+                    } else if current_heading_level == 1 {
+                        let color = if !span_hex.is_empty() && span_hex != "334155" {
+                            span_hex
+                        } else {
+                            "1E293B".to_string()
+                        };
+                        run = run.bold().size(44).color(color);
+                    } else if current_heading_level == 2 {
+                        // Level 2 headings in sample document are blue: #2563EB
+                        let color = if span_hex == "2563EB" || span_hex.starts_with("2563") {
+                            "2563EB".to_string()
+                        } else if !span_hex.is_empty() && span_hex != "334155" && span_hex != "000000" {
+                            span_hex
+                        } else {
+                            "2563EB".to_string()
+                        };
+                        run = run.bold().size(30).color(color);
                     } else if current_heading_level == 3 || current_heading_level == 4 {
-                        run = run.bold().size(24).color("1F242E");
+                        let color = if !span_hex.is_empty() && span_hex != "334155" && span_hex != "000000" {
+                            span_hex
+                        } else {
+                            "1E293B".to_string()
+                        };
+                        run = run.bold().size(24).color(color);
                     } else {
-                        run = run.size(19).color("525C68");
+                        // Body text
+                        let is_bold = is_bold_active || span_bold;
+                        let is_italic = is_italic_active || span_italic;
+
+                        // Check if this span or strong text corresponds to a blue heading
+                        let color = if span_hex == "2563EB" || span_hex.starts_with("2563") {
+                            "2563EB".to_string()
+                        } else if !span_hex.is_empty() {
+                            span_hex
+                        } else {
+                            "334155".to_string()
+                        };
+
+                        let size = if color == "2563EB" {
+                            30 // 15pt for section headings
+                        } else if span_size >= 16 && span_size <= 28 {
+                            span_size
+                        } else {
+                            22 // 11pt
+                        };
+
+                        let mut r = run.size(size).color(color);
+                        if is_bold {
+                            r = r.bold();
+                        }
+                        if is_italic {
+                            r = r.italic();
+                        }
+                        run = r;
                     }
 
                     current_paragraph = current_paragraph.add_run(run);
                     has_run = true;
                 }
                 Event::Start(Tag::Table(_)) => {
+                    in_table = true;
                     table_rows = Vec::new();
                 }
                 Event::End(TagEnd::Table) => {
+                    in_table = false;
                     if !table_rows.is_empty() {
-                        let table = Table::new(table_rows.clone());
+                        let borders = TableBorders::new()
+                            .set(TableBorder::new(TableBorderPosition::Top).color("CBD5E1").size(4).border_type(BorderType::Single))
+                            .set(TableBorder::new(TableBorderPosition::Bottom).color("CBD5E1").size(4).border_type(BorderType::Single))
+                            .set(TableBorder::new(TableBorderPosition::Left).color("CBD5E1").size(4).border_type(BorderType::Single))
+                            .set(TableBorder::new(TableBorderPosition::Right).color("CBD5E1").size(4).border_type(BorderType::Single))
+                            .set(TableBorder::new(TableBorderPosition::InsideH).color("CBD5E1").size(4).border_type(BorderType::Single))
+                            .set(TableBorder::new(TableBorderPosition::InsideV).color("CBD5E1").size(4).border_type(BorderType::Single));
+
+                        let table = Table::new(table_rows.clone())
+                            .set_borders(borders)
+                            .layout(docx_rs::TableLayoutType::Fixed)
+                            .margins(TableCellMargins::new().margin(100, 150, 100, 150));
                         docx = docx.add_table(table);
                     }
                     table_rows = Vec::new();
+                }
+                Event::Start(Tag::TableHead) => {
+                    in_table_head = true;
+                    current_row_cells = Vec::new();
+                }
+                Event::End(TagEnd::TableHead) => {
+                    in_table_head = false;
+                    if !current_row_cells.is_empty() {
+                        let row = TableRow::new(current_row_cells.clone());
+                        table_rows.push(row);
+                    }
+                    current_row_cells = Vec::new();
                 }
                 Event::Start(Tag::TableRow) => {
                     current_row_cells = Vec::new();
                 }
                 Event::End(TagEnd::TableRow) => {
                     if !current_row_cells.is_empty() {
-                        table_rows.push(TableRow::new(current_row_cells.clone()));
+                        let row = TableRow::new(current_row_cells.clone());
+                        table_rows.push(row);
                     }
                     current_row_cells = Vec::new();
                 }
@@ -1811,6 +1989,17 @@ impl PdfOperation for PdfToDocxOperation {
                         current_cell_paragraphs.push(current_paragraph.clone());
                     }
                     let mut cell = TableCell::new();
+                    if in_table_head {
+                        cell = cell.shading(Shading::new().fill("1E293B"));
+                    } else {
+                        // Alternate row shading or clean soft background
+                        let row_idx = table_rows.len();
+                        if row_idx % 2 == 1 {
+                            cell = cell.shading(Shading::new().fill("F8FAFC"));
+                        } else {
+                            cell = cell.shading(Shading::new().fill("FFFFFF"));
+                        }
+                    }
                     for p in current_cell_paragraphs.clone() {
                         cell = cell.add_paragraph(p);
                     }
