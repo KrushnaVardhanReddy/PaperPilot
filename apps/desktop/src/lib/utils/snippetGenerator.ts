@@ -32,6 +32,21 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
   if (outputFile) jsonArgs.output = output;
 
   switch (toolId) {
+    case 'pdf_crop':
+    case 'crop': {
+      const rect = params.rect || params.crop_box || '10,10,500,500';
+      const pagesStr = params.pages && params.pages !== 'all' ? ` --pages "${params.pages}"` : '';
+      cli = `paperpilot crop --input "${input}" --rect "${rect}"${pagesStr} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/crop -F "file=@${input}" -F "rect=${rect}"`;
+
+      const mcpArgs: any = { input, rect, output };
+      if (params.pages && params.pages !== 'all') mcpArgs.pages = params.pages;
+
+      mcpToolCall = JSON.stringify({ name: "pdf_crop", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Please crop "${input}" to rectangle "${rect}" and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_crop', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_rotate': {
       const angle = params.angle || 90;
       const pagesStr = params.pages && params.pages !== 'all' ? ` --pages "${params.pages}"` : '';

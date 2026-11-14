@@ -1288,6 +1288,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       padding: batesPadding || 6,
       quality: compressQuality || 80,
       order: reorderList || '',
+      rect: cropBox || '0,0,500,500',
+      crop_box: cropBox || '0,0,500,500',
       input_a: compareDocA || appState.documentPaths[0] || docPath,
       input_b: compareDocB || appState.documentPaths[1] || docPath
     };
