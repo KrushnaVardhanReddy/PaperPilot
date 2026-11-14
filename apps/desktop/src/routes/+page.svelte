@@ -11,6 +11,7 @@
   import DocumentList from '$lib/components/ui/DocumentList.svelte';
   import PdfViewer from '$lib/components/PdfViewer.svelte';
   import PdfThumbnails from '$lib/components/PdfThumbnails.svelte';
+  import PdfBookmarksPanel from '$lib/components/PdfBookmarksPanel.svelte';
   import SettingsPanel from '$lib/components/layout/SettingsPanel.svelte';
   import OperationsPanel from '$lib/components/layout/OperationsPanel.svelte';
   import GlobalCommandBar from '$lib/components/GlobalCommandBar.svelte';
@@ -31,7 +32,7 @@
   import { isPdfFile, isSpreadsheetFile, isImageFile, isJsonFile, isMarkdownFile, isHtmlFile, isDocxFile, getMimeType } from '$lib/utils/fileType';
   import { listen } from '@tauri-apps/api/event';
 
-  let drawerMode = $state<'auto' | 'files' | 'pages'>('auto');
+  let drawerMode = $state<'auto' | 'files' | 'pages' | 'bookmarks'>('auto');
 
   import { onMount } from 'svelte';
   onMount(() => {
@@ -571,6 +572,15 @@
                 >
                   📑 Pages
                 </button>
+                <button
+                  class="drawer-tab-btn"
+                  class:active={drawerMode === 'bookmarks'}
+                  disabled={appState.selectedDocumentIndex === null || !isPdfFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
+                  onclick={() => drawerMode = 'bookmarks'}
+                  title="Bookmarks / Outline"
+                >
+                  🔖 Outline
+                </button>
               </div>
               <button class="collapse-btn" title="Collapse Drawer" onclick={() => appState.toggleContextPanel()}>
                 ‹
@@ -580,6 +590,10 @@
             {#if drawerMode === 'files' || (drawerMode === 'auto' && appState.selectedDocumentIndex === null)}
               <div class="drawer-library">
                 <DocumentList />
+              </div>
+            {:else if drawerMode === 'bookmarks' && isPdfFile(appState.documents[appState.selectedDocumentIndex ?? 0]?.name ?? '')}
+              <div class="drawer-bookmarks">
+                <PdfBookmarksPanel {pdfDoc} bind:pageNum />
               </div>
             {:else if isPdfFile(appState.documents[appState.selectedDocumentIndex ?? 0]?.name ?? '')}
               <div class="drawer-thumbnails">
@@ -904,10 +918,16 @@
     background: var(--bg-primary);
     color: var(--text-primary);
   }
-  .drawer-library, .drawer-thumbnails {
+  .drawer-library, .drawer-thumbnails, .drawer-bookmarks {
     flex: 1;
     overflow-y: auto;
     padding: 16px;
+  }
+  .drawer-bookmarks {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .main-stage {
