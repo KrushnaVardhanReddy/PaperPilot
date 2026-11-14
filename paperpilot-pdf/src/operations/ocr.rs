@@ -178,14 +178,21 @@ impl PdfOperation for OcrOperationImpl {
 
                     if let Ok(page_dict_ref) = inner.get_object(page_id) {
                         if let Ok(dict) = page_dict_ref.as_dict() {
-                            if let Ok(media_box) = dict.get(b"MediaBox") {
+                            if let Ok(media_box) =
+                                dict.get(b"MediaBox").or_else(|_| dict.get(b"CropBox"))
+                            {
                                 if let Ok(arr) = media_box.as_array() {
                                     if arr.len() == 4 {
-                                        if let (Ok(x0), Ok(y0), Ok(x1), Ok(y1)) = (
-                                            arr[0].as_f32(),
-                                            arr[1].as_f32(),
-                                            arr[2].as_f32(),
-                                            arr[3].as_f32(),
+                                        let as_num = |o: &lopdf::Object| -> Option<f32> {
+                                            o.as_f32()
+                                                .ok()
+                                                .or_else(|| o.as_i64().ok().map(|v| v as f32))
+                                        };
+                                        if let (Some(x0), Some(y0), Some(x1), Some(y1)) = (
+                                            as_num(&arr[0]),
+                                            as_num(&arr[1]),
+                                            as_num(&arr[2]),
+                                            as_num(&arr[3]),
                                         ) {
                                             page_w = x1 - x0;
                                             page_h = y1 - y0;
@@ -342,19 +349,34 @@ impl PdfOperation for OcrOperationImpl {
 
                                 let box_x = word.frame.left;
                                 let box_y = word.frame.top;
-                                let _box_w = word.frame.width;
+                                let box_w = word.frame.width;
                                 let box_h = word.frame.height;
+
+                                let pdf_box_w = box_w * scale_x;
+                                let pdf_box_h = box_h * scale_y;
 
                                 // The DBNet detection unclip_ratio (1.6) expands the raw bounding box
                                 // to ensure characters aren't clipped, making box_h ~1.33x taller than
                                 // the font's actual cap-height. Scaling by 0.75 restores the font size
                                 // to match the visual text in the scan.
-                                let font_size = ((box_h * scale_y) * 0.75).clamp(4.0, 72.0);
+                                let font_size = (pdf_box_h * 0.75).clamp(4.0, 72.0);
 
                                 // In PDF, 'Tm' places text at the font baseline (not the box bottom).
-                                // Standard font descenders extend ~20% below the baseline.
+                                // Center the text vertically inside the detected bounding box:
+                                // box bottom is `page_h - (box_y * scale_y) - pdf_box_h`, plus ~22% of box height for descenders.
                                 let pdf_x = box_x * scale_x;
-                                let pdf_y = page_h - (box_y * scale_y) - (font_size * 0.85);
+                                let pdf_y = page_h - (box_y * scale_y) - (pdf_box_h * 0.78);
+
+                                // Compute horizontal scaling (Tz) so the rendered Helvetica string
+                                // spans the exact width of the detected word bounding box in the scan.
+                                // Average character width in Helvetica is ~0.52 * font_size.
+                                let char_count = line.chars().count().max(1) as f32;
+                                let est_text_w = char_count * font_size * 0.52;
+                                let horiz_scale = if est_text_w > 0.1 && pdf_box_w > 0.1 {
+                                    ((pdf_box_w / est_text_w) * 100.0).clamp(50.0, 200.0)
+                                } else {
+                                    100.0
+                                };
 
                                 words_collected.push((pdf_y, pdf_x, font_size, line.to_string()));
 
@@ -363,7 +385,7 @@ impl PdfOperation for OcrOperationImpl {
                                     .replace('(', "\\(")
                                     .replace(')', "\\)");
 
-                                text_ops.push_str(&format!("/F1 {:.2} Tf\n", font_size));
+                                text_ops.push_str(&format!("/F1 {:.2} Tf\n{:.1} Tz\n", font_size, horiz_scale));
                                 text_ops.push_str(&format!(
                                     "1 0 0 1 {:.2} {:.2} Tm\n({}) Tj\n",
                                     pdf_x, pdf_y, escaped
