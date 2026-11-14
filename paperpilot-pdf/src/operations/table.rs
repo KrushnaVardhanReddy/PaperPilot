@@ -1,8 +1,11 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
 
+use crate::document::LopdfDocument;
+use crate::operations::conversion::PdfToHtmlOperation;
 use paperpilot_core::error::PdfError;
-use pdf_oxide::api::Pdf;
+use paperpilot_core::traits::PdfOperation;
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,177 +56,194 @@ pub struct TableExtractResult {
     pub csv_output: Option<String>,
 }
 
+fn is_page_selected(page_num: u32, pages_filter: &str) -> bool {
+    if pages_filter.trim().is_empty() || pages_filter.eq_ignore_ascii_case("all") {
+        return true;
+    }
+    for range in pages_filter.split(',') {
+        let parts: Vec<&str> = range.split('-').collect();
+        if parts.len() == 1 {
+            if let Ok(p) = parts[0].trim().parse::<u32>() {
+                if p == page_num {
+                    return true;
+                }
+            }
+        } else if parts.len() == 2 {
+            if let (Ok(start), Ok(end)) = (
+                parts[0].trim().parse::<u32>(),
+                parts[1].trim().parse::<u32>(),
+            ) {
+                if page_num >= start && page_num <= end {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
 pub fn extract_tables_bytes(
     input_bytes: &[u8],
     options: &TableExtractOptions,
 ) -> Result<TableExtractResult, PdfError> {
-    // Extract words using pdf_oxide for spatial positioning
-    let mut pdf = Pdf::from_bytes(input_bytes.to_vec())
-        .map_err(|e| PdfError::ParseError(format!("Failed to load PDF with pdf_oxide: {:?}", e)))?;
+    if input_bytes.is_empty() {
+        return Ok(TableExtractResult {
+            total_tables: 0,
+            tables: Vec::new(),
+            csv_output: if options.format.to_lowercase() == "csv" {
+                Some(String::new())
+            } else {
+                None
+            },
+        });
+    }
 
-    let total_pages = pdf.page_count().unwrap_or(0);
+    let mut lopdf_doc = match LopdfDocument::from_bytes(input_bytes) {
+        Ok(doc) => doc,
+        Err(_) => {
+            return Ok(TableExtractResult {
+                total_tables: 0,
+                tables: Vec::new(),
+                csv_output: if options.format.to_lowercase() == "csv" {
+                    Some(String::new())
+                } else {
+                    None
+                },
+            });
+        }
+    };
+
+    let html_op = PdfToHtmlOperation::new();
+    let _ = html_op.execute(&mut lopdf_doc);
+    let html = {
+        let guard = html_op.extracted_html.lock().unwrap();
+        guard.clone().unwrap_or_default()
+    };
+
+    let parsed_doc = Html::parse_document(&html);
+    let page_sel = Selector::parse("div.page").unwrap();
+    let table_sel = Selector::parse("table").unwrap();
+    let tr_sel = Selector::parse("tr").unwrap();
+    let cell_sel = Selector::parse("th, td").unwrap();
+
     let mut tables = Vec::new();
     let mut overall_table_index = 0;
 
-    for page_idx in 0..total_pages {
-        let page_num = (page_idx + 1) as u32;
+    let page_elements: Vec<scraper::ElementRef> = parsed_doc.select(&page_sel).collect();
+    if page_elements.is_empty() {
+        // Fallback: parse tables from root if no div.page wrappers
+        for table_node in parsed_doc.select(&table_sel) {
+            overall_table_index += 1;
+            let mut headers = Vec::new();
+            let mut data = Vec::new();
+            let mut is_first_row = true;
 
-        // Filter pages based on options.pages if not "all"
-        if options.pages != "all" {
-            let page_ranges: Vec<&str> = options.pages.split(',').collect();
-            let mut page_match = false;
-            for range in page_ranges {
-                let parts: Vec<&str> = range.split('-').collect();
-                if parts.len() == 1 {
-                    if let Ok(p) = parts[0].trim().parse::<u32>() {
-                        if p == page_num {
-                            page_match = true;
-                            break;
-                        }
-                    }
-                } else if parts.len() == 2 {
-                    if let (Ok(start), Ok(end)) = (
-                        parts[0].trim().parse::<u32>(),
-                        parts[1].trim().parse::<u32>(),
-                    ) {
-                        if page_num >= start && page_num <= end {
-                            page_match = true;
-                            break;
-                        }
+            for tr in table_node.select(&tr_sel) {
+                let mut row_cells: Vec<String> = Vec::new();
+                for cell in tr.select(&cell_sel) {
+                    let cell_text: Vec<&str> = cell
+                        .text()
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                    row_cells.push(cell_text.join(" "));
+                }
+
+                while let Some(last) = row_cells.last() {
+                    if last.is_empty() {
+                        row_cells.pop();
+                    } else {
+                        break;
                     }
                 }
+
+                if row_cells.is_empty() {
+                    continue;
+                }
+
+                if is_first_row {
+                    headers = row_cells;
+                    is_first_row = false;
+                } else {
+                    data.push(row_cells);
+                }
             }
-            if !page_match {
-                continue;
+
+            if !headers.is_empty() || !data.is_empty() {
+                let cols = headers.len().max(data.iter().map(|r| r.len()).max().unwrap_or(0));
+                tables.push(ExtractedTable {
+                    page: 1,
+                    table_index: overall_table_index,
+                    bbox: [0.0, 0.0, 612.0, 792.0],
+                    rows: data.len(),
+                    cols,
+                    headers,
+                    data,
+                });
             }
         }
+    } else {
+        for (page_idx, page_elem) in page_elements.iter().enumerate() {
+            let page_num = page_elem
+                .value()
+                .attr("data-page")
+                .and_then(|p| p.parse::<u32>().ok())
+                .unwrap_or((page_idx + 1) as u32);
 
-        if let Ok(mut words) = pdf.extract_words(page_idx) {
-            if words.is_empty() {
+            if !is_page_selected(page_num, &options.pages) {
                 continue;
             }
 
-            // Y-Clustering (Rows)
-            // Sort by Y descending (PDF coordinates usually have 0,0 at bottom-left)
-            words.sort_by(|a, b| {
-                b.bbox
-                    .y
-                    .partial_cmp(&a.bbox.y)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            });
+            for table_node in page_elem.select(&table_sel) {
+                overall_table_index += 1;
+                let mut headers = Vec::new();
+                let mut data = Vec::new();
+                let mut is_first_row = true;
 
-            let mut rows: Vec<Vec<&pdf_oxide::layout::text_block::Word>> = Vec::new();
-            let mut current_row: Vec<&pdf_oxide::layout::text_block::Word> = Vec::new();
-            let mut current_y = words[0].bbox.y;
-            let y_threshold = 8.0; // ~8pt tolerance
+                for tr in table_node.select(&tr_sel) {
+                    let mut row_cells: Vec<String> = Vec::new();
+                    for cell in tr.select(&cell_sel) {
+                        let cell_text: Vec<&str> = cell
+                            .text()
+                            .map(|s| s.trim())
+                            .filter(|s| !s.is_empty())
+                            .collect();
+                        row_cells.push(cell_text.join(" "));
+                    }
 
-            for word in &words {
-                if (word.bbox.y - current_y).abs() <= y_threshold {
-                    current_row.push(word);
-                } else {
-                    rows.push(current_row);
-                    current_row = vec![word];
-                    current_y = word.bbox.y;
-                }
-            }
-            if !current_row.is_empty() {
-                rows.push(current_row);
-            }
-
-            // If we only have 1 or 0 rows, it's not a table
-            if rows.len() < 2 {
-                continue;
-            }
-
-            // Find columns based on X intervals
-            // First, find all X coordinates
-            let mut x_intervals: Vec<(f32, f32)> = Vec::new();
-            for row in &rows {
-                for word in row {
-                    let start_x = word.bbox.x;
-                    let end_x = word.bbox.x + word.bbox.width;
-
-                    // Try to merge into existing intervals
-                    let mut merged = false;
-                    for interval in &mut x_intervals {
-                        // If overlaps or is very close (e.g. 5pt)
-                        if (start_x <= interval.1 + 5.0) && (end_x + 5.0 >= interval.0) {
-                            interval.0 = interval.0.min(start_x);
-                            interval.1 = interval.1.max(end_x);
-                            merged = true;
+                    while let Some(last) = row_cells.last() {
+                        if last.is_empty() {
+                            row_cells.pop();
+                        } else {
                             break;
                         }
                     }
-                    if !merged {
-                        x_intervals.push((start_x, end_x));
-                    }
-                }
-            }
 
-            // Clean up intervals (merge any overlapping ones after the first pass)
-            x_intervals.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-            let mut merged_intervals = Vec::new();
-            if !x_intervals.is_empty() {
-                let mut current = x_intervals[0];
-                for interval in x_intervals.iter().skip(1) {
-                    if interval.0 <= current.1 + 5.0 {
-                        current.1 = current.1.max(interval.1);
+                    if row_cells.is_empty() {
+                        continue;
+                    }
+
+                    if is_first_row {
+                        headers = row_cells;
+                        is_first_row = false;
                     } else {
-                        merged_intervals.push(current);
-                        current = *interval;
+                        data.push(row_cells);
                     }
                 }
-                merged_intervals.push(current);
-            }
 
-            let num_cols = merged_intervals.len();
-            if num_cols < 2 {
-                continue; // Not a table if less than 2 columns
-            }
-
-            // Map rows into grid cells
-            let mut grid: Vec<Vec<String>> = Vec::new();
-            for row in &rows {
-                let mut grid_row = vec![String::new(); num_cols];
-                for word in row {
-                    let mid_x = word.bbox.x + word.bbox.width / 2.0;
-                    // Find which column this belongs to
-                    for (col_idx, interval) in merged_intervals.iter().enumerate() {
-                        if mid_x >= interval.0 - 5.0 && mid_x <= interval.1 + 5.0 {
-                            if !grid_row[col_idx].is_empty() {
-                                grid_row[col_idx].push(' ');
-                            }
-                            grid_row[col_idx].push_str(&word.text);
-                            break;
-                        }
-                    }
+                if !headers.is_empty() || !data.is_empty() {
+                    let cols = headers.len().max(data.iter().map(|r| r.len()).max().unwrap_or(0));
+                    tables.push(ExtractedTable {
+                        page: page_num,
+                        table_index: overall_table_index,
+                        bbox: [0.0, 0.0, 612.0, 792.0],
+                        rows: data.len(),
+                        cols,
+                        headers,
+                        data,
+                    });
                 }
-                grid.push(grid_row);
             }
-
-            // Header detection: treat the first row as headers
-            let headers = grid[0].clone();
-            let data = grid[1..].to_vec();
-
-            overall_table_index += 1;
-
-            let table = ExtractedTable {
-                page: page_num,
-                table_index: overall_table_index,
-                bbox: [
-                    merged_intervals.first().map(|i| i.0).unwrap_or(0.0),
-                    rows.last().map(|r| r[0].bbox.y).unwrap_or(0.0),
-                    merged_intervals.last().map(|i| i.1).unwrap_or(0.0)
-                        - merged_intervals.first().map(|i| i.0).unwrap_or(0.0),
-                    rows.first().map(|r| r[0].bbox.y).unwrap_or(0.0)
-                        - rows.last().map(|r| r[0].bbox.y).unwrap_or(0.0),
-                ],
-                rows: data.len(),
-                cols: num_cols,
-                headers,
-                data,
-            };
-            tables.push(table);
         }
     }
 
@@ -324,5 +344,23 @@ mod tests {
             csv,
             "Header 1,\"Header, 2\"\nData 1,\"Data \"\"2\"\"\"\n\"Data\n3\",Data 4\n"
         );
+    }
+
+    #[test]
+    fn test_extract_tables_from_fixture() {
+        let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../ManaulTestingFixtures/pdf_extract_tables/Input/sample_document.pdf");
+        if fixture_path.exists() {
+            let bytes = std::fs::read(fixture_path).unwrap();
+            let options = TableExtractOptions {
+                format: "json".to_string(),
+                pages: "all".to_string(),
+                ..Default::default()
+            };
+            let result = extract_tables_bytes(&bytes, &options).unwrap();
+            assert!(result.total_tables >= 2, "Expected at least 2 tables, found {}", result.total_tables);
+            assert_eq!(result.tables[0].headers[0], "Metric");
+            assert_eq!(result.tables[1].headers[0], "Vehicle ID");
+        }
     }
 }

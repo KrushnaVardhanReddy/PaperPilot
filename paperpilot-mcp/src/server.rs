@@ -5568,13 +5568,44 @@ impl PaperPilotMcpServer {
             }
 
             "pdf_extract_tables" => {
-                let _input = get_string("input").or_else(|_| get_string("file"))?;
+                let input = get_string("input").or_else(|_| get_string("file"))?;
+                let output = get_string("output").ok();
+                let format = get_string("format").unwrap_or_else(|_| "json".to_string());
+                let pages = get_string("pages").unwrap_or_else(|_| "all".to_string());
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| ErrorData::invalid_params(format!("Failed to read input file: {}", e), None))?;
+
+                let options = paperpilot_pdf::operations::table::TableExtractOptions {
+                    format: format.clone(),
+                    pages: pages.clone(),
+                    ..Default::default()
+                };
+
+                let extract_result = paperpilot_pdf::operations::table::extract_tables_bytes(&input_bytes, &options)
+                    .map_err(crate::error::to_mcp_error)?;
+
+                let out_str = if format.to_lowercase() == "csv" {
+                    extract_result.csv_output.clone().unwrap_or_default()
+                } else {
+                    serde_json::to_string_pretty(&extract_result)
+                        .map_err(|e| ErrorData::internal_error(e.to_string(), None))?
+                };
+
+                if let Some(ref out_path) = output {
+                    ensure_parent_dir(out_path)?;
+                    std::fs::write(out_path, &out_str)
+                        .map_err(|e| ErrorData::internal_error(format!("Failed to write output file: {}", e), None))?;
+                }
+
+                let data_value = serde_json::to_value(&extract_result).ok();
+
                 Ok(OperationResult {
                     success: true,
-                    message: "Extracted tables successfully.".to_string(),
-                    output_path: None,
+                    message: format!("Extracted {} tables successfully.", extract_result.total_tables),
+                    output_path: output,
                     diff_detected: None,
-                    data: Some(serde_json::json!({"tables": []})),
+                    data: data_value,
                 })
             }
 
