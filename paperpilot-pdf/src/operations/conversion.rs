@@ -749,15 +749,201 @@ fn extract_page_media(
     Ok(extracted)
 }
 
-#[derive(Default)]
+pub const DEFAULT_PDF_HTML_CSS: &str = r#"
+@page {
+    margin: 20mm;
+    size: A4;
+}
+@media print {
+    body {
+        background-color: transparent !important;
+        padding: 0 !important;
+    }
+    .page {
+        page-break-after: always;
+        break-after: page;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1e293b;
+    background-color: #f8fafc;
+    margin: 0;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.page {
+    background-color: #ffffff;
+    max-width: 850px;
+    width: 100%;
+    margin: 0 auto 32px auto;
+    padding: 40px 48px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    position: relative;
+    page-break-after: always;
+    break-after: page;
+}
+.page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+    margin-bottom: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #0f172a;
+}
+h1 { font-size: 2em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.25em; }
+p {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+    font-size: 13.5px;
+}
+table th, table td {
+    border: 1px solid #cbd5e1;
+    padding: 10px 14px;
+    text-align: left;
+}
+table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #334155;
+}
+tr:nth-child(even) td {
+    background-color: #fcfdfd;
+}
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+"#;
+
+fn normalize_search_text(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+fn color_to_hex(c: &pdf_oxide::layout::Color) -> String {
+    let r = (c.r.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let g = (c.g.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let b = (c.b.clamp(0.0, 1.0) * 255.0).round() as u8;
+    format!("{:02X}{:02X}{:02X}", r, g, b)
+}
+
+/// Strips empty trailing `<td>` cells from rows in HTML tables.
+fn cleanup_trailing_empty_table_cells(html: &str) -> String {
+    let tr_regex = regex::Regex::new(r"(?is)(<tr\b[^>]*>)(.*?)(</tr>)").unwrap();
+    let empty_td_regex = regex::Regex::new(r"(?is)(?:<td\b[^>]*>\s*</td>\s*)+$").unwrap();
+
+    tr_regex
+        .replace_all(html, |caps: &regex::Captures| {
+            let open_tr = &caps[1];
+            let row_content = &caps[2];
+            let close_tr = &caps[3];
+
+            let cleaned_content = empty_td_regex.replace(row_content, "");
+            format!("{}{}{}", open_tr, cleaned_content, close_tr)
+        })
+        .into_owned()
+}
+
+/// Applies text colors extracted from PDF spans to matching HTML tags (e.g. `<h1>`, `<h2>`, `<p>`).
+fn apply_span_colors_to_html(html: &str, spans: &[pdf_oxide::layout::TextSpan]) -> String {
+    let tag_names = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "td", "th"];
+    let strip_tags_regex = regex::Regex::new(r"<[^>]*>").unwrap();
+    let style_attr_regex = regex::Regex::new(r#"style="([^"]*)""#).unwrap();
+
+    let mut result = html.to_string();
+
+    for tag in tag_names {
+        let pattern = format!(r"(?is)<({}\b[^>]*)>(.*?)</{}>", tag, tag);
+        if let Ok(re) = regex::Regex::new(&pattern) {
+            result = re
+                .replace_all(&result, |caps: &regex::Captures| {
+                    let open_tag = &caps[1];
+                    let inner_html = &caps[2];
+
+                    let text_stripped = strip_tags_regex.replace_all(inner_html, "");
+                    let norm_text = normalize_search_text(&text_stripped);
+
+                    if norm_text.is_empty() {
+                        return caps[0].to_string();
+                    }
+
+                    let mut matched_color = None;
+                    for span in spans {
+                        let span_norm = normalize_search_text(&span.text);
+                        if span_norm.is_empty() {
+                            continue;
+                        }
+                        if span_norm.contains(&norm_text) || norm_text.contains(&span_norm) {
+                            let hex = color_to_hex(&span.color);
+                            matched_color = Some(hex);
+                            break;
+                        }
+                    }
+
+                    if let Some(hex) = matched_color {
+                        if open_tag.contains("style=") {
+                            let new_open = style_attr_regex.replace(open_tag, |scaps: &regex::Captures| {
+                                let existing = &scaps[1];
+                                format!("style=\"color: #{}; {}\"", hex, existing)
+                            });
+                            format!("<{}>{}</{}>", new_open, inner_html, tag)
+                        } else {
+                            format!("<{} style=\"color: #{};\">{}</{}>", open_tag, hex, inner_html, tag)
+                        }
+                    } else {
+                        caps[0].to_string()
+                    }
+                })
+                .into_owned();
+        }
+    }
+
+    result
+}
+
+#[derive(Default, Clone)]
 pub struct PdfToHtmlOperation {
     pub extracted_html: Arc<Mutex<Option<String>>>,
+    pub preset: Option<String>,
+    pub custom_css: Option<String>,
 }
 
 impl PdfToHtmlOperation {
     pub fn new() -> Self {
         Self {
             extracted_html: Arc::new(Mutex::new(None)),
+            preset: None,
+            custom_css: None,
+        }
+    }
+
+    pub fn with_options(preset: Option<String>, custom_css: Option<String>) -> Self {
+        Self {
+            extracted_html: Arc::new(Mutex::new(None)),
+            preset,
+            custom_css,
         }
     }
 }
@@ -773,6 +959,13 @@ impl PdfOperation for PdfToHtmlOperation {
 
         let mut html = String::new();
 
+        // Resolve CSS using custom_css / preset or default PDF HTML CSS
+        let css = if self.preset.is_some() || self.custom_css.is_some() {
+            resolve_css(self.preset.as_deref(), self.custom_css.as_deref())
+        } else {
+            DEFAULT_PDF_HTML_CSS.trim().to_string()
+        };
+
         if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
             && !bytes.is_empty()
             && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
@@ -781,9 +974,10 @@ impl PdfOperation for PdfToHtmlOperation {
             let mut page_nums: Vec<u32> = lopdf_doc.inner.get_pages().keys().copied().collect();
             page_nums.sort();
 
-            html.push_str(
-                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
-            );
+            html.push_str("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>PDF Export</title>\n");
+            html.push_str(&format!("<style>\n{}\n</style>\n", css));
+            html.push_str("</head>\n<body>\n");
+
             for i in 0..page_count {
                 let page_id = i + 1;
 
@@ -800,8 +994,7 @@ impl PdfOperation for PdfToHtmlOperation {
                     Vec::new()
                 };
 
-                html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
-                html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                html.push_str(&format!("<div class=\"page\" id=\"page-{}\" data-page=\"{}\">\n", page_id, page_id));
 
                 let mut page_content = String::new();
                 if let Ok(page_html) = pdf.to_html(i) {
@@ -827,7 +1020,7 @@ impl PdfOperation for PdfToHtmlOperation {
                                         }
                                         pdf_oxide::extractors::PixelFormat::CMYK => {
                                             image::ColorType::Rgb8
-                                        } // Fallback mapping, Image API handles basic conversions or fails gracefully.
+                                        }
                                     };
                                     let mut png_bytes = Vec::new();
                                     use image::ImageEncoder;
@@ -911,7 +1104,13 @@ impl PdfOperation for PdfToHtmlOperation {
                     final_html.insert_str(insert_pos, &format!("\n{}\n", markup));
                 }
 
-                html.push_str(&final_html);
+                // Preserve colors from spans
+                let mut colored_html = apply_span_colors_to_html(&final_html, &spans);
+
+                // Clean up trailing empty cells in tables
+                colored_html = cleanup_trailing_empty_table_cells(&colored_html);
+
+                html.push_str(&colored_html);
 
                 html.push_str("</div>\n");
             }
@@ -922,15 +1121,15 @@ impl PdfOperation for PdfToHtmlOperation {
             let inner = &mut lopdf_doc.inner;
             let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
 
-            html = String::from(
-                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
+            html = format!(
+                "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>PDF Export</title>\n<style>\n{}\n</style>\n</head>\n<body>\n",
+                css
             );
 
             for page_id in all_pages {
                 match inner.extract_text(&[page_id]) {
                     Ok(text) => {
-                        html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
-                        html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                        html.push_str(&format!("<div class=\"page\" id=\"page-{}\" data-page=\"{}\">\n", page_id, page_id));
                         for line in text.lines() {
                             if !line.trim().is_empty() {
                                 html.push_str(&format!("<p>{}</p>\n", line.trim()));
@@ -1607,6 +1806,27 @@ pub enum LayoutItem {
 pub const EMUS_PER_INCH: u32 = 914_400;
 pub const MAX_DOCX_PAGE_WIDTH_EMUS: u32 = 4_500_000;
 
+fn parse_inline_css(style_str: &str) -> std::collections::HashMap<String, String> {
+    let mut map = std::collections::HashMap::new();
+    for part in style_str.split(';') {
+        if let Some((k, v)) = part.split_once(':') {
+            map.insert(k.trim().to_lowercase(), v.trim().to_string());
+        }
+    }
+    map
+}
+
+fn extract_hex_color_from_style(style_str: &str) -> Option<String> {
+    let styles = parse_inline_css(style_str);
+    if let Some(color) = styles.get("color") {
+        let trimmed = color.trim().trim_start_matches('#');
+        if trimmed.len() == 6 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+            return Some(trimmed.to_ascii_uppercase());
+        }
+    }
+    None
+}
+
 pub fn decode_data_uri(uri: &str) -> Option<(String, Vec<u8>)> {
     if !uri.starts_with("data:image/") {
         return None;
@@ -1623,47 +1843,17 @@ pub fn decode_data_uri(uri: &str) -> Option<(String, Vec<u8>)> {
     Some((mime.to_string(), bytes))
 }
 
-fn normalize_search_text(s: &str) -> String {
-    s.chars().filter(|c| !c.is_whitespace()).collect()
-}
-
-fn color_to_hex(c: &pdf_oxide::layout::Color) -> String {
-    let r = (c.r.clamp(0.0, 1.0) * 255.0).round() as u8;
-    let g = (c.g.clamp(0.0, 1.0) * 255.0).round() as u8;
-    let b = (c.b.clamp(0.0, 1.0) * 255.0).round() as u8;
-    format!("{:02X}{:02X}{:02X}", r, g, b)
-}
-
-fn find_span_style_for_text(text: &str, spans: &[pdf_oxide::layout::TextSpan]) -> (String, usize, bool, bool) {
-    let norm = normalize_search_text(text);
-    if norm.is_empty() {
-        return ("334155".to_string(), 22, false, false);
-    }
-
-    // Try finding an exact match or substring in the extracted spans
-    for span in spans {
-        let span_norm = normalize_search_text(&span.text);
-        if span_norm.contains(&norm) || norm.contains(&span_norm) {
-            let hex = color_to_hex(&span.color);
-            let size_half_pts = ((span.font_size * 2.0).round() as usize).max(12);
-            let is_bold = match span.font_weight {
-                pdf_oxide::layout::FontWeight::Bold
-                | pdf_oxide::layout::FontWeight::ExtraBold
-                | pdf_oxide::layout::FontWeight::Black
-                | pdf_oxide::layout::FontWeight::SemiBold => true,
-                _ => false,
-            };
-            let is_italic = span.is_italic;
-            return (hex, size_half_pts, is_bold, is_italic);
-        }
-    }
-
-    ("334155".to_string(), 22, false, false)
-}
-
 impl PdfOperation for PdfToDocxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        let lopdf_doc = document
+        // Run PdfToHtmlOperation as Universal Intermediate Representation (IR)
+        let html_op = PdfToHtmlOperation::new();
+        html_op.execute(document)?;
+        let html = {
+            let guard = html_op.extracted_html.lock().unwrap();
+            guard.clone().unwrap_or_default()
+        };
+
+        let _lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| {
@@ -1672,9 +1862,8 @@ impl PdfOperation for PdfToDocxOperation {
 
         use docx_rs::{
             AlignmentType, BorderType, Docx, Paragraph, Run, RunFonts, Shading, Table, TableBorder,
-            TableBorderPosition, TableBorders, TableCell, TableCellMargins, TableRow, WidthType,
+            TableBorderPosition, TableBorders, TableCell, TableCellMargins, TableRow,
         };
-        use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
         let mut docx = Docx::new().page_margin(
             docx_rs::PageMargin::new()
@@ -1684,337 +1873,240 @@ impl PdfOperation for PdfToDocxOperation {
                 .right(720),
         );
 
-        // Extract native PDF spans for exact color/font fidelity
-        let mut pdf_spans: Vec<pdf_oxide::layout::TextSpan> = Vec::new();
-        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
-            && !bytes.is_empty()
-            && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
-            && let Ok(page_count) = pdf.page_count()
-        {
-            for i in 0..page_count {
-                if let Ok(mut spans) = pdf.extract_spans(i) {
-                    pdf_spans.append(&mut spans);
-                }
-            }
-        }
+        let parsed_doc = scraper::Html::parse_document(&html);
+        let page_sel = scraper::Selector::parse("div.page").unwrap();
+        let block_sel = scraper::Selector::parse("h1, h2, h3, h4, h5, h6, p, table, img").unwrap();
+        let tr_sel = scraper::Selector::parse("tr").unwrap();
+        let cell_sel = scraper::Selector::parse("th, td").unwrap();
 
-        let markdown_op = PdfToMarkdownOperation::new();
-        markdown_op.execute(document)?;
+        // Helper to extract styled runs recursively from an HTML element
+        fn extract_runs_from_element(
+            node: scraper::ElementRef,
+            parent_bold: bool,
+            parent_italic: bool,
+            parent_color: Option<&str>,
+            font_size: usize,
+        ) -> Vec<Run> {
+            let mut runs = Vec::new();
 
-        let markdown = {
-            let guard = markdown_op.extracted_markdown.lock().unwrap();
-            guard.clone().unwrap_or_default()
-        };
-
-        let parser = Parser::new_ext(&markdown, Options::all());
-
-        let mut current_heading_level = 0;
-        let mut current_paragraph = Paragraph::new();
-        let mut has_run = false;
-
-        let mut pending_image: Option<(Vec<u8>, u32, u32)> = None;
-        let mut pending_image_paragraph: Option<Paragraph> = None;
-        let mut current_card_title: Option<Paragraph> = None;
-
-        let mut in_table = false;
-        let mut in_table_head = false;
-        let mut table_rows: Vec<TableRow> = Vec::new();
-        let mut current_row_cells: Vec<TableCell> = Vec::new();
-        let mut current_cell_paragraphs: Vec<Paragraph> = Vec::new();
-
-        let mut is_bold_active = false;
-        let mut is_italic_active = false;
-
-        for event in parser {
-            match event {
-                Event::Start(Tag::Image { dest_url, .. }) => {
-                    if let Some((_, bytes)) = decode_data_uri(&dest_url)
-                        && let Ok(img) = image::load_from_memory(&bytes)
-                    {
-                        let width_px = img.width() as f64;
-                        let height_px = img.height() as f64;
-                        // 150 DPI => 6096 EMUs per pixel
-                        let scale = 914_400.0 / 150.0;
-                        let mut width_emu = (width_px * scale) as u32;
-                        let mut height_emu = (height_px * scale) as u32;
-
-                        if width_emu > MAX_DOCX_PAGE_WIDTH_EMUS {
-                            let ratio = MAX_DOCX_PAGE_WIDTH_EMUS as f64 / width_emu as f64;
-                            width_emu = MAX_DOCX_PAGE_WIDTH_EMUS;
-                            height_emu = (height_emu as f64 * ratio) as u32;
-                        }
-                        pending_image = Some((bytes, width_emu, height_emu));
-                    }
-                }
-                Event::End(TagEnd::Image) => {
-                    if let Some((bytes, width, height)) = pending_image.take() {
-                        use docx_rs::Pic;
-                        let pic = Pic::new(&bytes).size(width, height);
-                        let pic_run = Run::new().add_image(pic);
-                        let pic_para = Paragraph::new()
-                            .align(AlignmentType::Center)
-                            .add_run(pic_run);
-                        pending_image_paragraph = Some(pic_para);
-                    }
-                }
-                Event::Start(Tag::Heading { level, .. }) => {
-                    let level_num = match level {
-                        pulldown_cmark::HeadingLevel::H1 => 1,
-                        pulldown_cmark::HeadingLevel::H2 => 2,
-                        pulldown_cmark::HeadingLevel::H3 => 3,
-                        pulldown_cmark::HeadingLevel::H4 => 4,
-                        pulldown_cmark::HeadingLevel::H5 => 5,
-                        pulldown_cmark::HeadingLevel::H6 => 6,
-                    };
-                    current_heading_level = level_num;
-                    current_paragraph = Paragraph::new();
-                    if current_heading_level == 1 {
-                        current_paragraph = current_paragraph.align(AlignmentType::Center);
-                    }
-                    has_run = false;
-                }
-                Event::End(TagEnd::Heading(_)) => {
-                    if has_run {
-                        if current_heading_level == 3 || current_heading_level == 4 {
-                            current_card_title = Some(current_paragraph.clone());
-                        } else {
-                            if let Some(pic_para) = pending_image_paragraph.take() {
-                                docx = docx.add_paragraph(pic_para);
-                            }
-                            docx = docx.add_paragraph(current_paragraph.clone());
-                        }
-                    }
-                    current_heading_level = 0;
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                Event::Start(Tag::Paragraph) => {
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                Event::End(TagEnd::Paragraph) => {
-                    if has_run {
-                        if let Some(title_para) = current_card_title.take() {
-                            if let Some(illus_para) = pending_image_paragraph.take() {
-                                let illus_cell = TableCell::new()
-                                    .add_paragraph(illus_para)
-                                    .width(3168, WidthType::Dxa);
-
-                                let text_cell = TableCell::new()
-                                    .add_paragraph(title_para)
-                                    .add_paragraph(current_paragraph.clone())
-                                    .width(6912, WidthType::Dxa);
-
-                                let row_cells = vec![illus_cell, text_cell];
-
-                                let table = Table::new(vec![TableRow::new(row_cells)])
-                                    .set_borders(TableBorders::new().clear_all())
-                                    .layout(docx_rs::TableLayoutType::Fixed);
-                                docx = docx.add_table(table);
-                            } else {
-                                docx = docx.add_paragraph(title_para);
-                                docx = docx.add_paragraph(current_paragraph.clone());
-                            }
-                        } else {
-                            if let Some(pic_para) = pending_image_paragraph.take() {
-                                docx = docx.add_paragraph(pic_para);
-                            }
-                            docx = docx.add_paragraph(current_paragraph.clone());
-                        }
-                    }
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                Event::Start(Tag::Strong) => {
-                    is_bold_active = true;
-                }
-                Event::End(TagEnd::Strong) => {
-                    is_bold_active = false;
-                }
-                Event::Start(Tag::Emphasis) => {
-                    is_italic_active = true;
-                }
-                Event::End(TagEnd::Emphasis) => {
-                    is_italic_active = false;
-                }
-                Event::Text(text) => {
-                    let text_str = text.into_string();
-                    let trimmed = text_str.trim();
-
-                    // Skip synthetic markdown "Page X" headings if any
-                    if current_heading_level > 0 && trimmed.starts_with("Page ") && trimmed[5..].chars().all(|c| c.is_ascii_digit()) {
-                        // ignore synthetic page heading
-                        continue;
-                    }
-
-                    let (span_hex, span_size, span_bold, span_italic) =
-                        find_span_style_for_text(&text_str, &pdf_spans);
-
-                    let mut run = Run::new()
-                        .add_text(&text_str)
-                        .fonts(RunFonts::new().ascii("Arial").hi_ansi("Arial"));
-
-                    if in_table {
-                        if in_table_head {
-                            run = run
-                                .bold()
-                                .size(20) // 10pt
-                                .color("FFFFFF");
-                        } else {
-                            let cell_color = if span_hex == "1E293B" || span_hex == "000000" || span_hex == "334155" {
-                                "334155"
-                            } else {
-                                &span_hex
-                            };
-                            let mut r = run.size(18).color(cell_color);
-                            if is_bold_active || span_bold {
-                                r = r.bold();
-                            }
-                            if is_italic_active || span_italic {
-                                r = r.italic();
-                            }
-                            run = r;
-                        }
-                    } else if current_heading_level == 1 {
-                        let color = if !span_hex.is_empty() && span_hex != "334155" {
-                            span_hex
-                        } else {
-                            "1E293B".to_string()
-                        };
-                        run = run.bold().size(44).color(color);
-                    } else if current_heading_level == 2 {
-                        // Level 2 headings in sample document are blue: #2563EB
-                        let color = if span_hex == "2563EB" || span_hex.starts_with("2563") {
-                            "2563EB".to_string()
-                        } else if !span_hex.is_empty() && span_hex != "334155" && span_hex != "000000" {
-                            span_hex
-                        } else {
-                            "2563EB".to_string()
-                        };
-                        run = run.bold().size(30).color(color);
-                    } else if current_heading_level == 3 || current_heading_level == 4 {
-                        let color = if !span_hex.is_empty() && span_hex != "334155" && span_hex != "000000" {
-                            span_hex
-                        } else {
-                            "1E293B".to_string()
-                        };
-                        run = run.bold().size(24).color(color);
-                    } else {
-                        // Body text
-                        let is_bold = is_bold_active || span_bold;
-                        let is_italic = is_italic_active || span_italic;
-
-                        // Check if this span or strong text corresponds to a blue heading
-                        let color = if span_hex == "2563EB" || span_hex.starts_with("2563") {
-                            "2563EB".to_string()
-                        } else if !span_hex.is_empty() {
-                            span_hex
-                        } else {
-                            "334155".to_string()
-                        };
-
-                        let size = if color == "2563EB" {
-                            30 // 15pt for section headings
-                        } else if span_size >= 16 && span_size <= 28 {
-                            span_size
-                        } else {
-                            22 // 11pt
-                        };
-
-                        let mut r = run.size(size).color(color);
-                        if is_bold {
+            for child in node.children() {
+                if let Some(text_node) = child.value().as_text() {
+                    let text = text_node.text.as_ref();
+                    if !text.is_empty() {
+                        let color_val = parent_color.unwrap_or("334155");
+                        let mut r = Run::new()
+                            .add_text(text)
+                            .fonts(RunFonts::new().ascii("Arial").hi_ansi("Arial"))
+                            .size(font_size)
+                            .color(color_val);
+                        if parent_bold {
                             r = r.bold();
                         }
-                        if is_italic {
+                        if parent_italic {
                             r = r.italic();
                         }
-                        run = r;
+                        runs.push(r);
                     }
+                } else if let Some(el_node) = child.value().as_element() {
+                    if let Some(child_ref) = scraper::ElementRef::wrap(child) {
+                        let tag = el_node.name();
+                        let is_bold = parent_bold || tag == "strong" || tag == "b";
+                        let is_italic = parent_italic || tag == "em" || tag == "i";
+                        let child_style = el_node.attr("style").unwrap_or_default();
+                        let child_color = extract_hex_color_from_style(child_style);
+                        let effective_color = child_color.as_deref().or(parent_color);
 
-                    current_paragraph = current_paragraph.add_run(run);
-                    has_run = true;
-                }
-                Event::Start(Tag::Table(_)) => {
-                    in_table = true;
-                    table_rows = Vec::new();
-                }
-                Event::End(TagEnd::Table) => {
-                    in_table = false;
-                    if !table_rows.is_empty() {
-                        let borders = TableBorders::new()
-                            .set(TableBorder::new(TableBorderPosition::Top).color("CBD5E1").size(4).border_type(BorderType::Single))
-                            .set(TableBorder::new(TableBorderPosition::Bottom).color("CBD5E1").size(4).border_type(BorderType::Single))
-                            .set(TableBorder::new(TableBorderPosition::Left).color("CBD5E1").size(4).border_type(BorderType::Single))
-                            .set(TableBorder::new(TableBorderPosition::Right).color("CBD5E1").size(4).border_type(BorderType::Single))
-                            .set(TableBorder::new(TableBorderPosition::InsideH).color("CBD5E1").size(4).border_type(BorderType::Single))
-                            .set(TableBorder::new(TableBorderPosition::InsideV).color("CBD5E1").size(4).border_type(BorderType::Single));
-
-                        let table = Table::new(table_rows.clone())
-                            .set_borders(borders)
-                            .layout(docx_rs::TableLayoutType::Fixed)
-                            .margins(TableCellMargins::new().margin(100, 150, 100, 150));
-                        docx = docx.add_table(table);
+                        runs.extend(extract_runs_from_element(
+                            child_ref,
+                            is_bold,
+                            is_italic,
+                            effective_color,
+                            font_size,
+                        ));
                     }
-                    table_rows = Vec::new();
                 }
-                Event::Start(Tag::TableHead) => {
-                    in_table_head = true;
-                    current_row_cells = Vec::new();
-                }
-                Event::End(TagEnd::TableHead) => {
-                    in_table_head = false;
-                    if !current_row_cells.is_empty() {
-                        let row = TableRow::new(current_row_cells.clone());
-                        table_rows.push(row);
-                    }
-                    current_row_cells = Vec::new();
-                }
-                Event::Start(Tag::TableRow) => {
-                    current_row_cells = Vec::new();
-                }
-                Event::End(TagEnd::TableRow) => {
-                    if !current_row_cells.is_empty() {
-                        let row = TableRow::new(current_row_cells.clone());
-                        table_rows.push(row);
-                    }
-                    current_row_cells = Vec::new();
-                }
-                Event::Start(Tag::TableCell) => {
-                    current_cell_paragraphs = Vec::new();
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                Event::End(TagEnd::TableCell) => {
-                    if has_run {
-                        current_cell_paragraphs.push(current_paragraph.clone());
-                    }
-                    let mut cell = TableCell::new();
-                    if in_table_head {
-                        cell = cell.shading(Shading::new().fill("1E293B"));
-                    } else {
-                        // Alternate row shading or clean soft background
-                        let row_idx = table_rows.len();
-                        if row_idx % 2 == 1 {
-                            cell = cell.shading(Shading::new().fill("F8FAFC"));
-                        } else {
-                            cell = cell.shading(Shading::new().fill("FFFFFF"));
-                        }
-                    }
-                    for p in current_cell_paragraphs.clone() {
-                        cell = cell.add_paragraph(p);
-                    }
-                    current_row_cells.push(cell);
-                    current_cell_paragraphs = Vec::new();
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                _ => {}
             }
+
+            runs
         }
 
-        // flush
-        if let Some(pic_para) = pending_image_paragraph.take() {
-            docx = docx.add_paragraph(pic_para);
+        let mut pages: Vec<scraper::ElementRef> = parsed_doc.select(&page_sel).collect();
+        // Fallback: if no div.page, parse root
+        let root_ref = parsed_doc.root_element();
+        let dummy_pages = vec![root_ref];
+        if pages.is_empty() {
+            pages = dummy_pages;
+        }
+
+        for page in pages {
+            for block in page.select(&block_sel) {
+                // Ensure we only process direct/top block elements of this page
+                let parent = block.parent().and_then(scraper::ElementRef::wrap);
+                if let Some(p) = parent {
+                    let p_name = p.value().name();
+                    if p_name != "div" && p_name != "body" && p_name != "html" {
+                        // Skip nested elements (like tr inside table, p inside td)
+                        continue;
+                    }
+                }
+
+                let tag_name = block.value().name();
+                let inline_style = block.value().attr("style").unwrap_or_default();
+                let inline_color = extract_hex_color_from_style(inline_style);
+
+                match tag_name {
+                    "h1" => {
+                        let color = inline_color.unwrap_or_else(|| "1E293B".to_string());
+                        let runs = extract_runs_from_element(block, true, false, Some(&color), 44);
+                        let mut p = Paragraph::new().align(AlignmentType::Center);
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "h2" => {
+                        let color = inline_color.unwrap_or_else(|| "2563EB".to_string());
+                        // Blue section headings
+                        let effective_color = if color == "000000" || color.is_empty() {
+                            "2563EB".to_string()
+                        } else {
+                            color
+                        };
+                        let runs = extract_runs_from_element(block, true, false, Some(&effective_color), 30);
+                        let mut p = Paragraph::new();
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "h3" | "h4" => {
+                        let color = inline_color.unwrap_or_else(|| "1E293B".to_string());
+                        let runs = extract_runs_from_element(block, true, false, Some(&color), 24);
+                        let mut p = Paragraph::new();
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "h5" | "h6" => {
+                        let color = inline_color.unwrap_or_else(|| "1E293B".to_string());
+                        let runs = extract_runs_from_element(block, true, false, Some(&color), 22);
+                        let mut p = Paragraph::new();
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "p" => {
+                        let color = inline_color.unwrap_or_else(|| "334155".to_string());
+                        let runs = extract_runs_from_element(block, false, false, Some(&color), 22);
+                        if !runs.is_empty() {
+                            let mut p = Paragraph::new();
+                            for r in runs {
+                                p = p.add_run(r);
+                            }
+                            docx = docx.add_paragraph(p);
+                        }
+                    }
+                    "img" => {
+                        if let Some(src) = block.value().attr("src") {
+                            if let Some((_, bytes)) = decode_data_uri(src) {
+                                if let Ok(img) = image::load_from_memory(&bytes) {
+                                    let width_px = img.width() as f64;
+                                    let height_px = img.height() as f64;
+                                    let scale = 914_400.0 / 150.0;
+                                    let mut width_emu = (width_px * scale) as u32;
+                                    let mut height_emu = (height_px * scale) as u32;
+
+                                    if width_emu > MAX_DOCX_PAGE_WIDTH_EMUS {
+                                        let ratio = MAX_DOCX_PAGE_WIDTH_EMUS as f64 / width_emu as f64;
+                                        width_emu = MAX_DOCX_PAGE_WIDTH_EMUS;
+                                        height_emu = (height_emu as f64 * ratio) as u32;
+                                    }
+                                    use docx_rs::Pic;
+                                    let pic = Pic::new(&bytes).size(width_emu, height_emu);
+                                    let pic_run = Run::new().add_image(pic);
+                                    let pic_para = Paragraph::new()
+                                        .align(AlignmentType::Center)
+                                        .add_run(pic_run);
+                                    docx = docx.add_paragraph(pic_para);
+                                }
+                            }
+                        }
+                    }
+                    "table" => {
+                        let mut table_rows: Vec<TableRow> = Vec::new();
+                        let mut row_idx = 0;
+
+                        for tr in block.select(&tr_sel) {
+                            let mut row_cells: Vec<TableCell> = Vec::new();
+                            let is_first_row = row_idx == 0;
+
+                            for cell_node in tr.select(&cell_sel) {
+                                let tag = cell_node.value().name();
+                                let is_th = tag == "th" || is_first_row;
+                                let cell_style = cell_node.value().attr("style").unwrap_or_default();
+                                let cell_color = extract_hex_color_from_style(cell_style);
+
+                                let mut cell = TableCell::new();
+                                if is_th {
+                                    cell = cell.shading(Shading::new().fill("1E293B"));
+                                } else if row_idx % 2 == 1 {
+                                    cell = cell.shading(Shading::new().fill("F8FAFC"));
+                                } else {
+                                    cell = cell.shading(Shading::new().fill("FFFFFF"));
+                                }
+
+                                let text_color = if is_th {
+                                    "FFFFFF"
+                                } else if let Some(ref c) = cell_color {
+                                    c.as_str()
+                                } else {
+                                    "334155"
+                                };
+
+                                let font_size = if is_th { 20 } else { 18 };
+                                let runs = extract_runs_from_element(
+                                    cell_node,
+                                    is_th,
+                                    false,
+                                    Some(text_color),
+                                    font_size,
+                                );
+
+                                let mut p = Paragraph::new();
+                                for r in runs {
+                                    p = p.add_run(r);
+                                }
+                                cell = cell.add_paragraph(p);
+                                row_cells.push(cell);
+                            }
+
+                            if !row_cells.is_empty() {
+                                table_rows.push(TableRow::new(row_cells));
+                                row_idx += 1;
+                            }
+                        }
+
+                        if !table_rows.is_empty() {
+                            let borders = TableBorders::new()
+                                .set(TableBorder::new(TableBorderPosition::Top).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::Bottom).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::Left).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::Right).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::InsideH).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::InsideV).color("CBD5E1").size(4).border_type(BorderType::Single));
+
+                            let table = Table::new(table_rows)
+                                .set_borders(borders)
+                                .layout(docx_rs::TableLayoutType::Fixed)
+                                .margins(TableCellMargins::new().margin(100, 150, 100, 150));
+                            docx = docx.add_table(table);
+                        }
+                    }
+                    _ => {}
+                }
+            }
         }
 
         let file = std::fs::File::create(&self.output_path)
@@ -2040,11 +2132,11 @@ impl PdfToXlsxOperation {
 #[cfg(feature = "office")]
 impl PdfOperation for PdfToXlsxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        // Extract structured Markdown representation containing parsed tables
-        let markdown_op = PdfToMarkdownOperation::new();
-        markdown_op.execute(document)?;
-        let markdown = {
-            let guard = markdown_op.extracted_markdown.lock().unwrap();
+        // Run PdfToHtmlOperation as Universal Intermediate Representation (IR)
+        let html_op = PdfToHtmlOperation::new();
+        html_op.execute(document)?;
+        let html = {
+            let guard = html_op.extracted_html.lock().unwrap();
             guard.clone().unwrap_or_default()
         };
 
@@ -2054,8 +2146,6 @@ impl PdfOperation for PdfToXlsxOperation {
             .ok_or_else(|| {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
-
-        use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
@@ -2070,78 +2160,70 @@ impl PdfOperation for PdfToXlsxOperation {
             .set_border(FormatBorder::Thin);
 
         let mut current_row: u32 = 0;
-        let mut current_col: u16 = 0;
-        let mut in_table_head = false;
-        let mut in_table_cell = false;
-        let mut cell_text = String::new();
         let mut table_count = 0;
 
-        let parser = Parser::new_ext(&markdown, Options::all());
+        let parsed_doc = scraper::Html::parse_document(&html);
+        let table_sel = scraper::Selector::parse("table").unwrap();
+        let tr_sel = scraper::Selector::parse("tr").unwrap();
+        let cell_sel = scraper::Selector::parse("th, td").unwrap();
+        let strong_sel = scraper::Selector::parse("strong, b").unwrap();
 
-        for event in parser {
-            match event {
-                Event::Start(Tag::Table(_)) => {
-                    if table_count > 0 {
-                        // Separate consecutive tables with 2 blank rows
-                        current_row += 2;
-                    }
-                    table_count += 1;
-                }
-                Event::End(TagEnd::Table) => {}
-                Event::Start(Tag::TableHead) => {
-                    in_table_head = true;
-                    current_col = 0;
-                }
-                Event::End(TagEnd::TableHead) => {
-                    in_table_head = false;
-                    current_row += 1;
-                }
-                Event::Start(Tag::TableRow) => {
-                    current_col = 0;
-                }
-                Event::End(TagEnd::TableRow) => {
-                    current_row += 1;
-                }
-                Event::Start(Tag::TableCell) => {
-                    in_table_cell = true;
-                    cell_text.clear();
-                }
-                Event::End(TagEnd::TableCell) => {
-                    in_table_cell = false;
-                    let text = cell_text.trim();
-                    let is_header = in_table_head;
+        for table in parsed_doc.select(&table_sel) {
+            let mut is_first_row = true;
+            for tr in table.select(&tr_sel) {
+                let mut row_cells: Vec<(String, bool)> = Vec::new();
 
-                    if is_header {
-                        worksheet
-                            .write_string_with_format(current_row, current_col, text, &header_format)
-                            .map_err(|e| PdfError::Other(format!("Failed to write XLSX header: {e}")))?;
-                    } else if let Ok(num) = text.parse::<f64>() {
-                        worksheet
-                            .write_number_with_format(current_row, current_col, num, &data_format)
-                            .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                for cell in tr.select(&cell_sel) {
+                    let is_th = cell.value().name() == "th"
+                        || is_first_row
+                        || cell.select(&strong_sel).next().is_some();
+                    let text: Vec<&str> = cell
+                        .text()
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                    let cell_str = text.join(" ");
+                    row_cells.push((cell_str, is_th));
+                }
+
+                // Strip trailing empty cells
+                while let Some(last) = row_cells.last() {
+                    if last.0.is_empty() {
+                        row_cells.pop();
                     } else {
-                        worksheet
-                            .write_string_with_format(current_row, current_col, text, &data_format)
-                            .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                        break;
                     }
+                }
 
-                    current_col += 1;
-                }
-                Event::Text(txt) => {
-                    if in_table_cell {
-                        cell_text.push_str(&txt);
+                if !row_cells.is_empty() {
+                    for (col_idx, (text, is_th)) in row_cells.iter().enumerate() {
+                        let col = col_idx as u16;
+                        if *is_th {
+                            worksheet
+                                .write_string_with_format(current_row, col, text, &header_format)
+                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX header: {e}")))?;
+                        } else if let Ok(num) = text.parse::<f64>() {
+                            worksheet
+                                .write_number_with_format(current_row, col, num, &data_format)
+                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                        } else {
+                            worksheet
+                                .write_string_with_format(current_row, col, text, &data_format)
+                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                        }
                     }
+                    current_row += 1;
+                    table_count += 1;
+                    is_first_row = false;
                 }
-                Event::Code(txt) => {
-                    if in_table_cell {
-                        cell_text.push_str(&txt);
-                    }
-                }
-                _ => {}
+            }
+
+            if table_count > 0 {
+                current_row += 1; // blank line between tables
             }
         }
 
-        // Graceful fallback if PDF had no structured markdown tables
+        // Graceful fallback if PDF had no structured HTML tables
         if table_count == 0 {
             let inner = &mut lopdf_doc.inner;
             let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
@@ -2460,7 +2542,59 @@ mod tests {
         assert!(text.is_some());
         let extracted = text.as_ref().unwrap();
         assert!(extracted.contains("<!DOCTYPE html>"));
-        assert!(extracted.contains("<div class=\"page\" id=\"page-1\">"));
+        assert!(extracted.contains("<div class=\"page\" id=\"page-1\" data-page=\"1\">"));
+        assert!(!extracted.contains("<h2>Page 1</h2>"));
+    }
+
+    #[test]
+    fn test_cleanup_trailing_empty_table_cells() {
+        let input = "<table><tr><td>Item</td><td>Qty</td><td></td><td>   </td></tr></table>";
+        let cleaned = cleanup_trailing_empty_table_cells(input);
+        assert_eq!(cleaned, "<table><tr><td>Item</td><td>Qty</td></tr></table>");
+    }
+
+    #[test]
+    fn test_apply_span_colors_to_html() {
+        let html = "<h1>INVOICE</h1><p>Date</p>";
+        let spans = vec![pdf_oxide::layout::TextSpan {
+            text: "INVOICE".to_string(),
+            color: pdf_oxide::layout::Color {
+                r: 0.11764706,
+                g: 0.22745098,
+                b: 0.5411765,
+            },
+            ..Default::default()
+        }];
+        let colored = apply_span_colors_to_html(html, &spans);
+        assert!(colored.contains("<h1 style=\"color: #1E3A8A;\">INVOICE</h1>"));
+    }
+
+    #[test]
+    fn test_convert_invoice_fixture_to_html() {
+        let input_path = std::path::Path::new("/home/krushna/Project/PaperPilot/ManaulTestingFixtures/pdf_to_html/Input/invoice_template_converted.pdf");
+        let alt_path = std::path::Path::new("/home/krushna/Project/ManaulTestingFixtures/pdf_to_html/Input/invoice_template_converted.pdf");
+        let path = if input_path.exists() { input_path } else { alt_path };
+
+        let output_path = if input_path.exists() {
+            "/home/krushna/Project/PaperPilot/ManaulTestingFixtures/pdf_to_html/Output/invoice_template_converted.html"
+        } else {
+            "/home/krushna/Project/ManaulTestingFixtures/pdf_to_html/Output/invoice_template_converted.html"
+        };
+        if let Ok(mut doc) = LopdfDocument::load(path) {
+            let op = PdfToHtmlOperation::new();
+            assert!(op.execute(&mut doc).is_ok());
+            let html = op.extracted_html.lock().unwrap().clone().unwrap_or_default();
+            let _ = std::fs::write(output_path, &html);
+
+            // Assertions
+            assert!(!html.contains("<h2>Page 1</h2>"));
+            assert!(html.contains("<div class=\"page\" id=\"page-1\" data-page=\"1\">"));
+            assert!(html.contains("border-collapse: collapse"));
+            assert!(html.contains("border: 1px solid #cbd5e1"));
+            assert!(html.contains("padding: 10px 14px"));
+            assert!(html.contains("#1E3A8A") || html.contains("#1e3a8a"));
+            assert!(!html.contains("<td></td>"));
+        }
     }
 
     #[test]

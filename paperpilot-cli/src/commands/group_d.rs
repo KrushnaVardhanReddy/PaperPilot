@@ -153,7 +153,11 @@ pub fn handle_convert_with_orientation(
     match actual_format {
         "html" | "htm" => {
             let out_path = output.unwrap_or(Path::new("output.html"));
-            let op = paperpilot_pdf::operations::conversion::PdfToHtmlOperation::new();
+            let opts = build_options()?;
+            let op = paperpilot_pdf::operations::conversion::PdfToHtmlOperation::with_options(
+                opts.preset,
+                opts.custom_css,
+            );
             op.execute(&mut doc)?;
             let html = op
                 .extracted_html
