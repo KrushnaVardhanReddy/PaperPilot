@@ -80,11 +80,12 @@ describe('operationArgsBuilder', () => {
     });
 
     it('builds args for creation tools (md_to_pdf) with dialog mock', async () => {
-        const args = await buildOperationArgs('md_to_pdf', defaultContext);
+        const args = await buildOperationArgs('md_to_pdf', { ...defaultContext, convertOrientation: 'landscape' });
         expect(args).toEqual({
             input: '/mock/path.md',
             output: '/mock/save_path.pdf',
-            preset: 'standard'
+            preset: 'standard',
+            orientation: 'landscape'
         });
     });
 
@@ -288,9 +289,10 @@ describe('operationArgsBuilder', () => {
         expect(args).toEqual({
             input: '/docs/test.pdf',
             output: '/docs/test_permissions.pdf',
-            allow_print: false,
-            allow_copy: false,
-            allow_modify: false
+            allow_print: true,
+            allow_copy: true,
+            allow_modify: true,
+            owner_password: 'paperpilot'
         });
     });
 

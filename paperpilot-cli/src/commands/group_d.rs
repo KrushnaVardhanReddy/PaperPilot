@@ -12,6 +12,18 @@ pub fn handle_convert(
     css_preset: Option<&str>,
     inline_css: Option<&str>,
 ) -> OperationResult<()> {
+    handle_convert_with_orientation(format, input, output, css, css_preset, inline_css, None)
+}
+
+pub fn handle_convert_with_orientation(
+    format: &str,
+    input: &Path,
+    output: Option<&Path>,
+    css: Option<&Path>,
+    css_preset: Option<&str>,
+    inline_css: Option<&str>,
+    orientation: Option<&str>,
+) -> OperationResult<()> {
     let build_options =
         || -> OperationResult<paperpilot_pdf::operations::conversion::HtmlToPdfOptions> {
             let mut custom_css_str = String::new();
@@ -42,6 +54,7 @@ pub fn handle_convert(
                 custom_css: final_css,
                 page_size: Some("A4".to_string()),
                 margin_mm: Some(20.0),
+                orientation: orientation.map(|s| s.to_string()),
             })
         };
 

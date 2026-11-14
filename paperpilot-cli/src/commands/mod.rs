@@ -578,14 +578,16 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             preset,
             css,
             custom_css,
+            orientation,
         } => {
-            group_d::handle_convert(
+            group_d::handle_convert_with_orientation(
                 "md_to_pdf",
                 &resolve_input_path(input)?,
                 Some(output),
                 css.as_deref(),
                 preset.as_deref(),
                 custom_css.as_deref(),
+                orientation.as_deref(),
             )
         },
         Commands::HtmlToPdf {
@@ -594,14 +596,16 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             preset,
             css,
             custom_css,
+            orientation,
         } => {
-            group_d::handle_convert(
+            group_d::handle_convert_with_orientation(
                 "html_to_pdf",
                 &resolve_input_path(input)?,
                 Some(output),
                 css.as_deref(),
                 preset.as_deref(),
                 custom_css.as_deref(),
+                orientation.as_deref(),
             )
         },
         Commands::ConvertExcel {
@@ -610,14 +614,16 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             preset,
             css,
             custom_css,
+            orientation,
         } => {
-            group_d::handle_convert(
+            group_d::handle_convert_with_orientation(
                 "excel_to_pdf",
                 &resolve_input_path(input)?,
                 Some(output),
                 css.as_deref(),
                 preset.as_deref(),
                 custom_css.as_deref(),
+                orientation.as_deref(),
             )
         },
         Commands::RagChunks { input, output } => {

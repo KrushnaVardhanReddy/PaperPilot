@@ -788,6 +788,8 @@ pub enum Commands {
         css: Option<PathBuf>,
         #[arg(long)]
         custom_css: Option<String>,
+        #[arg(long)]
+        orientation: Option<String>,
     },
     /// Convert HTML source code and web pages directly into styled PDF documents
     #[command(name = "html-to-pdf", alias = "html_to_pdf", alias = "convert-html", alias = "pdf-convert-html", alias = "pdf_convert_html")]
@@ -802,6 +804,8 @@ pub enum Commands {
         css: Option<PathBuf>,
         #[arg(long)]
         custom_css: Option<String>,
+        #[arg(long)]
+        orientation: Option<String>,
     },
     /// Convert spreadsheet (Excel / CSV) to formatted PDF document
     #[command(name = "convert-excel", alias = "convert_excel", alias = "pdf-convert-excel", alias = "pdf_convert_excel", alias = "excel-to-pdf", alias = "excel_to_pdf")]
@@ -816,6 +820,8 @@ pub enum Commands {
         css: Option<PathBuf>,
         #[arg(long)]
         custom_css: Option<String>,
+        #[arg(long)]
+        orientation: Option<String>,
     },
     #[command(name = "rag-chunks", alias = "rag_chunks", alias = "pdf-rag-chunks", alias = "pdf_rag_chunks")]
     RagChunks {

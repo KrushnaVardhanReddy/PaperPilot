@@ -125,6 +125,10 @@ impl PaperPilotMcpServer {
                     "page_size": {
                         "type": "string",
                         "description": "Page size format (e.g. A4, Letter)"
+                    },
+                    "orientation": {
+                        "type": "string",
+                        "description": "Page orientation (portrait or landscape)"
                     }
                 },
                 "required": ["input", "output"]
@@ -5006,12 +5010,17 @@ impl PaperPilotMcpServer {
                     .get("page_size")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string());
+                let orientation = args
+                    .get("orientation")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
 
                 let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
                     preset,
                     custom_css,
                     page_size,
                     margin_mm: Some(20.0),
+                    orientation,
                 };
 
                 let input_str = std::fs::read_to_string(&input).map_err(|e| {
@@ -5052,12 +5061,17 @@ impl PaperPilotMcpServer {
                     .get("page_size")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string());
+                let orientation = args
+                    .get("orientation")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
 
                 let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
                     preset,
                     custom_css,
                     page_size,
                     margin_mm: Some(20.0),
+                    orientation,
                 };
 
                 let input_str = std::fs::read_to_string(&input).map_err(|e| {
@@ -5098,12 +5112,17 @@ impl PaperPilotMcpServer {
                     .get("page_size")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string());
+                let orientation = args
+                    .get("orientation")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
 
                 let options = paperpilot_pdf::operations::conversion::HtmlToPdfOptions {
                     preset,
                     custom_css,
                     page_size,
                     margin_mm: Some(20.0),
+                    orientation,
                 };
 
                 let op = paperpilot_pdf::operations::conversion::ExcelToStyledHtmlOperation::new(

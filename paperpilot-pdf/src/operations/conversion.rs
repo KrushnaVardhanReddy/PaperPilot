@@ -152,6 +152,7 @@ pub struct HtmlToPdfOptions {
     pub custom_css: Option<String>, // inline CSS string
     pub page_size: Option<String>, // "A4", "Letter", etc.
     pub margin_mm: Option<f32>, // default 20mm
+    pub orientation: Option<String>, // "portrait", "landscape"
 }
 
 impl Default for HtmlToPdfOptions {
@@ -161,11 +162,21 @@ impl Default for HtmlToPdfOptions {
             custom_css: None,
             page_size: Some("A4".to_string()),
             margin_mm: Some(20.0),
+            orientation: None,
         }
     }
 }
 
 pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
+    resolve_css_with_options(preset, custom_css, None, None)
+}
+
+pub fn resolve_css_with_options(
+    preset: Option<&str>,
+    custom_css: Option<&str>,
+    page_size: Option<&str>,
+    orientation: Option<&str>,
+) -> String {
     let preset_css = match preset.unwrap_or("github") {
         "elegant" | "academic" => CSS_PRESET_ELEGANT,
         "minimal" | "minimalist" => CSS_PRESET_MINIMAL,
@@ -174,12 +185,24 @@ pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
         _ => CSS_PRESET_GITHUB,
     };
 
+    let mut css = preset_css.to_string();
+
     if let Some(custom) = custom_css
         && !custom.trim().is_empty()
     {
-        return format!("{}\n/* Custom CSS */\n{}", preset_css, custom);
+        css.push_str("\n/* Custom CSS */\n");
+        css.push_str(custom);
     }
-    preset_css.to_string()
+
+    if let Some(orient) = orientation {
+        let norm_orient = orient.trim().to_lowercase();
+        if norm_orient == "landscape" || norm_orient == "portrait" {
+            let psize = page_size.unwrap_or("A4");
+            css.push_str(&format!("\n@page {{ size: {} {}; }}\n", psize, norm_orient));
+        }
+    }
+
+    css
 }
 
 pub fn inject_css_into_html(html: &str, css: &str) -> String {
@@ -220,9 +243,11 @@ impl HtmlToPdfOperation {
     }
 
     pub fn render(&self) -> OperationResult<()> {
-        let css = resolve_css(
+        let css = resolve_css_with_options(
             self.options.preset.as_deref(),
             self.options.custom_css.as_deref(),
+            self.options.page_size.as_deref(),
+            self.options.orientation.as_deref(),
         );
         let styled_html = inject_css_into_html(&self.input_html, &css);
 
@@ -381,12 +406,15 @@ impl ExcelToStyledHtmlOperation {
         let mut html =
             String::from("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>");
 
+        let mut max_cols = 0;
+
         if self.input_path.extension().and_then(|s| s.to_str()) == Some("csv") {
             let mut rdr = csv::Reader::from_path(&self.input_path)
                 .map_err(|e| PdfError::Other(format!("Failed to parse CSV: {}", e)))?;
 
             html.push_str("<table>");
             if let Ok(headers) = rdr.headers() {
+                max_cols = max_cols.max(headers.len());
                 html.push_str("<tr>");
                 for h in headers {
                     html.push_str(&format!("<th>{}</th>", html_escape::encode_text(h)));
@@ -395,6 +423,7 @@ impl ExcelToStyledHtmlOperation {
             }
 
             for record in rdr.records().flatten() {
+                max_cols = max_cols.max(record.len());
                 html.push_str("<tr>");
                 for field in record.iter() {
                     html.push_str(&format!("<td>{}</td>", html_escape::encode_text(field)));
@@ -419,6 +448,7 @@ impl ExcelToStyledHtmlOperation {
                         html.push_str("<table>");
                         let mut is_first_row = true;
                         for row in range.rows() {
+                            max_cols = max_cols.max(row.len());
                             html.push_str("<tr>");
                             for cell in row {
                                 let cell_tag = if is_first_row { "th" } else { "td" };
@@ -456,7 +486,20 @@ impl ExcelToStyledHtmlOperation {
         }
         html.push_str("</body></html>");
 
-        let html_op = HtmlToPdfOperation::new(html, self.output_path.clone(), self.options.clone());
+        let mut options = self.options.clone();
+        let is_auto_or_none = match &options.orientation {
+            None => true,
+            Some(o) => {
+                let trimmed = o.trim().to_lowercase();
+                trimmed.is_empty() || trimmed == "auto"
+            }
+        };
+
+        if max_cols > 5 && is_auto_or_none {
+            options.orientation = Some("landscape".to_string());
+        }
+
+        let html_op = HtmlToPdfOperation::new(html, self.output_path.clone(), options);
         html_op.render()
     }
 }
@@ -2078,6 +2121,34 @@ mod tests {
     }
 
     #[test]
+    fn test_css_orientation_resolution() {
+        let css_landscape = resolve_css_with_options(
+            Some("github"),
+            None,
+            Some("A4"),
+            Some("landscape"),
+        );
+        assert!(css_landscape.contains("@page { size: A4 landscape; }"));
+
+        let css_portrait = resolve_css_with_options(
+            Some("github"),
+            None,
+            Some("Letter"),
+            Some("portrait"),
+        );
+        assert!(css_portrait.contains("@page { size: Letter portrait; }"));
+
+        let css_none = resolve_css_with_options(
+            Some("github"),
+            None,
+            Some("A4"),
+            None,
+        );
+        assert!(!css_none.contains("@page { size: A4 landscape; }"));
+        assert!(!css_none.contains("@page { size: A4 portrait; }"));
+    }
+
+    #[test]
     fn test_inject_css_into_html() {
         let html = "<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>";
         let css = "body { color: red; }";
@@ -2279,6 +2350,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let op = ExcelToStyledHtmlOperation::new(csv_path.clone(), out_path.clone(), options);
@@ -2291,6 +2363,28 @@ mod tests {
     }
 
     #[test]
+    fn test_excel_to_html_csv_auto_landscape() {
+        let dir = tempfile::tempdir().unwrap();
+        let csv_path = dir.path().join("wide_test.csv");
+        let out_path = dir.path().join("wide_out.pdf");
+        // 6 columns (> 5)
+        std::fs::write(&csv_path, "C1,C2,C3,C4,C5,C6\n1,2,3,4,5,6").unwrap();
+
+        let options = HtmlToPdfOptions {
+            preset: None,
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+            orientation: None,
+        };
+
+        let op = ExcelToStyledHtmlOperation::new(csv_path.clone(), out_path.clone(), options);
+        assert!(op.render().is_ok());
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
     fn test_html_to_pdf_with_base64_image() {
         let dir = tempfile::tempdir().unwrap();
         let out_path = dir.path().join("out_html_img.pdf");
@@ -2299,6 +2393,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let html = r#"
@@ -2330,6 +2425,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
         let op = MarkdownToPdfOperation::new(md, out_path.clone(), options);
         let res = op.render();
@@ -2349,6 +2445,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let html = r#"
@@ -2380,6 +2477,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let html =
@@ -2407,6 +2505,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
         let op = MarkdownToPdfOperation::new(
             dir.path().join("in.md").to_string_lossy().to_string(),

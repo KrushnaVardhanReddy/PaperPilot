@@ -34,6 +34,7 @@ export interface OperationContext {
     pageNumberFormat: string;
     pageNumberStart: number;
     convertPreset: string;
+    convertOrientation?: string;
     scaleTargetSize?: string;
     scaleFactor?: number;
     reorderList: string;
@@ -160,7 +161,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         docName, docPath, getOutputPath, customOutputPath,
         splitPoints, deletePages, extractPages, rotateAngle, watermarkText, watermarkOrientation, watermarkOpacity, watermarkColor,
         password, batesPrefix, batesStart, batesPadding, ocrOutputFormat, cropBox,
-        convertPreset, reorderList, signCertPath, headerText, footerText, metadataTitle, compressQuality,
+        convertPreset, convertOrientation, reorderList, signCertPath, headerText, footerText, metadataTitle, compressQuality,
         blankSensitivity, searchQuery
     } = context;
 
@@ -240,7 +241,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = {
                 input: inputPath,
                 output: outputPath,
-                preset: convertPreset
+                preset: convertPreset,
+                orientation: convertOrientation
             };
             break;
         }
@@ -276,7 +278,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = {
                 input: inputPath,
                 output: outputPath,
-                preset: convertPreset
+                preset: convertPreset,
+                orientation: convertOrientation
             };
             break;
         }
@@ -1072,7 +1075,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = {
                 input: inputPath,
                 output: outputPath,
-                preset: convertPreset
+                preset: convertPreset,
+                orientation: convertOrientation
             };
             break;
         }

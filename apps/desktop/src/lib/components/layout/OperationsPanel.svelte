@@ -132,6 +132,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let pageNumberPos = $state('bottom-right');
   let pageNumberFormat = $state('Page 1 of N');
   let convertPreset = $state('academic');
+  let convertOrientation = $state('portrait');
   let scaleTargetSize = $state('A4');
   let scaleFactor = $state(1.0);
   let autoRotateOrientation = $state('portrait');
@@ -737,6 +738,8 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             pageNumberStart: 1,
             pageNumberFormat,
             convertPreset,
+          convertOrientation,
+            convertOrientation,
             scaleTargetSize,
             scaleFactor,
             reorderList,
@@ -983,6 +986,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           pageNumberFormat,
 
           convertPreset,
+          convertOrientation,
           scaleTargetSize,
           scaleFactor,
           reorderList,
@@ -1645,6 +1649,28 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <option value="minimalist">Minimalist</option>
           </select>
           <span class="field-hint">Applies typography, margins, and header styles tailored to the selected publication preset.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="convertOrientation" class="section-desc">Page Orientation:</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {convertOrientation === 'portrait' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => convertOrientation = 'portrait'}
+            >
+              📄 Portrait
+            </button>
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {convertOrientation === 'landscape' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => convertOrientation = 'landscape'}
+            >
+              🖼️ Landscape
+            </button>
+          </div>
+          <span class="field-hint">Select document orientation for rendered PDF pages.</span>
         </div>
       {:else if activeTool.id === 'json_to_pdf'}
         <div class="operation-config">
@@ -2553,6 +2579,28 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Parses tabular matrix cells, computes row bandings, and renders publication-ready PDF tables.
           </p>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="convertOrientationExcel" class="section-desc">Page Orientation:</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {convertOrientation === 'portrait' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => convertOrientation = 'portrait'}
+            >
+              📄 Portrait
+            </button>
+            <button
+              type="button"
+              class="form-button"
+              style="flex: 1; padding: 6px 10px; font-size: 13px; {convertOrientation === 'landscape' ? 'background: #2563eb; color: white;' : 'background: #27272a; color: #a1a1aa;'}"
+              onclick={() => convertOrientation = 'landscape'}
+            >
+              🖼️ Landscape
+            </button>
+          </div>
+          <span class="field-hint">Select orientation. Tables with &gt;5 columns automatically default to Landscape if not overridden.</span>
         </div>
       {:else if activeTool.id === 'office_to_markdown'}
         <div class="operation-config">
