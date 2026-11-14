@@ -104,6 +104,8 @@ export function rankToolsByContext(
       if ([
         'img_to_pdf',
         'pdf_images_to_pdf',
+        'pdf_comic_archive',
+        'comic_archive',
         'ocr',
         'pdf_ocr',
         'extract_text',
