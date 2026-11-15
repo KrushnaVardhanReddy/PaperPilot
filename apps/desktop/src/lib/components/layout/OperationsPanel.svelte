@@ -1290,6 +1290,12 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       order: reorderList || '',
       rect: cropBox || '0,0,500,500',
       crop_box: cropBox || '0,0,500,500',
+      nup: nupPages || 2,
+      pages_per_sheet: nupPages || 2,
+      ordering: nupOrdering || 'horizontal',
+      margin: nupMargin ?? 18,
+      spacing: nupSpacing ?? 10,
+      draw_borders: nupDrawBorders ?? false,
       input_a: compareDocA || appState.documentPaths[0] || docPath,
       input_b: compareDocB || appState.documentPaths[1] || docPath
     };
@@ -1862,7 +1868,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           {/if}
           <span class="field-hint" style="margin-top: 8px; display: block;">Output: <code>.json</code> — matched pages and occurrence counts.</span>
         </div>
-      {:else if activeTool.id === 'pdf_nup'}
+      {:else if activeTool.id === 'pdf_nup' || activeTool.id === 'nup'}
         <div class="operation-config">
           <label class="section-desc">Pages Per Sheet:</label>
           <div class="segmented" style="display: flex; gap: 8px; margin-bottom: 12px;">
@@ -1870,7 +1876,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               <button
                 type="button"
                 class="btn-segment"
-                style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {nupPages === n ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {nupPages === n ? '#fff' : 'var(--text-primary)'}; font-size: 13px;"
+                style="flex: 1; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: {nupPages === n ? '600' : '400'}; border: 1.5px solid {nupPages === n ? 'var(--accent-primary, #3b82f6)' : 'var(--border-color, #3f3f46)'}; background: {nupPages === n ? 'var(--accent-primary, #3b82f6)' : 'var(--bg-surface, #1e2029)'}; color: {nupPages === n ? '#ffffff' : 'var(--text-primary, #f4f4f5)'}; font-size: 13px; transition: all 0.15s ease;"
                 onclick={() => nupPages = n}
               >
                 {n}-Up

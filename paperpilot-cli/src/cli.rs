@@ -513,12 +513,22 @@ pub enum Commands {
         output: PathBuf,
     },
     /// N-Up Page Imposition: Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.
-    #[command(name = "pdf-nup")]
+    #[command(name = "pdf-nup", alias = "nup", alias = "pdf_nup")]
     PdfNup {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, default_value_t = 2)]
+        nup: u32,
+        #[arg(long, default_value = "horizontal")]
+        ordering: String,
+        #[arg(long, default_value_t = 18.0)]
+        margin: f32,
+        #[arg(long, default_value_t = 10.0)]
+        spacing: f32,
+        #[arg(long, default_value_t = false)]
+        draw_borders: bool,
     },
     /// Scale Page Dimensions: Scale page dimensions between standard formats or percentages.
     #[command(name = "pdf-scale-pages", alias = "scale-pages", alias = "scale_pages", alias = "pdf_scale_pages")]

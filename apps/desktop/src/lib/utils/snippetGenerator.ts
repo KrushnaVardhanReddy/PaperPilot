@@ -32,6 +32,19 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
   if (outputFile) jsonArgs.output = output;
 
   switch (toolId) {
+    case 'pdf_nup':
+    case 'nup': {
+      const nup = params.nup || params.pages_per_sheet || 2;
+      const ordering = params.ordering || 'horizontal';
+      cli = `paperpilot nup --input "${input}" --nup ${nup} --ordering ${ordering} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/nup -F "file=@${input}" -F "nup=${nup}" -F "ordering=${ordering}"`;
+
+      const mcpArgs: any = { input, nup, ordering, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_nup", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Impose "${input}" with ${nup}-up page grid and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_nup', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_crop':
     case 'crop': {
       const rect = params.rect || params.crop_box || '10,10,500,500';

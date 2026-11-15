@@ -407,7 +407,23 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfBooklet { input, output } => {
             pdf_booklet::handle_pdf_booklet_command(input, output)
         }
-        Commands::PdfNup { input, output } => pdf_nup::handle_pdf_nup_command(input, output),
+        Commands::PdfNup {
+            input,
+            output,
+            nup,
+            ordering,
+            margin,
+            spacing,
+            draw_borders,
+        } => pdf_nup::handle_pdf_nup_command(
+            input,
+            output,
+            *nup,
+            ordering.clone(),
+            *margin,
+            *spacing,
+            *draw_borders,
+        ),
         Commands::PdfScalePages {
             input,
             output,

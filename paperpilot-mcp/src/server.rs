@@ -6822,9 +6822,41 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
+                let nup = args.get("nup")
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as u32)
+                    .unwrap_or(2);
+
+                let ordering = args.get("ordering")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("horizontal")
+                    .to_string();
+
+                let margin_pt = args.get("margin_pt")
+                    .or_else(|| args.get("margin"))
+                    .and_then(|v| v.as_f64())
+                    .map(|v| v as f32)
+                    .unwrap_or(18.0);
+
+                let spacing_pt = args.get("spacing_pt")
+                    .or_else(|| args.get("spacing"))
+                    .and_then(|v| v.as_f64())
+                    .map(|v| v as f32)
+                    .unwrap_or(10.0);
+
+                let draw_borders = args.get("draw_borders")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_nup::PdfNupOptions::default();
+                let options = paperpilot_pdf::operations::pdf_nup::PdfNupOptions {
+                    nup,
+                    ordering,
+                    margin_pt,
+                    spacing_pt,
+                    draw_borders,
+                };
                 let result =
                     paperpilot_pdf::operations::pdf_nup::pdf_nup_bytes(&input_bytes, &options)
                         .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
