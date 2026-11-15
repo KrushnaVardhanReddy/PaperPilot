@@ -7,6 +7,7 @@
   import PdfAnnotationLayer from './PdfAnnotationLayer.svelte';
   import PdfSearchBar from './PdfSearchBar.svelte';
   import SignatureStampLayer, { type PlacedStamp, type ArmedSignature } from './signature/SignatureStampLayer.svelte';
+  import PdfFormLayer from './PdfFormLayer.svelte';
   import type { Annotation } from '$lib/api/pdf';
 
   if (typeof window !== 'undefined') {
@@ -27,6 +28,8 @@
     annotations = $bindable([] as Annotation[]),
     armedSignature = $bindable(null as ArmedSignature | null),
     placedStamps = $bindable([] as PlacedStamp[]),
+    formValues = $bindable({}),
+    hasFormFields = $bindable(false),
     onStampPlaced = (stamp: PlacedStamp) => {}
   } = $props<{
     fileUrl?: string;
@@ -38,6 +41,8 @@
     annotations?: Annotation[];
     armedSignature?: ArmedSignature | null;
     placedStamps?: PlacedStamp[];
+    formValues?: Record<string, any>;
+    hasFormFields?: boolean;
     onStampPlaced?: (stamp: PlacedStamp) => void;
   }>();
 
@@ -162,6 +167,7 @@
         transform: transform ? transform : undefined,
         viewport,
         canvas, // added required property
+        annotationMode: pdfjsLib.AnnotationMode?.DISABLE ?? 0,
       };
 
       await page.render(renderContext as any).promise;
@@ -331,6 +337,7 @@
         bind:placedStamps
         {onStampPlaced}
       />
+      <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
       <PdfAnnotationLayer {scale} {pageNum} bind:annotations {activeTool} />
     </div>
   </div>

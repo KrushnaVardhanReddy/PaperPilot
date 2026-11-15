@@ -17,7 +17,6 @@
   import GlobalCommandBar from '$lib/components/GlobalCommandBar.svelte';
   import PipelineView from '$lib/components/pipeline/PipelineView.svelte';
   import type { Annotation } from '$lib/api/pdf';
-  import PdfFormLayer from '$lib/components/PdfFormLayer.svelte';
   import ApiDocsView from '$lib/components/layout/ApiDocsView.svelte';
   import PdfVisualDiff from '$lib/components/PdfVisualDiff.svelte';
   import SpreadsheetViewer from '$lib/components/workspace/SpreadsheetViewer.svelte';
@@ -640,11 +639,12 @@
                     bind:annotations
                     bind:armedSignature
                     bind:placedStamps
+                    bind:formValues
+                    bind:hasFormFields
                     onStampPlaced={(stamp: PlacedStamp) => {
                       toastState.info(`Signature placed on Page ${stamp.page}. Click 'Apply to Document' to bake it.`);
                     }}
                   />
-                  <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
                 </div>
               </div>
 
