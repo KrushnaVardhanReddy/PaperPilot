@@ -553,7 +553,15 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_stitch_canvas': customOutputPath = getOutputPath(`${base}_stitched.pdf`);   break;
       case 'bookmarks':
       case 'pdf_bookmarks':     customOutputPath = getOutputPath(`${base}_bookmarks.json`);  break;
-      case 'pdf_attachments':   customOutputPath = attachmentAction === 'add' ? getOutputPath(`${base}_with_attachment.pdf`) : getOutputPath(`${base}_attachments.json`); break;
+      case 'pdf_attachments':
+        if (attachmentAction === 'add') {
+          customOutputPath = getOutputPath(`${base}_with_attachment.pdf`);
+        } else if (attachmentAction === 'extract') {
+          customOutputPath = getOutputPath(attachmentFileName ? attachmentFileName : `${base}_attachments.zip`);
+        } else {
+          customOutputPath = getOutputPath(`${base}_attachments.json`);
+        }
+        break;
       case 'pdf_auto_rotate':   customOutputPath = getOutputPath(`${base}_autorotated.pdf`); break;
       case 'repair':
       case 'pdf_repair':        customOutputPath = getOutputPath(`${base}_repaired.pdf`);    break;
@@ -2079,15 +2087,15 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         <div class="operation-config">
           <label class="section-desc">Action:</label>
           <div class="segmented" style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'list' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'list' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'list'}>📋 List</button>
-            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'add' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'add' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'add'}>➕ Add</button>
-            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'extract' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'extract' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'extract'}>📥 Extract</button>
-            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'remove' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'remove' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => attachmentAction = 'remove'}>❌ Remove</button>
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'list' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'list' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => { attachmentAction = 'list'; updateDefaultOutputPath(); }}>📋 List</button>
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'add' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'add' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => { attachmentAction = 'add'; updateDefaultOutputPath(); }}>➕ Add</button>
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'extract' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'extract' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => { attachmentAction = 'extract'; updateDefaultOutputPath(); }}>📥 Extract</button>
+            <button type="button" class="btn-segment" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: {attachmentAction === 'remove' ? 'var(--accent-color)' : 'var(--bg-surface)'}; color: {attachmentAction === 'remove' ? '#fff' : 'var(--text-primary)'}; font-size: 13px;" onclick={() => { attachmentAction = 'remove'; updateDefaultOutputPath(); }}>❌ Remove</button>
           </div>
 
           {#if attachmentAction !== 'list'}
-            <label for="attachmentFileName" class="section-desc">File Name in Portfolio:</label>
-            <input id="attachmentFileName" type="text" class="form-input" bind:value={attachmentFileName} placeholder="e.g. secret.txt" style="margin-bottom: 12px;" />
+            <label for="attachmentFileName" class="section-desc">{attachmentAction === 'extract' ? 'File Name in Portfolio (Leave empty to extract all):' : 'File Name in Portfolio:'}</label>
+            <input id="attachmentFileName" type="text" class="form-input" bind:value={attachmentFileName} oninput={() => updateDefaultOutputPath()} placeholder={attachmentAction === 'extract' ? 'e.g. security_notes.txt or leave blank for .zip' : 'e.g. security_notes.txt'} style="margin-bottom: 12px;" />
           {/if}
 
           {#if attachmentAction === 'add'}
