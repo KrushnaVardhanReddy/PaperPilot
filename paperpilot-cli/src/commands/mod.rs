@@ -266,8 +266,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::HeaderFooter {
             input,
             text,
+            position,
             output,
-        } => group_b::handle_header_footer(&resolve_input_path(input)?, text, output),
+        } => group_b::handle_header_footer(&resolve_input_path(input)?, text, position, output),
         Commands::Bates {
             input,
             prefix,

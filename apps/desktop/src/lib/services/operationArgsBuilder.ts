@@ -599,6 +599,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             args = {
                 input: docPath,
                 text: headerText || footerText || 'Header Notice',
+                position: headerText && !footerText ? 'header' : (!headerText && footerText ? 'footer' : 'header'),
                 header_left: headerText,
                 footer_center: footerText,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_header.pdf`)

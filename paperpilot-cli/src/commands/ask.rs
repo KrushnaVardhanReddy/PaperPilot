@@ -311,7 +311,7 @@ pub fn handle_ask(
                 ));
             }
             let out = output_path.unwrap_or_else(|| std::path::PathBuf::from("hf_out.pdf"));
-            crate::commands::group_b::handle_header_footer(&inputs_paths[0], "Header", &out)
+            crate::commands::group_b::handle_header_footer(&inputs_paths[0], "Header", "header", &out)
         }
         Intent::Bates => {
             if inputs_paths.is_empty() {

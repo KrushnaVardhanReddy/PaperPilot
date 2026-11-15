@@ -7714,39 +7714,56 @@ impl PaperPilotMcpServer {
             "pdf_header_footer" | "header_footer" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let text = args
-                    .get("text")
+
+                let header_text = args
+                    .get("header_left")
+                    .or_else(|| args.get("header"))
                     .and_then(|v| v.as_str())
-                    .unwrap_or_else(|| {
-                        args.get("header_left")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or_else(|| {
-                                args.get("footer_center")
-                                    .and_then(|v| v.as_str())
-                                    .unwrap_or("Header")
-                            })
-                    })
-                    .to_string();
-                let position = args
-                    .get("position")
+                    .filter(|s| !s.trim().is_empty());
+
+                let footer_text = args
+                    .get("footer_center")
+                    .or_else(|| args.get("footer"))
                     .and_then(|v| v.as_str())
-                    .unwrap_or_else(|| {
-                        if args.get("footer_center").is_some() {
-                            "bottom-center"
-                        } else {
-                            "top-left"
-                        }
-                    })
-                    .to_string();
+                    .filter(|s| !s.trim().is_empty());
 
                 ensure_parent_dir(&output)?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
-                let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(
-                    text, position,
-                );
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+
+                if header_text.is_some() || footer_text.is_some() {
+                    if let Some(h) = header_text {
+                        let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(
+                            h.to_string(),
+                            "top-left".to_string(),
+                        );
+                        op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                    }
+                    if let Some(f) = footer_text {
+                        let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(
+                            f.to_string(),
+                            "bottom-center".to_string(),
+                        );
+                        op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                    }
+                } else {
+                    let text = args
+                        .get("text")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("Header")
+                        .to_string();
+                    let position = args
+                        .get("position")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("header")
+                        .to_string();
+                    let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(
+                        text, position,
+                    );
+                    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
+                }
+
                 doc.save(&std::path::PathBuf::from(&output))
                     .map_err(crate::error::to_mcp_error)?;
 

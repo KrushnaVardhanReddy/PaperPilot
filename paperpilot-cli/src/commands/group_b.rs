@@ -150,12 +150,13 @@ pub fn handle_pdf_a(input: &std::path::Path, output: &std::path::Path) -> Operat
 pub fn handle_header_footer(
     input: &std::path::Path,
     text: &str,
+    position: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(
         text.to_string(),
-        "bottom".to_string(),
+        position.to_string(),
     );
     op.execute(&mut doc)?;
     doc.save(output)

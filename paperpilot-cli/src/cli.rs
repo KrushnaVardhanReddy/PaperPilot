@@ -321,6 +321,8 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         text: String,
+        #[arg(long, default_value = "header")]
+        position: String,
         #[arg(long)]
         output: PathBuf,
     },
