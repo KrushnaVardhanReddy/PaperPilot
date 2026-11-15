@@ -7369,21 +7369,38 @@ impl PaperPilotMcpServer {
                     .and_then(|v| v.as_str())
                     .unwrap_or("a4")
                     .to_string();
+                let (parsed_cols, parsed_rows) = if let Some(grid_str) = args.get("grid").and_then(|v| v.as_str()) {
+                    let parts: Vec<&str> = grid_str.split('x').collect();
+                    if parts.len() == 2 {
+                        let c = parts[0].parse::<u32>().ok();
+                        let r = parts[1].parse::<u32>().ok();
+                        (c, r)
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
+                };
+
                 let grid_cols = args
                     .get("grid_cols")
                     .and_then(|v| v.as_u64())
-                    .map(|v| v as u32);
+                    .map(|v| v as u32)
+                    .or(parsed_cols);
                 let grid_rows = args
                     .get("grid_rows")
                     .and_then(|v| v.as_u64())
-                    .map(|v| v as u32);
+                    .map(|v| v as u32)
+                    .or(parsed_rows);
                 let overlap_pt = args
                     .get("overlap_pt")
+                    .or_else(|| args.get("overlap"))
                     .and_then(|v| v.as_f64())
                     .unwrap_or(14.17) as f32;
                 let scale = args.get("scale").and_then(|v| v.as_f64()).unwrap_or(1.0) as f32;
                 let include_guides = args
                     .get("include_guides")
+                    .or_else(|| args.get("guides"))
                     .and_then(|v| v.as_bool())
                     .unwrap_or(true);
 

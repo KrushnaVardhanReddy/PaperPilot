@@ -1296,6 +1296,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       margin: nupMargin ?? 18,
       spacing: nupSpacing ?? 10,
       draw_borders: nupDrawBorders ?? false,
+      grid: posterGrid || '2x2',
+      target_sheet: posterTargetSheet || 'a4',
+      scale: posterScale ?? 1.0,
+      overlap: posterOverlap ?? 14.17,
+      guides: posterGuides ?? true,
       input_a: compareDocA || appState.documentPaths[0] || docPath,
       input_b: compareDocB || appState.documentPaths[1] || docPath
     };

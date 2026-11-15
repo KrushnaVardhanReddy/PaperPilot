@@ -32,6 +32,20 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
   if (outputFile) jsonArgs.output = output;
 
   switch (toolId) {
+    case 'pdf_posterize':
+    case 'posterize': {
+      const grid = params.grid || '2x2';
+      const sheet = params.target_sheet || 'a4';
+      const scale = params.scale || 1.0;
+      cli = `paperpilot pdf-posterize --input "${input}" --grid "${grid}" --target-sheet "${sheet}" --scale ${scale} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/posterize -F "file=@${input}" -F "grid=${grid}" -F "target_sheet=${sheet}"`;
+
+      const mcpArgs: any = { input, grid, target_sheet: sheet, scale, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_posterize", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Posterize "${input}" into a ${grid} grid of ${sheet} sheets and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_posterize', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_nup':
     case 'nup': {
       const nup = params.nup || params.pages_per_sheet || 2;
