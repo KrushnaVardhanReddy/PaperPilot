@@ -413,7 +413,7 @@ pub fn handle_ask(
                     "FormRead requires an input file".into(),
                 ));
             }
-            crate::commands::group_e::handle_form_read(&inputs_paths[0])
+            crate::commands::group_e::handle_form_read(&inputs_paths[0], output_path.as_deref())
         }
         Intent::FormFill => {
             if inputs_paths.is_empty() {

@@ -1874,7 +1874,7 @@ impl PaperPilotMcpServer {
         // Tool: pdf_read_form
         let mut tool_read_form = rmcp::model::Tool::default();
         tool_read_form.name = "pdf_read_form".into();
-        tool_read_form.description = Some("Extract AcroForm fields and values from a PDF. [Input: PDF (.pdf) | Output: JSON object]".into());
+        tool_read_form.description = Some("Extract AcroForm fields and values from a PDF. [Input: PDF (.pdf) | Output: JSON file (.json) or object]".into());
         let mut schema_rf = serde_json::Map::new();
         schema_rf.insert(
             "type".to_string(),
@@ -1891,6 +1891,18 @@ impl PaperPilotMcpServer {
             serde_json::Value::String("The input PDF file path.".to_string()),
         );
         props_rf.insert("input".to_string(), serde_json::Value::Object(input_rf));
+
+        let mut output_rf = serde_json::Map::new();
+        output_rf.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        output_rf.insert(
+            "description".to_string(),
+            serde_json::Value::String("The optional output JSON file path.".to_string()),
+        );
+        props_rf.insert("output".to_string(), serde_json::Value::Object(output_rf));
+
         schema_rf.insert(
             "properties".to_string(),
             serde_json::Value::Object(props_rf),
@@ -6018,6 +6030,7 @@ impl PaperPilotMcpServer {
 
             "pdf_read_form" | "read_form" => {
                 let input = get_string("input")?;
+                let output = get_string("output").ok();
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
@@ -6026,18 +6039,28 @@ impl PaperPilotMcpServer {
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
                 let map = op.extracted_fields.lock().unwrap();
-                let message = if let Some(ref fields) = *map {
-                    serde_json::to_string(fields).unwrap_or_else(|_| "{}".to_string())
+                let json_data = if let Some(ref fields) = *map {
+                    serde_json::to_value(fields).unwrap_or_else(|_| serde_json::json!({}))
                 } else {
-                    "{}".to_string()
+                    serde_json::json!({})
                 };
+                let message = serde_json::to_string_pretty(&json_data).unwrap_or_else(|_| "{}".to_string());
+
+                if let Some(ref out_path) = output {
+                    ensure_parent_dir(out_path)?;
+                    std::fs::write(out_path, &message).map_err(|e| {
+                        ErrorData::invalid_params(
+                            format!("Failed to write form fields to '{}': {}", out_path, e),
+                            None,
+                        )
+                    })?;
+                }
 
                 Ok(OperationResult {
-                    data: None,
+                    data: Some(json_data),
                     success: true,
-
                     message,
-                    output_path: None,
+                    output_path: output,
                     diff_detected: None,
                 })
             }
@@ -8610,6 +8633,32 @@ mod tests_added {
 
         let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_execute_call_tool_read_form_with_output() {
+        let input_path = get_fixture_path("simple.pdf");
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("form_fields.json");
+
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_read_form".into();
+
+        request.arguments = Some(
+            json!({
+                "input": input_path.to_str().unwrap(),
+                "output": output_path.to_str().unwrap(),
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
+        assert!(result.is_ok());
+        assert!(output_path.exists());
+        let content = std::fs::read_to_string(&output_path).unwrap();
+        assert!(serde_json::from_str::<serde_json::Value>(&content).is_ok());
     }
 
     #[test]

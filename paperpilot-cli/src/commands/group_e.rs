@@ -9,18 +9,28 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-pub fn handle_form_read(input: &Path) -> OperationResult<()> {
+pub fn handle_form_read(input: &Path, output: Option<&Path>) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = ReadFormOperation::new();
     op.execute(&mut doc)?;
 
     let map = op.extracted_fields.lock().unwrap();
-    if let Some(ref fields) = *map {
-        let json = serde_json::to_string_pretty(fields)
-            .map_err(|e| PdfError::InvalidInput(e.to_string()))?;
-        println!("{}", json);
+    let json = if let Some(ref fields) = *map {
+        serde_json::to_string_pretty(fields)
+            .map_err(|e| PdfError::InvalidInput(e.to_string()))?
     } else {
-        println!("{{}}");
+        "{}".to_string()
+    };
+
+    if let Some(out_path) = output {
+        if let Some(parent) = out_path.parent() {
+            if !parent.as_os_str().is_empty() {
+                fs::create_dir_all(parent).map_err(PdfError::IoError)?;
+            }
+        }
+        fs::write(out_path, &json).map_err(PdfError::IoError)?;
+    } else {
+        println!("{}", json);
     }
 
     Ok(())

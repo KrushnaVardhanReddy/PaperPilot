@@ -1062,6 +1062,8 @@ pub enum FormCommands {
     #[command(name = "read-form", alias = "read", alias = "pdf_read_form", alias = "pdf-read-form")]
     Read {
         input: PathBuf,
+        #[arg(short, long)]
+        output: Option<PathBuf>,
     },
     #[command(name = "fill-form", alias = "fill", alias = "pdf_fill_form", alias = "pdf-fill-form")]
     Fill {

@@ -364,8 +364,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
 
         // Group E
         Commands::Form { command: form_cmd } => match form_cmd {
-            crate::cli::FormCommands::Read { input } => {
-                group_e::handle_form_read(&resolve_input_path(input)?)
+            crate::cli::FormCommands::Read { input, output } => {
+                group_e::handle_form_read(&resolve_input_path(input)?, output.as_deref())
             }
             crate::cli::FormCommands::Fill {
                 input,
