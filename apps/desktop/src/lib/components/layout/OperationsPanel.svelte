@@ -2450,7 +2450,30 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       {:else if activeTool.id === 'fill_form' || activeTool.id === 'pdf_fill_form'}
         <div class="operation-config">
           <label for="formDataPath" class="section-desc">Form Data JSON Path:</label>
-          <input id="formDataPath" type="text" class="form-input" bind:value={formDataPath} placeholder="e.g. tests/e2e_fixtures/real/form_data.json" />
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input id="formDataPath" type="text" class="form-input" bind:value={formDataPath} placeholder="e.g. tests/e2e_fixtures/real/form_data.json" style="flex: 1;" />
+            <button
+              type="button"
+              class="browse-btn"
+              onclick={async () => {
+                try {
+                  const { open } = await import('@tauri-apps/plugin-dialog');
+                  const selected = await open({
+                    directory: false,
+                    multiple: false,
+                    filters: [{ name: 'JSON Document', extensions: ['json'] }],
+                    title: 'Select Form Data JSON'
+                  });
+                  if (selected && typeof selected === 'string') {
+                    formDataPath = selected;
+                  }
+                } catch (e) {
+                  console.warn('File dialog error:', e);
+                }
+              }}
+              title="Browse JSON File"
+            >📂 Browse</button>
+          </div>
           <span class="field-hint">JSON mapping field names to values (e.g. &#123;"ApplicantName": "Jane Doe"&#125;).</span>
         </div>
       {:else if activeTool.id === 'create_form_field' || activeTool.id === 'pdf_create_form_field'}

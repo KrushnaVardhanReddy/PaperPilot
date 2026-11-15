@@ -462,6 +462,8 @@
 
     async function loadFile() {
       const activeIndex = appState.selectedDocumentIndex;
+      formValues = {};
+      placedStamps = [];
       if (activeIndex !== null) {
         const file = appState.documents[activeIndex];
         if (file) {

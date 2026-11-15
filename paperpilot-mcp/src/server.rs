@@ -6075,9 +6075,24 @@ impl PaperPilotMcpServer {
                     .ok_or_else(|| ErrorData::invalid_params("Missing 'values' or 'data'", None))?;
 
                 let values: std::collections::HashMap<String, String> = if let Some(s) = values_value.as_str() {
-                    serde_json::from_str(s).map_err(|e| {
+                    let s_trimmed = s.trim();
+                    let json_str = if s_trimmed.starts_with('{') {
+                        s.to_string()
+                    } else if let Ok(content) = std::fs::read_to_string(s) {
+                        content
+                    } else if let Ok(content) = std::fs::read_to_string(
+                        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                            .parent()
+                            .unwrap_or_else(|| std::path::Path::new("."))
+                            .join(s)
+                    ) {
+                        content
+                    } else {
+                        s.to_string()
+                    };
+                    serde_json::from_str(&json_str).map_err(|e| {
                         ErrorData::invalid_params(
-                            "Invalid 'values' or 'data' string",
+                            format!("Invalid 'values' or 'data' (could not parse as JSON or read file '{}': {})", s, e),
                             Some(serde_json::json!({"error": e.to_string()})),
                         )
                     })?
@@ -8688,6 +8703,37 @@ mod tests_added {
         if output_path.exists() {
             std::fs::remove_file(&output_path).unwrap();
         }
+    }
+
+    #[test]
+    fn test_execute_call_tool_fill_form_with_file_path() {
+        let workspace_root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let input_path = workspace_root.join("ManaulTestingFixtures/pdf_fill_form/Input/sample_form_to_fill.pdf");
+        let data_path = workspace_root.join("ManaulTestingFixtures/pdf_fill_form/Input/form_data.json");
+        let temp_dir = tempfile::tempdir().unwrap();
+        let output_path = temp_dir.path().join("filled_test.pdf");
+
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_fill_form".into();
+
+        request.arguments = Some(
+            json!({
+                "input": input_path.to_str().unwrap(),
+                "output": output_path.to_str().unwrap(),
+                "data": data_path.to_str().unwrap(),
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+
+        let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
+        assert!(result.is_ok(), "Failed: {:?}", result.err());
+        assert!(output_path.exists());
+        assert!(output_path.metadata().unwrap().len() > 0);
     }
 
     #[test]

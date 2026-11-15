@@ -16,12 +16,18 @@
   }>();
 
   let fields: any[] = $state([]);
+  let lastDoc: any = null;
 
   $effect(() => {
     // Explicitly reference pageNum and scale so Svelte tracks reactive changes
     const currentDoc = pdfDoc;
     const currentPage = pageNum;
     const currentScale = scale;
+
+    if (currentDoc !== lastDoc) {
+      lastDoc = currentDoc;
+      formValues = {};
+    }
 
     async function fetchFields() {
       if (!currentDoc) {
@@ -39,7 +45,11 @@
         hasFormFields = widgetAnnotations.length > 0;
         fields = widgetAnnotations.map((a: any) => {
           if (formValues[a.fieldName] === undefined && a.fieldValue !== undefined) {
-            formValues[a.fieldName] = a.fieldValue;
+            if (a.fieldType === 'Btn') {
+              formValues[a.fieldName] = a.fieldValue !== 'Off' && a.fieldValue !== '' && a.fieldValue !== false && a.fieldValue !== 0;
+            } else {
+              formValues[a.fieldName] = a.fieldValue;
+            }
           }
 
           const [x1, y1, x2, y2] = a.rect;
