@@ -84,6 +84,7 @@ export interface OperationContext {
     filePath?: string;
     renderPage?: number;
     renderDpi?: number;
+    renderFormat?: string;
     invertMode?: string;
     invertPages?: string;
     compareInputA?: string;
@@ -604,14 +605,18 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'render':
-        case 'pdf_render':
+        case 'pdf_render': {
+            const format = (context.renderFormat || 'png').toLowerCase();
+            const ext = format === 'jpeg' ? 'jpg' : format;
             args = {
                 input: docPath,
                 page: context.renderPage ?? 1,
                 dpi: context.renderDpi ?? 150.0,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rendered.png`)
+                format,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_rendered.${ext}`)
             };
             break;
+        }
         case 'fill_form':
             args = {
                 input: docPath,

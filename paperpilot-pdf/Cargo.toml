@@ -16,7 +16,7 @@ fulgur = "0.40"
 hayro = "0.8.0"
 hayro-syntax = "0.8.0"
 html-escape = "0.2.15"
-image = { version = "0.25.6", features = ["jpeg", "png"] }
+image = { version = "0.25.6", features = ["jpeg", "png", "webp"] }
 log = "0.4.34"
 lopdf = "0.45.0"
 tracing = "0.1.44"

@@ -84,13 +84,30 @@ pub fn handle_search(input: &std::path::Path, query: &str, output: Option<&std::
 }
 
 pub fn handle_render(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+    handle_render_with_options(input, output, 1, 150.0, None)
+}
+
+pub fn handle_render_with_options(
+    input: &std::path::Path,
+    output: &std::path::Path,
+    page: u32,
+    dpi: f32,
+    format: Option<&str>,
+) -> OperationResult<()> {
     if let Some(parent) = output.parent() {
         std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
     }
+    let parsed_format = if let Some(fmt_str) = format {
+        Some(fmt_str.parse::<paperpilot_pdf::operations::render::ImageOutputFormat>().map_err(paperpilot_core::error::PdfError::ParseError)?)
+    } else {
+        None
+    };
+
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::render::RenderOperation {
-        page: Some(1),
-        dpi: 150.0,
+        page: Some(page),
+        dpi,
+        format: parsed_format,
         output_path: Some(output.to_path_buf()),
         rendered_images: std::sync::Mutex::new(Vec::new()),
     };

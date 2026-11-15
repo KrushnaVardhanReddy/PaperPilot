@@ -310,9 +310,17 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         }
         Commands::Render {
             input,
-            page: _,
+            page,
+            dpi,
+            format,
             output,
-        } => group_c::handle_render(&resolve_input_path(input)?, output),
+        } => group_c::handle_render_with_options(
+            &resolve_input_path(input)?,
+            output,
+            *page,
+            *dpi,
+            format.as_deref(),
+        ),
         Commands::Compare { input, input_b, output } => {
             group_c::handle_compare(
                 &resolve_input_path(input)?,

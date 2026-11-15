@@ -231,6 +231,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   // Conversions & Packaging parameter states (Tools 61-65)
   let conversionDpi = $state(150);
   let imageFormat = $state('png');
+  let renderFormat = $state('png');
+  let renderPage = $state(1);
+  let renderDpi = $state(150);
   let tableFormat = $state('json');
   let cbzArchiveName = $state('');
   let pdfaConformance = $state('PDF/A-1b');
@@ -568,7 +571,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'invert_colors':
       case 'pdf_invert_colors': customOutputPath = getOutputPath(`${base}_inverted.pdf`);    break;
       case 'render':
-      case 'pdf_render':        customOutputPath = getOutputPath(`${base}_rendered.png`);    break;
+      case 'pdf_render': {
+        const ext = renderFormat === 'jpeg' ? 'jpg' : renderFormat;
+        customOutputPath = getOutputPath(`${base}_rendered.${ext}`);
+        break;
+      }
       case 'compare':
       case 'pdf_compare':       customOutputPath = getOutputPath(`${base}_diff_report.json`); break;
       case 'extract_text':
@@ -858,6 +865,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             batchCsvPath,
             dpi: conversionDpi,
             imageFormat,
+            renderFormat,
+            renderPage,
+            renderDpi,
             tableFormat,
             cbzArchiveName,
             pdfaConformance,
@@ -1107,6 +1117,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           batchCsvPath,
           dpi: conversionDpi,
           imageFormat,
+          renderFormat,
+          renderPage,
+          renderDpi,
           tableFormat,
           cbzArchiveName,
           pdfaConformance,
@@ -2514,6 +2527,38 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           </select>
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Extracts all embedded raster image XObjects from PDF page resources into individual image files.
+          </p>
+        </div>
+      {:else if activeTool.id === 'render' || activeTool.id === 'pdf_render'}
+        <div class="operation-config">
+          <label for="renderFormat" class="section-desc">Rendered Image Format:</label>
+          <select id="renderFormat" class="form-input" bind:value={renderFormat} onchange={() => {
+            const ext = renderFormat === 'jpeg' ? 'jpg' : renderFormat;
+            customOutputPath = getOutputPath(`${base}_rendered.${ext}`);
+          }}>
+            <option value="png">PNG (Lossless with Alpha Channel)</option>
+            <option value="jpeg">JPEG (Compact Photographic with White Backdrop)</option>
+            <option value="webp">WebP (Modern High-Efficiency Compression)</option>
+          </select>
+
+          <label for="renderPage" class="section-desc" style="margin-top: 12px;">Page Number:</label>
+          <input
+            id="renderPage"
+            type="number"
+            min="1"
+            class="form-input"
+            bind:value={renderPage}
+            placeholder="1"
+          />
+
+          <label for="renderDpi" class="section-desc" style="margin-top: 12px;">Resolution (DPI):</label>
+          <select id="renderDpi" class="form-input" bind:value={renderDpi}>
+            <option value={72}>72 DPI (Screen draft)</option>
+            <option value={150}>150 DPI (Standard crisp)</option>
+            <option value={300}>300 DPI (High-definition print)</option>
+          </select>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Rasters vector typography, strokes, and image layers into high-resolution bitmap frames.
           </p>
         </div>
       {:else if activeTool.id === 'pdf_to_docx'}

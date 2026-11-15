@@ -387,12 +387,17 @@ pub enum Commands {
         #[arg(long)]
         output: Option<PathBuf>,
     },
-    /// Render Page: Render page to image format [Input: .pdf | Output: png images]
+    /// Render Page: Render page to image format [Input: .pdf | Output: png/jpeg/webp images]
+    #[command(name = "render", alias = "pdf-render", alias = "pdf_render")]
     Render {
         #[arg(long)]
         input: PathBuf,
         #[arg(long, default_value = "1")]
         page: u32,
+        #[arg(long, default_value_t = 150.0)]
+        dpi: f32,
+        #[arg(long)]
+        format: Option<String>,
         #[arg(long)]
         output: PathBuf,
     },
