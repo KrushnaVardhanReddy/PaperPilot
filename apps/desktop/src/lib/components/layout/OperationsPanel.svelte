@@ -130,7 +130,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let watcherSettleDelay = $state(500);
   let watcherId = $state('');
   let pageNumberPos = $state('bottom-right');
-  let pageNumberFormat = $state('Page 1 of N');
+  let pageNumberFormat = $state('Page {n} of {total}');
   let convertPreset = $state('academic');
   let convertOrientation = $state('portrait');
   let scaleTargetSize = $state('A4');
