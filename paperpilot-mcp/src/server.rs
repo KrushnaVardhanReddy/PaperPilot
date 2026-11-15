@@ -6621,12 +6621,11 @@ impl PaperPilotMcpServer {
 
                 ensure_parent_dir(&output)?;
 
-                let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
-                    .map_err(crate::error::to_mcp_error)?;
-                let op = paperpilot_pdf::operations::repair::RepairOperation::new();
-                op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-                doc.save(&std::path::PathBuf::from(&output))
-                    .map_err(crate::error::to_mcp_error)?;
+                paperpilot_pdf::operations::repair::RepairOperation::repair_file(
+                    &std::path::PathBuf::from(&input),
+                    &std::path::PathBuf::from(&output),
+                )
+                .map_err(crate::error::to_mcp_error)?;
 
                 Ok(OperationResult {
                     data: None,

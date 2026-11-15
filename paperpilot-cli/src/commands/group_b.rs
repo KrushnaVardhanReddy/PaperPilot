@@ -16,10 +16,7 @@ pub fn handle_compress(
 }
 
 pub fn handle_repair(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::repair::RepairOperation::new();
-    op.execute(&mut doc)?;
-    doc.save(output)
+    paperpilot_pdf::operations::repair::RepairOperation::repair_file(input, output)
 }
 
 pub fn handle_linearize(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
