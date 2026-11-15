@@ -521,12 +521,16 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Scale Page Dimensions: Scale page dimensions between standard formats or percentages.
-    #[command(name = "pdf-scale-pages")]
+    #[command(name = "pdf-scale-pages", alias = "scale-pages", alias = "scale_pages", alias = "pdf_scale_pages")]
     PdfScalePages {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, default_value = "A4")]
+        target_size: Option<String>,
+        #[arg(long, default_value = "1.0")]
+        scale_factor: Option<f32>,
     },
     /// Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations.
     #[command(name = "pdf-remove-signatures", alias = "remove-signatures", alias = "remove_signatures", alias = "pdf_remove_signatures")]

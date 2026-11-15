@@ -408,9 +408,17 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             pdf_booklet::handle_pdf_booklet_command(input, output)
         }
         Commands::PdfNup { input, output } => pdf_nup::handle_pdf_nup_command(input, output),
-        Commands::PdfScalePages { input, output } => {
-            pdf_scale_pages::handle_pdf_scale_pages_command(input, output)
-        }
+        Commands::PdfScalePages {
+            input,
+            output,
+            target_size,
+            scale_factor,
+        } => pdf_scale_pages::handle_pdf_scale_pages_command(
+            input,
+            output,
+            target_size.clone(),
+            *scale_factor,
+        ),
         Commands::PdfRemoveSignatures { input, output } => {
             pdf_remove_signatures::handle_pdf_remove_signatures_command(input, output)
         }

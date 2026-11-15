@@ -6845,10 +6845,24 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
+                let target_size = args.get("target_size")
+                    .or_else(|| args.get("format"))
+                    .or_else(|| args.get("size"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("A4")
+                    .to_string();
+
+                let scale_factor = args.get("scale_factor")
+                    .and_then(|v| v.as_f64())
+                    .map(|v| v as f32)
+                    .unwrap_or(1.0);
+
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options =
+                let mut options =
                     paperpilot_pdf::operations::pdf_scale_pages::PdfScalePagesOptions::default();
+                options.target_size = target_size;
+                options.scale_factor = scale_factor;
                 let result = paperpilot_pdf::operations::pdf_scale_pages::pdf_scale_pages_bytes(
                     &input_bytes,
                     &options,
