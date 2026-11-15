@@ -7925,19 +7925,24 @@ impl PaperPilotMcpServer {
             }
             "pdf_bookmarks" => {
                 let input = get_string("input")?;
+                let output = get_string("output")?;
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
-                let op = paperpilot_pdf::operations::bookmarks::BookmarksOperation::new();
+                let op = paperpilot_pdf::operations::bookmarks::BookmarksOperation::with_output(
+                    std::path::PathBuf::from(&output),
+                );
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
 
+                let count = paperpilot_pdf::operations::bookmarks::BookmarksOperation::extract(&doc.inner).len();
+
                 Ok(OperationResult {
-                    data: Some(
-                        serde_json::to_value(())
-                            .unwrap_or(serde_json::json!({"bookmarks": "outline"})),
-                    ),
+                    data: Some(serde_json::json!({
+                        "bookmarks_extracted": count,
+                        "output": &output
+                    })),
                     success: true,
-                    message: "Bookmarks operation completed successfully.".to_string(),
-                    output_path: None,
+                    message: format!("Successfully extracted {} bookmark(s) to JSON.", count),
+                    output_path: Some(output),
                     diff_detected: None,
                 })
             }

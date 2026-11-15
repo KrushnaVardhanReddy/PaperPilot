@@ -164,6 +164,8 @@
 
   function formatBookmarkColor(color?: Uint8ClampedArray): string | undefined {
     if (!color || color.length < 3) return undefined;
+    // Disregard default black (or near-black) RGB values from PDF metadata so theme colors apply properly in dark mode
+    if (color[0] === 0 && color[1] === 0 && color[2] === 0) return undefined;
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
   }
 </script>
@@ -596,6 +598,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     flex: 1;
+    color: inherit;
   }
 
   .node-title.bold {
