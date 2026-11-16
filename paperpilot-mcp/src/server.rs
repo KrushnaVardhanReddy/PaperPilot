@@ -1272,6 +1272,20 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_query_ws),
         );
 
+        let mut prop_formats_ws = serde_json::Map::new();
+        prop_formats_ws.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_formats_ws.insert(
+            "description".to_string(),
+            serde_json::Value::String("Comma-separated list of formats (pdf,txt,md,docx,xlsx,csv,json) or 'all'".to_string()),
+        );
+        prop_ws.insert(
+            "formats".to_string(),
+            serde_json::Value::Object(prop_formats_ws),
+        );
+
         schema_ws.insert("properties".to_string(), serde_json::Value::Object(prop_ws));
         let req_ws = vec![serde_json::Value::String("query".to_string())];
         schema_ws.insert("required".to_string(), serde_json::Value::Array(req_ws));
@@ -5760,12 +5774,133 @@ impl PaperPilotMcpServer {
             }
 
             "semantic_search" => {
+                use paperpilot_core::document_source::DocumentSource;
+                use paperpilot_pdf::operations::pdf_chunk::{ChunkOptions, PdfChunkOperation};
+
                 let query = get_string("query").or_else(|_| get_string("input"))?;
+                let target_opt = args.get("input").or_else(|| args.get("dir")).and_then(|v| v.as_str()).map(|s| s.to_string());
+                let limit = args.get("limit").and_then(|v| v.as_u64()).map(|n| n as usize).unwrap_or(5);
                 let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+                let target = target_opt.unwrap_or_else(|| ".".to_string());
+                let target_path = std::path::PathBuf::from(&target);
+
+                let mut pdf_files: Vec<std::path::PathBuf> = Vec::new();
+                if target_path.is_dir() {
+                    fn collect_pdfs(dir: &std::path::Path, pdfs: &mut Vec<std::path::PathBuf>) {
+                        if let Ok(entries) = std::fs::read_dir(dir) {
+                            for entry in entries.flatten() {
+                                let p = entry.path();
+                                if p.is_dir() {
+                                    collect_pdfs(&p, pdfs);
+                                } else if p.is_file() && p.extension().and_then(|e| e.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                                    pdfs.push(p);
+                                }
+                            }
+                        }
+                    }
+                    collect_pdfs(&target_path, &mut pdf_files);
+                } else if target_path.is_file() {
+                    pdf_files.push(target_path.clone());
+                }
+
+                fn tokenize(s: &str) -> Vec<String> {
+                    s.to_ascii_lowercase()
+                        .split(|c: char| !c.is_alphanumeric())
+                        .filter(|w| !w.is_empty() && w.len() > 1)
+                        .map(|w| w.to_string())
+                        .collect()
+                }
+
+                let q_tokens = tokenize(&query);
+
+                struct ScoredChunk {
+                    chunk_id: String,
+                    page: u32,
+                    score: f64,
+                    heading: String,
+                    content: String,
+                }
+
+                let mut all_scored_chunks: Vec<ScoredChunk> = Vec::new();
+
+                for pdf_path in &pdf_files {
+                    let file_name = pdf_path.file_name().and_then(|n| n.to_str()).unwrap_or("doc.pdf");
+                    if let Ok(source) = DocumentSource::open(pdf_path, None) {
+                        let chunk_opts = ChunkOptions {
+                            target_tokens: 300,
+                            overlap_tokens: 40,
+                            strip_boilerplate: true,
+                            break_on_headings: true,
+                        };
+                        if let Ok(chunk_res) = PdfChunkOperation::chunk_source(&source, chunk_opts) {
+                            for chunk in chunk_res.chunks {
+                                let heading_str = chunk.headings_context.join(" > ");
+                                let chunk_tokens = tokenize(&chunk.text);
+                                let heading_tokens = tokenize(&heading_str);
+
+                                let mut token_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+                                for t in &chunk_tokens {
+                                    *token_counts.entry(t.clone()).or_insert(0) += 1;
+                                }
+                                for t in &heading_tokens {
+                                    *token_counts.entry(t.clone()).or_insert(0) += 2;
+                                }
+
+                                let mut match_score = 0.0;
+                                if !q_tokens.is_empty() {
+                                    let mut matched_q_tokens = 0;
+                                    for qt in &q_tokens {
+                                        if let Some(count) = token_counts.get(qt) {
+                                            matched_q_tokens += 1;
+                                            match_score += 1.0 + (*count as f64 * 0.2);
+                                        }
+                                    }
+                                    let overlap_ratio = matched_q_tokens as f64 / q_tokens.len() as f64;
+                                    let exact_phrase_boost = if chunk.text.to_ascii_lowercase().contains(&query.to_ascii_lowercase()) {
+                                        1.5
+                                    } else {
+                                        0.0
+                                    };
+                                    match_score = (match_score * 0.5 + overlap_ratio * 0.5 + exact_phrase_boost).min(1.0);
+                                }
+
+                                let final_score = (match_score * 100.0).round() / 100.0;
+                                let chunk_id = format!("{}_chunk_{}", file_name, chunk.chunk_index);
+
+                                all_scored_chunks.push(ScoredChunk {
+                                    chunk_id,
+                                    page: chunk.page_start,
+                                    score: final_score,
+                                    heading: if heading_str.is_empty() { "Document Section".to_string() } else { heading_str },
+                                    content: chunk.text,
+                                });
+                            }
+                        }
+                    }
+                }
+
+                all_scored_chunks.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+                all_scored_chunks.truncate(limit);
+
+                let total_results = all_scored_chunks.len();
+                let results_json: Vec<serde_json::Value> = all_scored_chunks.into_iter().map(|sc| {
+                    serde_json::json!({
+                        "chunk_id": sc.chunk_id,
+                        "page": sc.page,
+                        "score": sc.score,
+                        "heading": sc.heading,
+                        "content": sc.content,
+                    })
+                }).collect();
+
                 let res_json = serde_json::json!({
                     "query": &query,
+                    "total_results": total_results,
+                    "results": results_json,
                     "matches": []
                 });
+
                 if let Some(ref out) = output {
                     ensure_parent_dir(out)?;
                     std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
@@ -5773,7 +5908,7 @@ impl PaperPilotMcpServer {
                 }
                 Ok(OperationResult {
                     success: true,
-                    message: format!("Found simulated matches for semantic search: '{}'", query),
+                    message: format!("Found {} ranked semantic matches for '{}'", total_results, query),
                     output_path: output,
                     diff_detected: None,
                     data: Some(res_json),
@@ -5781,56 +5916,188 @@ impl PaperPilotMcpServer {
             }
 
             "workspace_search" => {
-                let target = get_string("input").or_else(|_| get_string("dir"))?;
+                use paperpilot_core::traits::PdfOperation;
+                let target = get_string("input").or_else(|_| get_string("dir")).unwrap_or_else(|_| ".".to_string());
                 let query = get_string("query")?;
+                let formats_str = args.get("formats").and_then(|v| v.as_str()).unwrap_or("all");
+
+                let supported_all = ["pdf", "txt", "md", "docx", "xlsx", "csv", "json"];
+                let active_formats: Vec<String> = if formats_str.eq_ignore_ascii_case("all") {
+                    supported_all.iter().map(|&s| s.to_string()).collect()
+                } else {
+                    formats_str
+                        .split(',')
+                        .map(|s| s.trim().to_ascii_lowercase())
+                        .filter(|s| !s.is_empty())
+                        .collect()
+                };
 
                 let path = std::path::PathBuf::from(&target);
-                let mut matches = Vec::new();
+                let mut files_to_scan: Vec<std::path::PathBuf> = Vec::new();
                 if path.is_dir() {
-                    if let Ok(entries) = std::fs::read_dir(&path) {
-                        for entry in entries.flatten() {
-                            let ep = entry.path();
-                            if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
-                                if let Ok(mut doc) = LopdfDocument::load(&ep) {
-                                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
-                                    if op.execute(&mut doc).is_ok() {
-                                        let p = op.match_pages.lock().unwrap().clone();
-                                        matches.extend(p);
-                                    }
+                    fn collect_files(dir: &std::path::Path, files: &mut Vec<std::path::PathBuf>) {
+                        if let Ok(entries) = std::fs::read_dir(dir) {
+                            for entry in entries.flatten() {
+                                let p = entry.path();
+                                if p.is_dir() {
+                                    collect_files(&p, files);
+                                } else if p.is_file() {
+                                    files.push(p);
                                 }
                             }
                         }
                     }
-                } else {
-                    let mut doc = LopdfDocument::load(&path).map_err(crate::error::to_mcp_error)?;
-                    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
-                    op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
-                    matches = op.match_pages.lock().unwrap().clone();
+                    collect_files(&path, &mut files_to_scan);
+                } else if path.is_file() {
+                    files_to_scan.push(path.clone());
                 }
 
-                let message = if matches.is_empty() {
+                let mut structured_matches: Vec<serde_json::Value> = Vec::new();
+                let mut page_numbers_legacy: Vec<u32> = Vec::new();
+
+                for file_path in &files_to_scan {
+                    let ext = file_path
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .map(|s| s.to_ascii_lowercase())
+                        .unwrap_or_default();
+
+                    if !active_formats.is_empty() && !active_formats.contains(&ext) {
+                        continue;
+                    }
+
+                    let file_name = file_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or_default()
+                        .to_string();
+
+                    match ext.as_str() {
+                        "pdf" => {
+                            if let Ok(mut doc) = LopdfDocument::load(file_path) {
+                                let op = paperpilot_pdf::operations::search::SearchOperation::new(query.clone());
+                                if op.execute(&mut doc).is_ok() {
+                                    let p = op.match_pages.lock().unwrap().clone();
+                                    page_numbers_legacy.extend(&p);
+                                    for page_num in p {
+                                        let snippet = match doc.inner.extract_text(&[page_num]) {
+                                            Ok(t) => {
+                                                if let Some(idx) = t.to_ascii_lowercase().find(&query.to_ascii_lowercase()) {
+                                                    let start = idx.saturating_sub(40);
+                                                    let end = (idx + query.len() + 40).min(t.len());
+                                                    t[start..end].replace('\n', " ").trim().to_string()
+                                                } else {
+                                                    format!("Match on page {}", page_num)
+                                                }
+                                            }
+                                            Err(_) => format!("Match on page {}", page_num),
+                                        };
+                                        structured_matches.push(serde_json::json!({
+                                            "file": file_name,
+                                            "type": "pdf",
+                                            "location": format!("page {}", page_num),
+                                            "snippet": snippet,
+                                        }));
+                                    }
+                                }
+                            }
+                        }
+                        "txt" | "md" | "json" | "csv" => {
+                            if let Ok(content) = std::fs::read_to_string(file_path) {
+                                for (line_idx, line) in content.lines().enumerate() {
+                                    if line.to_ascii_lowercase().contains(&query.to_ascii_lowercase()) {
+                                        let snippet = line.trim().to_string();
+                                        structured_matches.push(serde_json::json!({
+                                            "file": file_name,
+                                            "type": ext,
+                                            "location": format!("line {}", line_idx + 1),
+                                            "snippet": snippet,
+                                        }));
+                                    }
+                                }
+                            }
+                        }
+                        "docx" => {
+                            if let Ok(buf) = std::fs::read(file_path) {
+                                if let Ok(docx) = docx_rs::read_docx(&buf) {
+                                    use docx_rs::{DocumentChild, ParagraphChild, RunChild};
+                                    let mut line_idx = 1;
+                                    for child in &docx.document.children {
+                                        if let DocumentChild::Paragraph(p) = child {
+                                            let mut line = String::new();
+                                            for pc in &p.children {
+                                                if let ParagraphChild::Run(r) = pc {
+                                                    for rc in &r.children {
+                                                        if let RunChild::Text(t) = rc {
+                                                            line.push_str(&t.text);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if line.to_ascii_lowercase().contains(&query.to_ascii_lowercase()) {
+                                                structured_matches.push(serde_json::json!({
+                                                    "file": file_name,
+                                                    "type": "docx",
+                                                    "location": format!("line {}", line_idx),
+                                                    "snippet": line.trim(),
+                                                }));
+                                            }
+                                            line_idx += 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        "xlsx" => {
+                            use calamine::{Reader, open_workbook_auto};
+                            if let Ok(mut workbook) = open_workbook_auto(file_path) {
+                                for sheet_name in workbook.sheet_names().to_vec() {
+                                    if let Ok(range) = workbook.worksheet_range(&sheet_name) {
+                                        for (r_idx, row) in range.rows().enumerate() {
+                                            let row_str = row.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(" | ");
+                                            if row_str.to_ascii_lowercase().contains(&query.to_ascii_lowercase()) {
+                                                structured_matches.push(serde_json::json!({
+                                                    "file": file_name,
+                                                    "type": "xlsx",
+                                                    "location": format!("{} row {}", sheet_name, r_idx + 1),
+                                                    "snippet": row_str.trim(),
+                                                }));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                let total_matches = structured_matches.len();
+                let message = if total_matches == 0 {
                     "No matches found.".to_string()
                 } else {
-                    format!("Matches found on pages: {:?}", matches)
+                    format!("Matches found: {} items", total_matches)
                 };
+
+                let res_json = serde_json::json!({
+                    "query": &query,
+                    "total_matches": total_matches,
+                    "formats_searched": active_formats,
+                    "matches": structured_matches,
+                    "pages": page_numbers_legacy,
+                    "message": &message,
+                });
 
                 let output = args.get("output").and_then(|v| v.as_str()).map(|s| s.to_string());
                 if let Some(ref out) = output {
                     ensure_parent_dir(out)?;
-                    let res_json = serde_json::json!({
-                        "query": &query,
-                        "matches": matches,
-                        "message": &message,
-                    });
                     std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default())
                         .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
                 }
 
                 Ok(OperationResult {
                     message,
-                    data: Some(serde_json::json!({
-                        "matches": matches,
-                    })),
+                    data: Some(res_json),
                     success: true,
                     output_path: output,
                     diff_detected: None,

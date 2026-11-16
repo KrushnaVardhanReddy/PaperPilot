@@ -723,7 +723,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             )?;
             Ok(())
         },
-        Commands::WorkspaceSearch { input, dir, query, output } => {
+        Commands::WorkspaceSearch { input, dir, query, formats, output } => {
             use paperpilot_core::traits::PdfOperation;
             use paperpilot_pdf::document::LopdfDocument;
 
@@ -733,39 +733,173 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 (None, None) => std::path::PathBuf::from("."),
             };
             let q = query.as_deref().unwrap_or("test");
-            let mut matches: Vec<u32> = Vec::new();
+
+            let formats_str = formats.as_deref().unwrap_or("all");
+            let supported_all = ["pdf", "txt", "md", "docx", "xlsx", "csv", "json"];
+            let active_formats: Vec<String> = if formats_str.eq_ignore_ascii_case("all") {
+                supported_all.iter().map(|&s| s.to_string()).collect()
+            } else {
+                formats_str
+                    .split(',')
+                    .map(|s| s.trim().to_ascii_lowercase())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            };
+
+            let mut files_to_scan: Vec<std::path::PathBuf> = Vec::new();
             if target.is_dir() {
-                if let Ok(entries) = std::fs::read_dir(&target) {
-                    for entry in entries.flatten() {
-                        let ep = entry.path();
-                        if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
-                            if let Ok(mut doc) = LopdfDocument::load(&ep) {
-                                let op = paperpilot_pdf::operations::search::SearchOperation::new(q.to_string());
-                                if op.execute(&mut doc).is_ok() {
-                                    let p = op.match_pages.lock().unwrap().clone();
-                                    matches.extend(p);
-                                }
+                fn collect_files(dir: &std::path::Path, files: &mut Vec<std::path::PathBuf>) {
+                    if let Ok(entries) = std::fs::read_dir(dir) {
+                        for entry in entries.flatten() {
+                            let p = entry.path();
+                            if p.is_dir() {
+                                collect_files(&p, files);
+                            } else if p.is_file() {
+                                files.push(p);
                             }
                         }
                     }
                 }
+                collect_files(&target, &mut files_to_scan);
             } else if target.is_file() {
-                if let Ok(mut doc) = LopdfDocument::load(&target) {
-                    let op = paperpilot_pdf::operations::search::SearchOperation::new(q.to_string());
-                    if op.execute(&mut doc).is_ok() {
-                        matches = op.match_pages.lock().unwrap().clone();
+                files_to_scan.push(target.clone());
+            }
+
+            let mut structured_matches: Vec<serde_json::Value> = Vec::new();
+            let mut page_numbers_legacy: Vec<u32> = Vec::new();
+
+            for file_path in &files_to_scan {
+                let ext = file_path
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .map(|s| s.to_ascii_lowercase())
+                    .unwrap_or_default();
+
+                if !active_formats.is_empty() && !active_formats.contains(&ext) {
+                    continue;
+                }
+
+                let file_name = file_path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+
+                match ext.as_str() {
+                    "pdf" => {
+                        if let Ok(mut doc) = LopdfDocument::load(file_path) {
+                            let op = paperpilot_pdf::operations::search::SearchOperation::new(q.to_string());
+                            if op.execute(&mut doc).is_ok() {
+                                let p = op.match_pages.lock().unwrap().clone();
+                                page_numbers_legacy.extend(&p);
+                                for page_num in p {
+                                    let snippet = match doc.inner.extract_text(&[page_num]) {
+                                        Ok(t) => {
+                                            if let Some(idx) = t.to_ascii_lowercase().find(&q.to_ascii_lowercase()) {
+                                                let start = idx.saturating_sub(40);
+                                                let end = (idx + q.len() + 40).min(t.len());
+                                                t[start..end].replace('\n', " ").trim().to_string()
+                                            } else {
+                                                format!("Match on page {}", page_num)
+                                            }
+                                        }
+                                        Err(_) => format!("Match on page {}", page_num),
+                                    };
+                                    structured_matches.push(serde_json::json!({
+                                        "file": file_name,
+                                        "type": "pdf",
+                                        "location": format!("page {}", page_num),
+                                        "snippet": snippet,
+                                    }));
+                                }
+                            }
+                        }
                     }
+                    "txt" | "md" | "json" | "csv" => {
+                        if let Ok(content) = std::fs::read_to_string(file_path) {
+                            for (line_idx, line) in content.lines().enumerate() {
+                                if line.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                    let snippet = line.trim().to_string();
+                                    structured_matches.push(serde_json::json!({
+                                        "file": file_name,
+                                        "type": ext,
+                                        "location": format!("line {}", line_idx + 1),
+                                        "snippet": snippet,
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                    "docx" => {
+                        if let Ok(buf) = std::fs::read(file_path) {
+                            if let Ok(docx) = docx_rs::read_docx(&buf) {
+                                use docx_rs::{DocumentChild, ParagraphChild, RunChild};
+                                let mut line_idx = 1;
+                                for child in &docx.document.children {
+                                    if let DocumentChild::Paragraph(p) = child {
+                                        let mut line = String::new();
+                                        for pc in &p.children {
+                                            if let ParagraphChild::Run(r) = pc {
+                                                for rc in &r.children {
+                                                    if let RunChild::Text(t) = rc {
+                                                        line.push_str(&t.text);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if line.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                            structured_matches.push(serde_json::json!({
+                                                "file": file_name,
+                                                "type": "docx",
+                                                "location": format!("line {}", line_idx),
+                                                "snippet": line.trim(),
+                                            }));
+                                        }
+                                        line_idx += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    "xlsx" => {
+                        use calamine::{Reader, open_workbook_auto};
+                        if let Ok(mut workbook) = open_workbook_auto(file_path) {
+                            for sheet_name in workbook.sheet_names().to_vec() {
+                                if let Ok(range) = workbook.worksheet_range(&sheet_name) {
+                                    for (r_idx, row) in range.rows().enumerate() {
+                                        let row_str = row.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(" | ");
+                                        if row_str.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                            structured_matches.push(serde_json::json!({
+                                                "file": file_name,
+                                                "type": "xlsx",
+                                                "location": format!("{} row {}", sheet_name, r_idx + 1),
+                                                "snippet": row_str.trim(),
+                                            }));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
                 }
             }
-            if matches.is_empty() {
+
+            let total_matches = structured_matches.len();
+            if total_matches == 0 {
                 println!("No workspace matches found for '{}'.", q);
             } else {
-                println!("Workspace matches found on pages: {:?}", matches);
+                println!("Found {} workspace matches for '{}' across formats: {:?}", total_matches, q, active_formats);
             }
+
             let res_json = serde_json::json!({
                 "query": q,
-                "matches": matches,
+                "total_matches": total_matches,
+                "formats_searched": active_formats,
+                "matches": structured_matches,
+                "pages": page_numbers_legacy,
             });
+
             if let Some(out) = output {
                 if let Some(parent) = out.parent() {
                     let _ = std::fs::create_dir_all(parent);
@@ -774,17 +908,137 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             }
             Ok(())
         },
-        Commands::SemanticSearch { input, dir: _, query, limit, output } => {
-            let q = query.as_deref()
-                .or_else(|| input.as_ref().and_then(|p| p.to_str()))
-                .unwrap_or("test");
+        Commands::SemanticSearch { input, dir, query, limit, output } => {
+            use paperpilot_core::document_source::DocumentSource;
+            use paperpilot_pdf::operations::pdf_chunk::{ChunkOptions, PdfChunkOperation};
+
+            let q = query.as_deref().unwrap_or("test");
             let lim = limit.unwrap_or(5);
-            println!("Found simulated matches for semantic search: '{}' (limit: {})", q, lim);
+
+            let target = match (input, dir) {
+                (Some(p), _) => resolve_input_path(p)?,
+                (None, Some(d)) => resolve_input_path(d)?,
+                (None, None) => std::path::PathBuf::from("."),
+            };
+
+            let mut pdf_files: Vec<std::path::PathBuf> = Vec::new();
+            if target.is_dir() {
+                fn collect_pdfs(dir: &std::path::Path, pdfs: &mut Vec<std::path::PathBuf>) {
+                    if let Ok(entries) = std::fs::read_dir(dir) {
+                        for entry in entries.flatten() {
+                            let p = entry.path();
+                            if p.is_dir() {
+                                collect_pdfs(&p, pdfs);
+                            } else if p.is_file() && p.extension().and_then(|e| e.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                                pdfs.push(p);
+                            }
+                        }
+                    }
+                }
+                collect_pdfs(&target, &mut pdf_files);
+            } else if target.is_file() {
+                pdf_files.push(target.clone());
+            }
+
+            fn tokenize(s: &str) -> Vec<String> {
+                s.to_ascii_lowercase()
+                    .split(|c: char| !c.is_alphanumeric())
+                    .filter(|w| !w.is_empty() && w.len() > 1)
+                    .map(|w| w.to_string())
+                    .collect()
+            }
+
+            let q_tokens = tokenize(q);
+
+            struct ScoredChunk {
+                chunk_id: String,
+                page: u32,
+                score: f64,
+                heading: String,
+                content: String,
+            }
+
+            let mut all_scored_chunks: Vec<ScoredChunk> = Vec::new();
+
+            for pdf_path in &pdf_files {
+                let file_name = pdf_path.file_name().and_then(|n| n.to_str()).unwrap_or("doc.pdf");
+                if let Ok(source) = DocumentSource::open(pdf_path, None) {
+                    let chunk_opts = ChunkOptions {
+                        target_tokens: 300,
+                        overlap_tokens: 40,
+                        strip_boilerplate: true,
+                        break_on_headings: true,
+                    };
+                    if let Ok(chunk_res) = PdfChunkOperation::chunk_source(&source, chunk_opts) {
+                        for chunk in chunk_res.chunks {
+                            let heading_str = chunk.headings_context.join(" > ");
+                            let chunk_tokens = tokenize(&chunk.text);
+                            let heading_tokens = tokenize(&heading_str);
+
+                            let mut token_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+                            for t in &chunk_tokens {
+                                *token_counts.entry(t.clone()).or_insert(0) += 1;
+                            }
+                            for t in &heading_tokens {
+                                *token_counts.entry(t.clone()).or_insert(0) += 2;
+                            }
+
+                            let mut match_score = 0.0;
+                            if !q_tokens.is_empty() {
+                                let mut matched_q_tokens = 0;
+                                for qt in &q_tokens {
+                                    if let Some(count) = token_counts.get(qt) {
+                                        matched_q_tokens += 1;
+                                        match_score += 1.0 + (*count as f64 * 0.2);
+                                    }
+                                }
+                                let overlap_ratio = matched_q_tokens as f64 / q_tokens.len() as f64;
+                                let exact_phrase_boost = if chunk.text.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                    1.5
+                                } else {
+                                    0.0
+                                };
+                                match_score = (match_score * 0.5 + overlap_ratio * 0.5 + exact_phrase_boost).min(1.0);
+                            }
+
+                            let final_score = (match_score * 100.0).round() / 100.0;
+                            let chunk_id = format!("{}_chunk_{}", file_name, chunk.chunk_index);
+
+                            all_scored_chunks.push(ScoredChunk {
+                                chunk_id,
+                                page: chunk.page_start,
+                                score: final_score,
+                                heading: if heading_str.is_empty() { "Document Section".to_string() } else { heading_str },
+                                content: chunk.text,
+                            });
+                        }
+                    }
+                }
+            }
+
+            all_scored_chunks.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+            all_scored_chunks.truncate(lim);
+
+            let total_results = all_scored_chunks.len();
+            let results_json: Vec<serde_json::Value> = all_scored_chunks.into_iter().map(|sc| {
+                serde_json::json!({
+                    "chunk_id": sc.chunk_id,
+                    "page": sc.page,
+                    "score": sc.score,
+                    "heading": sc.heading,
+                    "content": sc.content,
+                })
+            }).collect();
+
+            println!("Found {} ranked semantic matches for '{}' (limit: {})", total_results, q, lim);
+
             let res_json = serde_json::json!({
                 "query": q,
-                "limit": lim,
+                "total_results": total_results,
+                "results": results_json,
                 "matches": []
             });
+
             if let Some(out) = output {
                 if let Some(parent) = out.parent() {
                     let _ = std::fs::create_dir_all(parent);

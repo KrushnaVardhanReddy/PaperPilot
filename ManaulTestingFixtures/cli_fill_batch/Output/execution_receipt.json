@@ -1,0 +1,40 @@
+{
+  "success": true,
+  "job_id": "fill-batch-1794837211567636-251409",
+  "started_at": "2026-11-16T13:53:31.567636704+00:00",
+  "date": "2026-11-16",
+  "template": "ManaulTestingFixtures/cli_fill_batch/Input/batch_template_form.pdf",
+  "data": "ManaulTestingFixtures/cli_fill_batch/Input/batch_records.json",
+  "data_source": "file",
+  "template_sha256": "28a17a0dc56bedf8b3bea0b872e35b91de456de4c6e13f48550ba045cdbff345",
+  "data_sha256": "f99d419b6a80bb8c2bb0ac5c29952a0cf9d0bb389f6eff195762310f0a225d3d",
+  "receipt_path": "/home/krushna/Project/PaperPilot/ManaulTestingFixtures/cli_fill_batch/Output/execution_receipt.json",
+  "operations_applied": [
+    "pdf_fill_form",
+    "pdf_flatten"
+  ],
+  "total": 3,
+  "succeeded": 3,
+  "failed": 0,
+  "execution_time_ms": 20,
+  "results": [
+    {
+      "index": 1,
+      "success": true,
+      "output_path": "/home/krushna/Project/PaperPilot/ManaulTestingFixtures/cli_fill_batch/Output/Alice Smith.pdf",
+      "output_sha256": "ddad613505990915572f80d3eb7516221b90d67ac54eed925d274f8db009889e"
+    },
+    {
+      "index": 2,
+      "success": true,
+      "output_path": "/home/krushna/Project/PaperPilot/ManaulTestingFixtures/cli_fill_batch/Output/Bob Jones.pdf",
+      "output_sha256": "f32517d2179b1438588752ecc2cb86883f72c8e037011d564c4c307544d0c2f0"
+    },
+    {
+      "index": 3,
+      "success": true,
+      "output_path": "/home/krushna/Project/PaperPilot/ManaulTestingFixtures/cli_fill_batch/Output/Charlie Brown.pdf",
+      "output_sha256": "7ce6cad0a42a40ea76b92edbf21062de3f4c3a0a923256771a0efc80a3aed86b"
+    }
+  ]
+}

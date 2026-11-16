@@ -390,6 +390,7 @@ describe('operationArgsBuilder', () => {
             input: '/docs/test.pdf',
             dir: '/docs',
             query: 'FindInWs',
+            formats: 'all',
             output: '/docs/test_workspace_search.json'
         });
     });

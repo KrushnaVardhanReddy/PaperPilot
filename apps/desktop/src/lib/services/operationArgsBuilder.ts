@@ -603,6 +603,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 input: docPath,
                 dir,
                 query,
+                formats: (context as any).workspaceFormats || 'all',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_workspace_search.json`)
             };
             break;
@@ -613,8 +614,10 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 : (context.searchQuery && context.searchQuery.trim() !== '')
                     ? context.searchQuery.trim()
                     : 'document';
+            const dir = (context as any).semanticDir || (context as any).workspaceDir || undefined;
             args = {
                 input: docPath,
+                ...(dir ? { dir } : {}),
                 query,
                 limit: context.semanticLimit ?? 5,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_semantic_search.json`)

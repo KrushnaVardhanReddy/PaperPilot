@@ -892,6 +892,8 @@ pub enum Commands {
         #[arg(long)]
         query: Option<String>,
         #[arg(long)]
+        formats: Option<String>,
+        #[arg(long)]
         output: Option<PathBuf>,
     },
     #[command(name = "semantic-search", alias = "semantic_search")]

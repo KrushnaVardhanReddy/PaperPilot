@@ -1,0 +1,28 @@
+{
+  "formats_searched": [
+    "pdf",
+    "txt",
+    "md",
+    "docx",
+    "xlsx",
+    "csv",
+    "json"
+  ],
+  "matches": [
+    {
+      "file": "doc1.txt",
+      "location": "line 1",
+      "snippet": "Target keyword: PROJECT_ZEPHYR milestone achieved.",
+      "type": "txt"
+    },
+    {
+      "file": "doc2.md",
+      "location": "line 2",
+      "snippet": "Discussion on PROJECT_ZEPHYR budget allocation.",
+      "type": "md"
+    }
+  ],
+  "pages": [],
+  "query": "PROJECT_ZEPHYR",
+  "total_matches": 2
+}

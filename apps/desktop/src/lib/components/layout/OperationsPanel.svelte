@@ -111,6 +111,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let searchResultDisplay = $state<string | null>(null);
   let workspaceSearchQuery = $state('');
   let workspaceSearchDir = $state('');
+  let workspaceSearchFormats = $state('all');
   let semanticSearchQuery = $state('');
   let semanticSearchLimit = $state(5);
   let classifyDetail = $state(false);
@@ -779,6 +780,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             searchQuery: textSearchQuery,
             workspaceQuery: workspaceSearchQuery,
             workspaceDir: workspaceSearchDir,
+            workspaceFormats: workspaceSearchFormats,
             semanticQuery: semanticSearchQuery,
             semanticLimit: semanticSearchLimit,
             classifyDetail,
@@ -1039,6 +1041,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           searchQuery: textSearchQuery,
           workspaceQuery: workspaceSearchQuery,
           workspaceDir: workspaceSearchDir,
+          workspaceFormats: workspaceSearchFormats,
           semanticQuery: semanticSearchQuery,
           semanticLimit: semanticSearchLimit,
           classifyDetail,
@@ -3005,6 +3008,16 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               class="form-input"
               bind:value={workspaceSearchQuery}
               placeholder="Query across all files in workspace..."
+            />
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="workspaceSearchFormatsInput" class="section-desc">File Formats Filter:</label>
+            <input
+              id="workspaceSearchFormatsInput"
+              type="text"
+              class="form-input"
+              bind:value={workspaceSearchFormats}
+              placeholder="e.g. all or pdf, txt, md, docx, xlsx, csv, json"
             />
           </div>
           <div class="form-group" style="margin-bottom: 10px;">
