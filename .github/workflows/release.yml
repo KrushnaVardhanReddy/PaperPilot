@@ -174,7 +174,10 @@ jobs:
             const tauriPath = "src-tauri/tauri.conf.json";
             if (fs.existsSync(tauriPath)) {
               const tauri = JSON.parse(fs.readFileSync(tauriPath, "utf8"));
-              tauri.version = ver;
+              // WiX MSI requires purely numeric versions (Major.Minor.Patch[.Build])
+              // Strip non-numeric pre-release identifiers (e.g., 0.7.14-dev -> 0.7.14) for Tauri
+              const cleanTauriVer = ver.split("-")[0];
+              tauri.version = cleanTauriVer;
               fs.writeFileSync(tauriPath, JSON.stringify(tauri, null, 2) + "\n");
             }
           ' "$CLEAN_VER"
