@@ -253,7 +253,8 @@ export function mount(selector: string | HTMLElement, options: EmbedOptions = {}
   }
   container.innerHTML = '';
 
-  const shadow = container.attachShadow({ mode: 'open' });
+  const shadow = container.shadowRoot || container.attachShadow({ mode: 'open' });
+  shadow.innerHTML = '';
 
   // Inject theme styles
   const styleEl = document.createElement('style');
