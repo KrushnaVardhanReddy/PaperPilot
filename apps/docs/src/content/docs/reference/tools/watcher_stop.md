@@ -1,36 +1,95 @@
 ---
 title: "watcher_stop"
-description: "Stop and remove a local folder watcher after its current PDF operation finishes."
+description: "Reference, CLI, MCP, REST API, and Desktop specifications for watcher_stop."
+sidebar:
+  order: 92
 ---
 
+**Status**: ✅ Verified  |  **Format**: Automation / Hot Folder
+
 ### What it does
+**Gracefully cancels a running folder watcher after its active PDF operation completes and unregisters it.**  
+Signals the worker thread to stop, waits for any in-flight PDF pipeline step and audit receipt generation to finish safely, and removes the watcher instance from the shared manager registry.
 
-Cancels a real watcher, waits for any in-flight PDF operation and worker thread to finish, then removes its registry entry. After success no further files are processed by that watcher. Unknown IDs return an error.
+---
 
-The desktop Stop action retains the stopped configuration and final statistics so it can be restarted. Desktop Remove and MCP/REST stop remove the runtime entry. Removing from another local interface is reflected in the desktop panel by its local status refresh. These APIs apply to watchers in the same process.
+### Key Behaviors
+- **Graceful Drain**: In-flight file processing is never forcibly killed mid-operation; pending writes and `.receipt.json` outputs complete cleanly.
+- **Error Handling**: Supplying an invalid or unknown `watcher_id` returns an error response rather than failing silently.
+- **Registry Removal**: Successful stoppage unregisters the daemon so it stops consuming system resources and thread pools.
+
+---
 
 ### CLI
+Stop running folder watchers from the command line:
 
+#### 1. Graceful Terminal Interrupt
+When running `paperpilot watch` in foreground daemon mode, send an interrupt signal:
 ```bash
-# Press Ctrl+C in the terminal running `paperpilot watch` to stop it gracefully.
-# `paperpilot watch --once ...` stops automatically after the initial sweep.
+# Press Ctrl+C in the active terminal running paperpilot watch
+# The watcher completes the current file, flushes receipts, and exits cleanly.
 ```
 
+#### 2. Automatic Termination with `--once`
+Batch sweep runs terminate automatically once all existing directory files have been processed:
+```bash
+paperpilot watch --directory ./inbox --recipe preset-legal-discovery --once
+```
+
+---
+
 ### MCP JSON-RPC
+Stop and unregister an active watcher via Model Context Protocol (MCP):
 
 ```json
 {
-  "name": "watcher_stop",
-  "arguments": { "watcher_id": "WATCHER_ID_FROM_START" }
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "watcher_stop",
+    "arguments": {
+      "watcher_id": "watcher_c9b8f2d87e1445bfbb5bcf112a912803"
+    }
+  },
+  "id": 2
 }
 ```
 
-Returns `{"success":true}` only after the worker has stopped and been removed.
-
-### REST API
-
-```bash
-curl -i -X DELETE http://127.0.0.1:7823/v1/automation/watchers/WATCHER_ID_FROM_START
+#### MCP Output Response
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":true}"
+      }
+    ],
+    "isError": false
+  }
+}
 ```
 
-Returns HTTP 204 after stopping/removing, or HTTP 404 for an unknown watcher.
+#### MCP Schema Parameters
+- `watcher_id` *(string, required)*: The unique identifier of the active watcher to cancel and unregister.
+
+---
+
+### REST API
+Terminate and unregister a watcher via PaperPilot Gateway:
+
+```bash
+curl -i -X DELETE http://127.0.0.1:7823/v1/automation/watchers/watcher_c9b8f2d87e1445bfbb5bcf112a912803
+```
+
+#### Response Status
+- `HTTP 204 No Content`: The watcher was stopped and removed from the registry.
+- `HTTP 404 Not Found`: No active watcher exists with the provided ID.
+
+---
+
+### Known Limitations & Troubleshooting
+- **Lifecycle Scope**: MCP and REST termination commands only apply to watchers hosted within that specific server process. Standalone CLI processes running `paperpilot watch` in other terminal sessions must be stopped via their respective terminal process signals (`SIGINT` / `Ctrl+C`).
+- **WASM Support**: Not applicable to browser WebAssembly environments.

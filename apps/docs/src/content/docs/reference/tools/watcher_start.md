@@ -1,54 +1,146 @@
 ---
 title: "watcher_start"
-description: "Start a real local PDF folder watcher with validated recipes and audit receipts."
+description: "Reference, CLI, MCP, REST API, and Desktop specifications for watcher_start."
+sidebar:
+  order: 91
 ---
 
+**Status**: ✅ Verified  |  **Format**: Automation / Hot Folder
+
 ### What it does
+**Registers an operating-system folder watcher, processing arriving PDFs with validated recipes and durable audit receipts.**  
+Monitors a local filesystem directory for dropped or newly written PDF documents. Arriving files are debounced until file sizes stabilize, executed through declarative multi-step recipes or presets, and recorded with cryptographic SHA-256 receipts.
 
-Registers an operating-system folder watcher, processes existing and arriving PDFs with the shared workflow engine, and reports actual progress. Invalid paths and unsupported recipes fail before a watcher is reported as running.
+---
 
-The recipe accepts a preset ID, a local TOML/JSON `.ppflow` path, or serialized workflow content. Outputs default to `INPUT/processed`, failure receipts to `INPUT/.error`. Input and output folders must differ. Sources stay in place unless the CLI/REST caller explicitly requests `move_original`. Existing files are never overwritten; collisions receive a numeric suffix. Watching is nonrecursive. Each start sweeps existing files again.
+### Key Capabilities
+- **Pre-Registration Validation**: Rejects invalid paths, non-existent directories, and unsupported recipes prior to registration.
+- **Settle Delay Stabilization**: Debounces filesystem writes with configurable delay (`settle_delay_ms`, 50–60,000ms, default: 500ms).
+- **Execution Receipts**: Writes `.receipt.json` audit files containing input/output SHA-256 hashes, execution timing, and workflow stage statuses.
+- **Collision Protection**: Existing output files are never overwritten; automatic numeric suffixes are applied.
+- **Error Quarantine**: Processing failures retain the source document and write detailed diagnostic failure receipts into the error directory (`.error`).
 
-`settle_delay_ms` defaults to 500 and accepts 50–60000. The worker waits for a stable file size and ignores unchanged duplicate events during that run. A processing or write failure increments `failed`, emits an error, and retains the source; later PDFs can still succeed. Success receipts contain input/output SHA-256 hashes and the workflow report. Failure receipts contain the error and input hash; `.error` stores receipts, not relocated PDFs.
-
-Watchers live in the owning process. Desktop commands, its local REST gateway, and its MCP endpoint share one manager; separate processes have separate managers. Saved desktop configurations require an explicit start after relaunch. No network request is made unless a CLI caller supplies `--webhook`.
-
-Explicit CLI webhooks retain the completion fields `success`, `operation`, `file`, and `error`, adding `output` and `receipt` paths. Delivery has a 30-second timeout; HTTP/network failures are logged separately from PDF processing results.
-
-Optional `name_template` enables [dynamic naming](/reference/output-naming/) from input names, UTC dates, SHA-256, run indexes and PDF Info fields. CLI uses `--name-template`. Receipts reference the final collision-resolved output path.
+---
 
 ### CLI
+Start or test folder watching from the command line:
 
+#### 1. Continuous Watch Daemon
 ```bash
-paperpilot watch --directory /local/inbox --recipe preset-legal-discovery --settle-delay-ms 500
-# Add --once to process existing PDFs and exit; any failed file yields a nonzero exit code.
+paperpilot watch \
+  --directory tests/e2e_fixtures/out/batch18/watch_in \
+  --output tests/e2e_fixtures/out/batch18/watch_out \
+  --recipe preset-legal-discovery \
+  --settle-delay-ms 500
 ```
 
+#### 2. One-Shot Batch Sweep (`--once`)
+Process all existing PDFs currently residing in the directory and exit immediately:
+```bash
+paperpilot watch \
+  --directory tests/e2e_fixtures/out/batch18/watch_in \
+  --output tests/e2e_fixtures/out/batch18/watch_out \
+  --recipe preset-legal-discovery \
+  --once
+```
+
+#### 3. Custom Output Template
+```bash
+paperpilot watch \
+  --directory ./inbox \
+  --output ./processed \
+  --recipe ./prep_pipeline.ppflow \
+  --name-template "{input_stem}-{date:%Y%m%d}-{hash:8}-{index:04}.pdf"
+```
+
+#### CLI Parameters
+- `-d, --directory <DIRECTORY>` *(string, required)*: Directory to monitor for incoming PDF files.
+- `-r, --recipe <RECIPE>` *(string, optional)*: Path to `.ppflow` TOML/JSON recipe or preset ID (e.g. `preset-legal-discovery`).
+- `-o, --output <OUTPUT>` *(string, optional)*: Output directory for successfully processed PDFs.
+- `--name-template <NAME_TEMPLATE>` *(string, optional)*: Custom output basename template with variable tokens.
+- `--move-original <MOVE_ORIGINAL>` *(string, optional)*: Directory to move processed source files.
+- `--error-dir <ERROR_DIR>` *(string, optional, default: `<dir>/.error`)*: Directory for failure receipts.
+- `--settle-delay-ms <SETTLE_DELAY_MS>` *(integer, optional, default: `500`)*: Milliseconds of filesystem inactivity before processing.
+- `--once` *(flag, optional)*: Process existing files and exit cleanly.
+- `--webhook <WEBHOOK>` *(string, optional)*: Webhook URL to deliver completion notifications and receipt paths.
+
+---
+
 ### MCP JSON-RPC
+Register and manage folder watchers via Model Context Protocol (MCP) clients:
 
 ```json
 {
-  "name": "watcher_start",
-  "arguments": {
-    "dir": "/local/inbox",
-    "recipe": "preset-legal-discovery",
-    "settle_delay_ms": 500
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "watcher_start",
+    "arguments": {
+      "dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/batch18/watch_in",
+      "output_dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/batch18/watch_out",
+      "recipe": "preset-legal-discovery",
+      "settle_delay_ms": 500
+    }
+  },
+  "id": 1
+}
+```
+
+#### MCP Output Response
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":true,\"watcher_id\":\"watcher_c9b8f2d87e1445bfbb5bcf112a912803\",\"status\":\"watching\",\"watcher\":{\"id\":\"watcher_c9b8f2d87e1445bfbb5bcf112a912803\",\"directory\":\"/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/batch18/watch_in\",\"recipe_name\":\"preset-legal-discovery\",\"status\":\"watching\",\"succeeded\":0,\"failed\":0,\"last_processed_file\":null,\"last_processed_at\":null,\"last_error\":null,\"last_output\":null,\"last_receipt\":null}}"
+      }
+    ],
+    "isError": false
   }
 }
 ```
 
-Returns `watcher_id`, `status`, and an actual runtime snapshot. Keep `watcher_id` for listing/stopping.
+#### MCP Schema Parameters
+- `dir` *(string, required)*: Absolute path to the directory to watch.
+- `recipe` *(string, required)*: Local `.ppflow` recipe path, preset ID, or serialized workflow.
+- `output_dir` *(string, optional)*: Output directory (defaults to a separate processed subfolder).
+- `name_template` *(string, optional)*: Output basename template using dynamic tokens.
+- `settle_delay_ms` *(integer, optional, default: `500`)*: Inactivity delay before processing (50–60000 ms).
+
+---
 
 ### REST API
+Register a watcher through the PaperPilot Gateway:
 
 ```bash
 curl -s -X POST http://127.0.0.1:7823/v1/automation/watchers \
   -H 'Content-Type: application/json' \
-  -d '{"dir":"/local/inbox","recipe":"preset-legal-discovery","settle_delay_ms":500}'
+  -d '{
+    "dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/batch18/watch_in",
+    "output_dir": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/batch18/watch_out",
+    "recipe": "preset-legal-discovery",
+    "settle_delay_ms": 500,
+    "name_template": "{input_stem}-{index:04}.pdf"
+  }'
 ```
 
-Returns HTTP 201 after registration, HTTP 400 for invalid configuration. Optional REST fields are `output_dir`, `error_dir`, and `move_original`.
+#### Response (`HTTP 201 Created`)
+```json
+{
+  "watcher_id": "watcher_7f2b189c44",
+  "status": "watching",
+  "directory": "/home/krushna/Project/PaperPilot/tests/e2e_fixtures/out/batch18/watch_in",
+  "recipe": "preset-legal-discovery"
+}
+```
 
-### Dynamic filenames
+---
 
-CLI accepts `--name-template`; MCP and REST accept optional `name_template`, for example `{input_stem}-{date:%Y%m%d}-{hash:8}-{index:04}.pdf`. Templates are validated before registration. Input-specific metadata errors retain the source and write a failure receipt; later files continue. Indexes count attempts within the current watcher run. Existing output files receive numeric collision suffixes, and receipt names track the actual published filename. Explicitly archived originals retain their original names. See [all supported tokens and constraints](/reference/output-naming/).
+### Known Limitations & Troubleshooting
+- **Process Boundary**: Watchers operate inside the hosting process. The Desktop UI, its embedded REST gateway, and MCP runtime share an in-memory `WatcherManager`; standalone CLI invocations operate in their own process.
+- **Non-Recursive Monitoring**: Watcher scopes monitor the exact folder specified; subdirectories within the inbox are not traversed recursively.
+- **Directory Separation**: The input monitored directory and the designated output directory must be distinct paths to prevent recursive trigger loops.
+- **WASM Support**: Filesystem watcher daemons require OS filesystem event notification primitives (`notify`) and multi-threading; they are not available in browser WASM environments.

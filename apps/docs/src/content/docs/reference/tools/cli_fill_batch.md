@@ -1,110 +1,139 @@
 ---
 title: "cli_fill_batch"
-description: "Generate one filled AcroForm PDF per CSV or JSON record, with an execution receipt."
+description: "Reference, CLI, MCP, and REST API specifications for cli_fill_batch."
 sidebar:
   order: 3
 ---
 
+**Status**: ✅ Verified  |  **Format**: PDF (`.pdf`) + CSV/JSON -> Output Directory + `execution_receipt.json`
+
 ### What it does
+**Command-line batch mail-merge engine for generating populated, flattened AcroForm PDFs with audit receipts.**  
+Parses the input PDF template once, generates populated PDF documents for every record in a CSV or JSON dataset, and saves an `execution_receipt.json` audit manifest containing row outcomes, execution durations, and SHA-256 digests. Powered by the same underlying core engine as [`batch_fill`](/reference/tools/batch_fill/).
 
-`paperpilot fill-batch` performs local AcroForm mail merge. It parses the template
-once, fills an independent copy for each record, and writes a local
-`execution_receipt.json` with row outcomes, paths, SHA-256 hashes and timings.
-PDF processing uses the same in-memory form engine as the single-document tools. The shared native batch runner also powers [MCP and REST batch_fill](/reference/tools/batch_fill/).
-
-Text fields (including multiline fields) and checkboxes are supported. Values
-are stored using PDF text-string encoding, including UTF-16 for Chinese text.
-Appearances use Helvetica for ASCII and the standard STSong CJK fallback for
-non-ASCII BMP text. Viewers need standard CJK font support; fonts are not
-downloaded or embedded by this command. Non-BMP values, unsupported field types,
-read-only templates and XFA forms are rejected explicitly. Values too long to
-fit at a readable size fail that row instead of being silently clipped.
+---
 
 ### CLI
+Run batch generation via `paperpilot fill-batch` (or `paperpilot cli_fill_batch`):
 
+#### 1. Standard CSV Merge with Dynamic Filename Formatting
 ```bash
-paperpilot fill-batch --template form.pdf --data records.csv --output-dir ./out \
-  --name-template '{row.name}_{date}_{index:04}.pdf' --json
+paperpilot fill-batch \
+  --template tests/e2e_fixtures/real/form.pdf \
+  --data tests/e2e_fixtures/real/batch_data.csv \
+  --output-dir tests/e2e_fixtures/out/batch9_test/cli_fill_batch_out \
+  --name-template "{row.FullName}.pdf" \
+  --json
 ```
 
-The default filename is `{index:04}.pdf`. Supported tokens are `{row.column}`,
-`{date}`, `{index}`, and `{index:04}` (padding up to 12 digits). `{date}` uses the
-UTC batch date; `--date YYYY-MM-DD` provides an explicit, reproducible override.
-Column substitutions replace path separators and forbidden filename characters
-with underscores. Reserved Windows names, oversized names and paths are rejected.
-
-Example CSV:
-
-```csv
-name,email,subscribe
-Alice,alice@example.test,true
-李雷,,false
-```
-
-Or use a JSON array with `--data records.json`:
-
+Output:
 ```json
-[
-  {"name": "张三", "email": null, "subscribe": true},
-  {"name": "Alice", "email": "alice@example.test", "subscribe": false}
-]
+{"success":true,"operation":"FillBatch","error":null,"batch":{"data":"tests/e2e_fixtures/real/batch_data.csv","data_sha256":"f54db1a3d0d0ddd838ce6cacdfece9c4f5f5f03dc290d8e429adafc30f569a14","data_source":"file","date":"2026-11-16","execution_time_ms":44,"failed":0,"job_id":"fill-batch-1794843820820392-93","operations_applied":["pdf_fill_form","pdf_flatten"],"receipt_path":"tests/e2e_fixtures/out/batch9_test/cli_fill_batch_out/execution_receipt.json","results":[{"index":1,"output_path":"tests/e2e_fixtures/out/batch9_test/cli_fill_batch_out/Jane Doe.pdf","output_sha256":"a7c3074932506c87d17eadaa03290cc3df84da243a7b4c9f5426a03a0498402c","success":true}],"started_at":"2026-11-16T15:43:40.820392996+00:00","succeeded":4,"success":true,"template":"tests/e2e_fixtures/real/form.pdf","template_sha256":"25316f962c77870acaeb5b3317b2e467fa32ebe29e5574bf8c872df542a86cf1","total":4}}
 ```
 
-CSV headers must be unique and nonempty. UTF-8 BOMs, quoted commas and quoted
-multiline CSV values are accepted. JSON record values must be strings, numbers,
-booleans or null; null becomes an empty string. Missing keys fail that row. Extra
-columns can be used for naming without being sent to the form engine.
-
-Field names match column names exactly, including fully qualified hierarchical
-names such as `customer.name`. Override individual bindings with
-`--field-map mapping.json`; keys are PDF field names and values are source columns:
-
-```json
-{"customer.name": "name", "customer.email": "email"}
+#### 2. Numbered Outputs with Editable Fields Preserved
+```bash
+paperpilot fill-batch \
+  --template tests/e2e_fixtures/real/form.pdf \
+  --data tests/e2e_fixtures/real/batch_data.csv \
+  --output-dir tests/e2e_fixtures/out/batch9_test/cli_editable_out \
+  --name-template "{index:04}.pdf" \
+  --keep-editable \
+  --json
 ```
 
-Checkboxes accept true/false, 1/0, yes/no, on/off or the template's checked export
-state. Empty values clear the checkbox. Every supported form field needs a bound
-column; an empty string is different from a missing column.
+#### CLI Parameters
+- `--template` *(string, required)*: Local AcroForm PDF template.
+- `--data` *(string, required)*: UTF-8 CSV with header row, or a JSON array of record objects.
+- `--output-dir` *(string, required)*: Output directory where filled PDFs and `execution_receipt.json` will be written.
+- `--name-template` *(string, optional, default: `"{index:04}.pdf"`)*: Filename pattern supporting `{row.column}`, `{date}`, `{index}`, and `{index:04}`.
+- `--field-map` *(string, optional)*: Path to JSON mapping object translating PDF form field names to data column names.
+- `--keep-editable` *(flag, optional)*: Retain interactive PDF fields instead of baking form appearances into page content.
+- `--date` *(string, optional)*: Fixed `YYYY-MM-DD` date override for deterministic, repeatable batch runs.
+- `--json` *(flag, optional)*: Print JSON batch summary and execution receipt to stdout.
 
-### Output and failures
+---
 
-By default, form appearances are painted into page content and the widgets are
-removed. Existing page content and unrelated annotations remain. Hidden widgets
-are removed without revealing their values. `--keep-editable` preserves filled
-interactive fields with regenerated appearances and checkbox states.
-
-Output files are published without overwriting existing PDFs. Duplicate names
-fail the later row. Other rows continue. An existing `execution_receipt.json`
-prevents reusing an old batch directory; choose a fresh output directory for a
-new run. No partial temporary PDFs remain after handled row failures.
-
-- Exit 0: all rows succeeded.
-- Exit 1: one or more rows failed; successful outputs and the full receipt remain.
-- Invalid template, data format or configuration: fail before starting the batch.
-- `--json`: one JSON object with `success`, `operation`, `error`, and a `batch`
-  receipt after batch processing. CLI argument syntax errors use Clap's usual
-  diagnostics. The receipt includes `results[]` with a 1-based row index,
-  success/error, output path and output hash, plus template/data hashes and UTC
-  timestamps. Input record values are not copied into the receipt.
-
-### MCP JSON-RPC
+### Execution Receipts
+Every batch run generates a tamper-evident `execution_receipt.json` in the target directory:
 
 ```json
 {
-  "name": "batch_fill",
-  "arguments": {
-    "template": "/local/customer-form.pdf",
-    "output_dir": "/local/batch-001",
-    "data": "/local/customers.csv"
-  }
+  "success": true,
+  "job_id": "fill-batch-1794843820820392-93",
+  "started_at": "2026-11-16T15:43:40.820392996+00:00",
+  "date": "2026-11-16",
+  "template": "tests/e2e_fixtures/real/form.pdf",
+  "data": "tests/e2e_fixtures/real/batch_data.csv",
+  "data_source": "file",
+  "template_sha256": "25316f962c77870acaeb5b3317b2e467fa32ebe29e5574bf8c872df542a86cf1",
+  "data_sha256": "f54db1a3d0d0ddd838ce6cacdfece9c4f5f5f03dc290d8e429adafc30f569a14",
+  "receipt_path": "tests/e2e_fixtures/out/batch9_test/cli_fill_batch_out/execution_receipt.json",
+  "operations_applied": [
+    "pdf_fill_form",
+    "pdf_flatten"
+  ],
+  "total": 4,
+  "succeeded": 4,
+  "failed": 0,
+  "execution_time_ms": 44,
+  "results": [
+    {
+      "index": 1,
+      "success": true,
+      "output_path": "tests/e2e_fixtures/out/batch9_test/cli_fill_batch_out/Jane Doe.pdf",
+      "output_sha256": "a7c3074932506c87d17eadaa03290cc3df84da243a7b4c9f5426a03a0498402c"
+    }
+  ]
 }
 ```
 
+---
+
+### MCP JSON-RPC
+`cli_fill_batch` is exposed in Model Context Protocol clients as an identical tool alias to `batch_fill`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "cli_fill_batch",
+    "arguments": {
+      "template": "tests/e2e_fixtures/real/form.pdf",
+      "data": "tests/e2e_fixtures/real/batch_data.csv",
+      "output_dir": "tests/e2e_fixtures/out/batch9_test/mcp_cli_batch",
+      "name_template": "{row.FullName}.pdf"
+    }
+  },
+  "id": 1
+}
+```
+
+---
+
 ### REST API
+Execute via REST API through the gateway automation endpoints:
 
 ```bash
-curl -X POST http://127.0.0.1:7823/v1/automation/fill-batch \
-  -H 'Content-Type: application/json' \
-  -d '{"template":"/local/customer-form.pdf","output_dir":"/local/batch-001","data":"/local/customers.csv"}'
+curl -s -X POST http://127.0.0.1:7823/v1/automation/fill-batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template": "tests/e2e_fixtures/real/form.pdf",
+    "data": "tests/e2e_fixtures/real/batch_data.csv",
+    "output_dir": "tests/e2e_fixtures/out/batch9_test/api_cli_batch_out",
+    "name_template": "{row.FullName}.pdf"
+  }'
 ```
+
+---
+
+### WASM Support
+Not applicable in browser WASM. Batch file creation, collision checks, receipt generation, and directory isolation require native filesystem access.
+
+---
+
+### Known Limitations & Troubleshooting
+- **Existing Receipts**: Re-running a batch into a directory that already contains `execution_receipt.json` causes an error to prevent overwriting prior run audits.
+- **Filename Sanitization**: Tokens containing path separators (`/`, `\`) or reserved characters (`:`, `*`, `?`, `"`, `<`, `>`, `|`) are converted to underscores `_` to guarantee filesystem safety.
+- **Header Matching**: Column headers must correspond with PDF field names. If names differ, provide a `--field-map` mapping JSON file.

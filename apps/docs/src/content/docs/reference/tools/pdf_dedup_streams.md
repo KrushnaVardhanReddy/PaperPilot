@@ -1,44 +1,144 @@
 ---
-title: Lossless Stream Deduplication
-description: Lossless hash-based indirect object stream deduplication & CMYK-safe image compression
+title: "pdf_dedup_streams"
+description: "Reference, CLI, MCP, and REST API commands for pdf_dedup_streams lossless object stream deduplication."
+sidebar:
+  order: 58
 ---
 
-# Lossless Stream Deduplication (`pdf_dedup_streams`)
+**Status**: ✅ Verified  |  **Format**: PDF $\to$ Deduplicated PDF
 
-The `pdf_dedup_streams` tool performs a lossless object stream deduplication pass on the PDF document. It leverages cryptographic hashing (SHA-256) to identify byte-identical streams across the entire document structure, ensuring zero false positives. Duplicate streams are merged into a single canonical indirect object, reducing file size significantly without sacrificing any data.
+### What it does
+**Performs lossless indirect object stream deduplication and CMYK-safe document compression.**  
+Leverages cryptographic hashing (SHA-256) to identify byte-identical streams across the entire document structure, ensuring zero false positives. Duplicate streams are merged into a single canonical indirect object, reducing file size significantly without sacrificing any data.
 
-It also incorporates a CMYK color space guard, preserving original prepress and print quality profiles (`/DeviceCMYK` or `/ICCBased`) during general document compression workflows to prevent irreversible color-space distortion.
+- **Cryptographic Stream Hashing**: Computes SHA-256 digests of all uncompressed and compressed object streams (fonts, vector forms, raster images, content streams).
+- **Canonical Object Consolidation**: Rewires all indirect references across page dictionaries to point to the canonical stream object and eliminates redundant clones.
+- **CMYK Color Space Guard**: Preserves original prepress and print quality profiles (`/DeviceCMYK` or `/ICCBased`) during compression workflows to prevent irreversible color-space distortion.
+- **Lossless Size Reduction**: Ideal for compiled documents, slide decks, repetitive catalog pages, and multi-page reports with repeated header/footer art or embedded logos.
 
-### Invocation Examples
+---
 
-#### 1. CLI
-Use the CLI to deduplicate streams in a PDF and save to a new file:
+### CLI
+`pdf_dedup_streams` is invoked via `paperpilot pdf-dedup-streams`:
+
 ```bash
-paperpilot dedup-streams input.pdf -o deduped_output.pdf
+# Deduplicate redundant streams and save to optimized target file
+paperpilot pdf-dedup-streams \
+  --input tests/e2e_fixtures/real/single_page.pdf \
+  --output tests/e2e_fixtures/out/penta_e2e/deduped.pdf \
+  --json
 ```
 
-#### 2. MCP JSON-RPC
-Invoke the operation via a generic tool execution request in the MCP server:
+#### CLI Parameters
+- `--input` *(string, required)*: Path to the input PDF file.
+- `--output` *(string, required)*: Destination path for the deduplicated PDF.
+- `--json` *(flag, optional)*: Emit JSON execution status to stdout.
+
+---
+
+### MCP JSON-RPC
+Invoke `pdf_dedup_streams` via Model Context Protocol:
+
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "1",
-  "method": "call_tool",
+  "method": "tools/call",
   "params": {
     "name": "pdf_dedup_streams",
     "arguments": {
-      "input": "<base64_encoded_pdf_bytes>"
+      "input": "tests/e2e_fixtures/real/single_page.pdf",
+      "output": "tests/e2e_fixtures/out/penta_e2e/deduped.pdf"
     }
+  },
+  "id": 1
+}
+```
+
+#### MCP Schema Parameters
+- `input` *(string, required)*: Path to the input PDF file.
+- `output` *(string, required)*: Path to save the deduplicated PDF.
+
+---
+
+### REST API
+Execute stream deduplication via PaperPilot Gateway:
+
+```bash
+# Dedicated Route
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_dedup_streams \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/deduped.pdf"
+  }'
+```
+
+```bash
+# Alternative Hyphenated Route
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/dedup-streams \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/deduped.pdf"
+  }'
+```
+
+```bash
+# Universal Tool Route
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_dedup_streams \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/deduped.pdf"
+  }'
+```
+
+---
+
+### WebAssembly (WASM)
+In browser and client runtimes via `@paperpilot/wasm`:
+
+```typescript
+import { pdf_dedup_streams } from "@paperpilot/wasm";
+
+const deduplicatedPdfBytes = pdf_dedup_streams(
+  inputPdfBytes,
+  JSON.stringify({})
+);
+```
+
+---
+
+### Return Structure & Output Schema
+When invoked via MCP or Gateway REST API:
+
+```json
+{
+  "success": true,
+  "message": "Lossless Stream Deduplication executed successfully",
+  "output_path": "tests/e2e_fixtures/out/penta_e2e/deduped.pdf",
+  "data": {
+    "output_path": "tests/e2e_fixtures/out/penta_e2e/deduped.pdf"
   }
 }
 ```
 
-#### 3. REST API
-Deduplicate streams by making a POST request to the Gateway API:
-```bash
-curl -X POST http://localhost:3000/api/v1/pdf/dedup-streams \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": "<base64_encoded_pdf_bytes>"
-  }'
+When invoked via CLI:
+```text
+PdfDedupStreams complete.
 ```
+
+```json
+{
+  "success": true,
+  "operation": "PdfDedupStreams",
+  "error": null
+}
+```
+
+---
+
+### Known Limitations & Troubleshooting
+- **CLI Subcommand Name**: The CLI subcommand is `pdf-dedup-streams`. Do not use `dedup-streams` directly without the `pdf-` prefix on the CLI.
+- **Documents Without Redundant Streams**: If a document contains unique assets (such as single-page scans or variable raster images), deduplication will complete successfully with an identical byte structure.
+- **Signed Documents**: Re-indexing indirect object streams alters cross-reference byte offsets and will invalidate existing digital signatures. Run deduplication before applying signatures.

@@ -15,6 +15,9 @@ export default defineConfig({
       social: {
         github: 'https://github.com/KrushnaVardhanReddy/PaperPilot',
       },
+      components: {
+        Header: './src/components/VersionSelectHeader.astro',
+      },
       sidebar: [
         {
           label: 'Getting Started',

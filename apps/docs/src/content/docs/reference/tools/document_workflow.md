@@ -1,58 +1,202 @@
 ---
 title: "document_workflow"
-description: "Execute local TOML or JSON document recipes with runtime conditions and per-stage outcomes."
+description: "Reference, CLI, MCP, REST API, and WASM commands for document_workflow multi-step pipelines."
 sidebar:
   order: 3
 ---
 
+**Status**: ✅ Verified  |  **Format**: PDF + Recipe (.ppflow / TOML / JSON / Preset) $\to$ PDF + Execution Report
+
 ### What it does
 
-Runs a version-1 recipe through one shared in-memory PDF engine. Existing JSON
-`SavedWorkflow` files and presets remain accepted. TOML `.ppflow` recipes add
-runtime conditions, explicit dependencies and no-match handling. Execution is
-local; the runner never downloads models, interpolates environment variables,
-or sends document bytes to a service.
+Runs a declarative version-1 document workflow recipe through one unified in-memory PDF engine.
+Accepts custom TOML `.ppflow` files, JSON recipe definitions, or built-in system presets (e.g. `preset-legal-discovery`, `preset-clean-scan`).
 
-File-based CLI/MCP/REST wrappers support opt-in [dynamic output naming](/reference/output-naming/) using input names, UTC dates, hashes, indexes and PDF Info metadata. Set `name_template` and supply an output directory to preserve existing output files.
+- **Unified Multi-Stage Execution**: Supports compound document transformations without intermediate on-disk tempfile writing.
+- **Runtime Conditions & Branching**: Evaluates dynamic conditions (scanned checks, page counts, form fields, text matching, byte size) on the actual document entering each stage.
+- **Topological Dependencies**: Supports declared stage dependencies (`depends_on = ["stage-id"]`) for fan-out execution.
+- **Universal Interface Support**: Available across CLI (`paperpilot workflow run`), MCP (`document_workflow`), REST API (`POST /api/v1/workflow/run-json` and multipart `POST /api/v1/workflow/run`), and WebAssembly (`WasmPdfEngine.workflow`).
+- **Audit Trails**: Disk-based executions automatically persist terminal receipts (`.paperpilot-receipts/run-*.json`) queryable via [`execution_receipt_list`](/reference/tools/execution_receipt_list/) and [`execution_receipt_get`](/reference/tools/execution_receipt_get/).
+
+---
 
 ### CLI
 
+#### Run Workflow
 ```bash
-paperpilot run examples/workflows/conditional-invoice.ppflow invoice.pdf -o processed.pdf --json
-paperpilot workflow run --recipe invoice.ppflow --input invoice.pdf --output processed.pdf --json
-paperpilot workflow inspect --recipe invoice.ppflow --json
-paperpilot workflow list --json
+# Execute workflow using preset or custom recipe
+paperpilot workflow run \
+  --recipe ManaulTestingFixtures/document_workflow/Input/audit_pipeline.ppflow \
+  --input ManaulTestingFixtures/document_workflow/Input/incoming_document.pdf \
+  --output out/audit_pipeline_out.pdf \
+  --json
+
+# Execute using built-in preset
+paperpilot workflow run \
+  --preset preset-legal-discovery \
+  --input document.pdf \
+  --output out/legal_out.pdf \
+  --json
 ```
 
-Specify exactly one of `--preset` or `--recipe` with `workflow`. The `run`
-shortcut takes the recipe and input as positional arguments. Input and output
-must be different files. Successful CLI output is published atomically; a
-recipe failure does not replace an existing output. `--json` prints exactly one
-object; its `workflow` field contains the execution report. Failures exit nonzero.
-Inspection lists parameter names without exposing their values.
-
-Optional `--name-template` (CLI) / `name_template` (MCP and REST JSON) uses `output` as a directory and publishes a dynamically named PDF without replacing existing files. Reports expose the actual output path. [Dynamic output naming](/reference/output-naming/) documents input, UTC date, hash, index and PDF Info tokens; for example `{input_stem}-{hash:8}.pdf`.
-
-### MCP JSON-RPC
+**Output**:
 ```json
 {
-  "name": "document_workflow",
-  "arguments": {
-    "input": "invoice.pdf",
-    "output": "processed.pdf",
-    "recipe": "examples/workflows/conditional-invoice.ppflow"
+  "success": true,
+  "operation": "Workflow",
+  "error": null,
+  "workflow": {
+    "workflow_id": "Audit & Watermark Pipeline",
+    "workflow_name": "Audit & Watermark Pipeline",
+    "job_id": "run-HrUGVW",
+    "output": "out/audit_pipeline_out.pdf",
+    "receipt_path": "out/.paperpilot-receipts/run-HrUGVW.json",
+    "output_bytes_len": 1860,
+    "duration_ms": 2,
+    "steps_total": 2,
+    "steps_completed": 2,
+    "steps_skipped": 0,
+    "archived_original": false,
+    "error": null,
+    "stages": [
+      {
+        "id": "step_1",
+        "operation_id": "pdf_watermark",
+        "status": "completed",
+        "reason": null,
+        "duration_ms": 0
+      },
+      {
+        "id": "step_2",
+        "operation_id": "pdf_page_numbers",
+        "status": "completed",
+        "reason": null,
+        "duration_ms": 0
+      }
+    ]
   }
 }
 ```
 
+#### Inspect and List Workflows
+```bash
+# List available workflow presets
+paperpilot workflow list --json
+
+# Inspect stages and parameters of a recipe or preset
+paperpilot workflow inspect --recipe audit_pipeline.ppflow --json
+```
+
+#### CLI Parameters
+| Flag | Description |
+| --- | --- |
+| `--recipe <PATH>` | Path to custom TOML (`.ppflow`) or JSON workflow file (mutually exclusive with `--preset`) |
+| `--preset <NAME>` | Name of built-in preset (e.g. `preset-legal-discovery`, `preset-clean-scan`) |
+| `--input <PATH>` | Input PDF file |
+| `--output <PATH>` | Output destination file path (or destination directory when `--name-template` is passed) |
+| `--name-template <TEMPLATE>` | Output filename template (e.g., `{input_stem}-{hash:8}.pdf`); preserves existing files |
+| `--json` | Format output as structured JSON |
+
+---
+
+### MCP JSON-RPC
+
+Call tool `document_workflow` (or alias `pdf_document_workflow`):
+
+```json
+{
+  "name": "document_workflow",
+  "arguments": {
+    "input": "incoming_document.pdf",
+    "output": "processed.pdf",
+    "recipe": "audit_pipeline.ppflow"
+  }
+}
+```
+
+**MCP Response**:
+```json
+{
+  "success": true,
+  "message": "Workflow executed successfully.",
+  "output_path": "processed.pdf",
+  "data": {
+    "workflow_id": "Audit & Watermark Pipeline",
+    "job_id": "run-abc123",
+    "receipt_path": ".paperpilot-receipts/run-abc123.json",
+    "steps_total": 2,
+    "steps_completed": 2,
+    "steps_skipped": 0,
+    "output_bytes_len": 1860,
+    "duration_ms": 3,
+    "stages": [
+      {"id": "step_1", "operation_id": "pdf_watermark", "status": "completed", "duration_ms": 1},
+      {"id": "step_2", "operation_id": "pdf_page_numbers", "status": "completed", "duration_ms": 1}
+    ]
+  }
+}
+```
+
+---
+
 ### REST API
+
+#### 1. File-Based JSON Runner
+`POST /api/v1/workflow/run-json`
+
 ```bash
 curl -X POST http://127.0.0.1:7823/api/v1/workflow/run-json \
   -H 'Content-Type: application/json' \
-  -d '{"input":"invoice.pdf","output":"processed.pdf","recipe":{"name":"Conditional invoice","steps":[{"id":"large","operationId":"pdf_compress","condition":{"if_page_count_gt":50},"params":{"quality":"medium"}}]}}'
+  -d '{
+    "input": "invoice.pdf",
+    "output": "processed.pdf",
+    "preset": "preset-legal-discovery"
+  }'
 ```
 
-### Recipe format
+#### 2. Streaming Multipart Endpoint
+`POST /api/v1/workflow/run`
+
+Runs directly against uploaded document bytes without local filesystem history:
+```bash
+curl -X POST http://127.0.0.1:7823/api/v1/workflow/run \
+  -F "file=@invoice.pdf" \
+  -F "recipe=@conditional-invoice.ppflow" \
+  -o processed.pdf
+```
+
+#### 3. Preset Inspection
+`GET /api/v1/workflow/presets`
+
+Retrieves all pre-registered workflow presets and their stage metadata:
+```bash
+curl -s http://127.0.0.1:7823/api/v1/workflow/presets
+```
+
+---
+
+### WebAssembly (WASM)
+
+In browser or Edge worker environments, workflows execute using `WasmPdfEngine`:
+
+```typescript
+import init, { WasmPdfEngine } from 'paperpilot-wasm';
+
+await init();
+
+// Retrieve list of built-in preset definitions
+const presetsJson = WasmPdfEngine.workflow_presets();
+
+// Execute a recipe or preset against in-memory PDF Uint8Array
+const inputBytes = new Uint8Array(...);
+const recipeTomlOrJson = `...`; // Or pass preset string e.g. "preset-legal-discovery"
+
+const outputBytes = WasmPdfEngine.workflow(inputBytes, recipeTomlOrJson);
+```
+
+---
+
+### Recipe Format (.ppflow)
 
 ```toml
 name = "Conditional invoice processing"
@@ -79,111 +223,48 @@ text = "PROCESSED"
 opacity = 0.3
 ```
 
-`[[step]]` / `tool` are aliases for `[[stage]]` / `op`. JSON accepts `steps`
-and `operationId` (also `operation_id`). Existing IDs, `updatedAt`, labels,
-icons, `isPreset`, and `teamId` remain compatible. A missing workflow ID defaults
-to its name when parsed. Version defaults to `"1"`. Stage IDs must be unique and
-nonempty; recipes contain 1–256 stages. Unknown schema fields are rejected.
+#### Stage Directives
+- `id`: Nonempty, unique stage identifier.
+- `op` / `tool`: Operation name (e.g. `watermark`, `compress`, `rotate`, `page_numbers`, `bates`, `remove_blank`, `flatten`, `linearize`, `sanitize`, `encrypt`, `ocr`).
+- `depends_on`: Optional list of stage IDs whose output this stage consumes (default: consumes previous declared stage).
+- `on_no_match`: Action taken if condition evaluates to false:
+  - `skip` (default): Record stage as skipped; pass previous artifact unchanged.
+  - `archive_original`: Halt workflow and publish the original input unmodified.
+  - `error`: Abort execution immediately with failure.
 
-### Conditions
-
-Conditions inspect the **actual PDF entering that stage**, after earlier changes
-or the explicitly selected dependency. Supplied tests are combined with AND.
-
-Combinators include `all`, `any`, and `not`. If these combinators are used, they expect an array (`all`, `any`) or an object (`not`) enclosing other conditions.
-
-| Field | Meaning |
+#### Condition Selectors
+| Condition | Description |
 | --- | --- |
-| `text_contains = "term"` | Checks if extractable text (up to 16 MiB) matches `term` case-insensitively. |
-| `has_form_fields = true` | Validates presence of an interactive AcroForm. |
-| `is_signed = true` | Validates presence of digital signatures. |
-| `file_size_bytes = { between = [min, max] }` | Matches byte size natively against numerical comparators. |
-| `if_scanned = true` | At least one page paints an image and has no extractable non-whitespace text. |
-| `if_scanned = false` | Inverts that heuristic, enabling a complementary branch. |
-| `if_page_count_gt = 50` | Page count is strictly greater than 50. |
-| `comparator = "Greater", value = 3` | Page-count comparison; also `GreaterOrEqual`, `Equal`, `Less`, `LessOrEqual`. |
+| `text_contains = "term"` | Case-insensitive search on extractable text |
+| `has_form_fields = true` | Validates presence of interactive AcroForm fields |
+| `is_signed = true` | Validates digital signature presence |
+| `file_size_bytes = { between = [min, max] }` | Matches file size against numeric bounds |
+| `if_scanned = true` | Heuristic detecting scanned pages (image present with no extractable text) |
+| `if_page_count_gt = N` | Matches if total document pages strictly exceed N |
+| `all`, `any`, `not` | Logical combinators enclosing nested conditions |
 
-Scan detection includes image XObjects, nested Form XObjects, inherited page
-resources and mixed text/image documents. Blank pages and unused images in
-resources do not count as scans. This heuristic is not a classifier: an OCRed
-scan with a text layer normally evaluates false. Invalid PDF structures or text
-inspection failures return errors instead of guessing. Inspection bounds Form
-depth to 32, inherited resource depth to 64, and content to 16 MiB per inspected
-page/Form stream.
+---
 
-| `on_no_match` | Result |
+### Supported Operations & Parameters
+
+| Operation | Parameters |
 | --- | --- |
-| `skip` (default) | Record `skipped`; pass the stage input unchanged to dependants. |
-| `archive_original` | Stop the workflow and return the exact original input bytes to the requested output. Remaining stages are `not_run`; no archive directory is created. |
-| `error` | Record `failed`; abort without publishing a partial PDF. |
-
-Empty conditions, incomplete comparator/value pairs and `on_no_match` without a
-condition are invalid.
-
-### Dependencies and output
-
-Without `depends_on`, a stage consumes the previous **declared** stage (the
-first consumes the input). `depends_on = ["stage-id"]` consumes that stage's
-artifact, enabling fan-out and stable topological execution. Missing IDs and
-cycles fail before execution. The final declared stage selects the output.
-Multiple dependencies/fan-in require an explicit artifact merge and are rejected
-in this version. Conditions on separate stages are evaluated independently;
-they are not a paired IF/ELSE UI node. Use the same dependency when both tests
-must inspect the same source artifact.
-
-### Supported operations and parameters
-
-The `pdf_` prefix is optional for the operations below.
-
-| Operation | Accepted parameters |
-| --- | --- |
-| `watermark` | `text`, `opacity` (0–1), `angle` (−360–360) |
-| `compress` | `quality` or `level`; low/screen, medium/ebook, high/prepress, integer 1–100; aggressive maps to low |
+| `watermark` | `text`, `opacity` (0.0–1.0), `angle` (-360–360) |
+| `compress` | `quality` or `level` (`low`/`medium`/`high` or 1–100) |
 | `rotate` | `angle`: 0, 90, 180, 270 |
-| `page_numbers` | `position` (top/bottom left/center/right), `format` |
+| `page_numbers` | `position` (`bottom-right`, `bottom-center`, etc.), `format` |
 | `bates` | `prefix`, `start` (u32), `padding` (0–32) |
 | `remove_blank` | `sensitivity` (0–100) |
 | `flatten`, `linearize` | None |
-| `sanitize` | Boolean `remove_metadata`, `remove_attachments`, `remove_scripts`, `remove_thumbnails`, `remove_private_data` |
-| `encrypt` | Nonempty `password` or `user_password`; optional `owner_password`; final declared stage only |
-| `ocr` | None; native OCR-enabled build with locally installed models required |
-| `filter_page_count` | No parameters; requires a condition; passes matching input through |
+| `sanitize` | Boolean flags: `remove_metadata`, `remove_attachments`, `remove_scripts`, `remove_thumbnails`, `remove_private_data` |
+| `encrypt` | `password` or `user_password`; optional `owner_password` (terminal stage only) |
+| `ocr` | Native OCR build with local models installed |
 
-Unknown operations and parameter names/types fail before any stage executes,
-even if their conditions would skip them. Redaction is explicitly unsupported
-by this workflow runner: the old silent pass-through has been removed. The
-`redact-protect` preset needs explicit supported redaction/password configuration
-and now fails rather than claiming protection. Encryption really encrypts the
-output and must be terminal, with no dependent stages. Reports exclude parameter values/passwords.
+---
 
-OCR uses the existing native operation. Missing models, unavailable build
-capabilities, or no recognized text produce a failure. There is no automatic
-model download. Scan detection can recognize structures the current OCR engine
-cannot process; those inputs fail explicitly. WASM builds can skip OCR stages on
-text PDFs, but matching OCR stages require a native OCR-enabled build.
+### Known Limitations & Troubleshooting
 
-### Other interfaces and reports
-
-- MCP `document_workflow` / `pdf_document_workflow`: `input`, `output`, and exactly
-  one `preset` or `recipe` (local recipe path, raw JSON, or multiline TOML).
-  Success returns the report in `data`; execution errors include it in error data.
-- REST `POST /api/v1/workflow/run-json`: `input`, `output`, and one `preset` or
-  `recipe` (JSON object or TOML/JSON string). Success/error JSON includes `report`.
-- REST multipart `POST /api/v1/workflow/run`: recipe accepts TOML or JSON;
-  successful PDF responses include executed/skipped counts and duration headers.
-- WASM `WasmPdfEngine.workflow(bytes, recipe)`: uses the same parser and runner,
-  returning bytes or an error. It also accepts preset IDs.
-
-Reports contain total/completed/skipped counts, output byte length, elapsed time,
-`archived_original`, an optional error and per-stage `completed`, `skipped`,
-`failed` or `not_run` statuses with reasons and timings. Output length is zero
-on engine failure. File-based CLI/MCP/REST JSON runs now persist terminal receipts
-in `OUTPUT_PARENT/.paperpilot-receipts`, adding `job_id` and `receipt_path` to the
-existing report shape. Query them after restart with `execution_receipt_list` and
-`execution_receipt_get`. Byte-only and multipart runners retain their existing
-filesystem-free behavior.
-
-Folder/schedule/webhook triggers, `[output]` routing, retries, secret interpolation,
-multi-artifact joins and desktop IF/ELSE editing are separate tasks. Their schema
-fields are rejected instead of silently ignored. Existing standalone tools
-continue to expose their own broader parameter sets.
+- **Mutual Exclusivity**: You must provide exactly one of `recipe` or `preset`. Supplying both or neither will result in a validation error.
+- **Terminal Encryption**: The `encrypt` operation must be the final declared stage in the workflow. Dependent stages cannot operate on encrypted PDF streams.
+- **OCR Engine Dependencies**: OCR stages require a native binary with compiled OCR models. If models are missing or unconfigured, the stage will fail explicitly (models are never auto-downloaded over the network).
+- **Redaction Unsupported in Workflows**: Redaction (`pdf_redact`) requires explicit coordinates or pattern review and is intentionally unsupported as an automated workflow step.
