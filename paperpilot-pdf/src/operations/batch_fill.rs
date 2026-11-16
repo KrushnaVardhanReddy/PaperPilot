@@ -361,12 +361,11 @@ fn run_impl(args: &BatchFillConfig, inline: Option<Vec<u8>>) -> OperationResult<
     fs::create_dir_all(&args.output_dir)?;
     let output_dir = fs::canonicalize(&args.output_dir)?;
     let receipt_path = output_dir.join("execution_receipt.json");
-    // Reserve a batch receipt file before producing anything.
-    // Truncate/create so re-running a batch into the same output directory does not fail with File exists (os error 17).
+    // Reserve a new batch receipt before producing anything. Never overwrite an
+    // existing batch, PDF, symlink target or concurrent writer's output.
     let mut receipt_file = OpenOptions::new()
         .write(true)
-        .create(true)
-        .truncate(true)
+        .create_new(true)
         .open(&receipt_path)?;
     let mut results = Vec::new();
     for (offset, row) in rows.into_iter().enumerate() {
@@ -390,7 +389,7 @@ fn run_impl(args: &BatchFillConfig, inline: Option<Vec<u8>>) -> OperationResult<
             temporary.write_all(&output)?;
             temporary.as_file().sync_all()?;
             temporary
-                .persist(&target)
+                .persist_noclobber(&target)
                 .map_err(|error| PdfError::IoError(error.error))?;
             Ok((target, hash(&output)))
         })();

@@ -4,15 +4,10 @@ scripts/fetch_test_pdfs.py
 scripts/test_tri_interface_e2e.py
 scripts/run_system_benchmark.py
 scripts/gif_generators/
-apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
-apps/desktop/tests/e2e_real_desktop_execution.spec.ts
-apps/desktop/tests/e2e_all_tools_real_execution.spec.ts
-apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts
-apps/desktop/tests/e2e_suite_1_page_operations.spec.ts
-apps/desktop/tests/e2e_suite_2_security_forms.spec.ts
-apps/desktop/tests/e2e_unmocked_suite1_page_ops.spec.ts
-apps/desktop/tests/e2e_unmocked_suite2_security_forms.spec.ts
-apps/desktop/tests/e2e_unmocked_suite3_conversions_ai.spec.ts
+apps/desktop/tests/
+apps/embed/tests/
+apps/web/tests/
+tests/
 
 # Android standard main launcher activity must be exported=true for OS intent launching
 apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml
@@ -20,4 +15,3 @@ apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml
 # Swagger UI public documentation CDN assets & canonical link tag
 apps/web/public/swagger-ui.html
 apps/web/index.html
-

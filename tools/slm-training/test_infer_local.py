@@ -9,12 +9,13 @@ import pytest
 
 from generate_dataset import generate_compound_workflow_record
 from infer_local import default_cases, load_inference_model, validate_response
+from templates import COMPOUND_WORKFLOW_TEMPLATES
 
 
 def test_default_benchmark_covers_single_compound_and_refusal_cases():
     cases = default_cases()
     assert sum(len(case.get("tools", [])) == 1 for case in cases) == 6
-    assert sum(len(case.get("tools", [])) > 1 for case in cases) == 15
+    assert sum(len(case.get("tools", [])) > 1 for case in cases) == len(COMPOUND_WORKFLOW_TEMPLATES)
     assert sum(case.get("refusal", False) for case in cases) == 1
 
 

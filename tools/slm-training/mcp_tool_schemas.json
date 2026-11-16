@@ -216,6 +216,10 @@
         "description": "Path to input file",
         "type": "string"
       },
+      "orientation": {
+        "description": "Page orientation (portrait or landscape)",
+        "type": "string"
+      },
       "output": {
         "description": "Path to output PDF file",
         "type": "string"
@@ -297,12 +301,23 @@
       "output": {
         "description": "The output PDF file path.",
         "type": "string"
+      },
+      "regex": {
+        "description": "Regex pattern to find and annotate.",
+        "type": "string"
+      },
+      "rules": {
+        "description": "List of pattern/rule-based annotation objects (type, color, search, regex, occurrence).",
+        "type": "array"
+      },
+      "search": {
+        "description": "Keyword text to find and annotate.",
+        "type": "string"
       }
     },
     "required": [
       "input",
-      "output",
-      "annotations"
+      "output"
     ],
     "type": "object"
   },
@@ -361,6 +376,10 @@
       "padding": {
         "description": "Padding length.",
         "type": "integer"
+      },
+      "position": {
+        "description": "Position (bottom-right, bottom-left, bottom-center, top-right, top-left, top-center). Default: bottom-right.",
+        "type": "string"
       },
       "prefix": {
         "description": "Prefix.",
@@ -535,6 +554,10 @@
         "description": "Path to input file",
         "type": "string"
       },
+      "orientation": {
+        "description": "Page orientation (portrait or landscape)",
+        "type": "string"
+      },
       "output": {
         "description": "Path to output PDF file",
         "type": "string"
@@ -564,6 +587,10 @@
         "description": "Path to input file",
         "type": "string"
       },
+      "orientation": {
+        "description": "Page orientation (portrait or landscape)",
+        "type": "string"
+      },
       "output": {
         "description": "Path to output PDF file",
         "type": "string"
@@ -591,6 +618,10 @@
       },
       "input": {
         "description": "Path to input file",
+        "type": "string"
+      },
+      "orientation": {
+        "description": "Page orientation (portrait or landscape)",
         "type": "string"
       },
       "output": {
@@ -1032,8 +1063,16 @@
         "description": "The input PDF file path.",
         "type": "string"
       },
+      "keywords": {
+        "description": "The new keywords.",
+        "type": "string"
+      },
       "output": {
         "description": "The output PDF file path.",
+        "type": "string"
+      },
+      "subject": {
+        "description": "The new subject.",
         "type": "string"
       },
       "title": {
@@ -1166,6 +1205,10 @@
       "input": {
         "description": "The input PDF file path.",
         "type": "string"
+      },
+      "output": {
+        "description": "The optional output JSON file path.",
+        "type": "string"
       }
     },
     "required": [
@@ -1183,13 +1226,29 @@
         "description": "Path to the PDF to redact.",
         "type": "string"
       },
+      "occurrence": {
+        "description": "Occurrence filter: 'all', 'first', 'last', or indices.",
+        "type": "string"
+      },
       "output": {
         "description": "Path to save the redacted PDF.",
+        "type": "string"
+      },
+      "overlay_text": {
+        "description": "Optional overlay text (e.g. '[REDACTED]').",
         "type": "string"
       },
       "page": {
         "description": "Page number to redact (1-based).",
         "type": "integer"
+      },
+      "query": {
+        "description": "Search keyword or pattern to redact permanently.",
+        "type": "string"
+      },
+      "regex": {
+        "description": "Regular expression to match and redact.",
+        "type": "string"
       },
       "width": {
         "description": "Width.",
@@ -1206,12 +1265,7 @@
     },
     "required": [
       "input",
-      "output",
-      "page",
-      "x",
-      "y",
-      "width",
-      "height"
+      "output"
     ],
     "type": "object"
   },
@@ -1250,6 +1304,10 @@
   },
   "pdf_render": {
     "properties": {
+      "format": {
+        "description": "Output image format: png, jpeg/jpg, webp. Optional, defaults to inferring from output path or png.",
+        "type": "string"
+      },
       "input": {
         "description": "The input PDF file path.",
         "type": "string"
@@ -1811,6 +1869,10 @@
   "workspace_search": {
     "properties": {
       "dir": {
+        "type": "string"
+      },
+      "formats": {
+        "description": "Comma-separated list of formats (pdf,txt,md,docx,xlsx,csv,json) or 'all'",
         "type": "string"
       },
       "input": {
