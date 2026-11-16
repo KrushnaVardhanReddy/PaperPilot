@@ -1,4 +1,4 @@
-package com.paperpilot.app
+package com.usepaperpilot.PaperPilot
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
