@@ -28,10 +28,63 @@ env:
 
 jobs:
   # =========================================================================
-  # 1. PARALLEL DESKTOP GUI BUILDS (Tauri Installers + Standalone Bundles)
+  # 1. WASM PACKAGE (Web, Edge & Desktop Prerequisite)
+  # =========================================================================
+  build-wasm-package:
+    name: Build WASM Package (Web & Edge)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust & WASM Target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: |
+          which wasm-pack || cargo install wasm-pack --locked
+
+      - name: Build WASM Package
+        run: |
+          wasm-pack build --target web --release paperpilot-wasm
+
+      - name: Package WASM Release Bundle
+        run: |
+          mkdir -p release_pkgs staging_wasm
+          cp -r paperpilot-wasm/pkg/* staging_wasm/
+          cp README.md staging_wasm/ || true
+          tar -czvf "release_pkgs/paperpilot-wasm-universal.tar.gz" -C staging_wasm .
+          cd release_pkgs
+          shasum -a 256 "paperpilot-wasm-universal.tar.gz" > "paperpilot-wasm-universal.tar.gz.sha256"
+          cd ..
+
+      - name: Upload WASM Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-wasm
+          path: |
+            release_pkgs/*
+          if-no-files-found: error
+
+      - name: Upload WASM Dist For Desktop Job
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-pkg-dist
+          path: paperpilot-wasm/pkg/
+          if-no-files-found: error
+
+  # =========================================================================
+  # 2. PARALLEL DESKTOP GUI BUILDS (Tauri Installers + Standalone Bundles)
   # =========================================================================
   build-desktop-gui:
     name: Desktop GUI (${{ matrix.os }})
+    needs: [build-wasm-package]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -52,6 +105,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download Prebuilt WASM Package
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-pkg-dist
+          path: paperpilot-wasm/pkg
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -86,17 +145,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Set up wasm32 Target & wasm-pack
-        shell: bash
-        run: |
-          rustup target add wasm32-unknown-unknown
-          which wasm-pack || cargo install wasm-pack --locked
-
-      - name: Build WebAssembly Package for Desktop
-        shell: bash
-        run: |
-          wasm-pack build --target web --release paperpilot-wasm
 
       - name: Install Desktop Frontend Dependencies
         run: |
@@ -372,58 +420,20 @@ jobs:
           if-no-files-found: error
 
   # =========================================================================
-  # 3. WASM PACKAGE (Web, Edge & Browser Extension)
-  # =========================================================================
-  build-wasm-package:
-    name: Build WASM Package (Web & Edge)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Rust & WASM Target
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
-        with:
-          key: wasm32-unknown-unknown
-
-      - name: Install wasm-pack
-        run: |
-          which wasm-pack || cargo install wasm-pack --locked
-
-      - name: Build WASM Package
-        run: |
-          wasm-pack build --target web --release paperpilot-wasm
-
-      - name: Package WASM Release Bundle
-        run: |
-          mkdir -p release_pkgs staging_wasm
-          cp -r paperpilot-wasm/pkg/* staging_wasm/
-          cp README.md staging_wasm/ || true
-          tar -czvf "release_pkgs/paperpilot-wasm-universal.tar.gz" -C staging_wasm .
-          cd release_pkgs
-          shasum -a 256 "paperpilot-wasm-universal.tar.gz" > "paperpilot-wasm-universal.tar.gz.sha256"
-          cd ..
-
-      - name: Upload WASM Package Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-assets-wasm
-          path: |
-            release_pkgs/*
-          if-no-files-found: error
-
-  # =========================================================================
-  # 4. ANDROID APK (Mobile)
+  # 3. ANDROID APK (Mobile)
   # =========================================================================
   build-android-apk:
     name: Build Android APK (Mobile)
+    needs: [build-wasm-package]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download Prebuilt WASM Package
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-pkg-dist
+          path: paperpilot-wasm/pkg
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -461,17 +471,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Set up wasm32 Target & wasm-pack
-        shell: bash
-        run: |
-          rustup target add wasm32-unknown-unknown
-          which wasm-pack || cargo install wasm-pack --locked
-
-      - name: Build WebAssembly Package for Desktop
-        shell: bash
-        run: |
-          wasm-pack build --target web --release paperpilot-wasm
 
       - name: Install Desktop Dependencies
         run: |
