@@ -30,7 +30,7 @@ pipeline_tag: text-generation
 
 **PaperPilot-Qwen-0.5B-Instruct** is an on-device, lightweight specialized small language model (SLM) fine-tuned on top of `Qwen/Qwen2.5-0.5B-Instruct`.
 
-It is engineered specifically for **private, air-gapped document intelligence and tool-calling**, translating natural language user requests into single operations or multi-step chained pipelines across **78+ PaperPilot PDF and document tools**.
+It is engineered specifically for **private, air-gapped document intelligence and tool-calling**, translating natural language user requests into single operations or multi-step chained pipelines across **88 PaperPilot PDF and document tools**.
 
 ## Key Capabilities
 - **Exact Schema Tool-Calling**: Emits valid JSON tool calls for single and multi-step PDF workflows.
@@ -68,11 +68,24 @@ print(tokenizer.decode(outputs[0][len(inputs.input_ids[0]):], skip_special_token
 Apache-2.0 (Open Source)
 """
 
-def push_to_hub(repo_id: str):
+def load_hf_token():
     token = os.environ.get("HF_TOKEN")
+    if token:
+        return token
+    # Try reading from root .env
+    env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
+    if os.path.exists(env_file):
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("HF_TOKEN="):
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return None
+
+def push_to_hub(repo_id: str):
+    token = load_hf_token()
     if not token:
-        print("❌ Error: HF_TOKEN environment variable not found.")
-        print("Set your write token: export HF_TOKEN=hf_...")
+        print("❌ Error: HF_TOKEN environment variable or .env entry not found.")
+        print("Set your write token: export HF_TOKEN=hf_... or add to .env")
         sys.exit(1)
 
     print(f"🚀 Creating Hugging Face repository: {repo_id}")
@@ -91,11 +104,23 @@ def push_to_hub(repo_id: str):
         repo_type="model",
         token=token,
     )
+    # Also upload the quantized GGUF artifact if present
+    gguf_path = os.path.join(os.path.dirname(__file__), "output", "paperpilot-qwen-0.5b-q4_k_m.gguf")
+    if os.path.exists(gguf_path):
+        print(f"📦 Uploading quantized GGUF artifact: {gguf_path}...")
+        api.upload_file(
+            path_or_fileobj=gguf_path,
+            path_in_repo="paperpilot-qwen-0.5b-q4_k_m.gguf",
+            repo_id=repo_id,
+            repo_type="model",
+            token=token,
+        )
+
     print(f"🎉 Model published successfully: https://huggingface.co/{repo_id}")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         repo_id = sys.argv[1]
     else:
-        repo_id = f"KrushnaVardhanReddy/{REPO_NAME}"
+        repo_id = f"kpakkiragari/{REPO_NAME}"
     push_to_hub(repo_id)

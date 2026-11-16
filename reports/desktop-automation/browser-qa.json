@@ -1,0 +1,15 @@
+{
+  "surface": "Browser preview; native lifecycle is tested by Rust integration tests",
+  "checks": [
+    "Disabled native controls in browser",
+    "Restored folder stays stopped",
+    "Nested NOT, false, legacy zero and byte range displayed",
+    "Explicit Apply succeeds",
+    "Condition editor fits 900px viewport"
+  ],
+  "geometry": {
+    "width": 422,
+    "scrollWidth": 422
+  },
+  "pageErrors": []
+}

@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://docs.usepaperpilot.com',
@@ -14,6 +15,9 @@ export default defineConfig({
       social: {
         github: 'https://github.com/KrushnaVardhanReddy/PaperPilot',
       },
+      components: {
+        Header: './src/components/VersionSelectHeader.astro',
+      },
       sidebar: [
         {
           label: 'Getting Started',
@@ -26,9 +30,9 @@ export default defineConfig({
         {
           label: 'Master Tools Reference',
           items: [
-            { label: 'Tools Handbook (All-in-One)', slug: 'reference/50-tools-handbook' },
+            { label: 'Tools Handbook (All-in-One)', slug: 'reference/tools-handbook' },
             {
-              label: 'All Tools Index (70+ Tools)',
+              label: 'All Tools Index (92 Tools)',
               autogenerate: { directory: 'reference/tools' },
             },
           ],
@@ -37,8 +41,13 @@ export default defineConfig({
           label: 'Developer Gateway & AI Agents',
           autogenerate: { directory: 'developer' },
         },
+        {
+          label: 'Architecture & Performance',
+          autogenerate: { directory: 'architecture' },
+        },
       ],
       customCss: [],
     }),
+    sitemap(),
   ],
 });

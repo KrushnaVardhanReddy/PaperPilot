@@ -1,0 +1,149 @@
+Task: Complete 90-Tool Desktop Playwright E2E Automation Across 3 Modular Suites
+
+Objective:
+Implement full automated end-to-end testing for all 90 PaperPilot Desktop Tools using Playwright on `feature/dev`.
+
+Context & Specifications:
+- Full Technical Specification: `qa/playwright_e2e_specification.md`
+- Implementation Task Breakdown: `qa/playwright_e2e_tasks.md`
+- Working Reference Implementation: `apps/desktop/tests/e2e_all_tools_real_execution.spec.ts`
+- Playwright Configuration: `apps/desktop/playwright.config.ts`
+- Domain Test Matrix Guides:
+  - Tools 01–30: `qa/manual_desktop_testing/TESTER_1_PAGE_OPERATIONS.md`
+  - Tools 31–60: `qa/manual_desktop_testing/TESTER_2_SECURITY_FORMS.md`
+  - Tools 61–90: `qa/manual_desktop_testing/TESTER_3_CONVERSIONS_INTELLIGENCE.md`
+  - Master Catalog: `qa/manual_desktop_testing/MANUAL_TESTING_INDEX.md`
+- Test Fixtures: Located in `tests/e2e_fixtures/real/`:
+  - `single_page.pdf`, `multi_page.pdf`, `merge_a.pdf`, `merge_b.pdf`, `form.pdf`, `dummy.p12` (password: `password123`), `test.xlsx`, `test.png`
+
+================================================================================
+CONSTRAINTS & INVARIANTS
+================================================================================
+1. Target Branch: `feature/dev`. Do NOT commit or push to `main`.
+2. Cargo Concurrency: Max 4 jobs. Run all cargo commands with `-j 4` (e.g., `cargo build --bin paperpilot -j 4`).
+3. Zero-Mock Execution: UI interactions in Playwright must trigger genuine child-process CLI commands (`target/debug/paperpilot`) and produce real output files in `tests/e2e_fixtures/out/desktop/`.
+4. Deep Semantic Validation: Every tool must assert byte-level correctness (e.g. `%PDF-` header, page geometry, valid JSON parsing, Office `PK\x03\x04` signatures).
+5. Environment Variables:
+   - `export PAPERPILOT_OCR_MODELS_DIR="$(pwd)/../../models/ocr/ppocrv4"`
+   - `export NO_PROXY="localhost,127.0.0.1"`
+   - `export no_proxy="localhost,127.0.0.1"`
+   - Unset `HTTP_PROXY`, `HTTPS_PROXY`, `http_proxy`, `https_proxy`.
+
+================================================================================
+PART 1: SUITE 1 — PAGE OPERATIONS & IMPOSITION (Tools 01–30)
+================================================================================
+File to create: `apps/desktop/tests/e2e_suite_1_page_operations.spec.ts`
+- Implement real UI navigation and deep semantic assertions for Tools 01–30:
+  1. `pdf_merge`
+  2. `pdf_merge_alternate`
+  3. `pdf_split`
+  4. `pdf_split_by_size`
+  5. `pdf_split_by_outline`
+  6. `pdf_split_half`
+  7. `pdf_extract_pages`
+  8. `pdf_delete_pages`
+  9. `pdf_reorder_pages`
+  10. `pdf_rotate`
+  11. `pdf_crop`
+  12. `pdf_auto_crop`
+  13. `pdf_nup`
+  14. `pdf_booklet`
+  15. `pdf_poster`
+  16. `pdf_remove_blank`
+  17. `pdf_add_blank_page`
+  18. `pdf_duplicate_pages`
+  19. `pdf_reverse_order`
+  20. `pdf_interleave`
+  21. `pdf_deinterleave`
+  22. `pdf_adjust_page_box`
+  23. `pdf_scale_pages`
+  24. `pdf_burst`
+  25. `pdf_compress`
+  26. `pdf_compress_lossless`
+  27. `pdf_grayscale`
+  28. `pdf_render`
+  29. `pdf_render_page_selection`
+  30. `pdf_extract_embedded_images`
+
+================================================================================
+PART 2: SUITE 2 — SECURITY, FORMS & MARKS (Tools 31–60)
+================================================================================
+File to create: `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts`
+- Implement real UI navigation and cryptographic / form assertions for Tools 31–60:
+  31. `pdf_encrypt`
+  32. `pdf_decrypt`
+  33. `pdf_change_password`
+  34. `pdf_set_permissions`
+  35. `pdf_redact`
+  36. `pdf_sanitize`
+  37. `pdf_repair`
+  38. `pdf_linearize`
+  39. `pdf_sign`
+  40. `pdf_validate_signatures`
+  41. `pdf_remove_signatures`
+  42. `pdf_extract_certs`
+  43. `pdf_fill_form`
+  44. `pdf_read_form_fields`
+  45. `pdf_flatten_form`
+  46. `pdf_remove_form_fields`
+  47. `pdf_watermark`
+  48. `pdf_watermark_image`
+  49. `pdf_header_footer`
+  50. `pdf_bates`
+  51. `pdf_page_numbers`
+  52. `pdf_add_border`
+  53. `pdf_add_margin`
+  54. `pdf_flatten`
+  55. `pdf_metadata`
+  56. `pdf_set_metadata`
+  57. `pdf_strip_metadata`
+  58. `pdf_bookmarks`
+  59. `pdf_set_bookmarks`
+  60. `pdf_hash`
+
+================================================================================
+PART 3: SUITE 3 — CONVERSIONS, MODERNIZATION & AI (Tools 61–90)
+================================================================================
+File to create: `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`
+- Implement real UI navigation, conversions, OCR, search, and workflow tests for Tools 61–90:
+  61. `pdf_to_docx`
+  62. `pdf_to_pptx`
+  63. `pdf_to_xlsx`
+  64. `pdf_to_html`
+  65. `pdf_to_markdown`
+  66. `pdf_to_txt`
+  67. `pdf_to_json`
+  68. `pdf_to_csv`
+  69. `pdf_to_pdf_a`
+  70. `docx_to_pdf`
+  71. `pptx_to_pdf`
+  72. `xlsx_to_pdf`
+  73. `html_to_pdf`
+  74. `markdown_to_pdf`
+  75. `txt_to_pdf`
+  76. `images_to_pdf`
+  77. `excel_to_json`
+  78. `excel_to_csv`
+  79. `office_to_markdown`
+  80. `office_extract_text`
+  81. `office_modernize_legacy`
+  82. `pdf_ocr`
+  83. `pdf_extract_text`
+  84. `pdf_search`
+  85. `pdf_classify_type`
+  86. `pdf_rag_chunks`
+  87. `pdf_compare`
+  88. `pdf_validate`
+  89. `pdf_pipeline_builder`
+  90. `pdf_watch_folder`
+
+================================================================================
+VERIFICATION & DELIVERABLES
+================================================================================
+1. Execute each suite via Playwright:
+   - `cd apps/desktop && npx playwright test tests/e2e_suite_1_page_operations.spec.ts`
+   - `cd apps/desktop && npx playwright test tests/e2e_suite_2_security_forms.spec.ts`
+   - `cd apps/desktop && npx playwright test tests/e2e_suite_3_conversions_ai.spec.ts`
+2. Run Vitest component tests: `pnpm test` (all 153 passing).
+3. Generate scorecard report at `reports/ALL_90_TOOLS_REAL_DESKTOP_E2E_SCORECARD.md` with 90/90 PASS.
+4. Commit all work cleanly to `feature/dev`.

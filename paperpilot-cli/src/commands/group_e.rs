@@ -9,18 +9,28 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-pub fn handle_form_read(input: &Path) -> OperationResult<()> {
+pub fn handle_form_read(input: &Path, output: Option<&Path>) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = ReadFormOperation::new();
     op.execute(&mut doc)?;
 
     let map = op.extracted_fields.lock().unwrap();
-    if let Some(ref fields) = *map {
-        let json = serde_json::to_string_pretty(fields)
-            .map_err(|e| PdfError::InvalidInput(e.to_string()))?;
-        println!("{}", json);
+    let json = if let Some(ref fields) = *map {
+        serde_json::to_string_pretty(fields)
+            .map_err(|e| PdfError::InvalidInput(e.to_string()))?
     } else {
-        println!("{{}}");
+        "{}".to_string()
+    };
+
+    if let Some(out_path) = output {
+        if let Some(parent) = out_path.parent() {
+            if !parent.as_os_str().is_empty() {
+                fs::create_dir_all(parent).map_err(PdfError::IoError)?;
+            }
+        }
+        fs::write(out_path, &json).map_err(PdfError::IoError)?;
+    } else {
+        println!("{}", json);
     }
 
     Ok(())
@@ -46,6 +56,7 @@ pub fn handle_form_add_field(
     field_type: &str,
     page: i32,
     rect: &str,
+    label: Option<String>,
     output: &Path,
 ) -> OperationResult<()> {
     let rect_parts: Vec<&str> = rect.split(',').collect();
@@ -69,8 +80,11 @@ pub fn handle_form_add_field(
     ];
 
     let mut doc = LopdfDocument::load(input)?;
-    let op =
+    let mut op =
         CreateFormFieldOperation::new(name.to_string(), field_type.to_string(), page, rect_arr);
+    if let Some(lbl) = label {
+        op = op.with_label(Some(lbl));
+    }
     op.execute(&mut doc)?;
     doc.save(output)?;
 

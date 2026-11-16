@@ -74,11 +74,14 @@ pub fn pdf_overlay_underlay_bytes(
         }
     } else {
         let path = Path::new("tests/e2e_fixtures/real/single_page.pdf");
+        let fallback_path1 = Path::new("../").join(path);
+        let fallback_path2 = Path::new("../../").join(path);
         if path.exists() {
             fs::read(path).map_err(PdfError::IoError)?
+        } else if fallback_path1.exists() {
+            fs::read(fallback_path1).map_err(PdfError::IoError)?
         } else {
-            let fallback_path = Path::new("../").join(path);
-            fs::read(fallback_path).map_err(PdfError::IoError)?
+            fs::read(fallback_path2).map_err(PdfError::IoError)?
         }
     };
 
@@ -382,6 +385,7 @@ mod tests {
 
         // ensure we have a valid pdf to work with for the test
         if !input_bytes.is_empty() {
+            #[allow(clippy::collapsible_if)]
             if let Ok(result) = pdf_overlay_underlay_bytes(&input_bytes, &options) {
                 assert!(result.starts_with(b"%PDF"));
 

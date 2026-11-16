@@ -1,4 +1,5 @@
 use crate::document::LopdfDocument;
+use paperpilot_core::document_source::{DocumentSource, PageBatchIterator};
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::sync::{Arc, Mutex};
@@ -15,6 +16,100 @@ impl SearchOperation {
             match_pages: Arc::new(Mutex::new(Vec::new())),
         }
     }
+
+    /// Executes the search on raw bytes.
+    pub fn execute_on_bytes(&self, bytes: &[u8]) -> OperationResult<Vec<u32>> {
+        let mut doc = LopdfDocument::from_bytes(bytes)?;
+        self.execute(&mut doc)?;
+        let pages = self
+            .match_pages
+            .lock()
+            .map_err(|_| PdfError::Other("Failed to acquire mutex lock".to_string()))?
+            .clone();
+        Ok(pages)
+    }
+
+    /// Executes the search using a zero-copy [`DocumentSource`].
+    pub fn execute_on_source(&self, source: &DocumentSource) -> OperationResult<Vec<u32>> {
+        self.execute_on_bytes(source.as_ref())
+    }
+
+    /// Opens a document from the specified path using memory mapping if applicable,
+    /// and executes the search.
+    pub fn execute_on_path<P: AsRef<std::path::Path>>(&self, path: P) -> OperationResult<Vec<u32>> {
+        let source = DocumentSource::open(path, None).map_err(PdfError::IoError)?;
+        self.execute_on_source(&source)
+    }
+
+    /// Executes the search using page batching via [`PageBatchIterator`].
+    pub fn execute_batched(
+        &self,
+        document: &mut dyn PdfDocument,
+        batch_size: usize,
+    ) -> OperationResult<Vec<u32>> {
+        let lopdf_doc = document
+            .as_any_mut()
+            .downcast_mut::<LopdfDocument>()
+            .ok_or_else(|| {
+                PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
+            })?;
+
+        let total_pages = lopdf_doc.page_count()? as usize;
+        let batch_iter = PageBatchIterator::new(total_pages, batch_size);
+        let inner = &mut lopdf_doc.inner;
+
+        let query_normalized = self.search_query.replace(' ', "").to_lowercase();
+        let mut found_pages = Vec::new();
+
+        for batch in batch_iter {
+            for page_idx in batch {
+                let page_u32 = page_idx as u32;
+                match inner.extract_text(&[page_u32]) {
+                    Ok(text) => {
+                        if text
+                            .replace(' ', "")
+                            .to_lowercase()
+                            .contains(&query_normalized)
+                        {
+                            found_pages.push(page_u32);
+                        }
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract text from page {}: {}",
+                            page_u32, e
+                        )));
+                    }
+                }
+            }
+        }
+
+        if let Ok(mut lock) = self.match_pages.lock() {
+            *lock = found_pages.clone();
+        } else {
+            return Err(PdfError::Other("Failed to acquire mutex lock".to_string()));
+        }
+
+        Ok(found_pages)
+    }
+}
+
+/// Convenience helper to search a document via [`DocumentSource`].
+pub fn search_pdf_source(source: &DocumentSource, query: &str) -> OperationResult<Vec<u32>> {
+    let op = SearchOperation::new(query.to_string());
+    op.execute_on_source(source)
+}
+
+/// Convenience helper to search a document via byte slice.
+pub fn search_pdf_bytes(bytes: &[u8], query: &str) -> OperationResult<Vec<u32>> {
+    let op = SearchOperation::new(query.to_string());
+    op.execute_on_bytes(bytes)
+}
+
+/// Convenience helper to search a document from a file path using memory mapping.
+pub fn search_pdf_path<P: AsRef<std::path::Path>>(path: P, query: &str) -> OperationResult<Vec<u32>> {
+    let source = DocumentSource::open(path, None).map_err(PdfError::IoError)?;
+    search_pdf_source(&source, query)
 }
 
 impl PdfOperation for SearchOperation {
@@ -143,5 +238,30 @@ mod tests {
 
         let pages = op.match_pages.lock().unwrap();
         assert!(pages.is_empty());
+    }
+
+    #[test]
+    fn test_search_operation_batched() {
+        let mut doc = create_dummy_doc(3);
+        let op = SearchOperation::new("Test".to_string());
+        let res = op.execute_batched(&mut doc, 2);
+        assert!(res.is_ok());
+        let pages = res.unwrap();
+        assert!(pages.len() <= 3);
+    }
+
+    #[test]
+    fn test_search_source_helpers() {
+        let mut doc = create_dummy_doc(1);
+        let mut buf = Vec::new();
+        doc.inner.save_to(&mut buf).unwrap();
+
+        let source = DocumentSource::from_bytes(buf);
+        let op = SearchOperation::new("Test".to_string());
+        let pages = op.execute_on_source(&source).unwrap();
+        assert!(pages.len() <= 1);
+
+        let search_res = search_pdf_source(&source, "NonExistentString999").unwrap();
+        assert!(search_res.is_empty());
     }
 }

@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "name": "Audit & Watermark Pipeline",
+  "steps": [
+    {
+      "tool": "pdf_watermark",
+      "params": {
+        "text": "CONFIDENTIAL",
+        "opacity": 0.2
+      }
+    },
+    {
+      "tool": "pdf_page_numbers",
+      "params": {
+        "position": "bottom-right",
+        "format": "Page {n} of {total}"
+      }
+    }
+  ]
+}

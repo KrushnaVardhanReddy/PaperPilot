@@ -19,7 +19,7 @@
   }
 
   let embedCode = $derived(
-`<script src="https://cdn.usepaperpilot.com/v1/embed.js" async></scr` + `ipt>
+`<script src="https://usepaperpilot.com/embed.js" async></scr` + `ipt>
 <div id="paperpilot-portal"
      data-theme="${theme}"
      data-tools="${selectedTools.join(',')}"

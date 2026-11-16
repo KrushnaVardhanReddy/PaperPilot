@@ -79,4 +79,20 @@ describe('SettingsPanel', () => {
     expect(link).not.toBeNull();
     expect(link.getAttribute('href')).toContain('7823');
   });
+
+  it('renders Run System Diagnostics button and opens modal', async () => {
+    render(SettingsPanel);
+
+    // Switch to Developer tab
+    const devTab = screen.getByRole('button', { name: /Developer & Gateway/i });
+    await fireEvent.click(devTab);
+
+    const doctorBtn = screen.getByRole('button', { name: /Run System Diagnostics/i });
+    expect(doctorBtn).not.toBeNull();
+
+    await fireEvent.click(doctorBtn);
+
+    const modalTitle = screen.getByText(/PaperPilot System Doctor/i);
+    expect(modalTitle).not.toBeNull();
+  });
 });

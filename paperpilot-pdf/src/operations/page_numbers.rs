@@ -79,7 +79,10 @@ impl PdfOperation for PageNumbersOperation {
             let text = self
                 .format
                 .replace("{n}", &page_number.to_string())
-                .replace("{total}", &total_pages.to_string());
+                .replace("{total}", &total_pages.to_string())
+                .replace("{N}", &total_pages.to_string())
+                .replace("of N", &format!("of {}", total_pages))
+                .replace("of n", &format!("of {}", total_pages));
             let escaped_text = text.replace("(", "\\(").replace(")", "\\)");
 
             let margin = 30.0;

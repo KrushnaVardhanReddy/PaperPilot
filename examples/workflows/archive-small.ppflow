@@ -1,0 +1,14 @@
+name = "Archive original when under threshold"
+version = "1"
+
+[[stage]]
+id = "large-only"
+op = "filter_page_count"
+condition = { comparator = "Greater", value = 3 }
+on_no_match = "archive_original"
+
+[[stage]]
+id = "label-large"
+op = "watermark"
+[stage.params]
+text = "LARGE DOCUMENT"

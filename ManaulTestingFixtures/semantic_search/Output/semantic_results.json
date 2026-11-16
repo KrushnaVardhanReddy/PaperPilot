@@ -1,0 +1,14 @@
+{
+  "matches": [],
+  "query": "vector retrieval embeddings",
+  "results": [
+    {
+      "chunk_id": "knowledge_base_article.pdf_chunk_0",
+      "content": "Machine Learning Vector Retrieval Protocols\n\nDense embeddings map semantic meaning into high-dimensional vector spaces.\n\nCosine similarity computes distance between queries and stored context.",
+      "heading": "Document Section",
+      "page": 1,
+      "score": 1.0
+    }
+  ],
+  "total_results": 1
+}

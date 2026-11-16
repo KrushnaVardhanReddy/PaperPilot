@@ -1,6 +1,13 @@
 [build]
 rustflags = ["-Csymbol-mangling-version=v0"]
 
+# macOS: Unpacked split debuginfo for faster incremental linking
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "split-debuginfo=unpacked"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "split-debuginfo=unpacked"]
+
 [target.'cfg(all(windows, target_env = "msvc"))']
 rustflags = [
     "-Csymbol-mangling-version=v0",

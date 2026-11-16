@@ -140,15 +140,16 @@ permissions = { print = true, edit = false }
 
 | # | Task | Notes |
 |---|---|---|
-| 8.2.1 | `.ppflow` pipeline schema | **TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
-| 8.2.2 | CLI pipeline execution | `paperpilot run invoice.ppflow input.pdf` — accepts `.ppflow` (TOML) or `.ppflow.json` (JSON) transparently |
-| 8.2.3 | Conditional branching engine | IF/ELSE via `condition` field per stage + `on_no_match` routing (e.g., "if scanned → OCR branch, else extract text") |
+| 8.2.1 | `.ppflow` pipeline schema (runtime subset implemented) | Version-1 name/id, stages, params, conditions, single dependencies and no-match behavior are implemented under Spec 136. Trigger/output/retry/secret fields remain planned and are rejected. **Full planned schema: TOML primary, JSON secondary** — see design decision above. Fields: `name`, `version`, `[trigger]`, `[output]`, `[[stage]]` with `op`, `depends_on`, `condition`, `on_no_match`, `retry`, `[stage.params]`. `${env:VAR}` injection for secrets. |
+| 8.2.2 | CLI pipeline execution (`paperpilot run`) ✅ | **Completed & Merged** — `paperpilot run invoice.ppflow input.pdf --output out.pdf` accepts TOML or JSON and preserves existing `workflow run` syntax; `--json` outputs structured stage outcomes and receipts. |
+| 8.2.3 | Conditional branching engine `[Spec 136]` ✅ | **Completed & Merged** — Per-stage scan/page-count predicates, complementary tests against a shared dependency, explicit `skip` / `archive_original` / `error`, and detailed outcomes in the shared runner. Desktop paired IF/ELSE nodes remain Task 3.4.11; multi-artifact joins remain separate. |
 | 8.2.4 | Stage retry & error handling | Per-stage `retry = N`, quarantine folder on final failure, optional Slack/webhook failure alert |
 | 8.2.5 | Pipeline sharing & community library | Export/import `.ppflow` files; public community registry of pipeline templates |
 | 8.2.6 | Enterprise private pipelines | Org-scoped pipeline libraries, access controlled via RBAC |
 | 8.2.7 | Pipeline audit trail | Every execution logged: which file, which stage, result, duration, who triggered it |
 | 8.2.8 | Per-stage integrity hashing | SHA-256 the file before and after every pipeline stage; mismatch = automatic abort + alert |
 | 8.2.9 | E2E Orchestrator tests | Run real pipelines against test PDF corpus end-to-end (No Mocking) |
+| 8.2.10 | Multi-Condition Predicates & Combinators `[Spec 137]` ✅ | **Completed & Merged (PR #299)** — Recursive boolean combinators (`all`, `any`, `not`), in-flight text layer matching, form field / signature detection, and file size comparators. |
 
 ---
 
@@ -314,4 +315,44 @@ permissions = { print = true, edit = false }
 | 8.11.8 | Print-with-return-address (steganographic fingerprint) | When PaperPilot **prints** a `.ppdoc` document, embed two invisible markers in the printed output: (a) a 2×2 mm corner micro-QR code encoding `{doc_id, version_hash, ppdoc_server}` and (b) a DCT-domain steganographic watermark that survives the print→scan round-trip. When the physical document is later scanned back into PaperPilot, it detects the markers and: links the scan to the original `.ppdoc` source; overlays hand-written annotations as a new annotation layer on the original editable document; shows a diff "Original vs. annotated physical copy." Enables paper-based annotation workflows to flow back into the digital document. |
 | 8.11.9 | Round-trip annotation merge UI | Desktop UI for reviewing a scanned-back document: side-by-side view of original `.ppdoc` vs. inbound scan; detected handwritten annotations shown as a new `annotation` layer; one-click "Accept all" merges annotations into the canonical document. |
 | 8.11.10 | E2E Physical Ingestion tests | Automated tests: spin up a mock eSCL HTTP client, POST a test TIFF scan, verify PaperPilot produces a valid `.ppdoc` with OCR text and DjVu compression applied. Print-with-return-address: embed watermark, simulate scan (Gaussian blur + noise filter to simulate print/scan degradation), verify fingerprint is recovered and doc_id decoded correctly. (No Mocking of the compression or OCR pipeline.) |
+
+---
+
+### 8.12 — Universal Observability, Structured Logging & Dual Error Engine `[Spec 146]` ✅ **Merged (PR #323)**
+
+**Goal:** Production-grade observability, telemetry, and debugging across all surfaces without leaking sensitive customer PII or breaking stdio protocols.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.12.1 | Multi-Format Logging (`LOG_FORMAT`) | Support `json` (NDJSON), `compact`, `pretty`, and `text` with dynamic level filtering via `RUST_LOG` and CLI flags (`specs/146-universal-structured-logging/spec.md`) |
+| 8.12.2 | The Dual Error Model | Log full root causes and error chains internally on server (`tracing::error!`), while returning safe structured error responses with `request_id` to clients |
+| 8.12.3 | Gateway Request Tracing & Correlation | Axum middleware capturing `http.method`, `http.route`, `http.status_code`, `duration_ms`, `client.ip`, and propagating `request_id` |
+| 8.12.4 | Stdio Isolation & Privacy Guardrails | Strict `stderr` routing for CLI and MCP (protecting binary stdout and JSON-RPC wire frames); redaction of passwords and raw document text buffers |
+| 8.12.5 | Deep Operation Tracing | Granular `tracing::debug!` and `tracing::trace!` spans across core operations in `paperpilot-pdf` |
+| 8.12.6 | Automated Test Suite | Unmocked verification in `tests/test_logging.rs` for NDJSON parsing and flag validation |
+
+---
+
+### 8.13 — Automated OWASP ZAP API Dynamic Security Gate `[Spec 147]`
+
+**Goal:** Automated dynamic application security testing (DAST) in CI running against PaperPilot Gateway endpoints using OpenAPI definitions.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.13.1 | OpenAPI Export Tooling | Generate static `openapi.json` from `ApiDoc::openapi()` during build or via CLI/test (`specs/147-owasp-zap-api-security-scan/spec.md`) |
+| 8.13.2 | OWASP ZAP API Scan Workflow | Automated GitHub Actions workflow (`.github/workflows/zap.yml`) running `zaproxy/action-api-scan` against live gateway endpoints |
+| 8.13.3 | Vulnerability Baseline & Rules | Configure custom ZAP rule thresholds (`zap-rules.tsv`) ignoring benign static assets and enforcing strict zero-tolerance on injection and auth headers |
+| 8.13.4 | SARIF Upload & Security Dashboard | Upload scan findings directly to GitHub Security Advisory tab |
+
+---
+
+### 8.14 — OpenVAS / Greenbone Community Container Hardening Suite `[Spec 148]`
+
+**Goal:** Turnkey infrastructure and network vulnerability scanner for deployed Docker containers and enterprise servers.
+
+| # | Task | Notes |
+|---|---|---|
+| 8.14.1 | Greenbone Community Compose Scaffold | Docker Compose recipe (`docker/greenbone-scan/docker-compose.yml`) hosting Greenbone GCE containers with free vulnerability feeds (`specs/148-greenbone-openvas-container-hardening/spec.md`) |
+| 8.14.2 | Automated Container Target Runner | Shell script (`scripts/run_greenbone_scan.sh`) targeting local or remote `paperpilot-gateway` container instances |
+| 8.14.3 | Executive PDF/HTML Audit Exporter | Automated headless extraction of ISO 27001 / SOC 2 compliance reports via `gvm-cli` |
 

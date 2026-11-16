@@ -6,30 +6,133 @@
   import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
   import PdfAnnotationLayer from './PdfAnnotationLayer.svelte';
   import PdfSearchBar from './PdfSearchBar.svelte';
+  import SignatureStampLayer, { type PlacedStamp, type ArmedSignature } from './signature/SignatureStampLayer.svelte';
+  import PdfFormLayer from './PdfFormLayer.svelte';
   import type { Annotation } from '$lib/api/pdf';
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+  if (typeof window !== 'undefined') {
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(pdfjsWorker, window.location.href).href;
+    } catch {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+    }
+  }
 
   let {
     fileUrl = '',
+    file = null as File | Blob | null,
     pdfDoc = $bindable(null),
     pageNum = $bindable(1),
     scale = $bindable(1.2),
     activeTool = 'none',
-    annotations = $bindable([] as Annotation[])
-  } = $props();
+    annotations = $bindable([] as Annotation[]),
+    armedSignature = $bindable(null as ArmedSignature | null),
+    placedStamps = $bindable([] as PlacedStamp[]),
+    formValues = $bindable({}),
+    hasFormFields = $bindable(false),
+    onStampPlaced = (stamp: PlacedStamp) => {}
+  } = $props<{
+    fileUrl?: string;
+    file?: File | Blob | null;
+    pdfDoc?: any;
+    pageNum?: number;
+    scale?: number;
+    activeTool?: string;
+    annotations?: Annotation[];
+    armedSignature?: ArmedSignature | null;
+    placedStamps?: PlacedStamp[];
+    formValues?: Record<string, any>;
+    hasFormFields?: boolean;
+    onStampPlaced?: (stamp: PlacedStamp) => void;
+  }>();
 
   let canvas: HTMLCanvasElement;
   let isRendering = false; // Not a $state to prevent infinite loops in effects
+  let pageDimensions = $state({ width: 595.28, height: 841.89 });
 
-  async function loadDocument(url: string) {
-    if (!url) return;
+  // Password prompt state
+  let showPasswordModal = $state(false);
+  let passwordInput = $state('');
+  let passwordError = $state('');
+  let passwordCallback: ((password: string) => void) | null = null;
+  let passwordInputEl: HTMLInputElement | null = $state(null);
+
+  function handlePasswordSubmit(e?: Event) {
+    if (e) e.preventDefault();
+    if (!passwordCallback) return;
+    const pwd = passwordInput;
+    passwordError = '';
+    passwordCallback(pwd);
+  }
+
+  function handlePasswordCancel() {
+    showPasswordModal = false;
+    passwordInput = '';
+    passwordError = '';
+    if (passwordCallback) {
+      // Pass an empty string or trigger cancellation
+      passwordCallback('');
+      passwordCallback = null;
+    }
+  }
+
+  $effect(() => {
+    if (showPasswordModal && passwordInputEl) {
+      setTimeout(() => passwordInputEl?.focus(), 50);
+    }
+  });
+
+  async function loadDocument(url: string, fileObj?: File | Blob | null) {
+    if (!url && !fileObj) {
+      pdfDoc = null;
+      showPasswordModal = false;
+      return;
+    }
     try {
-      const loadingTask = pdfjsLib.getDocument({ url });
-      pdfDoc = await loadingTask.promise;
-      pageNum = 1;
-    } catch (err) {
+      let loadingTask;
+      if (fileObj && typeof (fileObj as any).arrayBuffer === 'function') {
+        const buffer = await fileObj.arrayBuffer();
+        loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+      } else if (url && url.startsWith('blob:')) {
+        try {
+          const res = await fetch(url);
+          const buffer = await res.arrayBuffer();
+          loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+        } catch (fetchErr) {
+          console.warn("fetch blob failed, falling back to url", fetchErr);
+          loadingTask = pdfjsLib.getDocument({ url });
+        }
+      } else if (url) {
+        loadingTask = pdfjsLib.getDocument({ url });
+      }
+
+      if (loadingTask) {
+        loadingTask.onPassword = (updatePassword: (password: string) => void, reason: number) => {
+          passwordCallback = updatePassword;
+          showPasswordModal = true;
+          if (reason === (pdfjsLib.PasswordResponses?.INCORRECT_PASSWORD ?? 2)) {
+            passwordError = 'Incorrect password. Please try again.';
+          } else {
+            passwordError = '';
+          }
+        };
+
+        pdfDoc = await loadingTask.promise;
+        showPasswordModal = false;
+        passwordInput = '';
+        passwordError = '';
+        passwordCallback = null;
+        pageNum = 1;
+      }
+    } catch (err: any) {
       console.error("Error loading PDF:", err);
+      if (err?.name === 'PasswordException') {
+        showPasswordModal = true;
+        passwordError = 'This document is protected with a password.';
+      } else {
+        pdfDoc = null;
+        showPasswordModal = false;
+      }
     }
   }
 
@@ -40,6 +143,8 @@
     try {
       const page = await doc.getPage(currentPage);
       const viewport = page.getViewport({ scale: currentScale });
+      const unscaledVp = page.getViewport({ scale: 1.0 });
+      pageDimensions = { width: unscaledVp.width, height: unscaledVp.height };
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -62,6 +167,7 @@
         transform: transform ? transform : undefined,
         viewport,
         canvas, // added required property
+        annotationMode: pdfjsLib.AnnotationMode?.DISABLE ?? 0,
       };
 
       await page.render(renderContext as any).promise;
@@ -72,10 +178,12 @@
     }
   }
 
-  // Reactively load document when fileUrl changes
+  // Reactively load document when file or fileUrl changes
   $effect(() => {
-    if (fileUrl) {
-      loadDocument(fileUrl);
+    if (file || fileUrl) {
+      loadDocument(fileUrl, file);
+    } else {
+      pdfDoc = null;
     }
   });
 
@@ -155,6 +263,42 @@
 <svelte:window onkeydown={handleGlobalKeydown} />
 
 <div class="pdf-viewer-wrapper">
+  {#if showPasswordModal}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="password-modal-backdrop" onclick={(e) => { if (e.target === e.currentTarget) handlePasswordCancel(); }}>
+      <div class="password-modal-card" role="dialog" aria-modal="true" aria-labelledby="pwd-title">
+        <div class="password-modal-header">
+          <div class="lock-icon-badge">🔒</div>
+          <div>
+            <h3 id="pwd-title">Password Required</h3>
+            <p class="pwd-subtitle">This document is encrypted. Enter password to view.</p>
+          </div>
+        </div>
+        <form onsubmit={handlePasswordSubmit}>
+          <div class="input-group">
+            <input
+              bind:this={passwordInputEl}
+              type="password"
+              class="password-input"
+              class:has-error={!!passwordError}
+              bind:value={passwordInput}
+              placeholder="Enter password..."
+              autocomplete="current-password"
+            />
+            {#if passwordError}
+              <p class="error-msg">{passwordError}</p>
+            {/if}
+          </div>
+          <div class="password-modal-actions">
+            <button type="button" class="btn-cancel" onclick={handlePasswordCancel}>Cancel</button>
+            <button type="submit" class="btn-unlock" disabled={!passwordInput.trim()}>Unlock Document</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {/if}
+
   <PdfSearchBar {pdfDoc} bind:pageNum bind:searchHighlights />
   <div class="viewer-container">
     {#if citationHighlight && citationHighlight.page === pageNum && !citationHighlight.bbox}
@@ -185,6 +329,15 @@
            {/each}
         </div>
       {/if}
+      <SignatureStampLayer
+        {scale}
+        {pageNum}
+        pageDimensions={pageDimensions}
+        bind:armedSignature
+        bind:placedStamps
+        {onStampPlaced}
+      />
+      <PdfFormLayer {pdfDoc} {pageNum} {scale} bind:formValues bind:hasFormFields />
       <PdfAnnotationLayer {scale} {pageNum} bind:annotations {activeTool} />
     </div>
   </div>
@@ -202,10 +355,13 @@
   .viewer-container {
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     overflow: auto;
     background-color: var(--bg-secondary, #f3f4f6);
     padding: 2rem;
     flex: 1;
+    min-height: 0;
+    min-width: 0;
   }
 
   .page-container {
@@ -215,11 +371,13 @@
     /* Ensure the container sizes tightly around the canvas */
     display: inline-block;
     height: fit-content;
+    flex-shrink: 0;
+    margin: auto;
   }
 
   canvas {
-    max-width: 100%; /* Ensure canvas doesn't break layout unexpectedly */
-    object-fit: contain;
+    display: block;
+    max-width: none;
   }
 
   .search-highlights-layer {
@@ -286,5 +444,137 @@
     15% { opacity: 1; transform: translate(-50%, 0); }
     85% { opacity: 1; transform: translate(-50%, 0); }
     100% { opacity: 0; transform: translate(-50%, -10px); }
+  }
+
+  /* Password Modal Styling */
+  .password-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1.5rem;
+  }
+
+  .password-modal-card {
+    background: var(--bg-surface, #1e1e24);
+    border: 1px solid var(--border-color, #2a2a35);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .password-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .lock-icon-badge {
+    font-size: 1.75rem;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .password-modal-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  .pwd-subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted, #9ca3af);
+  }
+
+  .input-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .password-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #374151);
+    background: var(--bg-input, #111827);
+    color: var(--text-primary, #ffffff);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .password-input:focus {
+    border-color: var(--accent-primary, #6366f1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  }
+
+  .password-input.has-error {
+    border-color: #ef4444;
+  }
+
+  .error-msg {
+    margin: 0.4rem 0 0;
+    color: #ef4444;
+    font-size: 0.8rem;
+  }
+
+  .password-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  .btn-cancel {
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #374151);
+    background: transparent;
+    color: var(--text-muted, #9ca3af);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .btn-unlock {
+    padding: 0.55rem 1.25rem;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent-primary, #6366f1);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .btn-unlock:hover:not(:disabled) {
+    background: #4f46e5;
+  }
+
+  .btn-unlock:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 </style>

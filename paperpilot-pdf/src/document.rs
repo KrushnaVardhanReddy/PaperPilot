@@ -57,9 +57,13 @@ impl LopdfDocument {
         })
     }
 
+    pub fn from_source(source: &paperpilot_core::document_source::DocumentSource) -> OperationResult<Self> {
+        Self::from_bytes(source.as_ref())
+    }
+
     pub fn load(path: &Path) -> OperationResult<Self> {
-        let bytes = std::fs::read(path).map_err(PdfError::IoError)?;
-        Self::from_bytes(&bytes)
+        let source = paperpilot_core::document_source::DocumentSource::open(path, None).map_err(PdfError::IoError)?;
+        Self::from_source(&source)
     }
 }
 

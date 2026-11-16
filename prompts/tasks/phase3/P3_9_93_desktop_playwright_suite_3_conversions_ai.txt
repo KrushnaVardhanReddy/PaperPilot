@@ -1,0 +1,84 @@
+Task: Desktop Playwright E2E Automation - Suite 3 (Tools 61–90: Conversions, Office Modernization, AI & Pipelines)
+
+Target Branch: `feature/dev` (strictly use -j 4 for any cargo builds; do NOT push directly to main).
+
+================================================================================
+EXECUTIVE CONTEXT & MANDATE
+================================================================================
+1. Suite 1 (Tools 01–30) and Suite 2 (Tools 31–60) are passing green with real CLI engine execution!
+2. Your task is to implement and verify `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts` strictly covering Tools 61–90.
+3. STRICT POLICY: ZERO PLACEHOLDERS, ZERO MOCKS.
+   - You MUST REMOVE any synthetic fallback: `fs.writeFileSync(placeholderFile, ...)` is completely banned.
+   - For every tool in Tools 61–90, the test MUST locate the `.tool-card` in the desktop UI (`expect(toolCards.count()).toBeGreaterThan(0)`).
+   - Use the proven `executeRealCli` via `page.exposeFunction()` pattern to invoke the real `target/debug/paperpilot` CLI binary or Tauri backend.
+   - Every operation must generate an authentic output file in `tests/e2e_fixtures/out/desktop/` with deep semantic validation (valid `%PDF-` header, non-empty JSON/CSV report, office doc format, or checksum data).
+
+================================================================================
+SUITE 3 TOOL SCOPE (Tools 61–90)
+================================================================================
+File to test/refactor: `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`
+
+61. `pdf_to_docx` — Convert PDF to editable Word DOCX
+62. `pdf_to_pptx` — Convert PDF slides to PowerPoint PPTX
+63. `pdf_to_xlsx` — Extract tabular structures into Excel spreadsheets
+64. `pdf_to_html` — Convert PDF layout into HTML document
+65. `pdf_to_markdown` — Export structured Markdown from PDF
+66. `pdf_to_txt` — Pure text extraction
+67. `pdf_to_json` — Extract full PDF content into structured JSON
+68. `pdf_to_csv` — Extract PDF tables to CSV format
+69. `pdf_to_pdf_a` — Standardized Archival PDF/A Conversion
+70. `docx_to_pdf` — Render DOCX into PDF document
+71. `pptx_to_pdf` — Convert PPTX presentation to PDF
+72. `xlsx_to_pdf` — Export Excel spreadsheet to PDF
+73. `html_to_pdf` — Render HTML document to PDF
+74. `markdown_to_pdf` — Render Markdown document to PDF
+75. `txt_to_pdf` — Flow plain text document into PDF pages
+76. `images_to_pdf` — Combine image assets (PNG, JPEG, TIFF) into PDF
+77. `excel_to_json` — Parse Excel spreadsheets into structured JSON
+78. `excel_to_csv` — Convert Excel spreadsheets to CSV records
+79. `office_to_markdown` — Convert Office documents to Markdown
+80. `office_extract_text` — Extract raw textual streams from Office docs
+81. `office_modernize_legacy` — Modernize legacy binary formats (.doc, .xls, .ppt) to OOXML
+82. `pdf_ocr` — Optical Character Recognition on scanned pages
+83. `pdf_extract_text` — Targeted page text extraction
+84. `pdf_search` — High-speed indexed regex and full-text keyword search
+85. `pdf_classify_type` — Document classification (invoice, receipt, contract, form, report)
+86. `pdf_rag_chunks` — Split documents into context-preserving semantic chunks
+87. `pdf_compare` — Semantic and visual diff comparison between two PDF versions
+88. `pdf_validate` — Structural ISO 32000-1 PDF validation
+89. `pdf_pipeline_builder` — Multi-step visual macro pipeline workflow
+90. `pdf_watch_folder` — Automated background hot folder monitoring engine
+
+================================================================================
+CRITICAL EXECUTION & COMPILATION INSTRUCTIONS
+================================================================================
+1. The binary exists at `target/debug/paperpilot` (or compile with `cargo build --bin paperpilot -j 4`).
+2. Run Playwright Suite 3:
+   ```bash
+   cd apps/desktop
+   export PATH="/home/krushna/.nvm/versions/node/v26.12.1/bin:$PATH"
+   export NODE_PATH="$(pwd)/../web/node_modules:$(pwd)/../edge/node_modules:$(pwd)/node_modules"
+   export NO_PROXY="localhost,127.0.0.1"
+   export no_proxy="localhost,127.0.0.1"
+   unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+   ../web/node_modules/.bin/playwright test tests/e2e_suite_3_conversions_ai.spec.ts
+   ```
+3. Test Cleanup Loops:
+   Ensure all file cleanup in `tests/e2e_fixtures/out/desktop` uses safe path sanitization without `..` or leading `/` to maintain Semgrep compliance:
+   ```typescript
+   if (!f.includes('..') && !f.includes('/')) {
+     const safePath = path.resolve(outDir, path.basename(f));
+     if (safePath.startsWith(outDir)) {
+       fs.rmSync(safePath, { recursive: true, force: true });
+     }
+   }
+   ```
+4. Output Validation:
+   - For PDF outputs: Verify file size > 100 bytes and starts with `%PDF-`.
+   - For JSON/CSV/Office reports: Verify non-empty and parsable.
+
+================================================================================
+DELIVERABLES
+================================================================================
+1. `tests/e2e_suite_3_conversions_ai.spec.ts` executes and passes 30/30 green against real UI cards and engine execution.
+2. Commit your changes cleanly on `feature/dev` with prefix `jules: suite 3 conversions and ai zero-mock automation`.

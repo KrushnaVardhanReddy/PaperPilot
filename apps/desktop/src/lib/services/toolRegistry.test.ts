@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { resolveToolName } from './toolRegistry';
+import { resolveToolName, rankToolsByContext } from './toolRegistry';
+import { allTools } from '../types/toolList';
 
 describe('toolRegistry', () => {
     it('resolves creation tools correctly', () => {
@@ -26,5 +27,26 @@ describe('toolRegistry', () => {
         expect(resolveToolName('merge')).toBe('pdf_merge');
         expect(resolveToolName('split')).toBe('pdf_split');
         expect(resolveToolName('compress')).toBe('pdf_compress');
+    });
+
+    it('never creates double-prefixed tool names for all registered tools', () => {
+        expect(resolveToolName('pdf_sign')).toBe('pdf_sign');
+        expect(resolveToolName('sign')).toBe('pdf_sign');
+        expect(resolveToolName('pdf_merge')).toBe('pdf_merge');
+        expect(resolveToolName('pdf_compress')).toBe('pdf_compress');
+        expect(resolveToolName('pdf_repair')).toBe('pdf_repair');
+
+        for (const tool of allTools) {
+            const resolved = resolveToolName(tool.id);
+            expect(resolved).not.toContain('pdf_pdf_');
+            expect(resolved.length).toBeGreaterThan(0);
+        }
+    });
+
+    it('ranks image tools as recommended when image documents are present', () => {
+        const dummyImage = new File(['mock'], 'scan.png', { type: 'image/png' });
+        const { recommended } = rankToolsByContext(allTools, [dummyImage], []);
+        const recommendedIds = recommended.map(t => resolveToolName(t.id));
+        expect(recommendedIds).toContain('pdf_images_to_pdf');
     });
 });

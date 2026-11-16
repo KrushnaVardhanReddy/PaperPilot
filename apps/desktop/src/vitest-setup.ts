@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
 
 // Mock Web Animations API since jsdom doesn't support it

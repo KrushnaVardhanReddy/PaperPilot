@@ -1,0 +1,92 @@
+# Task 6.1.1: Spec 161 — Universal Installers & Package Distribution
+
+## Goal
+Implement Spec 161 (Package Distribution and Installers) to provide official one-line installation scripts for Linux/macOS and Windows, plus a Homebrew formula.
+
+## Architecture Boundaries (Zero Merge Conflict)
+This task touches ONLY installation scripts and packaging formulas:
+- `scripts/install.sh` (new)
+- `scripts/install.ps1` (new)
+- `packaging/homebrew/paperpilot.rb` (new)
+
+---
+
+## Detailed Implementation Steps
+
+### 1. POSIX One-Line Shell Installer (`scripts/install.sh`)
+Create `scripts/install.sh` supporting:
+- Platform detection: `uname -s` (Linux, Darwin) and `uname -m` (x86_64, aarch64/arm64).
+- Target determination:
+  - Linux x86_64: `paperpilot-x86_64-unknown-linux-gnu.tar.gz`
+  - Linux arm64: `paperpilot-aarch64-unknown-linux-gnu.tar.gz`
+  - macOS x86_64: `paperpilot-x86_64-apple-darwin.tar.gz`
+  - macOS Apple Silicon: `paperpilot-aarch64-apple-darwin.tar.gz`
+- Release resolution: Fetches latest tag from `https://api.github.com/repos/KrushnaVardhanReddy/PaperPilot/releases/latest` (fallback to latest stable tag if rate limited).
+- Checksum validation: Verifies downloaded `.sha256` checksum before extracting.
+- Installation directory: Installs binary to `/usr/local/bin` (or `~/.local/bin` if running non-root without sudo).
+- Ensure script handles non-interactive execution: `curl -fsSL https://paperpilot.app/install.sh | sh`.
+
+### 2. Windows PowerShell One-Line Installer (`scripts/install.ps1`)
+Create `scripts/install.ps1` supporting:
+- Architecture detection: `[System.Environment]::Is64BitOperatingSystem`.
+- Downloads `paperpilot-x86_64-pc-windows-msvc.zip`.
+- Extracts `paperpilot.exe` to `$env:LOCALAPPDATA\Programs\PaperPilot\bin`.
+- Appends directory to User `PATH` environment variable if not already present.
+- Non-interactive execution: `irm https://paperpilot.app/install.ps1 | iex`.
+
+### 3. Homebrew Formula (`packaging/homebrew/paperpilot.rb`)
+Create formula:
+```ruby
+class Paperpilot < Formula
+  desc "100% Private, Local-First, Pure-Rust PDF & Document Workstation"
+  homepage "https://paperpilot.app"
+  version "1.0.0"
+
+  on_macos do
+    if Hardware::CPU.arm?
+      url "https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v#{version}/paperpilot-aarch64-apple-darwin.tar.gz"
+      sha256 "REPLACE_WITH_ACTUAL_SHA256"
+    else
+      url "https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v#{version}/paperpilot-x86_64-apple-darwin.tar.gz"
+      sha256 "REPLACE_WITH_ACTUAL_SHA256"
+    end
+  end
+
+  on_linux do
+    if Hardware::CPU.intel?
+      url "https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v#{version}/paperpilot-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "REPLACE_WITH_ACTUAL_SHA256"
+    end
+  end
+
+  def install
+    bin.install "paperpilot"
+  end
+
+  test do
+    assert_match "paperpilot", shell_output("#{bin}/paperpilot --version")
+  end
+end
+```
+
+---
+
+## 🔒 Post-Validation Checks (MANDATORY)
+After writing files, execute and ensure all checks succeed:
+1. ShellCheck / syntax verification:
+   ```bash
+   bash -n scripts/install.sh
+   ```
+2. Verify executable bits:
+   ```bash
+   chmod +x scripts/install.sh
+   ```
+3. Test dry-run or mock execution:
+   ```bash
+   DRY_RUN=1 ./scripts/install.sh
+   ```
+4. Verify repository workspace compiles with zero errors:
+   ```bash
+   cargo check --workspace -j 4
+   ```
+

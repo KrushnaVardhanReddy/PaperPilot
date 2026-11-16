@@ -1,0 +1,57 @@
+# Task: Penta-Interface Remediation — Session 2: CLI Subcommand & Flag Parity
+# Base Branch: feat/penta-audit-remediation-all-waves
+# Target Spec: specs/145-penta-audit-remediation/spec.md
+# Workstream: 2 of 5
+
+## Objective
+Normalize CLI subcommands, flags, and parameter parsing in `paperpilot-cli` so that all CLI operations across Waves 5, 6, 7, and 8 execute successfully with exit code 0.
+
+---
+
+## STRICT Constraints & File Ownership
+You may ONLY modify files inside:
+- `paperpilot-cli/src/`
+- `paperpilot-cli/tests/`
+
+DO NOT modify root `Cargo.toml`, `Makefile`, or any files in other crates (`paperpilot-mcp`, `paperpilot-gateway`, `paperpilot-pdf`, `paperpilot-nlp`).
+
+---
+
+## Detailed Implementation Tasks
+
+### 1. Multi-Input Flags in `paperpilot-cli/src/cli.rs`
+- In `merge`, `merge-alternate`, and other multi-file subcommands:
+  Allow multiple `--input` flags via `clap(action = ArgAction::Append)` so commands like:
+  `paperpilot merge --input file1.pdf --input file2.pdf --output merged.pdf`
+  work without syntax errors.
+  Also support comma-separated paths or multiple trailing positional arguments.
+
+### 2. Flag Aliases & Subcommand Normalization
+- Support both kebab-case and snake_case flags (e.g. `--start-number` and `--start_number`, `--field-name` and `--field_name`).
+- Ensure all Wave 5 tools have matching CLI subcommands:
+  `watermark`, `encrypt`, `decrypt`, `sanitize`, `redact`, `read-form`, `fill-form`, `flatten`, `stamp`, `validate-signatures`, `remove-signatures`, `change-permissions`, `create-form-field`, `timestamp`, `bates`.
+- Ensure all Wave 6 tools have matching CLI subcommands:
+  `merge`, `merge-alternate`, `split`, `split-by-outline`, `split-scanned-book`, `rotate`, `auto-rotate`, `crop`, `scale-pages`, `delete-pages`, `reorder-pages`, `extract-pages`, `nup`, `booklet`, `posterize`, `stitch-canvas`.
+- Ensure all Wave 7 conversion subcommands exist:
+  `pdf-to-html`, `pdf-to-markdown`, `pdf-to-json`, `json-to-pdf`, `pdf-to-epub`, `pdf-to-pdf-a`, `pdf-comic-archive`, `excel-to-json`, `excel-to-csv`, `pdf-dedup-streams`, `pdf-invert-colors`, `pdf-linearize`, `pdf-repair`.
+- Ensure all Wave 8 intelligence subcommands exist:
+  `extract-text`, `ocr`, `extract-tables`, `pii-scan`, `bookmarks`, `header-footer`, `classify-type`, `compare`, `hash`, `validate`, `render`, `rag-chunks`, `workspace-search`, `semantic-search`.
+
+### 3. Output & Exit Code Handling
+- On successful command execution, exit with code `0`.
+- If `--json` flag is provided, output clean JSON to stdout `{ "success": true, ... }`.
+
+---
+
+## Verification
+```bash
+cargo build --bin paperpilot
+cargo test -p paperpilot-cli
+```
+Test running sample CLI commands:
+```bash
+target/debug/paperpilot --help
+target/debug/paperpilot watermark --help
+target/debug/paperpilot merge --help
+target/debug/paperpilot pdf-to-html --help
+```

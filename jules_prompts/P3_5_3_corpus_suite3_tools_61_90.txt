@@ -1,0 +1,69 @@
+# Prompt P3_5_3: Enterprise Document Test Corpus & Deep Semantic Assertions (Suite 3: Tools 61–90)
+
+## Context & Objectives
+PaperPilot features a 90-tool zero-mock Playwright E2E test suite. Suite 3 (`apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts`) covers Tools 61–90 (Conversions, Intelligence, Office & Workflows).
+Currently, fixtures used for conversions and intelligence tests are small or lack structured tables and multi-format data.
+
+In this task, you will:
+1. Create templates and test documents in `tests/fixtures_templates/suite3/`:
+   - `academic_paper.html`: A 6-8 page academic research paper featuring a 2-column layout, abstract, figures, equations, and references.
+   - `financial_model.html`: Multi-page financial statements containing complex multi-column, multi-row HTML tables with headers and numerical cell data.
+   - `technical_guide.md`: A structured Markdown guide with headers (H1-H4), code fences (` ```rust `), bullet lists, and tables.
+   - `conversion_sample.html`: Semantic HTML document with rich styling and inline SVG elements.
+   - `data_sheet.csv`: Multi-column spreadsheet data with realistic financial and operational metrics.
+   - `data_sheet.xlsx`: A valid OpenXML spreadsheet file with multiple columns and rows.
+2. Implement a deterministic corpus generation script `scripts/gen_corpus_suite3.sh` that dogfoods our native CLI:
+   - Renders `research_paper.pdf` from `academic_paper.html`.
+   - Renders `financial_tables.pdf` from `financial_model.html`.
+   - Generates/copies `test.html`, `test.md`, `test.csv`, `test.xlsx` into `tests/e2e_fixtures/real/`.
+   - Converts `research_paper.pdf` to `test.docx` via `$CLI_BIN convert --format docx`.
+3. Add Makefile targets `gen-corpus-suite-3` and `gen-corpus` (which aggregates suites 1, 2, and 3).
+4. Update `apps/desktop/tests/e2e_suite_3_conversions_ai.spec.ts` with deep domain invariant assertions:
+   - `pdf_extract_tables`: Assert tables extracted from `financial_tables.pdf` return non-zero rows/columns.
+   - `pdf_to_markdown` & `pdf_to_html`: Assert converted output contains expected heading text and structure.
+   - `pdf_to_epub`: Assert generated EPUB contains valid ZIP container and mimetype.
+   - `convert` (office to pdf): Assert converted PDF has valid page count and `%PDF` header.
+5. Ensure `make gen-corpus-suite-3 && make test-e2e-suite-3` passes 100% cleanly.
+
+---
+
+## Detailed Implementation Requirements
+
+### 1. Document Templates (`tests/fixtures_templates/suite3/`)
+- `academic_paper.html`: Two-column layout with section headings, abstract, text paragraphs, and structured citations.
+- `financial_model.html`: Tables with `<thead>`, `<tbody>`, `<tr>`, `<th>`, `<td>` featuring revenue, expenses, and growth percentages.
+- `technical_guide.md`: Rich Markdown with headers, code blocks, lists, and tables.
+- `data_sheet.csv`: CSV with headers (`id,product_name,category,unit_price,quantity,total_revenue`).
+
+### 2. Generator Script (`scripts/gen_corpus_suite3.sh`)
+- Executable bash script (`chmod +x scripts/gen_corpus_suite3.sh`).
+- Generates:
+  - `research_paper.pdf` via `$CLI_BIN convert --format pdf --input tests/fixtures_templates/suite3/academic_paper.html --output tests/e2e_fixtures/real/research_paper.pdf`
+  - `financial_tables.pdf` via `$CLI_BIN convert --format pdf --input tests/fixtures_templates/suite3/financial_model.html --output tests/e2e_fixtures/real/financial_tables.pdf`
+  - Copies/prepares `test.html`, `test.md`, `test.csv`, `test.xlsx`, `test.docx` in `tests/e2e_fixtures/real/`.
+
+### 3. Makefile Integration
+Add to `Makefile`:
+```makefile
+gen-corpus-suite-3: build-cli
+	@bash scripts/gen_corpus_suite3.sh
+
+gen-corpus: build-cli gen-corpus-suite-1 gen-corpus-suite-2 gen-corpus-suite-3
+	@echo "Enterprise test corpus generated successfully."
+```
+
+### 4. Deep Domain Invariants in `e2e_suite_3_conversions_ai.spec.ts`
+Upgrade assertions beyond just `.success`:
+- `pdf_extract_tables`: Assert parsed JSON array has length > 0 and contains cell values from the financial table.
+- `pdf_to_epub`: Assert output file starts with PK zip header (`\x50\x4B\x03\x04`).
+- `pdf_to_markdown`: Assert markdown string contains `# ` headings.
+- Ensure all 30 tool cases in Suite 3 pass cleanly.
+
+---
+
+## Verification Commands
+Before completing:
+1. `make build-cli`
+2. `make gen-corpus-suite-3`
+3. `make test-e2e-suite-3`
+4. `make test-e2e-all-90`

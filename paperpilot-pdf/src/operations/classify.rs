@@ -58,23 +58,97 @@ impl PdfOperation for PdfClassifyOperation {
 
         let categories = vec![
             (
-                "Invoice",
-                vec!["invoice", "total", "tax", "due date", "balance"],
+                "Invoice / Receipt",
+                vec![
+                    "invoice",
+                    "billing",
+                    "bill to",
+                    "ship to",
+                    "subtotal",
+                    "total due",
+                    "tax",
+                    "due date",
+                    "payment terms",
+                    "unit price",
+                    "balance due",
+                    "remit to",
+                    "receipt",
+                ],
             ),
             (
-                "Contract",
+                "Contract / Agreement",
                 vec![
                     "agreement",
+                    "contract",
+                    "terms and conditions",
                     "hereby",
                     "party of the first part",
+                    "parties hereto",
+                    "governing law",
+                    "indemnification",
+                    "confidentiality",
+                    "non-disclosure",
                     "signatures",
+                    "in witness whereof",
                 ],
             ),
             (
                 "Research Paper",
-                vec!["abstract", "references", "methodology"],
+                vec![
+                    "abstract",
+                    "references",
+                    "methodology",
+                    "introduction",
+                    "literature review",
+                    "conclusion",
+                    "acknowledgments",
+                    "doi:",
+                    "ieee",
+                    "arxiv",
+                ],
             ),
-            ("Form", vec!["application", "date of birth", "signature"]),
+            (
+                "Form / Application",
+                vec![
+                    "application form",
+                    "date of birth",
+                    "applicant signature",
+                    "ssn",
+                    "ein",
+                    "official use only",
+                    "form",
+                    "questionnaire",
+                ],
+            ),
+            (
+                "Financial / Business Report",
+                vec![
+                    "executive summary",
+                    "quarterly report",
+                    "annual report",
+                    "financial statement",
+                    "balance sheet",
+                    "income statement",
+                    "cash flows",
+                    "operating expenses",
+                    "revenue",
+                    "net profit",
+                    "ebitda",
+                    "fiscal year",
+                ],
+            ),
+            (
+                "Document Specification",
+                vec![
+                    "specification",
+                    "specifications",
+                    "overview",
+                    "fixture",
+                    "sample document",
+                    "benchmark",
+                    "verification",
+                ],
+            ),
         ];
 
         let mut best_category = "Unknown".to_string();
@@ -177,7 +251,7 @@ mod tests {
         let res = op.classification.lock().unwrap();
         assert!(res.is_some());
         let class = res.as_ref().unwrap();
-        assert_eq!(class.category, "Invoice");
+        assert_eq!(class.category, "Invoice / Receipt");
         assert!(class.confidence > 0.0);
     }
 }

@@ -18,25 +18,11 @@ impl Default for FlattenOperation {
 
 impl PdfOperation for FlattenOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
-        let lopdf_doc = document
+        let doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Only LopdfDocument supported".into()))?;
-
-        let catalog_ref = lopdf_doc
-            .inner
-            .trailer
-            .get(b"Root")
-            .and_then(|r| r.as_reference())
-            .map_err(|e| PdfError::Other(format!("Missing Root reference: {:?}", e)))?;
-
-        if let Ok(catalog) = lopdf_doc.inner.get_object_mut(catalog_ref)
-            && let Ok(dict) = catalog.as_dict_mut()
-        {
-            dict.remove(b"AcroForm");
-        }
-
-        Ok(())
+        super::form_fill::flatten_widgets(&mut doc.inner)
     }
 }
 

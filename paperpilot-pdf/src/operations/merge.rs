@@ -24,6 +24,13 @@ impl PdfOperation for MergeOperation {
                 PdfError::UnsupportedOperation("Document must be a LopdfDocument".to_string())
             })?;
 
+        let mut total_combined_pages = 0;
+        tracing::debug!(
+            target: "paperpilot_pdf::merge",
+            input_files_count = self.paths.len(),
+            "Starting pdf_merge operation"
+        );
+
         for path in &self.paths {
             let mut other_doc =
                 Document::load(path).map_err(|e| PdfError::ParseError(e.to_string()))?;
@@ -109,6 +116,7 @@ impl PdfOperation for MergeOperation {
             }
 
             for (_, page_id) in pages {
+                total_combined_pages += 1;
                 let adjusted_page_id = (page_id.0 + max_id, page_id.1);
 
                 let pages_obj = lopdf_doc.inner.get_object_mut(pages_id).unwrap();
@@ -128,6 +136,12 @@ impl PdfOperation for MergeOperation {
                 }
             }
         }
+
+        tracing::debug!(
+            target: "paperpilot_pdf::merge",
+            combined_page_count = total_combined_pages,
+            "Finished pdf_merge operation"
+        );
 
         Ok(())
     }

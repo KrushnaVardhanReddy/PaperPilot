@@ -3,10 +3,10 @@ import glob
 import re
 
 def extract_code_block(content, section_pattern):
-    # Match the heading and capture the first code block following it
-    pattern = r'(?:' + section_pattern + r')\s*\n+```(?:bash|json|sh)?\n(.*?)\n```'
+    # Match the heading and capture the first code block following it (allowing optional descriptive text)
+    pattern = r'(?:^|\n)#{2,4}\s*' + section_pattern + r'[^\n]*\n(?:(?!\n#{2,4}\s).)*?```(?:bash|json|sh)?\n(.*?)\n```'
     match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
-    if match and match.group(1):
+    if match and match.group(1).strip():
         return match.group(1).strip()
     return "N/A"
 
@@ -31,7 +31,7 @@ def extract_description(content):
 
 def generate_handbook():
     tools_dir = 'apps/docs/src/content/docs/reference/tools'
-    output_path = 'apps/docs/src/content/docs/reference/50-tools-handbook.md'
+    output_path = 'apps/docs/src/content/docs/reference/tools-handbook.md'
     tool_files = sorted(glob.glob(os.path.join(tools_dir, '*.md')))
 
     print(f"Discovered {len(tool_files)} tool documents in {tools_dir}")
@@ -50,9 +50,9 @@ def generate_handbook():
                 content = tf.read()
 
             desc = extract_description(content)
-            cli_code = extract_code_block(content, r'###\s*CLI|####\s*1\.\s*CLI|##\s*Usage Examples\s*\n\s*###\s*CLI')
-            mcp_code = extract_code_block(content, r'###\s*MCP JSON-RPC|####\s*2\.\s*MCP JSON-RPC|###\s*MCP')
-            api_code = extract_code_block(content, r'###\s*REST API|####\s*3\.\s*REST API|###\s*REST')
+            cli_code = extract_code_block(content, r'(?:\d+\.\s*)?CLI')
+            mcp_code = extract_code_block(content, r'(?:\d+\.\s*)?MCP')
+            api_code = extract_code_block(content, r'(?:\d+\.\s*)?(?:REST|Gateway)')
 
             f.write(f"## {i}. `{tool_id}`\n\n")
             f.write("**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data\n\n")

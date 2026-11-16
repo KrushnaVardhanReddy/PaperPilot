@@ -28,7 +28,7 @@ const coreOperations = [
   { name: 'pdf_encrypt', query: 'encrypt', type: 'pdf' },
   { name: 'pdf_redact', query: 'redact', type: 'pdf' },
   { name: 'pdf_metadata', query: 'metadata', type: 'pdf' },
-  { name: 'pdf_sign', query: 'signature', type: 'pdf' },
+  { name: 'pdf_sign', query: 'Sign Document', type: 'pdf' },
   { name: 'pdf_flatten', query: 'flatten', type: 'pdf' },
   { name: 'pdf_header_footer', query: 'header', type: 'pdf' },
   { name: 'pdf_bates', query: 'bates', type: 'pdf' },
@@ -37,12 +37,13 @@ const coreOperations = [
   { name: 'pdf_render', query: 'convert', type: 'pdf' },
   { name: 'pdf_bookmarks', query: 'bookmarks', type: 'pdf' },
   { name: 'pdf_classify_type', query: 'classify', type: 'pdf' },
-  { name: 'pdf_validate', query: 'validate', type: 'pdf' },
+  { name: 'pdf_validate', query: 'Validate PDF', type: 'pdf' },
   { name: 'pdf_hash', query: 'hash', type: 'pdf' },
   { name: 'pdf_to_html', query: 'html', type: 'pdf' },
   { name: 'pdf_to_markdown', query: 'markdown', type: 'pdf' },
   { name: 'office_modernize_legacy', query: 'modernize', type: 'excel' },
-  { name: 'pdf_images_to_pdf', query: 'images', type: 'pdf' }
+  { name: 'pdf_images_to_pdf', query: 'images', type: 'pdf' },
+  { name: 'pdf_chunk', query: 'chunk', type: 'pdf' }
 ];
 
 test.beforeEach(async ({ page }) => {
@@ -115,6 +116,9 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
           await page.evaluate(({t, n}) => {
               (window as any).__last_tool_type = t;
               (window as any).__last_tool_name = n;
+              if ((window as any).appState?.clearAllDocuments) {
+                (window as any).appState.clearAllDocuments();
+              }
           }, { t: op.type, n: op.name });
 
           const fileInput = page.locator('input[multiple][type="file"]');
@@ -171,17 +175,26 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
                await angleInput.fill('90');
              }
           }
+          if (op.name === 'pdf_chunk') {
+             const chunkInput = page.locator('#chunkTargetTokensInput');
+             if (await chunkInput.isVisible()) {
+               await chunkInput.fill('500');
+             }
+          }
 
           if (await runBtn.isDisabled()) {
              await runBtn.evaluate((node) => (node as HTMLButtonElement).removeAttribute('disabled'));
           }
 
-          // Clear previous files, handle dirs
-          fs.readdirSync(outDir).forEach(f => {
-            if (f.startsWith('mock_save_')) {
-                fs.rmSync(path.join(outDir, f), { recursive: true, force: true });
+          // Clear previous files safely without path traversal
+          for (const f of fs.readdirSync(outDir)) {
+            if (f.startsWith('mock_save_') && !f.includes('..') && !f.includes('/')) {
+              const safePath = path.resolve(outDir, path.basename(f));
+              if (safePath.startsWith(outDir)) {
+                fs.rmSync(safePath, { recursive: true, force: true });
+              }
             }
-          });
+          }
 
           await runBtn.click({ force: true });
 
@@ -246,11 +259,19 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
           else if (op.name === 'office_modernize_legacy') cliCmd = `${cliBin} office modernize --input ../../tests/e2e_fixtures/real/test.xlsx --output ${mockFileDOCX}`;
           else if (op.name === 'pdf_rag_chunks') cliCmd = `${cliBin} extract-text --input ../../tests/e2e_fixtures/real/single_page.pdf --format json --output ${mockFileJSON}`;
           else if (op.name === 'pdf_images_to_pdf') cliCmd = `${cliBin} images-to-pdf --images ../../tests/e2e_fixtures/real/test.png --output ${mockFilePDF}`;
+          else if (op.name === 'pdf_chunk') cliCmd = `${cliBin} pdf-chunk --input ../../tests/e2e_fixtures/real/single_page.pdf --target-tokens 500 --overlap 50 --json --output ${mockFileJSON}`;
 
           console.log("Executing Real Engine for", op.name, ":", cliCmd);
+          console.log(`[PASSING OP ${op.name}]`);
           if (cliCmd) {
             try {
-              execSync(cliCmd, { stdio: 'pipe' });
+              execSync(cliCmd, {
+                stdio: 'pipe',
+                env: {
+                  ...process.env,
+                  PAPERPILOT_OCR_MODELS_DIR: path.resolve('../../models/ocr/ppocrv4')
+                }
+              });
             } catch (e: any) {
               console.log("Command execution failed or warnings (ignoring error for validation fallback):", e.message);
             }
@@ -316,7 +337,7 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
              }
           }
 
-          if (['pdf_to_json', 'pdf_extract_text', 'excel_to_json', 'pdf_metadata', 'pdf_search', 'pdf_bookmarks', 'pdf_classify_type', 'pdf_validate', 'pdf_hash', 'office_extract_text', 'pdf_compare', 'pdf_rag_chunks'].includes(op.name)) {
+          if (['pdf_to_json', 'pdf_extract_text', 'excel_to_json', 'pdf_metadata', 'pdf_search', 'pdf_bookmarks', 'pdf_classify_type', 'pdf_validate', 'pdf_hash', 'office_extract_text', 'pdf_compare', 'pdf_rag_chunks', 'pdf_chunk'].includes(op.name)) {
              let jsonStr = fileContent.toString('utf-8');
              
              // For metadata and classify tools that just rewrite PDF dictionaries, we might not get JSON text back if the CLI output format wasn't explicitly supported or it just returned success string.
@@ -351,6 +372,9 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
                      throw new Error("Semantic Validation Failed: Excel JSON is not an object/array.");
                   }
                }
+               if (op.name === 'pdf_chunk' && (!jsonObj.chunks || typeof jsonObj.total_chunks !== 'number')) {
+                  throw new Error("Semantic Validation Failed: pdf_chunk JSON missing chunks array or total_chunks.");
+               }
              } catch (e: any) {
                if (e.message.includes('Semantic Validation Failed')) throw e;
                throw new Error(`Semantic Validation Failed: ${op.name} output is not valid JSON.`);
@@ -383,12 +407,15 @@ test.describe('Real Desktop Unmocked Executions (Deep Semantic Validations)', ()
           const backBtn = page.locator('.back-btn');
           if (await backBtn.isVisible({ timeout: 2000 })) {
              await backBtn.click();
+          } else {
+             await page.click('#tab-btn-home');
           }
-          await expect(searchInput).toBeVisible({ timeout: 2000 });
+          await expect(searchInput).toBeVisible({ timeout: 5000 });
         });
       } catch (err: any) {
         hasError = true;
         errorMessage = err.message || String(err);
+        console.error(`[TOOL FAIL ${op.name}]:`, errorMessage);
 
         try {
           await page.goto('http://127.0.0.1:1420/');

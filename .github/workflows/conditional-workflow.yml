@@ -1,0 +1,39 @@
+name: Conditional Document Workflows
+
+on:
+  pull_request:
+    paths:
+      - 'paperpilot-core/**'
+      - 'paperpilot-pdf/**'
+      - 'paperpilot-cli/**'
+      - 'paperpilot-mcp/**'
+      - 'paperpilot-gateway/**'
+      - 'paperpilot-wasm/**'
+      - 'examples/workflows/**'
+      - 'Cargo.lock'
+      - '.github/workflows/conditional-workflow.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-pdf-regression:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+      - name: Shared schema and graph validation
+        run: cargo test -p paperpilot-core --lib workflow:: -j 2
+      - name: Core, MCP and REST with genuine PDF artifacts
+        run: cargo test -p paperpilot-pdf -p paperpilot-mcp -p paperpilot-gateway --test conditional_workflow -j 2 -- --test-threads=2
+      - name: CLI compatibility and machine-readable failures
+        run: cargo test -p paperpilot-cli --test test_conditional_workflow -j 2 -- --test-threads=2
+      - name: WASM wrapper on host without native OCR
+        run: cargo test -p paperpilot-wasm --test conditional_workflow -j 2

@@ -272,9 +272,14 @@ pub fn pdf_attachments_bytes(
             Ok(output)
         }
         "extract" => {
-            let target_name = options.file_name.as_ref().ok_or_else(|| {
-                PdfError::Other("Missing file_name for extract action".to_string())
-            })?;
+            let target_name = options
+                .file_name
+                .as_ref()
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty());
+
+            let mut all_extracted: Vec<(String, Vec<u8>)> = Vec::new();
+
             if let Ok(catalog) = doc.catalog() {
                 if let Ok(names_id) = catalog.get(b"Names").and_then(|obj| obj.as_reference()) {
                     if let Ok(names_dict) = doc.get_dictionary(names_id) {
@@ -291,7 +296,7 @@ pub fn pdf_attachments_bytes(
                                         if let Ok(name_str) = names_array[i].as_str() {
                                             let name =
                                                 String::from_utf8_lossy(name_str).to_string();
-                                            if name == *target_name {
+                                            if target_name.is_none() || target_name == Some(name.as_str()) {
                                                 if let Ok(file_spec_id) =
                                                     names_array[i + 1].as_reference()
                                                 {
@@ -312,14 +317,9 @@ pub fn pdf_attachments_bytes(
                                                                     .get_object(stream_id)
                                                                     .and_then(|obj| obj.as_stream())
                                                                 {
-                                                                    let content = stream
-                                                                        .decompressed_content()
-                                                                        .map_err(|e| {
-                                                                            PdfError::Other(
-                                                                                e.to_string(),
-                                                                            )
-                                                                        })?;
-                                                                    return Ok(content);
+                                                                    if let Ok(content) = stream.decompressed_content() {
+                                                                        all_extracted.push((name, content));
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -334,10 +334,48 @@ pub fn pdf_attachments_bytes(
                     }
                 }
             }
-            Err(PdfError::Other(format!(
-                "Attachment not found: {}",
-                target_name
-            )))
+
+            if all_extracted.is_empty() {
+                if let Some(name) = target_name {
+                    return Err(PdfError::Other(format!("Attachment not found: {}", name)));
+                } else {
+                    return Err(PdfError::Other("No attachments found in PDF document".to_string()));
+                }
+            }
+
+            // If a specific file was requested, or if only 1 file exists and matches, return its raw bytes directly
+            if let Some(_) = target_name {
+                if let Some((_, bytes)) = all_extracted.into_iter().next() {
+                    return Ok(bytes);
+                }
+            } else if all_extracted.len() == 1 {
+                return Ok(all_extracted.remove(0).1);
+            } else {
+                // Multiple attachments and no specific filename given: bundle all into a ZIP archive!
+                use std::io::{Cursor, Write};
+                use zip::write::SimpleFileOptions;
+                use zip::CompressionMethod;
+
+                let mut zip_buffer = Cursor::new(Vec::new());
+                {
+                    let mut zip = zip::ZipWriter::new(&mut zip_buffer);
+                    let zip_options = SimpleFileOptions::default()
+                        .compression_method(CompressionMethod::Deflated)
+                        .unix_permissions(0o644);
+
+                    for (fname, file_bytes) in all_extracted.iter() {
+                        zip.start_file(fname, zip_options)
+                            .map_err(|e| PdfError::Other(e.to_string()))?;
+                        zip.write_all(file_bytes)
+                            .map_err(|e| PdfError::Other(e.to_string()))?;
+                    }
+
+                    zip.finish().map_err(|e| PdfError::Other(e.to_string()))?;
+                }
+                return Ok(zip_buffer.into_inner());
+            }
+
+            Err(PdfError::Other("Extraction failed".to_string()))
         }
         "remove" => {
             let target_name = options.file_name.as_ref().ok_or_else(|| {
@@ -482,8 +520,10 @@ mod tests {
 
     #[test]
     fn test_pdf_attachments_list_empty() {
-        let mut options = PdfAttachmentsOptions::default();
-        options.action = "list".to_string();
+        let options = PdfAttachmentsOptions {
+            action: "list".to_string(),
+            ..Default::default()
+        };
         let bytes = create_blank_pdf();
         let result = pdf_attachments_bytes(&bytes, &options).unwrap();
         let report: AttachmentsReport = serde_json::from_slice(&result).unwrap();

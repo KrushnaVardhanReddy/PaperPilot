@@ -5,7 +5,7 @@
 # Spec: specs/031-penta-interface-e2e-real-semantic-assertions/spec.md & specs/064-all-50-tools-cleanroom-audit/spec.md
 
 ## Objective
-Execute a comprehensive end-to-end verification across ALL 5 INTERFACES (CLI, MCP, REST Gateway, WebAssembly/In-Memory, and Edge Worker) for all 50 PaperPilot tools. Extract real, verified execution commands and payloads directly from the tests and update the Documentation Portal (`apps/docs/src/content/docs/reference/50-tools-handbook.md`) so every single tool has verified, working, copy-pasteable snippets across CLI, REST API (`curl`), and MCP JSON-RPC. (Web UI updates are out of scope for this task).
+Execute a comprehensive end-to-end verification across ALL 5 INTERFACES (CLI, MCP, REST Gateway, WebAssembly/In-Memory, and Edge Worker) for all 50 PaperPilot tools. Extract real, verified execution commands and payloads directly from the tests and update the Documentation Portal (`apps/docs/src/content/docs/reference/tools-handbook.md`) so every single tool has verified, working, copy-pasteable snippets across CLI, REST API (`curl`), and MCP JSON-RPC. (Web UI updates are out of scope for this task).
 
 ---
 
@@ -15,7 +15,7 @@ You may **ONLY** create and touch files in these paths:
 paperpilot-cli/tests/all50_cleanroom_audit.rs
 reports/ALL_50_TOOLS_CLEANROOM_AUDIT_REPORT.md
 reports/PENTA_INTERFACE_EXPANSION_AND_REAL_PLAYWRIGHT_REPORT.md
-apps/docs/src/content/docs/reference/50-tools-handbook.md
+apps/docs/src/content/docs/reference/tools-handbook.md
 apps/docs/src/content/docs/reference/
 Makefile
 ```
@@ -59,7 +59,7 @@ Run and verify all 5 distinct execution surfaces across the 50 tools:
 ---
 
 ## 2. Documentation Portal Synchronization (`apps/docs`)
-Using the verified tests from Section 1, update `apps/docs/src/content/docs/reference/50-tools-handbook.md`:
+Using the verified tests from Section 1, update `apps/docs/src/content/docs/reference/tools-handbook.md`:
 1. **Multi-Interface Code Snippets for Every Tool**:
    Ensure each of the 50 tools includes copy-pasteable snippets for:
    - **CLI**: Exact command (e.g. `paperpilot convert excel-to-json --input data.xlsx --output data.json`)

@@ -49,6 +49,7 @@ impl PdfOperation for CropPagesOperation {
         for object_id in pages_to_update {
             if let Ok(lopdf::Object::Dictionary(dict)) = lopdf_doc.inner.get_object_mut(object_id) {
                 dict.set("CropBox", lopdf::Object::Array(new_crop_box_array.clone()));
+                dict.set("MediaBox", lopdf::Object::Array(new_crop_box_array.clone()));
             }
         }
 

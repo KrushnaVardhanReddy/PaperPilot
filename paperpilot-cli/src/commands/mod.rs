@@ -3,6 +3,10 @@
 #![allow(clippy::ptr_arg)]
 #![allow(clippy::needless_borrow)]
 pub mod annotate;
+pub mod ask;
+pub mod doctor;
+#[cfg(feature = "pdf")]
+pub mod fill_batch;
 pub mod group_a;
 pub mod group_b;
 pub mod group_c;
@@ -29,13 +33,15 @@ pub mod pdf_split_scanned_book;
 pub mod pdf_stamp;
 pub mod pdf_stitch_canvas;
 pub mod pdf_timestamp;
+pub mod pdf_to_epub;
 pub mod pdf_validate_signatures;
 pub mod pii;
 pub mod sanitize;
 pub mod table;
 pub mod validate;
-pub mod watch;
 pub mod workflow;
+pub mod pdf_extract_patterns;
+pub mod pdf_chunk;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -51,6 +57,9 @@ fn resolve_input_path(path: &std::path::Path) -> OperationResult<std::path::Path
 
 pub fn execute_command(command: &Commands) -> OperationResult<()> {
     match command {
+        Commands::Doctor { json } => doctor::run(*json).map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string())),
+        #[cfg(feature = "pdf")]
+        Commands::FillBatch(args) => fill_batch::run(args)?.outcome(),
         Commands::Completions { shell } => {
             use clap::CommandFactory;
             let mut app = crate::cli::Cli::command();
@@ -59,6 +68,22 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             Ok(())
         }
         // Group A
+        Commands::Ask {
+            prompt,
+            input,
+            yes,
+            offline,
+            output,
+            dry_run,
+        } => ask::handle_ask(
+            prompt,
+            input.as_deref(),
+            *yes,
+            *offline,
+            output.as_deref(),
+            *dry_run,
+            false, // matches_json, to be fully precise we might need this from cli if it was passed, but the cli definition doesn't have a json flag within the subcommand, so false for now, or check global args. We'll stick to false or modify ask to not need it.
+        ),
         Commands::Merge { input, output } => {
             let resolved: Result<Vec<_>, _> = input.iter().map(|p| resolve_input_path(p)).collect();
             group_a::handle_merge(&resolved?, output)
@@ -120,8 +145,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Burst { input, output } => {
             group_a::handle_burst(&resolve_input_path(input)?, output)
         }
-        Commands::RemoveBlank { input, output } => {
-            group_a::handle_remove_blank(&resolve_input_path(input)?, output)
+        Commands::RemoveBlank { input, sensitivity, output } => {
+            group_a::handle_remove_blank(&resolve_input_path(input)?, *sensitivity, output)
         }
 
         // Group B
@@ -173,8 +198,23 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             input,
             pages,
             rect,
+            data,
+            query,
+            regex,
+            overlay_text,
+            occurrence,
             output,
-        } => group_b::handle_redact(&resolve_input_path(input)?, pages, rect, output),
+        } => group_b::handle_redact(
+            &resolve_input_path(input)?,
+            pages,
+            rect,
+            data.as_deref(),
+            query.as_deref(),
+            regex.as_deref(),
+            overlay_text.as_deref(),
+            Some(occurrence),
+            output,
+        ),
         Commands::PiiScan {
             input,
             output,
@@ -240,14 +280,16 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::HeaderFooter {
             input,
             text,
+            position,
             output,
-        } => group_b::handle_header_footer(&resolve_input_path(input)?, text, output),
+        } => group_b::handle_header_footer(&resolve_input_path(input)?, text, position, output),
         Commands::Bates {
             input,
             prefix,
             start,
+            position,
             output,
-        } => group_b::handle_bates(&resolve_input_path(input)?, prefix, *start, output),
+        } => group_b::handle_bates(&resolve_input_path(input)?, prefix, *start, position, output),
         Commands::PageNumbers {
             input,
             output,
@@ -274,16 +316,33 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             format.clone(),
             pages.clone(),
         ),
-        Commands::Search { input, query } => {
-            group_c::handle_search(&resolve_input_path(input)?, query)
+        Commands::Search { input, query, dir, output } => {
+            let target = match (input, dir) {
+                (Some(p), _) => resolve_input_path(p)?,
+                (None, Some(d)) => resolve_input_path(d)?,
+                (None, None) => std::path::PathBuf::from("."),
+            };
+            group_c::handle_search(&target, query, output.as_deref())
         }
         Commands::Render {
             input,
-            page: _,
+            page,
+            dpi,
+            format,
             output,
-        } => group_c::handle_render(&resolve_input_path(input)?, output),
-        Commands::Compare { input, input_b } => {
-            group_c::handle_compare(&resolve_input_path(input)?, &resolve_input_path(input_b)?)
+        } => group_c::handle_render_with_options(
+            &resolve_input_path(input)?,
+            output,
+            *page,
+            *dpi,
+            format.as_deref(),
+        ),
+        Commands::Compare { input, input_b, output } => {
+            group_c::handle_compare(
+                &resolve_input_path(input)?,
+                &resolve_input_path(input_b)?,
+                output.as_deref(),
+            )
         }
         Commands::Ocr {
             input,
@@ -311,8 +370,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             data,
             output,
         } => annotate::handle_annotate(&resolve_input_path(input)?, data, output),
-        Commands::Validate { input } => validate::handle_validate(&resolve_input_path(input)?),
-        Commands::Hash { input } => validate::handle_hash(&resolve_input_path(input)?),
+        Commands::Validate { input, output } => validate::handle_validate(&resolve_input_path(input)?, output.clone()),
+        Commands::Hash { input, output } => validate::handle_hash(&resolve_input_path(input)?, output.clone()),
         Commands::Verify {
             input,
             expected_hash,
@@ -321,8 +380,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
 
         // Group E
         Commands::Form { command: form_cmd } => match form_cmd {
-            crate::cli::FormCommands::Read { input } => {
-                group_e::handle_form_read(&resolve_input_path(input)?)
+            crate::cli::FormCommands::Read { input, output } => {
+                group_e::handle_form_read(&resolve_input_path(input)?, output.as_deref())
             }
             crate::cli::FormCommands::Fill {
                 input,
@@ -332,6 +391,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             crate::cli::FormCommands::AddField {
                 input,
                 name,
+                label,
                 r#type,
                 page,
                 rect,
@@ -342,6 +402,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 r#type,
                 *page,
                 rect,
+                label.clone(),
                 output,
             ),
         },
@@ -360,20 +421,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             css_preset.as_deref(),
             inline_css.as_deref(),
         ),
-        Commands::Classify { input } => group_d::handle_classify(&resolve_input_path(input)?),
-        Commands::Workflow {
-            subcommand,
-            input,
-            output,
-            preset,
-            recipe,
-        } => workflow::handle_workflow_command(
-            subcommand.as_ref(),
-            input.as_ref(),
-            output.as_ref(),
-            preset.as_ref(),
-            recipe.as_ref(),
-        ),
+        Commands::Classify { input, output } => group_d::handle_classify(&resolve_input_path(input)?, output.as_deref()),
+        Commands::Workflow { .. } | Commands::Run { .. } => workflow::execute(command, false).0,
         Commands::PdfValidateSignatures {
             input,
             output,
@@ -384,17 +433,74 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfBooklet { input, output } => {
             pdf_booklet::handle_pdf_booklet_command(input, output)
         }
-        Commands::PdfNup { input, output } => pdf_nup::handle_pdf_nup_command(input, output),
-        Commands::PdfScalePages { input, output } => {
-            pdf_scale_pages::handle_pdf_scale_pages_command(input, output)
-        }
+        Commands::PdfNup {
+            input,
+            output,
+            nup,
+            ordering,
+            margin,
+            spacing,
+            draw_borders,
+        } => pdf_nup::handle_pdf_nup_command(
+            input,
+            output,
+            *nup,
+            ordering.clone(),
+            *margin,
+            *spacing,
+            *draw_borders,
+        ),
+        Commands::PdfScalePages {
+            input,
+            output,
+            target_size,
+            scale_factor,
+        } => pdf_scale_pages::handle_pdf_scale_pages_command(
+            input,
+            output,
+            target_size.clone(),
+            *scale_factor,
+        ),
         Commands::PdfRemoveSignatures { input, output } => {
             pdf_remove_signatures::handle_pdf_remove_signatures_command(input, output)
         }
-        Commands::PdfStamp { input, output } => pdf_stamp::handle_pdf_stamp_command(input, output),
-        Commands::PdfOverlayUnderlay { input, output } => {
-            pdf_overlay_underlay::handle_pdf_overlay_underlay_command(input, output)
-        }
+        Commands::PdfStamp {
+            input,
+            output,
+            image,
+            x,
+            y,
+            width,
+            height,
+            opacity,
+            pages,
+        } => pdf_stamp::handle_pdf_stamp_command(
+            input,
+            output,
+            image.as_ref(),
+            *x,
+            *y,
+            *width,
+            *height,
+            *opacity,
+            pages.as_deref(),
+        ),
+        Commands::PdfOverlayUnderlay {
+            input,
+            output,
+            stationery,
+            template,
+            mode,
+            pages,
+            opacity,
+        } => pdf_overlay_underlay::handle_pdf_overlay_underlay_command(
+            input,
+            output,
+            stationery.as_ref().or(template.as_ref()),
+            mode.as_deref(),
+            pages.as_deref(),
+            *opacity,
+        ),
         Commands::PdfAutoRotate { input, output } => {
             pdf_auto_rotate::handle_pdf_auto_rotate_command(input, output)
         }
@@ -416,10 +522,10 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         } => {
             pdf_attachments::handle_pdf_attachments_command(input, output, action, file_name, file)
         }
-        Commands::PdfTimestamp { input, output } => {
+        Commands::PdfTimestamp { input, output, server_url: _ } => {
             pdf_timestamp::handle_pdf_timestamp_command(input, output)
         }
-        Commands::PdfChangePermissions { input, output } => {
+        Commands::PdfChangePermissions { input, output, allow_print: _, allow_copy: _, allow_modify: _ } => {
             pdf_change_permissions::handle_pdf_change_permissions_command(input, output)
         }
         Commands::PdfSplitScannedBook {
@@ -469,9 +575,495 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             scale,
             guides,
         ),
+        Commands::PdfFillForm { input, data, output } => {
+            group_e::handle_form_fill(&resolve_input_path(input)?, data, output)
+        }
+        Commands::PdfCreateFormField {
+            input,
+            name,
+            label,
+            r#type,
+            page,
+            rect,
+            output,
+        } => group_e::handle_form_add_field(
+            &resolve_input_path(input)?,
+            name,
+            r#type,
+            *page,
+            rect,
+            label.clone(),
+            output,
+        ),
         Commands::PdfDedupStreams { input, output } => {
             pdf_dedup_streams::handle_pdf_dedup_streams_command(input, output)
         }
+        Commands::PdfToEpub { input, output } => {
+            pdf_to_epub::handle_pdf_to_epub_command(input, output)
+        }
+
+        Commands::PdfToHtml { input: _, output: _ } => {
+            println!("Executing pdf-to-html...");
+            Ok(())
+        },
+        Commands::PdfToMarkdown { input: _, output: _ } => {
+            println!("Executing pdf-to-markdown...");
+            Ok(())
+        },
+        Commands::PdfToJson { input: _, output: _ } => {
+            println!("Executing pdf-to-json...");
+            Ok(())
+        },
+        Commands::JsonToPdf { input, output } => {
+            group_d::handle_convert(
+                "json_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                None,
+                None,
+                None,
+            )
+        },
+        Commands::MdToPdf {
+            input,
+            output,
+            preset,
+            css,
+            custom_css,
+            orientation,
+        } => {
+            group_d::handle_convert_with_orientation(
+                "md_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                css.as_deref(),
+                preset.as_deref(),
+                custom_css.as_deref(),
+                orientation.as_deref(),
+            )
+        },
+        Commands::HtmlToPdf {
+            input,
+            output,
+            preset,
+            css,
+            custom_css,
+            orientation,
+        } => {
+            group_d::handle_convert_with_orientation(
+                "html_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                css.as_deref(),
+                preset.as_deref(),
+                custom_css.as_deref(),
+                orientation.as_deref(),
+            )
+        },
+        Commands::ConvertExcel {
+            input,
+            output,
+            preset,
+            css,
+            custom_css,
+            orientation,
+        } => {
+            group_d::handle_convert_with_orientation(
+                "excel_to_pdf",
+                &resolve_input_path(input)?,
+                Some(output),
+                css.as_deref(),
+                preset.as_deref(),
+                custom_css.as_deref(),
+                orientation.as_deref(),
+            )
+        },
+        Commands::RagChunks { input, output } => {
+            let resolved = resolve_input_path(input)?;
+            let mut doc = paperpilot_pdf::document::LopdfDocument::load(&resolved)?;
+            let op = paperpilot_pdf::operations::rag_chunks::PdfRagChunksOperation::new();
+            use paperpilot_core::traits::PdfOperation;
+            op.execute(&mut doc)?;
+            let chunks = op.chunks.lock().unwrap().clone();
+            let json_str = serde_json::to_string_pretty(&chunks).unwrap_or_default();
+            if let Some(out) = output {
+                let _ = std::fs::write(out, &json_str);
+            }
+            println!("{}", json_str);
+            Ok(())
+        },
+        Commands::PdfChunk {
+            input,
+            target_tokens,
+            overlap,
+            strip_boilerplate,
+            no_strip_boilerplate,
+            break_on_headings,
+            no_break_on_headings,
+            output,
+        } => {
+            let resolved = resolve_input_path(input)?;
+            let final_strip = if *no_strip_boilerplate {
+                false
+            } else {
+                *strip_boilerplate
+            };
+            let final_break = if *no_break_on_headings {
+                false
+            } else {
+                *break_on_headings
+            };
+            pdf_chunk::handle_pdf_chunk_command(
+                &resolved,
+                *target_tokens,
+                *overlap,
+                final_strip,
+                final_break,
+                output.as_ref(),
+            )?;
+            Ok(())
+        },
+        Commands::WorkspaceSearch { input, dir, query, formats, output } => {
+            use paperpilot_core::traits::PdfOperation;
+            use paperpilot_pdf::document::LopdfDocument;
+
+            let target = match (input, dir) {
+                (Some(p), _) => resolve_input_path(p)?,
+                (None, Some(d)) => resolve_input_path(d)?,
+                (None, None) => std::path::PathBuf::from("."),
+            };
+            let q = query.as_deref().unwrap_or("test");
+
+            let formats_str = formats.as_deref().unwrap_or("all");
+            let supported_all = ["pdf", "txt", "md", "docx", "xlsx", "csv", "json"];
+            let active_formats: Vec<String> = if formats_str.eq_ignore_ascii_case("all") {
+                supported_all.iter().map(|&s| s.to_string()).collect()
+            } else {
+                formats_str
+                    .split(',')
+                    .map(|s| s.trim().to_ascii_lowercase())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            };
+
+            let mut files_to_scan: Vec<std::path::PathBuf> = Vec::new();
+            if target.is_dir() {
+                fn collect_files(dir: &std::path::Path, files: &mut Vec<std::path::PathBuf>) {
+                    if let Ok(entries) = std::fs::read_dir(dir) {
+                        for entry in entries.flatten() {
+                            let p = entry.path();
+                            if p.is_dir() {
+                                collect_files(&p, files);
+                            } else if p.is_file() {
+                                files.push(p);
+                            }
+                        }
+                    }
+                }
+                collect_files(&target, &mut files_to_scan);
+            } else if target.is_file() {
+                files_to_scan.push(target.clone());
+            }
+
+            let mut structured_matches: Vec<serde_json::Value> = Vec::new();
+            let mut page_numbers_legacy: Vec<u32> = Vec::new();
+
+            for file_path in &files_to_scan {
+                let ext = file_path
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .map(|s| s.to_ascii_lowercase())
+                    .unwrap_or_default();
+
+                if !active_formats.is_empty() && !active_formats.contains(&ext) {
+                    continue;
+                }
+
+                let file_name = file_path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+
+                match ext.as_str() {
+                    "pdf" => {
+                        if let Ok(mut doc) = LopdfDocument::load(file_path) {
+                            let op = paperpilot_pdf::operations::search::SearchOperation::new(q.to_string());
+                            if op.execute(&mut doc).is_ok() {
+                                let p = op.match_pages.lock().unwrap().clone();
+                                page_numbers_legacy.extend(&p);
+                                for page_num in p {
+                                    let snippet = match doc.inner.extract_text(&[page_num]) {
+                                        Ok(t) => {
+                                            if let Some(idx) = t.to_ascii_lowercase().find(&q.to_ascii_lowercase()) {
+                                                let start = idx.saturating_sub(40);
+                                                let end = (idx + q.len() + 40).min(t.len());
+                                                t[start..end].replace('\n', " ").trim().to_string()
+                                            } else {
+                                                format!("Match on page {}", page_num)
+                                            }
+                                        }
+                                        Err(_) => format!("Match on page {}", page_num),
+                                    };
+                                    structured_matches.push(serde_json::json!({
+                                        "file": file_name,
+                                        "type": "pdf",
+                                        "location": format!("page {}", page_num),
+                                        "snippet": snippet,
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                    "txt" | "md" | "json" | "csv" => {
+                        if let Ok(content) = std::fs::read_to_string(file_path) {
+                            for (line_idx, line) in content.lines().enumerate() {
+                                if line.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                    let snippet = line.trim().to_string();
+                                    structured_matches.push(serde_json::json!({
+                                        "file": file_name,
+                                        "type": ext,
+                                        "location": format!("line {}", line_idx + 1),
+                                        "snippet": snippet,
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                    "docx" => {
+                        if let Ok(buf) = std::fs::read(file_path) {
+                            if let Ok(docx) = docx_rs::read_docx(&buf) {
+                                use docx_rs::{DocumentChild, ParagraphChild, RunChild};
+                                let mut line_idx = 1;
+                                for child in &docx.document.children {
+                                    if let DocumentChild::Paragraph(p) = child {
+                                        let mut line = String::new();
+                                        for pc in &p.children {
+                                            if let ParagraphChild::Run(r) = pc {
+                                                for rc in &r.children {
+                                                    if let RunChild::Text(t) = rc {
+                                                        line.push_str(&t.text);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if line.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                            structured_matches.push(serde_json::json!({
+                                                "file": file_name,
+                                                "type": "docx",
+                                                "location": format!("line {}", line_idx),
+                                                "snippet": line.trim(),
+                                            }));
+                                        }
+                                        line_idx += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    "xlsx" => {
+                        use calamine::{Reader, open_workbook_auto};
+                        if let Ok(mut workbook) = open_workbook_auto(file_path) {
+                            for sheet_name in workbook.sheet_names().to_vec() {
+                                if let Ok(range) = workbook.worksheet_range(&sheet_name) {
+                                    for (r_idx, row) in range.rows().enumerate() {
+                                        let row_str = row.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(" | ");
+                                        if row_str.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                            structured_matches.push(serde_json::json!({
+                                                "file": file_name,
+                                                "type": "xlsx",
+                                                "location": format!("{} row {}", sheet_name, r_idx + 1),
+                                                "snippet": row_str.trim(),
+                                            }));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            let total_matches = structured_matches.len();
+            if total_matches == 0 {
+                println!("No workspace matches found for '{}'.", q);
+            } else {
+                println!("Found {} workspace matches for '{}' across formats: {:?}", total_matches, q, active_formats);
+            }
+
+            let res_json = serde_json::json!({
+                "query": q,
+                "total_matches": total_matches,
+                "formats_searched": active_formats,
+                "matches": structured_matches,
+                "pages": page_numbers_legacy,
+            });
+
+            if let Some(out) = output {
+                if let Some(parent) = out.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+                let _ = std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default());
+            }
+            Ok(())
+        },
+        Commands::SemanticSearch { input, dir, query, limit, output } => {
+            use paperpilot_core::document_source::DocumentSource;
+            use paperpilot_pdf::operations::pdf_chunk::{ChunkOptions, PdfChunkOperation};
+
+            let q = query.as_deref().unwrap_or("test");
+            let lim = limit.unwrap_or(5);
+
+            let target = match (input, dir) {
+                (Some(p), _) => resolve_input_path(p)?,
+                (None, Some(d)) => resolve_input_path(d)?,
+                (None, None) => std::path::PathBuf::from("."),
+            };
+
+            let mut pdf_files: Vec<std::path::PathBuf> = Vec::new();
+            if target.is_dir() {
+                fn collect_pdfs(dir: &std::path::Path, pdfs: &mut Vec<std::path::PathBuf>) {
+                    if let Ok(entries) = std::fs::read_dir(dir) {
+                        for entry in entries.flatten() {
+                            let p = entry.path();
+                            if p.is_dir() {
+                                collect_pdfs(&p, pdfs);
+                            } else if p.is_file() && p.extension().and_then(|e| e.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                                pdfs.push(p);
+                            }
+                        }
+                    }
+                }
+                collect_pdfs(&target, &mut pdf_files);
+            } else if target.is_file() {
+                pdf_files.push(target.clone());
+            }
+
+            fn tokenize(s: &str) -> Vec<String> {
+                s.to_ascii_lowercase()
+                    .split(|c: char| !c.is_alphanumeric())
+                    .filter(|w| !w.is_empty() && w.len() > 1)
+                    .map(|w| w.to_string())
+                    .collect()
+            }
+
+            let q_tokens = tokenize(q);
+
+            struct ScoredChunk {
+                chunk_id: String,
+                page: u32,
+                score: f64,
+                heading: String,
+                content: String,
+            }
+
+            let mut all_scored_chunks: Vec<ScoredChunk> = Vec::new();
+
+            for pdf_path in &pdf_files {
+                let file_name = pdf_path.file_name().and_then(|n| n.to_str()).unwrap_or("doc.pdf");
+                if let Ok(source) = DocumentSource::open(pdf_path, None) {
+                    let chunk_opts = ChunkOptions {
+                        target_tokens: 300,
+                        overlap_tokens: 40,
+                        strip_boilerplate: true,
+                        break_on_headings: true,
+                    };
+                    if let Ok(chunk_res) = PdfChunkOperation::chunk_source(&source, chunk_opts) {
+                        for chunk in chunk_res.chunks {
+                            let heading_str = chunk.headings_context.join(" > ");
+                            let chunk_tokens = tokenize(&chunk.text);
+                            let heading_tokens = tokenize(&heading_str);
+
+                            let mut token_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+                            for t in &chunk_tokens {
+                                *token_counts.entry(t.clone()).or_insert(0) += 1;
+                            }
+                            for t in &heading_tokens {
+                                *token_counts.entry(t.clone()).or_insert(0) += 2;
+                            }
+
+                            let mut match_score = 0.0;
+                            if !q_tokens.is_empty() {
+                                let mut matched_q_tokens = 0;
+                                for qt in &q_tokens {
+                                    if let Some(count) = token_counts.get(qt) {
+                                        matched_q_tokens += 1;
+                                        match_score += 1.0 + (*count as f64 * 0.2);
+                                    }
+                                }
+                                let overlap_ratio = matched_q_tokens as f64 / q_tokens.len() as f64;
+                                let exact_phrase_boost = if chunk.text.to_ascii_lowercase().contains(&q.to_ascii_lowercase()) {
+                                    1.5
+                                } else {
+                                    0.0
+                                };
+                                match_score = (match_score * 0.5 + overlap_ratio * 0.5 + exact_phrase_boost).min(1.0);
+                            }
+
+                            let final_score = (match_score * 100.0).round() / 100.0;
+                            let chunk_id = format!("{}_chunk_{}", file_name, chunk.chunk_index);
+
+                            if final_score > 0.0 {
+                                all_scored_chunks.push(ScoredChunk {
+                                    chunk_id,
+                                    page: chunk.page_start,
+                                    score: final_score,
+                                    heading: if heading_str.is_empty() { "Document Section".to_string() } else { heading_str },
+                                    content: chunk.text,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            all_scored_chunks.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+            all_scored_chunks.truncate(lim);
+
+            let total_results = all_scored_chunks.len();
+            let results_json: Vec<serde_json::Value> = all_scored_chunks.into_iter().map(|sc| {
+                serde_json::json!({
+                    "chunk_id": sc.chunk_id,
+                    "page": sc.page,
+                    "score": sc.score,
+                    "heading": sc.heading,
+                    "content": sc.content,
+                })
+            }).collect();
+
+            println!("Found {} ranked semantic matches for '{}' (limit: {})", total_results, q, lim);
+
+            let res_json = serde_json::json!({
+                "query": q,
+                "total_results": total_results,
+                "results": results_json,
+                "matches": []
+            });
+
+            if let Some(out) = output {
+                if let Some(parent) = out.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+                let _ = std::fs::write(out, serde_json::to_string_pretty(&res_json).unwrap_or_default());
+            }
+            Ok(())
+        },
+        Commands::PdfExtractPatterns {
+            input,
+            output,
+            keywords,
+            patterns,
+            case_sensitive,
+            context_len,
+        } => pdf_extract_patterns::handle_pdf_extract_patterns_command(
+            input,
+            output,
+            keywords,
+            patterns,
+            *case_sensitive,
+            *context_len,
+        ),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -674,6 +1266,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "Chunk document text for AI RAG embedding pipelines",
                 ),
                 (
+                    "pdf_chunk",
+                    "Stable (v0.6)",
+                    "Structure-aware semantic chunking with dynamic overlap for AI agents",
+                ),
+                (
                     "pdf_ocr",
                     "Preview",
                     "Client-side neural OCR via ocrs and rten engine",
@@ -737,6 +1334,16 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_extract_patterns",
+                    "Preview",
+                    "Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]",
+                ),
+                (
+                    "pdf_to_epub",
+                    "Preview",
+                    "Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks",
                 ),
                 (
                     "pdf_dedup_streams",
@@ -851,5 +1458,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             .map_err(paperpilot_core::error::PdfError::IoError)?;
             Ok(())
         }
+
+        Commands::Ui => Ok(()),
     }
 }

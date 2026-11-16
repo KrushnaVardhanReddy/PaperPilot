@@ -1,23 +1,23 @@
 export interface WasmPdfClient {
-    merge(files: Uint8Array[]): Promise<Uint8Array>;
-    rotate(file: Uint8Array, angle: number, pages?: string): Promise<Uint8Array>;
-    split(file: Uint8Array, ranges: string): Promise<Uint8Array[]>;
-    compress(file: Uint8Array): Promise<Uint8Array>;
-    encrypt(file: Uint8Array, password: string): Promise<Uint8Array>;
-    watermark(file: Uint8Array, text: string): Promise<Uint8Array>;
-    delete_pages(file: Uint8Array, pages: string): Promise<Uint8Array>;
-    extract_pages(file: Uint8Array, pages: string): Promise<Uint8Array>;
-    reorder_pages(file: Uint8Array, new_order: number[]): Promise<Uint8Array>;
-    crop(file: Uint8Array, left: number, bottom: number, right: number, top: number): Promise<Uint8Array>;
-    flatten(file: Uint8Array): Promise<Uint8Array>;
-    set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array>;
-    pdf_to_docx(file: Uint8Array): Promise<Uint8Array>;
-    images_to_pdf(files: Uint8Array[]): Promise<Uint8Array>;
+    merge(files: Uint8Array[], options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    rotate(file: Uint8Array, angle: number, pages?: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    split(file: Uint8Array, ranges: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array[]>;
+    compress(file: Uint8Array, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    encrypt(file: Uint8Array, password: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    watermark(file: Uint8Array, text: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    delete_pages(file: Uint8Array, pages: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    extract_pages(file: Uint8Array, pages: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    reorder_pages(file: Uint8Array, new_order: number[], options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    crop(file: Uint8Array, left: number, bottom: number, right: number, top: number, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    flatten(file: Uint8Array, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    pdf_to_docx(file: Uint8Array, options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
+    images_to_pdf(files: Uint8Array[], options?: { zeroTrace?: boolean }): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
-    runOperation(type: string, payload: any): Promise<any> {
-        return this.sendRequest(type, payload);
+    runOperation(type: string, payload: any, options?: { zeroTrace?: boolean }): Promise<any> {
+        return this.sendRequest(type, payload, options);
     }
     private worker: Worker;
     private messageIdCounter = 0;
@@ -41,68 +41,79 @@ export class WasmPdfClientImpl implements WasmPdfClient {
         }
     }
 
-    private sendRequest<T>(type: string, payload: any): Promise<T> {
+    private sendRequest<T>(type: string, payload: any, options?: { zeroTrace?: boolean }): Promise<T> {
         return new Promise((resolve, reject) => {
             const id = this.messageIdCounter++;
-            this.pendingRequests.set(id, { resolve, reject });
-            this.worker.postMessage({ id, type, payload });
+            if (!options?.zeroTrace) {
+                console.debug(`[WASM] Starting ${type} operation`);
+            }
+            this.pendingRequests.set(id, { 
+                resolve: (val) => {
+                    if (!options?.zeroTrace) {
+                        console.debug(`[WASM] Completed ${type} operation`);
+                    }
+                    resolve(val);
+                }, 
+                reject 
+            });
+            this.worker.postMessage({ id, type, payload, zeroTrace: options?.zeroTrace });
         });
     }
 
-    merge(files: Uint8Array[]): Promise<Uint8Array> {
-        return this.sendRequest('merge', { files });
+    merge(files: Uint8Array[], options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('merge', { files }, options);
     }
 
-    rotate(file: Uint8Array, angle: number, pages: string = 'all'): Promise<Uint8Array> {
-        return this.sendRequest('rotate', { file, angle, pages });
+    rotate(file: Uint8Array, angle: number, pages: string = 'all', options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('rotate', { file, angle, pages }, options);
     }
 
-    split(file: Uint8Array, ranges: string): Promise<Uint8Array[]> {
-        return this.sendRequest('split', { file, ranges });
+    split(file: Uint8Array, ranges: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array[]> {
+        return this.sendRequest('split', { file, ranges }, options);
     }
 
-    compress(file: Uint8Array): Promise<Uint8Array> {
-        return this.sendRequest('compress', { file });
+    compress(file: Uint8Array, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('compress', { file }, options);
     }
 
-    encrypt(file: Uint8Array, password: string): Promise<Uint8Array> {
-        return this.sendRequest('encrypt', { file, password });
+    encrypt(file: Uint8Array, password: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('encrypt', { file, password }, options);
     }
 
-    watermark(file: Uint8Array, text: string): Promise<Uint8Array> {
-        return this.sendRequest('watermark', { file, text });
+    watermark(file: Uint8Array, text: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('watermark', { file, text }, options);
     }
 
-    delete_pages(file: Uint8Array, pages: string): Promise<Uint8Array> {
-        return this.sendRequest('delete_pages', { file, pages });
+    delete_pages(file: Uint8Array, pages: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('delete_pages', { file, pages }, options);
     }
 
-    extract_pages(file: Uint8Array, pages: string): Promise<Uint8Array> {
-        return this.sendRequest('extract_pages', { file, pages });
+    extract_pages(file: Uint8Array, pages: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('extract_pages', { file, pages }, options);
     }
 
-    reorder_pages(file: Uint8Array, new_order: number[]): Promise<Uint8Array> {
-        return this.sendRequest('reorder_pages', { file, new_order });
+    reorder_pages(file: Uint8Array, new_order: number[], options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('reorder_pages', { file, new_order }, options);
     }
 
-    crop(file: Uint8Array, left: number, bottom: number, right: number, top: number): Promise<Uint8Array> {
-        return this.sendRequest('crop', { file, left, bottom, right, top });
+    crop(file: Uint8Array, left: number, bottom: number, right: number, top: number, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('crop', { file, left, bottom, right, top }, options);
     }
 
-    flatten(file: Uint8Array): Promise<Uint8Array> {
-        return this.sendRequest('flatten', { file });
+    flatten(file: Uint8Array, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('flatten', { file }, options);
     }
 
-    set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string): Promise<Uint8Array> {
-        return this.sendRequest('set_metadata', { file, title, author, subject, keywords });
+    set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string, keywords?: string, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('set_metadata', { file, title, author, subject, keywords }, options);
     }
 
-    pdf_to_docx(file: Uint8Array): Promise<Uint8Array> {
-        return this.sendRequest('pdf_to_docx', { file });
+    pdf_to_docx(file: Uint8Array, options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('pdf_to_docx', { file }, options);
     }
 
-    images_to_pdf(files: Uint8Array[]): Promise<Uint8Array> {
-        return this.sendRequest('images_to_pdf', { files });
+    images_to_pdf(files: Uint8Array[], options?: { zeroTrace?: boolean }): Promise<Uint8Array> {
+        return this.sendRequest('images_to_pdf', { files }, options);
     }
 }
 

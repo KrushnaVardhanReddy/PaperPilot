@@ -1,0 +1,99 @@
+### Task: Implement Spec 159 - Agent Semantic Chunking & Dynamic Overlap (`pdf_chunk`)
+
+#### Context
+Spec 159 (`specs/159-agent-semantic-chunking/spec.md`) defines `pdf_chunk` as an intelligent, structure-aware semantic chunker tailored for LLMs and AI agent context windows.
+Note: PaperPilot has an existing basic `rag-chunks` (`PdfRagChunksOperation` in `paperpilot-pdf/src/operations/rag_chunks.rs`), but `pdf_chunk` provides full structural boundary splitting (`#`, `##`, `\n\n`, tables `|...|`), configurable `target_tokens` (default 500), `overlap_tokens` (default 50), `strip_boilerplate` (recurring headers/footers across consecutive pages), and `break_on_headings` (default true). Furthermore, it should integrate seamlessly with `DocumentSource` (implemented in Spec 163).
+
+#### Requirements
+
+1. **Core Data Structures & Algorithm (`paperpilot-pdf/src/operations/pdf_chunk.rs`)**:
+   Implement `ChunkOptions`, `DocumentChunk`, `ChunkResult`, and `PdfChunkOperation`:
+   ```rust
+   #[derive(Debug, Clone, Serialize, Deserialize)]
+   pub struct ChunkOptions {
+       pub target_tokens: usize,       // default 500, min 50, max 4000
+       pub overlap_tokens: usize,      // default 50, min 0, max 500
+       pub strip_boilerplate: bool,   // default true
+       pub break_on_headings: bool,   // default true
+   }
+
+   #[derive(Debug, Clone, Serialize, Deserialize)]
+   pub struct DocumentChunk {
+       pub chunk_index: usize,
+       pub page_start: u32,
+       pub page_end: u32,
+       pub estimated_tokens: usize,
+       pub text: String,
+       pub headings_context: Vec<String>,
+   }
+
+   #[derive(Debug, Clone, Serialize, Deserialize)]
+   pub struct ChunkResult {
+       pub total_chunks: usize,
+       pub total_tokens: usize,
+       pub chunks: Vec<DocumentChunk>,
+       pub execution_time_ms: f64,
+   }
+   ```
+   - Support `DocumentSource` directly (`PdfChunkOperation::chunk_source(&DocumentSource, ChunkOptions)` and `PdfChunkOperation::chunk_bytes(&[u8], ChunkOptions)`).
+   - Implement token estimation (~4 characters per token or accurate whitespace-based estimation with bpe heuristic).
+   - Boundary prioritization:
+     - Level 1: Hard break on `#` / `##` headings if `break_on_headings == true`.
+     - Level 2: Paragraph breaks (`\n\n`).
+     - Level 3: Sentence terminators (`. `, `! `, `? `).
+     - Keep Markdown tables (`| ... |`) intact within a single chunk whenever possible unless the table exceeds `target_tokens`.
+   - Boilerplate suppression: If `strip_boilerplate == true`, identify repetitive single-line headers or footers across $\ge 3$ consecutive pages and remove them before chunking.
+   - Dynamic overlap: When starting the next chunk, rewind by up to `overlap_tokens` sentences/words from the previous chunk unless broken by a major heading.
+   - Export `pdf_chunk` in `paperpilot-pdf/src/operations/mod.rs` and `paperpilot-pdf/src/lib.rs`.
+
+2. **CLI Surface (`paperpilot-cli`)**:
+   - Add `pdf-chunk` subcommand (alias `pdf_chunk`, `chunk`) in `paperpilot-cli/src/cli.rs`:
+     - `--input <PATH>`
+     - `--target-tokens <USIZE>` (default 500)
+     - `--overlap <USIZE>` (alias `--overlap-tokens`, default 50)
+     - `--strip-boilerplate` (bool flag, default true or `--no-strip-boilerplate`)
+     - `--break-on-headings` (bool flag, default true)
+     - `--output <PATH>` (optional output JSON path)
+     - `--json-out <PATH>` (alias for output)
+   - Implement handler in `paperpilot-cli/src/commands/` using `DocumentSource::open` and output clean JSON or write to file.
+   - Wire in `paperpilot-cli/src/commands/mod.rs` and `cli_ask`.
+
+3. **MCP Server (`paperpilot-mcp`)**:
+   - Register tool `pdf_chunk` with schema:
+     - `input`: string (required)
+     - `target_tokens`: optional number (default 500)
+     - `overlap_tokens`: optional number (default 50)
+     - `strip_boilerplate`: optional boolean (default true)
+     - `break_on_headings`: optional boolean (default true)
+   - Handle `pdf_chunk` in `paperpilot-mcp/src/server.rs` returning JSON formatted `ChunkResult`.
+
+4. **REST Gateway (`paperpilot-gateway`)**:
+   - Route `POST /api/v1/pdf/chunk` and `POST /api/v1/pdf/pdf_chunk`:
+     - Accepts JSON payload: `{ "input": "...", "target_tokens": 500, "overlap_tokens": 50, "strip_boilerplate": true, "break_on_headings": true }`.
+     - Returns JSON response `ChunkResult`.
+   - Register in OpenAPI documentation / router.
+
+5. **Desktop & Svelte 5 UI (`apps/desktop`)**:
+   - Register `pdf_chunk` in `apps/desktop/src/lib/types/toolList.ts`:
+     - id: `"pdf_chunk"`, title: `"Semantic Chunking"`, icon: `"🧩"`, inputFormat: `"PDF"`, outputFormat: `".JSON"`, category: `"ai"`.
+   - Add parameter controls in `apps/desktop/src/lib/components/layout/OperationsPanel.svelte`:
+     - Target Tokens slider (100–2000, step 50, default 500)
+     - Overlap Tokens slider (0–200, step 10, default 50)
+     - Strip Boilerplate toggle (default true)
+     - Break on Headings toggle (default true)
+   - Update `operationArgsBuilder.ts` to map `pdf_chunk` parameters to CLI/API payload.
+   - Add/update unit test in `apps/desktop/src/lib/services/operationArgsBuilder.test.ts`.
+
+6. **Tests & Verification**:
+   - Unit tests in `paperpilot-pdf/tests/test_pdf_chunk.rs` covering:
+     - Basic chunking with heading preservation.
+     - Token bounds and overlap validation.
+     - Boilerplate suppression across multiple pages.
+     - Table preservation.
+     - Edge cases: 0-length documents, 1-page documents, single sentence exceeding target tokens.
+   - Integration test with `DocumentSource::open`.
+   - Vitest suite check: `pnpm --dir apps/desktop test:unit`.
+   - Zero WASM regressions: `cargo check -p paperpilot-wasm --target wasm32-unknown-unknown -j 4`.
+   - Full workspace check: `cargo check --workspace --all-targets -j 4`.
+   - Always compile with `-j 4` to prevent system memory overload.
+

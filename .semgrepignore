@@ -2,8 +2,12 @@
 # Ignore test/benchmark scripts using urllib for local assertions
 scripts/fetch_test_pdfs.py
 scripts/test_tri_interface_e2e.py
-apps/desktop/tests/e2e_pipeline_flow_management.spec.ts
-apps/desktop/tests/e2e_real_desktop_execution.spec.ts
+scripts/run_system_benchmark.py
+scripts/gif_generators/
+apps/desktop/tests/
+apps/embed/tests/
+apps/web/tests/
+tests/
 
 # Android standard main launcher activity must be exported=true for OS intent launching
 apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml
@@ -12,3 +16,5 @@ apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml
 apps/web/public/swagger-ui.html
 apps/web/index.html
 
+# GitHub Actions workflows are managed via GitHub repository settings
+.github/workflows/

@@ -27,25 +27,27 @@
 
 | Phase | Scope & Title | Status | Exit Condition / Summary | Detailed Spec File |
 |:---:|---|:---:|---|:---:|
-| **01** | **Rust Core Engine** | ✅ **100% Done** | 45+ pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
-| **02** | **MCP Server** | ✅ **100% Done** | 78+ MCP tools registered for Claude Desktop, Cursor, OpenCode | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
-| **03** | **Desktop + Mobile App** | ✅ **100% Done** | Tauri 2.0 desktop + responsive touch mobile layout | [phase-03-desktop-mobile-app.md](file:///home/krushna/Project/PaperPilot/phases/phase-03-desktop-mobile-app.md) |
-| **04** | **AI Layer & Workflows** | ✅ **100% Done** | Natural language routing, action cards, declarative pipelines | [phase-04-ai-layer.md](file:///home/krushna/Project/PaperPilot/phases/phase-04-ai-layer.md) |
-| **05** | **Advanced Intelligence** | 🚀 **In Progress (92%)** | Pure-Rust OCR (`ocrs`), on-device Qwen-0.5B SLM, visual pipeline generator | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
-| **06** | **Enterprise Security** | 📋 **Planned (P1 B2B)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
-| **07** | **Managed Cloud Gateway** | 📋 **Planned (P2)** | Multi-tenant REST gateway, Cloudflare Edge workers, usage metering | [phase-07-managed-cloud.md](file:///home/krushna/Project/PaperPilot/phases/phase-07-managed-cloud.md) |
-| **08** | **Growth & Security** | 🚀 **In Progress (88%)** | Community contributions, HackerNews feedback, Semgrep & Supply Chain audit | [phase-08-growth-platform.md](file:///home/krushna/Project/PaperPilot/phases/phase-08-growth-platform.md) |
-| **09** | **Advanced Editing** | ✅ **100% Done** | Form filling, digital signatures, flattening, visual annotations | [phase-09-advanced-editing.md](file:///home/krushna/Project/PaperPilot/phases/phase-09-advanced-editing.md) |
-| **10** | **WebAssembly (WASM)** | ✅ **100% Done** | In-browser zero-server WASM sandbox + single-file `paperpilot-portable.html` | [phase-10-webassembly-wasm.md](file:///home/krushna/Project/PaperPilot/phases/phase-10-webassembly-wasm.md) |
-| **11** | **`.ppdoc` Native Format** | 📋 **Backlog** | Fast-saving non-destructive container format for project edits | [phase-11-ppdoc-native-format.md](file:///home/krushna/Project/PaperPilot/phases/phase-11-ppdoc-native-format.md) |
-| **12** | **Office Ecosystem** | 🚀 **In Progress (85%)** | Wave 4 `.docx`, `.xlsx`, `.pptx` conversion and modernization | [phase-12-future-roadmap-office.md](file:///home/krushna/Project/PaperPilot/phases/phase-12-future-roadmap-office.md) |
+| **01** | **Rust Core Engine** | ✅ **100% Done** | 90 pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
+| **02** | **MCP Server** | ✅ **100% Done** | 90 MCP tools registered, parameter-aligned, and validated across Waves 1–21 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
+| **03** | **Desktop + Mobile App** | ✅ **100% Done** | All 90 tools wired with dedicated Svelte 5 UI parameter panels and validated via zero-mock Playwright E2E suites | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
+| **04** | **AI Layer & Workflows** | ✅ **100% Done** | Watched folders, declarative `.ppflow` workflows, instant recipes, and `cli_ask` natural language assistant | [phase-04-ai-layer.md](phases/phase-04-ai-layer.md) |
+| **05** | **Advanced Intelligence** | ✅ **100% Done** | Neural OCR, on-device SLM, RAG chunking, pattern extraction, and vector semantic search | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
+| **06** | **Enterprise Security** | 📋 **Planned (Tier 4)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs, Spec 150 Hexagonal DatabasePort | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
+| **07** | **Managed Cloud Gateway** | 📋 **Planned (Tier 4)** | Multi-tenant REST gateway, Cloudflare Edge workers, usage metering | [phase-07-managed-cloud.md](file:///home/krushna/Project/PaperPilot/phases/phase-07-managed-cloud.md) |
+| **08** | **Growth & Security** | ✅ **100% Done** | Multi-scanner audit clean (Semgrep SAST 0 findings, Cargo Audit 0 criticals, Trivy FS clean, dependencies pruned) | [phase-08-growth-platform.md](file:///home/krushna/Project/PaperPilot/phases/phase-08-growth-platform.md) |
+| **09** | **Advanced Editing** | ✅ **100% Done** | Form filling, digital signatures, flattening, visual annotations, bates numbering, watermarks | [phase-09-advanced-editing.md](file:///home/krushna/Project/PaperPilot/phases/phase-09-advanced-editing.md) |
+| **10** | **WebAssembly (WASM)** | ✅ **100% Done** | Zero-server WASM sandbox, pure-Rust bundle compiled cleanly without `mio`/network bloat | [phase-10-webassembly-wasm.md](file:///home/krushna/Project/PaperPilot/phases/phase-10-webassembly-wasm.md) |
+| **11** | **Browser Extensions** | 🚀 **Next Up (Tier 3)** | Manifest V3 companion extension (Chrome/Edge/Firefox) with in-tab PDF actions & clean-article to PDF/A exporter | [ROADMAP.md](ROADMAP.md) |
+| **12** | **Office Ecosystem** | ✅ **100% Done** | Complete `.docx`, `.xlsx`, `.pptx`, `.md`, `.csv` bidirectional conversions and modernization | [phase-12-future-roadmap-office.md](file:///home/krushna/Project/PaperPilot/phases/phase-12-future-roadmap-office.md) |
 | **13** | **Universal Document OS** | 🔮 **Future Vision** | Cross-format conversion matrix and air-gapped document intelligence | [phase-13-universal-document-os.md](file:///home/krushna/Project/PaperPilot/phases/phase-13-universal-document-os.md) |
 
 ---
 
-## 🎯 Active Development Focus
-- **Production Milestone**: PR #267 merged into `main` with 78 verified tools, 100% clean security audit, and air-gapped supply chain protections.
-- **On-Device SLM (Task 84D / Spec 084)**: Completed 10,000-sample compound fine-tuning on RTX 4070. Weights fused and verified for multi-step chained parameter generation.
-- **Active Feature Freeze**: Codebase is feature-frozen. Development will resume strictly based on incoming user issues and community pull requests.
+## 🎯 Active Development Focus & Parallel Jules Sprints
+- **Phase 6.1 (Tier 1 Developer Onboarding & Distribution)**:
+  - **Task 6.1.1 (Spec 161)**: Universal one-line install scripts (`install.sh`, `install.ps1`, Homebrew formula `paperpilot.rb`) — ✅ **MERGED (PR #339)**.
+  - **Task 6.1.3 (Spec 162)**: AI framework integration recipes (LangChain `PaperPilotLoader`, LlamaIndex `PaperPilotReader`, Claude/Cursor MCP presets, n8n OCR workflow) — ✅ **MERGED (PR #338)**.
+  - **Task 6.1.2 (Spec 160)**: System diagnostics engine (`paperpilot doctor`, `GET /health`, `GET /api/v1/doctor`, Settings UI modal) — 🚀 **Session 308936918267204628** (`in-progress`).
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
+

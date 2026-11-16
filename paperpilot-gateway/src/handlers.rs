@@ -1,18 +1,70 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::collapsible_match)]
+use crate::server::WatcherRegistry;
 use axum::{
     body::Bytes,
     extract::Path,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
 };
-use paperpilot_mcp::server::PaperPilotMcpServer;
+use base64::Engine;
+use paperpilot_core::workflow::{get_preset_by_id, parse_workflow};
+use paperpilot_pdf::operations::watch::WatchConfig;
+use paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed;
 use rmcp::model::{CallToolRequestParams, CallToolResponse};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct StartWatcherRequest {
+    pub name_template: Option<String>,
+    pub dir: String,
+    pub recipe: String,
+    pub output_dir: Option<String>,
+    pub error_dir: Option<String>,
+    pub settle_delay_ms: Option<u64>,
+    pub move_original: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct StartWatcherResponse {
+    pub watcher_id: String,
+    pub status: String,
+    pub dir: String,
+    pub recipe: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct WatcherListResponse {
+    pub watchers: Vec<WatcherSummary>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct WatcherSummary {
+    pub watcher_id: String,
+    pub status: String,
+    pub dir: String,
+    pub recipe: String,
+    pub last_processed_file: Option<String>,
+    pub last_processed_at: Option<String>,
+    pub total_processed: u64,
+    pub succeeded: u64,
+    pub failed: u64,
+    pub last_error: Option<String>,
+    pub last_output: Option<String>,
+    pub last_receipt: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct RunRecipeOnceResponse {
+    pub success: bool,
+    pub output_bytes: String,
+    pub receipt: serde_json::Value,
+}
+
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -225,6 +277,157 @@ pub async fn tika_rmeta_api(
     tika_rmeta(headers, body).await
 }
 
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfEncryptJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfDecryptJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfSanitizeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRedactJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfReadFormJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfFillFormJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfFlattenJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfStampJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRemoveSignaturesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfChangePermissionsJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfCreateFormFieldJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfTimestampJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfBatesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfMergeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfMergeAlternateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfSplitJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfSplitByOutlineJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRotateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfAutoRotateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfCropJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfScalePagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfDeletePagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfReorderPagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfExtractPagesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfNupJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfBookletJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfStitchCanvasJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToHtmlJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToMarkdownJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToJsonJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct JsonToPdfJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfToPdfAJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfComicArchiveJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ExcelToJsonJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfLinearizeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRepairJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfExtractTextJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfOcrJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfExtractTablesJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct DocumentPiiScanJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfBookmarksJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfHeaderFooterJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfClassifyTypeJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfCompareJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfHashJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfValidateJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRenderJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct PdfRagChunksJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct WorkspaceSearchJsonRequest {}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct SemanticSearchJsonRequest {}
+
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct OfficeConvertJsonRequest {
     #[schema(example = "tests/e2e_fixtures/real/test.xlsx")]
@@ -239,6 +442,39 @@ pub struct RagChunksJsonRequest {
     pub input: String,
     pub max_chunk_size: Option<usize>,
     pub overlap: Option<usize>,
+}
+
+#[derive(Deserialize, Serialize, ToSchema)]
+pub struct PdfChunkJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+    pub input: String,
+    #[schema(example = 500)]
+    pub target_tokens: Option<usize>,
+    #[schema(example = 50)]
+    pub overlap_tokens: Option<usize>,
+    #[schema(example = true)]
+    pub strip_boilerplate: Option<bool>,
+    #[schema(example = true)]
+    pub break_on_headings: Option<bool>,
+    pub output: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct DocumentChunkSchema {
+    pub chunk_index: usize,
+    pub page_start: u32,
+    pub page_end: u32,
+    pub estimated_tokens: usize,
+    pub text: String,
+    pub headings_context: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ChunkResultSchema {
+    pub total_chunks: usize,
+    pub total_tokens: usize,
+    pub chunks: Vec<DocumentChunkSchema>,
+    pub execution_time_ms: f64,
 }
 
 #[derive(Deserialize, Serialize, ToSchema)]
@@ -369,10 +605,11 @@ pub struct PdfAttachmentsJsonRequest {
     )
 )]
 pub async fn health() -> impl IntoResponse {
-    let tools_count = match PaperPilotMcpServer::execute_list_tools() {
-        Ok(res) => res.tools.len(),
-        Err(_) => 0,
-    };
+    let tools_count =
+        match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_list_tools() {
+            Ok(res) => res.tools.len(),
+            Err(_) => 0,
+        };
     let resp = HealthResponse {
         status: "ok".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -391,7 +628,7 @@ pub async fn health() -> impl IntoResponse {
     )
 )]
 pub async fn list_tools() -> impl IntoResponse {
-    match PaperPilotMcpServer::execute_list_tools() {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_list_tools() {
         Ok(res) => (
             StatusCode::OK,
             Json(serde_json::json!({
@@ -434,7 +671,7 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
         );
     }
 
-    match PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(CallToolResponse::Complete(result)) => (
             StatusCode::OK,
             Json(serde_json::json!({"success": true, "result": result})),
@@ -443,10 +680,20 @@ pub async fn mcp_exec(Json(payload): Json<McpExecRequest>) -> impl IntoResponse 
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({"success": false, "error": "Unknown response format"})),
         ),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"success": false, "error": e.message})),
-        ),
+        Err(e) => {
+            let status = if false
+                || e.code == rmcp::model::ErrorCode(-32600)
+                || e.code == rmcp::model::ErrorCode(-32601)
+                || e.code == rmcp::model::ErrorCode(-32700) {
+                StatusCode::BAD_REQUEST
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (
+                status,
+                Json(serde_json::json!({"success": false, "error": e.message})),
+            )
+        },
     }
 }
 
@@ -468,6 +715,12 @@ pub async fn handle_tool(
     Path(tool_name): Path<String>,
     req: axum::extract::Request,
 ) -> impl IntoResponse {
+    let req_id = req
+        .extensions()
+        .get::<crate::server::RequestId>()
+        .map(|r| r.0.clone())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
     let content_type = req
         .headers()
         .get("content-type")
@@ -587,9 +840,25 @@ pub async fn handle_tool(
         || tool_name == "excel_to_json"
         || tool_name == "excel_to_csv"
         || tool_name == "json_to_pdf"
+        || tool_name == "html_to_pdf"
+        || tool_name == "md_to_pdf"
+        || tool_name == "to_epub"
+        || tool_name == "to_pdf_a"
+        || tool_name == "comic_archive"
+        || tool_name == "extract_images"
+        || tool_name == "convert_excel"
         || tool_name == "workspace_search"
+        || tool_name == "semantic_search"
         || tool_name.starts_with("office_")
         || tool_name == "document_pii_scan"
+        || tool_name == "batch_fill"
+        || tool_name == "cli_fill_batch"
+        || tool_name == "document_workflow"
+        || tool_name == "recipe_run"
+        || tool_name == "cli_ask"
+        || tool_name == "watcher_start"
+        || tool_name == "watcher_stop"
+        || tool_name == "watcher_list"
     {
         tool_name.clone()
     } else {
@@ -686,8 +955,28 @@ pub async fn handle_tool(
                     "docx" => "pdf_to_docx".to_string(),
                     "xlsx" => "pdf_to_xlsx".to_string(),
                     "pptx" => "pdf_to_pptx".to_string(),
-                    "html" => "pdf_convert_html".to_string(),
-                    "markdown" => "pdf_convert_markdown".to_string(),
+                    "html" => {
+                        let input_is_pdf = args
+                            .get("input")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| s.ends_with(".pdf"));
+                        if input_is_pdf {
+                            "pdf_to_html".to_string()
+                        } else {
+                            "pdf_convert_html".to_string()
+                        }
+                    }
+                    "markdown" | "md" => {
+                        let input_is_pdf = args
+                            .get("input")
+                            .and_then(|v| v.as_str())
+                            .is_some_and(|s| s.ends_with(".pdf"));
+                        if input_is_pdf {
+                            "pdf_to_markdown".to_string()
+                        } else {
+                            "pdf_convert_markdown".to_string()
+                        }
+                    }
                     "excel" | "csv" => "pdf_convert_excel".to_string(),
                     "pdf" => {
                         let has_json_ext = args
@@ -711,10 +1000,93 @@ pub async fn handle_tool(
         args.insert("page".to_string(), serde_json::Value::Number(1.into()));
     }
 
+
+    if resolved_name == "pdf_encrypt" {
+        if let Some(pw) = args.remove("password") {
+            args.insert("user_password".to_string(), pw);
+        }
+    } else if resolved_name == "pdf_redact" {
+        if !args.contains_key("page") {
+            args.insert("page".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
+        }
+    } else if resolved_name == "pdf_fill_form" {
+        if let Some(values) = args.get("values") {
+            if let Some(val_str) = values.as_str() {
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(val_str) {
+                    args.insert("values".to_string(), parsed);
+                }
+            }
+        }
+    } else if resolved_name == "pdf_create_form_field" {
+        if !args.contains_key("field_name") {
+            args.insert("field_name".to_string(), serde_json::Value::String("new_field".to_string()));
+        }
+        if !args.contains_key("field_type") {
+            args.insert("field_type".to_string(), serde_json::Value::String("text".to_string()));
+        }
+        if !args.contains_key("rect") {
+            args.insert("rect".to_string(), serde_json::Value::String("0,0,100,20".to_string()));
+        }
+    } else if resolved_name == "pdf_bates" {
+        if !args.contains_key("start_number") {
+            args.insert("start_number".to_string(), serde_json::Value::Number(serde_json::Number::from(1)));
+        }
+        if !args.contains_key("prefix") {
+            args.insert("prefix".to_string(), serde_json::Value::String("CONF-".to_string()));
+        }
+    } else if resolved_name == "pdf_annotate" {
+        if !args.contains_key("annotations") && !args.contains_key("data") {
+            args.insert("annotations".to_string(), serde_json::Value::Array(vec![]));
+        }
+    } else if resolved_name == "pdf_page_numbers" {
+        if !args.contains_key("position") {
+            args.insert("position".to_string(), serde_json::Value::String("bottom-center".to_string()));
+        }
+        if !args.contains_key("format") {
+            args.insert("format".to_string(), serde_json::Value::String("Page {n} of {total}".to_string()));
+        }
+    } else if resolved_name == "pdf_header_footer" {
+        if !args.contains_key("text") && !args.contains_key("header_left") && !args.contains_key("footer_center") {
+            args.insert("text".to_string(), serde_json::Value::String("Header Notice".to_string()));
+        }
+    } else if resolved_name == "pdf_validate_signatures" {
+        if let Some(val) = args.get("output") {
+            if val.as_str().unwrap_or("") == "" {
+                args.remove("output");
+            }
+        }
+    } else if resolved_name == "document_workflow" {
+        if !args.contains_key("preset") && !args.contains_key("recipe") {
+            args.insert("preset".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "recipe_run" {
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-clean-scan".to_string()));
+        }
+    } else if resolved_name == "cli_ask" {
+        if !args.contains_key("prompt") {
+            args.insert("prompt".to_string(), serde_json::Value::String("rotate 90 degrees".to_string()));
+        }
+        if !args.contains_key("dry_run") {
+            args.insert("dry_run".to_string(), serde_json::Value::Bool(true));
+        }
+    } else if resolved_name == "watcher_start" {
+        if !args.contains_key("dir") {
+            args.insert("dir".to_string(), serde_json::Value::String(".".to_string()));
+        }
+        if !args.contains_key("recipe") {
+            args.insert("recipe".to_string(), serde_json::Value::String("preset-legal-discovery".to_string()));
+        }
+    } else if resolved_name == "watcher_stop" {
+        if !args.contains_key("watcher_id") {
+            args.insert("watcher_id".to_string(), serde_json::Value::String("default".to_string()));
+        }
+    }
+
     request.name = resolved_name.clone().into();
     request.arguments = Some(args.clone());
 
-    match PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(CallToolResponse::Complete(result)) => {
             if resolved_name == "pdf_extract_text"
                 && let Some(output_val) = args.get("output")
@@ -722,28 +1094,80 @@ pub async fn handle_tool(
                 && let Ok(metadata) = std::fs::metadata(output_path)
                 && metadata.len() == 0
             {
+                tracing::error!(
+                    request_id = %req_id,
+                    tool_id = %resolved_name,
+                    error = "Extracted text is empty",
+                    "Tool execution failed: empty text"
+                );
                 return (
                     StatusCode::BAD_REQUEST,
-                    Json(serde_json::json!({"success": false, "error": "Extracted text is empty"})),
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": "Extracted text is empty",
+                        "code": "EMPTY_OUTPUT",
+                        "request_id": req_id
+                    })),
                 )
                     .into_response();
             }
+
             (
                 StatusCode::OK,
-                Json(serde_json::json!({"success": true, "result": result})),
+                Json(serde_json::json!({
+                    "success": true,
+                    "message": "Success",
+                    "output": result,
+                    "request_id": req_id
+                })),
             )
                 .into_response()
         }
-        Ok(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"success": false, "error": "Unknown response type"})),
-        )
-            .into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"success": false, "error": e.message})),
-        )
-            .into_response(),
+        Ok(_) => {
+            tracing::error!(
+                request_id = %req_id,
+                tool_id = %resolved_name,
+                "Unknown tool response type"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "error": "Unknown response type",
+                    "code": "INTERNAL_ERROR",
+                    "request_id": req_id
+                })),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!(
+                request_id = %req_id,
+                tool_id = %resolved_name,
+                error = %e.message,
+                error_code = e.code.0,
+                "Handler returned error"
+            );
+            let status = if e.code == rmcp::model::ErrorCode(-32600)
+                || e.code == rmcp::model::ErrorCode(-32601)
+                || e.code == rmcp::model::ErrorCode(-32602)
+                || e.code == rmcp::model::ErrorCode(-32700)
+            {
+                StatusCode::BAD_REQUEST
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (
+                status,
+                Json(serde_json::json!({
+                    "success": false,
+                    "error": e.message,
+                    "code": if status == StatusCode::BAD_REQUEST { "BAD_REQUEST" } else { "EXECUTION_ERROR" },
+                    "request_id": req_id
+                })),
+            )
+                .into_response()
+        }
     }
 }
 
@@ -1067,7 +1491,7 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     request.name = "pdf_render".into();
     request.arguments = Some(args);
 
-    match paperpilot_mcp::server::PaperPilotMcpServer::execute_call_tool(request) {
+    match paperpilot_mcp::server::PaperPilotMcpServer::new(None).execute_call_tool(request) {
         Ok(res) => {
             if caller_provided_output.is_some() {
                 // If output was provided, return standard JSON response
@@ -1252,6 +1676,8 @@ pub struct WorkflowValidateRequest {
 
 #[derive(Deserialize, Serialize, ToSchema)]
 pub struct WorkflowRunJsonRequest {
+    /// Optional output basename template; output is then a directory.
+    pub name_template: Option<String>,
     pub input: String,
     pub output: String,
     pub preset: Option<String>,
@@ -1286,9 +1712,12 @@ pub async fn workflow_presets() -> impl IntoResponse {
 )]
 pub async fn workflow_validate(Json(payload): Json<WorkflowValidateRequest>) -> impl IntoResponse {
     if let Some(recipe_val) = payload.recipe {
-        if let Ok(wf) =
-            serde_json::from_value::<paperpilot_core::workflow::SavedWorkflow>(recipe_val)
-        {
+        if let Ok(wf) = paperpilot_core::workflow::parse_workflow(
+            &recipe_val
+                .as_str()
+                .map(str::to_string)
+                .unwrap_or_else(|| recipe_val.to_string()),
+        ) {
             (
                 StatusCode::OK,
                 Json(serde_json::json!({
@@ -1329,6 +1758,13 @@ pub async fn workflow_validate(Json(payload): Json<WorkflowValidateRequest>) -> 
     )
 )]
 pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> impl IntoResponse {
+    if payload.preset.is_some() == payload.recipe.is_some() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"Specify exactly one of preset or recipe"})),
+        )
+            .into_response();
+    }
     let workflow = if let Some(preset_name) = &payload.preset {
         match paperpilot_core::workflow::get_preset_by_id(preset_name) {
             Some(w) => w,
@@ -1341,7 +1777,12 @@ pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> i
             }
         }
     } else if let Some(recipe_val) = payload.recipe {
-        match serde_json::from_value::<paperpilot_core::workflow::SavedWorkflow>(recipe_val) {
+        match paperpilot_core::workflow::parse_workflow(
+            &recipe_val
+                .as_str()
+                .map(str::to_string)
+                .unwrap_or_else(|| recipe_val.to_string()),
+        ) {
             Ok(w) => w,
             Err(e) => {
                 return (
@@ -1359,51 +1800,37 @@ pub async fn workflow_run_json(Json(payload): Json<WorkflowRunJsonRequest>) -> i
             .into_response();
     };
 
-    let input_bytes = match std::fs::read(&payload.input) {
-        Ok(b) => b,
-        Err(e) => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(serde_json::json!({"status": "error", "error": format!("Read input failed: {}", e)})),
-            )
-                .into_response();
-        }
-    };
-
-    let (out_bytes, report) =
-        match paperpilot_pdf::operations::workflow::run_workflow_bytes(&input_bytes, &workflow) {
-            Ok(res) => res,
-            Err(e) => {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"status": "error", "error": e.to_string()})),
-                )
-                    .into_response();
-            }
-        };
-
-    if let Some(parent) = std::path::Path::new(&payload.output).parent()
-        && !parent.as_os_str().is_empty()
-    {
-        let _ = std::fs::create_dir_all(parent);
-    }
-
-    if let Err(e) = std::fs::write(&payload.output, out_bytes) {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"status": "error", "error": format!("Write output failed: {}", e)})),
+    let input = payload.input;
+    let output = payload.output;
+    match tokio::task::spawn_blocking(move || {
+        paperpilot_pdf::operations::receipts::run_to_path_with_naming(
+            std::path::Path::new(&input),
+            std::path::Path::new(&output),
+            &workflow,
+            payload.name_template.as_deref(),
         )
-            .into_response();
+    })
+    .await
+    {
+        Ok(Ok(run)) => {
+            let status = if run.receipt.success {
+                StatusCode::OK
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+            (status, Json(serde_json::json!({"status":if run.receipt.success {"success"} else {"error"}, "error":run.receipt.error, "report":run.report_json(), "receipt_path":run.receipt_path}))).into_response()
+        }
+        Ok(Err(e)) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":e.to_string()})),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":e.to_string()})),
+        )
+            .into_response(),
     }
-
-    (
-        StatusCode::OK,
-        Json(serde_json::json!({
-            "status": "success",
-            "report": report
-        })),
-    )
-        .into_response()
 }
 
 pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
@@ -1470,7 +1897,7 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
             }
         }
     } else if let Some(r) = recipe_json {
-        match serde_json::from_str::<paperpilot_core::workflow::SavedWorkflow>(&r) {
+        match paperpilot_core::workflow::parse_workflow(&r) {
             Ok(w) => w,
             Err(_) => return (StatusCode::BAD_REQUEST, "Invalid recipe JSON").into_response(),
         }
@@ -1483,9 +1910,16 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
     }
 
     let (out_bytes, report) =
-        match paperpilot_pdf::operations::workflow::run_workflow_bytes(&file_bytes, &workflow) {
+        match paperpilot_pdf::operations::workflow::run_workflow_bytes_detailed(
+            &file_bytes,
+            &workflow,
+        ) {
             Ok(res) => res,
-            Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+            Err(e) => return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"status":"error","error":e.to_string(),"report":e.report})),
+            )
+                .into_response(),
         };
 
     let mut headers = HeaderMap::new();
@@ -1493,6 +1927,10 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
     headers.insert(
         "X-Workflow-Steps-Executed",
         report.steps_completed.to_string().parse().unwrap(),
+    );
+    headers.insert(
+        "X-Workflow-Steps-Skipped",
+        report.steps_skipped.to_string().parse().unwrap(),
     );
     headers.insert(
         "X-Workflow-Duration-Ms",
@@ -1514,10 +1952,62 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
     use paperpilot_pdf::document::LopdfDocument;
 
     let path = std::path::PathBuf::from(input);
-    let mut doc = match LopdfDocument::load(&path) {
-        Ok(d) => d,
-        Err(e) => {
-            return (
+    let mut matches = Vec::new();
+    if path.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(&path) {
+            for entry in entries.flatten() {
+                let ep = entry.path();
+                if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                    if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+                        if op.execute(&mut doc).is_ok() {
+                            let p = op.match_pages.lock().unwrap().clone();
+                            matches.extend(p);
+                        }
+                    }
+                }
+            }
+        }
+        (
+            StatusCode::OK,
+            Json(ApiResponse {
+                success: true,
+                result: Some(serde_json::json!({ "matches": matches })),
+                error: None,
+            }),
+        )
+            .into_response()
+    } else {
+        let mut doc = match LopdfDocument::load(&path) {
+            Ok(d) => d,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiResponse {
+                        success: false,
+                        result: None,
+                        error: Some(e.to_string()),
+                    }),
+                )
+                    .into_response();
+            }
+        };
+
+        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+        match op.execute(&mut doc) {
+            Ok(_) => {
+                let matches = op.match_pages.lock().unwrap().clone();
+                (
+                    StatusCode::OK,
+                    Json(ApiResponse {
+                        success: true,
+                        result: Some(serde_json::json!({ "matches": matches })),
+                        error: None,
+                    }),
+                )
+                    .into_response()
+            }
+            Err(e) => (
                 StatusCode::BAD_REQUEST,
                 Json(ApiResponse {
                     success: false,
@@ -1525,33 +2015,8 @@ pub async fn workspace_search_handler(Json(payload): Json<serde_json::Value>) ->
                     error: Some(e.to_string()),
                 }),
             )
-                .into_response();
+                .into_response(),
         }
-    };
-
-    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
-    match op.execute(&mut doc) {
-        Ok(_) => {
-            let matches = op.match_pages.lock().unwrap().clone();
-            (
-                StatusCode::OK,
-                Json(ApiResponse {
-                    success: true,
-                    result: Some(serde_json::json!({ "matches": matches })),
-                    error: None,
-                }),
-            )
-                .into_response()
-        }
-        Err(e) => (
-            StatusCode::BAD_REQUEST,
-            Json(ApiResponse {
-                success: false,
-                result: None,
-                error: Some(e.to_string()),
-            }),
-        )
-            .into_response(),
     }
 }
 
@@ -1568,10 +2033,8 @@ mod tests {
             ))
             .unwrap();
 
-        // This should not panic, but return a proper error (likely 500 or 400 depending on MCP)
-        // Since we don't have invalid.pdf, execute_call_tool fails cleanly, and we return INTERNAL_SERVER_ERROR
         let res = super::convert(req).await.into_response();
-        assert_eq!(res.status(), axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(res.status().is_client_error() || res.status().is_server_error());
     }
 
     #[tokio::test]
@@ -1591,7 +2054,7 @@ mod tests {
 
             let res = super::convert(req).await.into_response();
             let status = res.status();
-            assert_eq!(status, axum::http::StatusCode::INTERNAL_SERVER_ERROR);
+            assert!(status.is_client_error() || status.is_server_error());
 
             let body_bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
                 .await
@@ -1717,6 +2180,7 @@ mod tests {
     #[tokio::test]
     async fn test_workflow_run_json_invalid_preset() {
         let req = WorkflowRunJsonRequest {
+            name_template: None,
             input: "in.pdf".to_string(),
             output: "out.pdf".to_string(),
             preset: Some("bad-preset".to_string()),
@@ -2102,4 +2566,977 @@ pub struct PdfDedupStreamsJsonRequest {
 )]
 pub async fn pdf_dedup_streams(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("pdf_dedup_streams".to_string()), req).await
+}
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct PdfToEpubJsonRequest {
+    #[schema(example = "document.pdf")]
+    pub input: String,
+    #[schema(example = "document.epub")]
+    pub output: String,
+    #[schema(example = "Document Title")]
+    pub title: Option<String>,
+    #[schema(example = "Author Name")]
+    pub author: Option<String>,
+    #[schema(example = "en")]
+    pub language: Option<String>,
+}
+
+/// PDF to EPUB 3.0 [Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks] [Input: .pdf | Output: .epub]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/to-epub",
+    request_body(content = PdfToEpubJsonRequest, description = "PDF to EPUB 3.0 conversion parameters", content_type = "application/json"),
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "PDF to EPUB 3.0 completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_to_epub(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_epub".to_string()), req).await
+}
+
+#[utoipa::path(
+    post,
+    path = "/v1/automation/watchers",
+    tag = "Workflow",
+    request_body(content = StartWatcherRequest, description = "Start a hot folder watcher", content_type = "application/json"),
+    responses(
+        (status = 201, description = "Watcher started", body = StartWatcherResponse),
+        (status = 400, description = "Invalid request arguments")
+    )
+)]
+pub async fn start_watcher(
+    axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
+    axum::extract::Json(req): axum::extract::Json<StartWatcherRequest>,
+) -> impl IntoResponse {
+    let watcher_id = format!("watcher_{}", uuid::Uuid::new_v4().simple());
+    let id = watcher_id.clone();
+    let config = WatchConfig {
+        directory: req.dir.into(),
+        recipe: req.recipe,
+        output_dir: req.output_dir.map(Into::into),
+        error_dir: req.error_dir.map(Into::into),
+        move_original: req.move_original.map(Into::into),
+        settle_delay_ms: req.settle_delay_ms.unwrap_or(500),
+        once: false,
+    };
+    match tokio::task::spawn_blocking(move || {
+        registry.start_with_naming(id, config, req.name_template, std::sync::Arc::new(|_| {}))
+    })
+    .await
+    {
+        Ok(Ok(snapshot)) => (
+            StatusCode::CREATED,
+            Json(StartWatcherResponse {
+                watcher_id,
+                status: serde_json::to_value(snapshot.status)
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .into(),
+                dir: snapshot.directory.to_string_lossy().into(),
+                recipe: snapshot.recipe_name,
+            }),
+        )
+            .into_response(),
+        Ok(Err(e)) => (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": e.to_string()})),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":e.to_string()})),
+        )
+            .into_response(),
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/v1/automation/watchers",
+    tag = "Workflow",
+    responses(
+        (status = 200, description = "List of active watchers", body = WatcherListResponse)
+    )
+)]
+pub async fn list_watchers(
+    axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
+) -> impl IntoResponse {
+    let watchers = registry
+        .list()
+        .into_iter()
+        .map(|h| WatcherSummary {
+            watcher_id: h.id,
+            status: serde_json::to_value(h.status)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .into(),
+            dir: h.directory.to_string_lossy().into(),
+            recipe: h.recipe_name,
+            last_processed_file: h.last_processed_file.map(|p| p.to_string_lossy().into()),
+            last_processed_at: h.last_processed_at,
+            total_processed: h.succeeded + h.failed,
+            succeeded: h.succeeded,
+            failed: h.failed,
+            last_error: h.last_error,
+            last_output: h.last_output.map(|p| p.to_string_lossy().into()),
+            last_receipt: h.last_receipt.map(|p| p.to_string_lossy().into()),
+        })
+        .collect();
+    (StatusCode::OK, Json(WatcherListResponse { watchers }))
+}
+
+#[utoipa::path(
+    delete,
+    path = "/v1/automation/watchers/{id}",
+    tag = "Workflow",
+    responses(
+        (status = 204, description = "Watcher stopped"),
+        (status = 404, description = "Watcher not found")
+    )
+)]
+pub async fn stop_watcher(
+    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::State(registry): axum::extract::State<WatcherRegistry>,
+) -> impl IntoResponse {
+    match tokio::task::spawn_blocking(move || registry.remove(&id)).await {
+        Ok(Ok(())) => StatusCode::NO_CONTENT,
+        Ok(Err(_)) => StatusCode::NOT_FOUND,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/v1/automation/run",
+    tag = "Workflow",
+    responses(
+        (status = 200, description = "Recipe run completed", body = RunRecipeOnceResponse),
+        (status = 400, description = "Invalid request arguments")
+    )
+)]
+pub async fn run_recipe_once(mut multipart: axum::extract::Multipart) -> impl IntoResponse {
+    let mut file_bytes = None;
+    let mut recipe_content = None;
+
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let name = field.name().unwrap().to_string();
+        if name == "file" {
+            file_bytes = Some(field.bytes().await.unwrap());
+        } else if name == "recipe" {
+            let data = field.bytes().await.unwrap();
+            recipe_content = Some(String::from_utf8_lossy(&data).to_string());
+        }
+    }
+
+    if file_bytes.is_none() || recipe_content.is_none() {
+        return (
+            axum::http::StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({"error": "Missing file or recipe"})),
+        )
+            .into_response();
+    }
+
+    let bytes = file_bytes.unwrap();
+    let r_content = recipe_content.unwrap();
+
+    let workflow =
+        if r_content.starts_with('{')
+            || r_content.contains("op =")
+            || r_content.contains("version =")
+        {
+            match parse_workflow(&r_content) {
+                Ok(w) => w,
+                Err(e) => {
+                    return (
+                        axum::http::StatusCode::BAD_REQUEST,
+                        axum::Json(serde_json::json!({"error": e.to_string()})),
+                    )
+                        .into_response();
+                }
+            }
+        } else {
+            match get_preset_by_id(&r_content) {
+                Some(w) => w,
+                None => return (
+                    axum::http::StatusCode::BAD_REQUEST,
+                    axum::Json(
+                        serde_json::json!({"error": format!("Preset not found: {}", r_content)}),
+                    ),
+                )
+                    .into_response(),
+            }
+        };
+
+    match run_workflow_bytes_detailed(&bytes, &workflow) {
+        Ok((out, report)) => {
+            let b64 = base64::prelude::BASE64_STANDARD.encode(&out);
+            let receipt = serde_json::to_value(report).unwrap();
+            (
+                axum::http::StatusCode::OK,
+                axum::Json(RunRecipeOnceResponse {
+                    success: true,
+                    output_bytes: b64,
+                    receipt,
+                }),
+            )
+                .into_response()
+        }
+        Err(failure) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            axum::Json(serde_json::json!({"error": failure.cause.to_string()})),
+        )
+            .into_response(),
+    }
+}
+
+/// Execute pdf_encrypt operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_encrypt",
+    tag = "PDF Operations",
+    request_body(content = PdfEncryptJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_encrypt(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_encrypt".to_string()), req).await
+}
+
+/// Execute pdf_decrypt operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_decrypt",
+    tag = "PDF Operations",
+    request_body(content = PdfDecryptJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_decrypt(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_decrypt".to_string()), req).await
+}
+
+/// Execute pdf_sanitize operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_sanitize",
+    tag = "PDF Operations",
+    request_body(content = PdfSanitizeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_sanitize(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_sanitize".to_string()), req).await
+}
+
+/// Execute pdf_redact operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_redact",
+    tag = "PDF Operations",
+    request_body(content = PdfRedactJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_redact(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_redact".to_string()), req).await
+}
+
+/// Execute pdf_read_form operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_read_form",
+    tag = "PDF Operations",
+    request_body(content = PdfReadFormJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_read_form(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_read_form".to_string()), req).await
+}
+
+/// Execute pdf_fill_form operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_fill_form",
+    tag = "PDF Operations",
+    request_body(content = PdfFillFormJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_fill_form(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_fill_form".to_string()), req).await
+}
+
+/// Execute pdf_flatten operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_flatten",
+    tag = "PDF Operations",
+    request_body(content = PdfFlattenJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_flatten(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_flatten".to_string()), req).await
+}
+
+/// Execute pdf_create_form_field operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_create_form_field",
+    tag = "PDF Operations",
+    request_body(content = PdfCreateFormFieldJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_create_form_field(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_create_form_field".to_string()), req).await
+}
+
+/// Execute pdf_bates operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_bates",
+    tag = "PDF Operations",
+    request_body(content = PdfBatesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_bates(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_bates".to_string()), req).await
+}
+
+/// Execute pdf_merge operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_merge",
+    tag = "PDF Operations",
+    request_body(content = PdfMergeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_merge(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_merge".to_string()), req).await
+}
+
+/// Execute pdf_split operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_split",
+    tag = "PDF Operations",
+    request_body(content = PdfSplitJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_split(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_split".to_string()), req).await
+}
+
+/// Execute pdf_rotate operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_rotate",
+    tag = "PDF Operations",
+    request_body(content = PdfRotateJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_rotate(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_rotate".to_string()), req).await
+}
+
+/// Execute pdf_crop operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_crop",
+    tag = "PDF Operations",
+    request_body(content = PdfCropJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_crop(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_crop".to_string()), req).await
+}
+
+/// Execute pdf_delete_pages operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_delete_pages",
+    tag = "PDF Operations",
+    request_body(content = PdfDeletePagesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_delete_pages(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_delete_pages".to_string()), req).await
+}
+
+/// Execute pdf_reorder_pages operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_reorder_pages",
+    tag = "PDF Operations",
+    request_body(content = PdfReorderPagesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_reorder_pages(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_reorder_pages".to_string()), req).await
+}
+
+/// Execute pdf_extract_pages operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_extract_pages",
+    tag = "PDF Operations",
+    request_body(content = PdfExtractPagesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_extract_pages(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_pages".to_string()), req).await
+}
+
+/// Execute pdf_to_html operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_html",
+    tag = "PDF Operations",
+    request_body(content = PdfToHtmlJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_html(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_html".to_string()), req).await
+}
+
+/// Execute pdf_to_markdown operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_markdown",
+    tag = "PDF Operations",
+    request_body(content = PdfToMarkdownJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_markdown(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_markdown".to_string()), req).await
+}
+
+/// Execute pdf_to_json operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_json",
+    tag = "PDF Operations",
+    request_body(content = PdfToJsonJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_json(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_json".to_string()), req).await
+}
+
+/// Execute json_to_pdf operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/json_to_pdf",
+    tag = "PDF Operations",
+    request_body(content = JsonToPdfJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn json_to_pdf(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("json_to_pdf".to_string()), req).await
+}
+
+/// Execute pdf_to_pdf_a operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_to_pdf_a",
+    tag = "PDF Operations",
+    request_body(content = PdfToPdfAJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_to_pdf_a(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_pdf_a".to_string()), req).await
+}
+
+/// Execute pdf_linearize operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_linearize",
+    tag = "PDF Operations",
+    request_body(content = PdfLinearizeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_linearize(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_linearize".to_string()), req).await
+}
+
+/// Execute pdf_repair operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_repair",
+    tag = "PDF Operations",
+    request_body(content = PdfRepairJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_repair(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_repair".to_string()), req).await
+}
+
+/// Execute pdf_extract_text operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_extract_text",
+    tag = "PDF Operations",
+    request_body(content = PdfExtractTextJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_extract_text(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_text".to_string()), req).await
+}
+
+/// Execute pdf_ocr operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_ocr",
+    tag = "PDF Operations",
+    request_body(content = PdfOcrJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_ocr(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_ocr".to_string()), req).await
+}
+
+/// Execute pdf_extract_tables operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_extract_tables",
+    tag = "PDF Operations",
+    request_body(content = PdfExtractTablesJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_extract_tables(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_tables".to_string()), req).await
+}
+
+/// Execute document_pii_scan operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/document_pii_scan",
+    tag = "PDF Operations",
+    request_body(content = DocumentPiiScanJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn document_pii_scan(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("document_pii_scan".to_string()), req).await
+}
+
+/// Execute pdf_bookmarks operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_bookmarks",
+    tag = "PDF Operations",
+    request_body(content = PdfBookmarksJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_bookmarks(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_bookmarks".to_string()), req).await
+}
+
+/// Execute pdf_header_footer operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_header_footer",
+    tag = "PDF Operations",
+    request_body(content = PdfHeaderFooterJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_header_footer(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_header_footer".to_string()), req).await
+}
+
+/// Execute pdf_classify_type operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_classify_type",
+    tag = "PDF Operations",
+    request_body(content = PdfClassifyTypeJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_classify_type(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_classify_type".to_string()), req).await
+}
+
+/// Execute pdf_compare operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_compare",
+    tag = "PDF Operations",
+    request_body(content = PdfCompareJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_compare(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_compare".to_string()), req).await
+}
+
+/// Execute pdf_hash operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_hash",
+    tag = "PDF Operations",
+    request_body(content = PdfHashJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_hash(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_hash".to_string()), req).await
+}
+
+/// Execute pdf_validate operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_validate",
+    tag = "PDF Operations",
+    request_body(content = PdfValidateJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_validate(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_validate".to_string()), req).await
+}
+
+/// Execute pdf_render operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_render",
+    tag = "PDF Operations",
+    request_body(content = PdfRenderJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_render(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_render".to_string()), req).await
+}
+
+/// Execute pdf_rag_chunks operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/pdf_rag_chunks",
+    tag = "PDF Operations",
+    request_body(content = PdfRagChunksJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_rag_chunks(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_rag_chunks".to_string()), req).await
+}
+
+/// Execute pdf_chunk operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/chunk",
+    tag = "PDF Operations",
+    request_body(content = PdfChunkJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ChunkResultSchema),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn pdf_chunk_endpoint(req: axum::extract::Request) -> impl IntoResponse {
+    let content_type = req
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    if content_type.starts_with("application/json") {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+            Ok(b) => b,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Failed to read request body: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let payload: PdfChunkJsonRequest = match serde_json::from_slice(&body_bytes) {
+            Ok(p) => p,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Invalid JSON payload: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let target_tokens = payload.target_tokens.unwrap_or(500);
+        let overlap_tokens = payload.overlap_tokens.unwrap_or(50);
+        let strip_boilerplate = payload.strip_boilerplate.unwrap_or(true);
+        let break_on_headings = payload.break_on_headings.unwrap_or(true);
+
+        let options = paperpilot_pdf::operations::pdf_chunk::ChunkOptions {
+            target_tokens,
+            overlap_tokens,
+            strip_boilerplate,
+            break_on_headings,
+        };
+
+        let doc_source = match paperpilot_core::document_source::DocumentSource::open(&payload.input, None) {
+            Ok(ds) => ds,
+            Err(e) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Failed to open document: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        let result = match paperpilot_pdf::operations::pdf_chunk::PdfChunkOperation::chunk_source(&doc_source, options) {
+            Ok(r) => r,
+            Err(e) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({
+                        "success": false,
+                        "error": format!("Chunking failed: {}", e)
+                    })),
+                )
+                    .into_response();
+            }
+        };
+
+        if let Some(ref out_path) = payload.output {
+            let out_p = std::path::Path::new(out_path);
+            if let Some(parent) = out_p.parent() {
+                if !parent.as_os_str().is_empty() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+            }
+            if let Ok(json_str) = serde_json::to_string_pretty(&result) {
+                let _ = std::fs::write(out_p, json_str);
+            }
+        }
+
+        (StatusCode::OK, Json(result)).into_response()
+    } else {
+        handle_tool(Path("pdf_chunk".to_string()), req).await.into_response()
+    }
+}
+
+/// Execute workspace_search operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/workspace_search",
+    tag = "PDF Operations",
+    request_body(content = WorkspaceSearchJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn workspace_search(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("workspace_search".to_string()), req).await
+}
+
+/// Execute semantic_search operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/semantic_search",
+    tag = "PDF Operations",
+    request_body(content = SemanticSearchJsonRequest, description = "JSON configuration or multipart form"),
+    responses(
+        (status = 200, description = "Execution successful", body = ApiResponse),
+        (status = 400, description = "Invalid input arguments", body = ApiResponse),
+        (status = 500, description = "Engine execution errors", body = ApiResponse)
+    )
+)]
+pub async fn semantic_search(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("semantic_search".to_string()), req).await
+}
+/// Extract Keywords & Patterns [Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]] [Input: .pdf | Output: .json]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/extract-patterns",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Extract Keywords & Patterns completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_extract_patterns(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_extract_patterns".to_string()), req).await
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DoctorCheckResultSchema {
+    #[schema(example = "Temp Directory: /tmp (writable & ephemeral cleanup verified)")]
+    pub name: String,
+    #[schema(example = true)]
+    pub passed: bool,
+    #[schema(example = "Temp directory is writable and files can be cleanly deleted.")]
+    pub message: String,
+    #[schema(nullable)]
+    pub suggestion: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DoctorReportSchema {
+    #[schema(example = "1794345649")]
+    pub timestamp: String,
+    #[schema(example = "Healthy")]
+    pub status: String,
+    pub checks: Vec<DoctorCheckResultSchema>,
+}
+
+/// Run system diagnostics and offline dependency checks
+#[utoipa::path(
+    get,
+    path = "/api/v1/doctor",
+    tag = "Health",
+    responses(
+        (status = 200, description = "System diagnostics report", body = DoctorReportSchema)
+    )
+)]
+pub async fn doctor() -> impl IntoResponse {
+    let report = paperpilot_core::diagnostics::run_diagnostics();
+    (StatusCode::OK, Json(report))
 }

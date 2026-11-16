@@ -636,3 +636,63 @@ mod tests {
         assert_eq!(count_after, 0);
     }
 }
+
+#[async_trait::async_trait]
+impl paperpilot_core::storage::DatabasePort for StorageEngine {
+    async fn create_job(&self, job: paperpilot_core::storage::NewJob) -> Result<String, paperpilot_core::storage::StorageError> {
+        let record = self.create_job(&job).await?;
+        Ok(record.id)
+    }
+
+    async fn get_job(&self, id: &str) -> Result<Option<paperpilot_core::storage::JobRecord>, paperpilot_core::storage::StorageError> {
+        Ok(self.get_job(id).await?)
+    }
+
+    async fn update_job_status(
+        &self,
+        id: &str,
+        status: paperpilot_core::storage::JobStatus,
+        progress: u8,
+        output: Option<&str>,
+        error: Option<&str>,
+    ) -> Result<(), paperpilot_core::storage::StorageError> {
+        self.update_job_status(id, status, progress, output, error).await?;
+        Ok(())
+    }
+
+    async fn list_jobs(&self, limit: usize) -> Result<Vec<paperpilot_core::storage::JobRecord>, paperpilot_core::storage::StorageError> {
+        Ok(self.list_jobs(limit).await?)
+    }
+
+    async fn store_document_chunks(&self, chunks: &[paperpilot_core::storage::DocumentChunkRecord]) -> Result<(), paperpilot_core::storage::StorageError> {
+        let new_chunks: Vec<paperpilot_core::storage::NewDocumentChunk> = chunks.iter().map(|c| paperpilot_core::storage::NewDocumentChunk {
+            id: Some(c.id.clone()),
+            document_hash: c.document_hash.clone(),
+            document_name: c.document_name.clone(),
+            page_number: c.page_number,
+            chunk_index: c.chunk_index,
+            content: c.content.clone(),
+            embedding: c.embedding.clone(),
+        }).collect();
+        self.store_chunks(&new_chunks).await?;
+        Ok(())
+    }
+
+    async fn search_similar_chunks(&self, query_embedding: &[f32], limit: usize, min_similarity: f32) -> Result<Vec<paperpilot_core::storage::VectorSearchResult>, paperpilot_core::storage::StorageError> {
+        let results = self.search_chunks(query_embedding, limit, None).await?;
+        Ok(results.into_iter().filter(|r| r.score >= min_similarity).collect())
+    }
+
+    async fn delete_document_chunks(&self, document_hash: &str) -> Result<usize, paperpilot_core::storage::StorageError> {
+        Ok(self.delete_chunks_by_document(document_hash).await?)
+    }
+
+    async fn append_audit_log(&self, event: paperpilot_core::storage::AuditEvent) -> Result<(), paperpilot_core::storage::StorageError> {
+        self.record_audit_event(&event).await?;
+        Ok(())
+    }
+
+    async fn list_audit_logs(&self, limit: usize) -> Result<Vec<paperpilot_core::storage::AuditEvent>, paperpilot_core::storage::StorageError> {
+        Ok(self.list_audit_events(limit).await?)
+    }
+}

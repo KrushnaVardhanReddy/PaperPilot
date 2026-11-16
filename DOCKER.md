@@ -98,6 +98,46 @@ The Docker container runs with an embedded **libSQL / Turso** database engine (`
 
 ---
 
+## ☁️ Continuous S3 / Cloudflare R2 Disaster Recovery (Litestream)
+
+For production or VPS self-hosting, PaperPilot provides an automated, zero-maintenance backup sidecar using **[Litestream](https://litestream.io/)** (`docker-compose.backup.yml`). It streams database transactions in real-time to your private S3, Cloudflare R2, or MinIO bucket with sub-second RPO.
+
+### 1. Configure Cloud Storage Credentials (`.env`)
+Create or edit your `.env` file:
+```env
+# AWS S3, Cloudflare R2, MinIO, or Backblaze B2 credentials
+LITESTREAM_BUCKET=my-paperpilot-backup-bucket
+LITESTREAM_PATH=paperpilot-db
+LITESTREAM_ACCESS_KEY_ID=your_access_key
+LITESTREAM_SECRET_ACCESS_KEY=your_secret_key
+
+# Optional: Custom endpoint (required for Cloudflare R2 or MinIO)
+# LITESTREAM_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
+# LITESTREAM_REGION=auto
+```
+
+### 2. Start with Continuous Replication
+```bash
+docker compose -f docker-compose.yml -f docker-compose.backup.yml up -d
+```
+Litestream immediately connects and streams all database commits to your bucket.
+
+### 3. Disaster Recovery (Point-in-Time Restore)
+If your server crashes or volume unmounts, restore the entire database in milliseconds:
+```bash
+# Restore latest backup to ./data/paperpilot.db
+docker run --rm \
+  -v $(pwd)/data:/data \
+  --env-file .env \
+  litestream/litestream:0.3.13 \
+  restore -config /etc/litestream.yml /data/paperpilot.db
+
+# Or restore to a specific point-in-time timestamp:
+# docker run --rm -v $(pwd)/data:/data --env-file .env litestream/litestream:0.3.13 restore -timestamp 2026-11-06T12:00:00Z /data/paperpilot.db
+```
+
+---
+
 ## 🛑 Stopping the Container
 ```bash
 docker compose down

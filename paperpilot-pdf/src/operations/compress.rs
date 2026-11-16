@@ -223,6 +223,25 @@ impl PdfOperation for CompressOperation {
             }
         }
 
+        let original_bytes_len = lopdf_doc.original_bytes.as_ref().map(|b| b.len()).unwrap_or(0);
+        let mut final_bytes_len = 0;
+        let mut buf = Vec::new();
+        if lopdf_doc.inner.save_to(&mut buf).is_ok() {
+            final_bytes_len = buf.len();
+        }
+        let compression_ratio = if original_bytes_len > 0 {
+            final_bytes_len as f64 / original_bytes_len as f64
+        } else {
+            1.0
+        };
+        tracing::debug!(
+            target: "paperpilot_pdf::compress",
+            input_bytes = original_bytes_len,
+            output_bytes = final_bytes_len,
+            compression_ratio = compression_ratio,
+            "pdf_compress execution finished"
+        );
+
         lopdf_doc.inner.prune_objects();
         lopdf_doc.inner.compress();
         Ok(())

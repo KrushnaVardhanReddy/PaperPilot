@@ -98,5 +98,5 @@ Every test run must execute inside an **isolated, newly generated output sandbox
 
 ## 5. Penta-Interface Testing & Documentation Parity (Task P5_9_50)
 - [ ] Test across all 5 interfaces: Native CLI (`paperpilot`), Agent MCP Server (`paperpilot-mcp`), REST Gateway (`:7823`), In-Memory WebAssembly (`paperpilot-wasm`), and Cloudflare Edge Worker (`apps/edge`).
-- [ ] Update `apps/docs/src/content/docs/reference/50-tools-handbook.md` with verified, copy-pasteable CLI, REST (`curl`), and MCP JSON-RPC snippets for every single tool.
+- [ ] Update `apps/docs/src/content/docs/reference/tools-handbook.md` with verified, copy-pasteable CLI, REST (`curl`), and MCP JSON-RPC snippets for every single tool.
 - [ ] Ensure `apps/docs` builds cleanly with zero Astro/Starlight errors (`cd apps/docs && npm run build`).

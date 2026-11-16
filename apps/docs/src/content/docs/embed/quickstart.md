@@ -12,7 +12,7 @@ Integrate the full power of PaperPilot directly into your website with a simple 
 Add the following code to your HTML file where you want the PaperPilot widget to appear:
 
 ```html
-<script src="https://cdn.usepaperpilot.com/embed.js"></script>
+<script src="https://usepaperpilot.com/embed.js"></script>
 <div id="paperpilot-portal"></div>
 ```
 

@@ -8,6 +8,8 @@ We are deeply grateful to our open-source contributors and the community members
 - **Qiaochu Hu ([@hobostay](https://github.com/hobostay))**:
   - Implemented the in-memory Open-WebUI & Apache Tika PDF ingestion adapter ([PR #273](https://github.com/KrushnaVardhanReddy/PaperPilot/pull/273) / Task 126A).
   - Authored the Open-WebUI integration guide and Python folder bridge tool.
+  - Implemented the unified Conditional Pipeline Execution Engine across CLI, Desktop, WASM, MCP, and Gateway (`[Spec 136]` / Task 4.7.6 / 8.2.3), adding runtime document inspections (`if_scanned`, page count boundary comparators), `.ppflow` TOML/JSON parsing, atomic CLI publication, and shared engine architecture.
+  - Implemented the desktop Watched Folders daemon and reactive PDF Smart Filters ([PR #306](https://github.com/KrushnaVardhanReddy/PaperPilot/pull/306) / Spec 142 / Task 4.7.8), adding pure-Rust Tauri IPC bindings, bounded concurrency, filesystem event listening, and fact-based document filtering (`isScanned`, `isSigned`, `hasFormFields`, `pageCount > 1`).
 
 ---
 

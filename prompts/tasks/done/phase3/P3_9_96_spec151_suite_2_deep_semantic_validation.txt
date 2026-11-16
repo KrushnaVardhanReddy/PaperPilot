@@ -1,0 +1,41 @@
+Task: Spec 151 Deep Semantic E2E Validation - Suite 2 (Tools 31–60: Security, Cryptography & Forms)
+
+Target Branch: `feature/dev` (strictly use -j 4 for any cargo builds; do NOT push directly to main).
+
+================================================================================
+EXECUTIVE CONTEXT & MANDATE
+================================================================================
+1. The baseline 90/90 zero-mock desktop Playwright suites have passed 100% green.
+2. Your task is to upgrade `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts` to execute **Spec 151 Deep Semantic Validation** across Tools 31–60 using:
+   - `SandboxManager` (`apps/desktop/tests/helpers/sandboxManager.ts`) for ephemeral UUID isolation per test run.
+   - `PdfInspector` (`apps/desktop/tests/helpers/pdfInspector.ts`) for cryptographic dictionaries, form values, and text search.
+3. STRICT POLICY: ZERO PLACEHOLDERS, ZERO MOCKS.
+   - Genuine UI navigation (`.tool-card`, search, `.run-btn`).
+   - Authentic CLI execution (`target/debug/paperpilot`).
+   - Deep assertions:
+     * `pdf_encrypt`: Verify raw byte stream has `/Encrypt` dictionary.
+     * `pdf_decrypt`: Verify decrypted file opens without password and lacks `/Encrypt`.
+     * `pdf_sign` & `pdf_validate_signatures`: Verify `/Sig` dictionary, `/ByteRange`, and valid PKCS#7 certificate structure.
+     * `pdf_timestamp`: Verify RFC 3161 TSA timestamp signature trailer token in raw stream.
+     * `pdf_redact`: Verify redacted content is **permanently absent** from all decoded text streams.
+     * `pdf_read_form` & `pdf_fill_form`: Verify populated AcroForm field values match input JSON keys.
+     * `pdf_watermark`, `pdf_bates`, `pdf_header_footer`: Verify stamped strings exist in document text stream.
+     * `document_pii_scan`: Verify JSON scan findings structure.
+
+================================================================================
+EXECUTION & VERIFICATION INSTRUCTIONS
+================================================================================
+Run Suite 2 Playwright:
+```bash
+cd apps/desktop
+export PATH="/home/krushna/.nvm/versions/node/v26.12.1/bin:$PATH"
+export NODE_PATH="$(pwd)/../web/node_modules:$(pwd)/../edge/node_modules:$(pwd)/node_modules"
+export NO_PROXY="localhost,127.0.0.1"
+export no_proxy="localhost,127.0.0.1"
+unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+../web/node_modules/.bin/playwright test tests/e2e_suite_2_security_forms.spec.ts
+```
+
+DELIVERABLES:
+1. `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts` passing 30/30 green with deep cryptographic and AcroForm assertions.
+2. Clean commit on `feature/dev`.

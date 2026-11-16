@@ -1,0 +1,11 @@
+{
+  "name": "paperpilot-monorepo",
+  "private": true,
+  "scripts": {
+    "build:extension": "pnpm --dir apps/extension build",
+    "pack:extension": "pnpm --dir apps/extension pack"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
+}

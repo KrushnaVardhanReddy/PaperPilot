@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enterprise Technical Specification - Part 1</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #1a202c;
+      line-height: 1.5;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      page-break-after: always;
+      box-sizing: border-box;
+      min-height: 90%;
+    }
+    .page:last-child {
+      page-break-after: avoid;
+    }
+    .header {
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 10px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .title-doc {
+      font-size: 18pt;
+      font-weight: bold;
+      color: #2b6cb0;
+    }
+    .doc-meta {
+      font-size: 9pt;
+      color: #718096;
+      text-align: right;
+    }
+    h1 {
+      font-size: 16pt;
+      color: #2d3748;
+      margin-top: 0;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #3182ce;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      margin-bottom: 12px;
+      text-align: justify;
+    }
+    ul, ol {
+      margin-top: 5px;
+      margin-bottom: 15px;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    .callout {
+      background: #ebf8ff;
+      border-left: 4px solid #3182ce;
+      padding: 12px 16px;
+      margin: 15px 0;
+      font-size: 10pt;
+    }
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+      margin-top: 30px;
+      font-size: 9pt;
+      color: #a0aec0;
+      display: flex;
+      justify-content: space-between;
+    }
+    code {
+      background: #edf2f7;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10pt;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: CHAPTER 1 -->
+  <div class="page">
+    <div class="header">
+      <div class="title-doc">PaperPilot Architecture Specification (Part 1)</div>
+      <div class="doc-meta">Doc ID: SPEC-2026-A &bull; Version 4.2</div>
+    </div>
+    <h1>Chapter 1: System Overview & Core Topology</h1>
+    <p><strong>Tracking Identifier:</strong> MERGE_PAGE_AAA</p>
+    <p>
+      The PaperPilot Enterprise Architecture provides a zero-trust, memory-safe document processing runtime
+      designed for high-throughput enterprise pipelines. This first partition document encapsulates core subsystem definitions,
+      memory layout contracts, and low-level thread scheduling models.
+    </p>
+    <h2>1.1 Architectural Pillars</h2>
+    <ul>
+      <li><strong>Deterministic Memory Footprint:</strong> Zero-copy buffer slicing via Rust-native ownership semantics.</li>
+      <li><strong>Polyglot IPC Gateway:</strong> High-efficiency serialization layer bridging local GUI bindings and external services.</li>
+      <li><strong>Hermetic Operation Isolation:</strong> All transformation jobs execute within sandboxed memory contexts.</li>
+    </ul>
+    <div class="callout">
+      <strong>Chapter 1 Summary:</strong> Establishes the topological baseline for Part 1. Document A covers Chapters 1 through 4.
+    </div>
+    <div class="footer">
+      <span>PaperPilot Technical Specification &bull; Part 1</span>
+      <span>Page 1 of 4</span>
+    </div>
+  </div>
+
+  <!-- PAGE 2: CHAPTER 2 -->
+  <div class="page">
+    <div class="header">
+      <div class="title-doc">PaperPilot Architecture Specification (Part 1)</div>
+      <div class="doc-meta">Doc ID: SPEC-2026-A &bull; Version 4.2</div>
+    </div>
+    <h1>Chapter 2: Data Pipeline & Stream Ingestion</h1>
+    <p>
+      Document streams entering the cluster undergo streaming validation prior to object graph construction.
+      This ensures malformed PDF byte streams and circular xref table references are intercepted before allocation.
+    </p>
+    <h2>2.1 Ingestion Stages</h2>
+    <ol>
+      <li><strong>Header Verification:</strong> Rapid byte validation of PDF magic markers and trailer dictionary integrity.</li>
+      <li><strong>Stream Tokenization:</strong> Lazy decoding of flate and JPX streams to minimize virtual memory peak load.</li>
+      <li><strong>Index Reconstruction:</strong> Reconstruction of cross-reference tables in non-linearized documents.</li>
+    </ol>
+    <div class="callout">
+      <strong>Throughput Benchmark:</strong> The stream parser achieves sustained 450 MB/s deserialization across multi-core nodes.
+    </div>
+    <div class="footer">
+      <span>PaperPilot Technical Specification &bull; Part 1</span>
+      <span>Page 2 of 4</span>
+    </div>
+  </div>
+
+  <!-- PAGE 3: CHAPTER 3 -->
+  <div class="page">
+    <div class="header">
+      <div class="title-doc">PaperPilot Architecture Specification (Part 1)</div>
+      <div class="doc-meta">Doc ID: SPEC-2026-A &bull; Version 4.2</div>
+    </div>
+    <h1>Chapter 3: Security Architecture & Cryptographic Boundaries</h1>
+    <p>
+      PaperPilot enforces cryptographic guarantees at every layer of document mutation.
+      Cryptographic permissions, AES-256 GCM envelope protection, and digital certificate validation operate in hardware-backed boundaries.
+    </p>
+    <h2>3.1 Cryptographic Standards Matrix</h2>
+    <ul>
+      <li><strong>Symmetric Encryption:</strong> AES-256 compliant with ISO 32000-2 (PDF 2.0 extension 3).</li>
+      <li><strong>Asymmetric Signing:</strong> RSA 4096-bit and ECDSA P-384 with SHA-384 / SHA-512 digest algorithms.</li>
+      <li><strong>Key Protection:</strong> Ephemeral session secrets strictly managed in non-swappable pinned memory pages.</li>
+    </ul>
+    <div class="callout">
+      <strong>Security Clearance:</strong> Certified compliant for military, healthcare, and enterprise banking compliance frameworks.
+    </div>
+    <div class="footer">
+      <span>PaperPilot Technical Specification &bull; Part 1</span>
+      <span>Page 3 of 4</span>
+    </div>
+  </div>
+
+  <!-- PAGE 4: CHAPTER 4 -->
+  <div class="page">
+    <div class="header">
+      <div class="title-doc">PaperPilot Architecture Specification (Part 1)</div>
+      <div class="doc-meta">Doc ID: SPEC-2026-A &bull; Version 4.2</div>
+    </div>
+    <h1>Chapter 4: Scalability, Latency & Service Level Agreements</h1>
+    <p>
+      High-volume batch operations require deterministic latency bounds under peak load conditions.
+      The PaperPilot scheduler uses priority-weighted work-stealing executors to enforce strict 99th percentile response guarantees.
+    </p>
+    <h2>4.1 Performance SLA Commitments</h2>
+    <ul>
+      <li><strong>P50 Latency:</strong> &lt; 15 milliseconds for page manipulations under 50 MB.</li>
+      <li><strong>P99 Latency:</strong> &lt; 90 milliseconds for complete document re-indexing and linearization.</li>
+      <li><strong>Zero Memory Leaks:</strong> Verified via AddressSanitizer and Valgrind continuous integration runs.</li>
+    </ul>
+    <div class="callout">
+      <strong>Conclusion of Part 1:</strong> Chapters 1-4 conclude here. Refer to Document B for Appendices and Sign-Off (Chapters 5-7).
+    </div>
+    <div class="footer">
+      <span>PaperPilot Technical Specification &bull; Part 1</span>
+      <span>Page 4 of 4</span>
+    </div>
+  </div>
+
+</body>
+</html>

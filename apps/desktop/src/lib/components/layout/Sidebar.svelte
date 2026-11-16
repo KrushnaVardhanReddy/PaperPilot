@@ -1,116 +1,47 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { appState } from '$lib/state/app.svelte';
-  import { jobsState } from '$lib/state/jobs.svelte';
-
-  import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
-  import CancelButton from '$lib/components/ui/CancelButton.svelte';
-
-  let windowWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
-  let manualCollapsed = $state(false);
-  let isCollapsed = $derived(manualCollapsed || windowWidth < 900);
-
-  onMount(() => {
-    // Restore persisted collapse state
-    const stored = localStorage.getItem('sidebar-collapsed');
-    if (stored === 'true') manualCollapsed = true;
-
-    function handleResize() {
-      windowWidth = window.innerWidth;
-    }
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  });
-
-  $effect(() => {
-    localStorage.setItem('sidebar-collapsed', String(manualCollapsed));
-  });
 
   const navItems = [
-    { id: 'documents', label: 'Documents', icon: '📄' },
-    { id: 'pipeline', label: 'Pipeline', icon: '🔗' },
-    { id: 'api', label: 'API & Gateway', icon: '⚡' },
+    { id: 'documents', label: 'Documents', icon: '📁' },
+    { id: 'pipeline', label: 'Pipeline Studio', icon: '🔗' },
+    { id: 'api', label: 'API Gateway', icon: '⚡' },
     { id: 'settings', label: 'Settings', icon: '⚙️' }
   ];
 </script>
 
-<aside class="sidebar" class:collapsed={isCollapsed} aria-label="Main navigation">
-  <div class="sidebar-header">
-    <h1 class="brand-title">PaperPilot</h1>
-  </div>
-
+<aside class="sidebar collapsed" aria-label="Main navigation">
   <nav class="sidebar-nav" aria-label="Navigation">
     {#each navItems as item (item.id)}
       {#if item.id !== 'api' || appState.developerMode}
         <button
           class="nav-item"
           class:active={appState.activeTab === item.id}
-          onclick={() => appState.setActiveTab(item.id)}
-          title={isCollapsed ? item.label : undefined}
+          onclick={() => {
+            if (appState.activeTab === item.id && item.id === 'documents') {
+              appState.toggleContextPanel();
+            } else {
+              appState.setActiveTab(item.id);
+            }
+          }}
+          title={item.label}
           id={`nav-${item.id}`}
           aria-label={item.label}
           aria-current={appState.activeTab === item.id ? 'page' : undefined}
         >
           <span class="nav-icon" aria-hidden="true">{item.icon}</span>
-          <span class="nav-label">{item.label}</span>
         </button>
       {/if}
     {/each}
   </nav>
 
-  <div class="sidebar-jobs">
-    <h4>Recent Jobs</h4>
-    {#if jobsState.jobs.length === 0}
-      <p class="no-jobs">No recent jobs</p>
-    {:else}
-      <div class="jobs-list">
-        {#each jobsState.jobs.slice(-5).reverse() as job (job.id)}
-          <div class="job-item-container">
-            <div class="job-item">
-              <span class="job-status" class:success={job.status === 'success'} class:error={job.status === 'error'} class:running={job.status === 'running'} class:cancelled={job.status === 'cancelled'}>
-                {#if job.status === 'success'}✅{/if}
-                {#if job.status === 'error'}❌{/if}
-                {#if job.status === 'running'}⏳{/if}
-                {#if job.status === 'cancelled'}🚫{/if}
-              </span>
-              <span class="job-name">{job.toolName}</span>
-              {#if job.status === 'running'}
-                <div class="cancel-container">
-                  <CancelButton jobId={job.id} onCancelled={() => jobsState.updateJobStatus(job.id, 'cancelled', 'Cancelled by user')} />
-                </div>
-              {/if}
-            </div>
-            {#if job.status === 'running'}
-              <ProgressBar
-                jobName={job.toolName}
-                percent={job.progress ?? 0}
-                currentPage={job.currentPage}
-                totalPages={job.totalPages}
-                visible={true}
-              />
-            {/if}
-          </div>
-        {/each}
-      </div>
-    {/if}
-  </div>
-
   <div class="sidebar-footer">
-    <button
-      class="collapse-btn"
-      id="sidebar-collapse-toggle"
-      onclick={() => manualCollapsed = !manualCollapsed}
-      title={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      aria-label={manualCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-    >
-      {manualCollapsed ? '›' : '‹'}
-    </button>
     <div class="theme-toggle">
       <button
         class="theme-btn"
+        title={appState.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         onclick={() => appState.setTheme(appState.theme === 'dark' ? 'light' : 'dark')}
       >
-        {appState.theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+        <span class="nav-icon">{appState.theme === 'dark' ? '🌙' : '☀️'}</span>
       </button>
     </div>
   </div>
@@ -118,94 +49,37 @@
 
 <style>
   .sidebar {
-    width: 260px;
+    width: 48px;
     background-color: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     height: 100%;
-    transition: width 0.25s ease;
-  }
-
-  /* Collapsed state: 48px icon rail */
-  .sidebar.collapsed {
-    width: 48px;
-  }
-
-  /* Hide text elements when collapsed */
-  .sidebar.collapsed .nav-label,
-  .sidebar.collapsed .brand-title,
-  .sidebar.collapsed .sidebar-jobs {
-    display: none;
-  }
-
-  /* Hide theme toggle entirely when collapsed */
-  .sidebar.collapsed .theme-btn {
-    display: none;
-  }
-
-  /* Center icons when collapsed */
-  .sidebar.collapsed .nav-item {
-    justify-content: center;
-    padding: 10px 0;
-  }
-  .sidebar.collapsed .nav-icon {
-    margin-right: 0;
-  }
-
-  /* Collapse toggle button */
-  .collapse-btn {
-    width: 100%;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: var(--border-radius-sm);
-    transition: all var(--transition-fast);
-    text-align: center;
-    margin-bottom: 8px;
-  }
-  .collapse-btn:hover {
-    background: var(--bg-surface);
-    color: var(--text-primary);
-  }
-
-  .sidebar-header {
-    padding: 24px 20px;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .brand-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.025em;
+    z-index: 10;
   }
 
   .sidebar-nav {
     flex: 1;
-    padding: 20px 12px;
+    padding: 12px 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 12px;
     overflow-y: auto;
   }
 
   .nav-item {
     display: flex;
     align-items: center;
-    padding: 10px 16px;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     background: transparent;
     border: none;
-    border-radius: var(--border-radius-md);
+    border-radius: 8px;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all var(--transition-fast);
-    text-align: left;
-    font-size: 0.95rem;
-    font-weight: 500;
+    transition: all 0.2s ease;
   }
 
   .nav-item:hover {
@@ -214,102 +88,44 @@
   }
 
   .nav-item.active {
-    background-color: var(--accent-primary);
-    color: #ffffff;
+    background-color: rgba(59, 130, 246, 0.15); /* light accent */
+    color: var(--accent-primary);
+    border-left: 2px solid var(--accent-primary);
+    border-radius: 0 8px 8px 0;
+    width: 40px;
+    margin-right: -4px;
   }
 
   .nav-icon {
-    margin-right: 12px;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .sidebar-footer {
-    padding: 16px 20px;
+    padding: 16px 0;
+    display: flex;
+    justify-content: center;
     border-top: 1px solid var(--border-color);
   }
 
   .theme-btn {
-    width: 100%;
-    padding: 8px 12px;
-    background-color: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
     color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
     cursor: pointer;
-    font-size: 0.85rem;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
   }
 
   .theme-btn:hover {
-    background-color: var(--bg-surface-hover);
-    color: var(--text-primary);
-  }
-
-  .sidebar-jobs {
-    padding: 16px 20px;
-    border-top: 1px solid var(--border-color);
-  }
-
-  .sidebar-jobs h4 {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .no-jobs {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-  }
-
-  .jobs-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-
-  .job-status {
-    margin-right: 8px;
-    font-size: 0.8rem;
-  }
-
-  .job-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .job-item-container {
-    display: flex;
-    flex-direction: column;
     background-color: var(--bg-surface);
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-color);
-    padding: 6px 10px;
-  }
-
-  .job-item {
-    display: flex;
-    align-items: center;
-    font-size: 0.85rem;
     color: var(--text-primary);
   }
-
-  .cancel-container {
-    margin-left: auto;
-  }
-
-  .job-status.running {
-    color: var(--accent-primary);
-  }
-
-  .job-status.cancelled {
-    color: var(--text-muted);
-  }
-
 </style>

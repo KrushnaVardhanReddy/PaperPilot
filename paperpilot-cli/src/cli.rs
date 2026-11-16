@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -10,6 +10,14 @@ use std::path::PathBuf;
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+
+    /// Output format for logs: text, json, compact, or pretty
+    #[arg(global = true, long)]
+    pub log_format: Option<String>,
+
+    /// Log level verbosity: trace, debug, info, warn, error
+    #[arg(global = true, long)]
+    pub log_level: Option<String>,
 
     /// Output result as JSON
     #[arg(global = true, long)]
@@ -34,6 +42,18 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Fill one AcroForm PDF per CSV/JSON record and write an execution receipt
+    #[cfg(feature = "pdf")]
+    #[command(name = "fill-batch", alias = "batch-fill", alias = "batch_fill", alias = "cli-fill-batch", alias = "cli_fill_batch", alias = "pdf-fill-batch")]
+    FillBatch(FillBatchArgs),
+    /// Launch the PaperPilot Graphical Desktop UI
+    #[command(alias = "gui")]
+    Ui,
+    /// Run system diagnostics to check offline dependencies
+    Doctor {
+        #[arg(long)]
+        json: bool,
+    },
     /// Generate shell completions
     Completions {
         #[arg(value_enum)]
@@ -58,6 +78,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "extract-pages", alias = "extract")]
     Extract {
         #[arg(long)]
         input: PathBuf,
@@ -66,6 +87,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "delete-pages", alias = "delete")]
     Delete {
         #[arg(long)]
         input: PathBuf,
@@ -74,6 +96,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "reorder-pages", alias = "reorder")]
     Reorder {
         #[arg(long)]
         input: PathBuf,
@@ -124,6 +147,8 @@ pub enum Commands {
     RemoveBlank {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long, default_value = "95")]
+        sensitivity: u8,
         #[arg(long)]
         output: PathBuf,
     },
@@ -138,6 +163,7 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "pdf-repair", alias = "repair")]
     Repair {
         #[arg(long)]
         input: PathBuf,
@@ -145,6 +171,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Fast Web View: Optimize PDF for fast web viewing [Input: .pdf | Output: .pdf]
+    #[command(name = "pdf-linearize", alias = "linearize")]
     Linearize {
         #[arg(long)]
         input: PathBuf,
@@ -155,7 +182,7 @@ pub enum Commands {
     Encrypt {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, visible_alias = "password", alias = "password")]
         user_password: Option<String>,
         #[arg(long)]
         owner_password: Option<String>,
@@ -172,6 +199,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Add Watermark: Stamp text or branding [Input: .pdf | Output: .pdf]
+    #[command(name = "watermark", alias = "pdf-watermark", alias = "pdf_watermark")]
     Watermark {
         #[arg(long)]
         input: std::path::PathBuf,
@@ -189,19 +217,30 @@ pub enum Commands {
         output: std::path::PathBuf,
     },
     /// Redact Text: Permanently remove sensitive information [Input: .pdf | Output: .pdf]
+    #[command(name = "redact", alias = "pdf-redact", alias = "pdf_redact")]
     Redact {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "1")]
         pages: String,
-        #[arg(long)]
+        #[arg(long, default_value = "0,0,100,100")]
         rect: String,
+        #[arg(long)]
+        data: Option<String>,
+        #[arg(long)]
+        query: Option<String>,
+        #[arg(long)]
+        regex: Option<String>,
+        #[arg(long)]
+        overlay_text: Option<String>,
+        #[arg(long, default_value = "all")]
+        occurrence: String,
         #[arg(long)]
         output: PathBuf,
     },
     /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]
     /// Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]
-    #[command(name = "pii-scan")]
+    #[command(name = "pii-scan", alias = "document-pii-scan", alias = "document_pii_scan", alias = "pii_scan")]
     PiiScan {
         #[arg(long)]
         input: PathBuf,
@@ -246,7 +285,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Sign Document: Apply digital signature to document [Input: .pdf | Output: .pdf]
-    #[command(alias = "sign")]
+    #[command(alias = "sign", alias = "pdf-sign", alias = "pdf_sign")]
     Signature {
         #[arg(long)]
         input: PathBuf,
@@ -256,6 +295,7 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Flatten Annotations: Bake annotations and forms into page [Input: .pdf | Output: .pdf]
+    #[command(alias = "pdf-flatten", alias = "pdf_flatten")]
     Flatten {
         #[arg(long)]
         input: PathBuf,
@@ -264,6 +304,7 @@ pub enum Commands {
     },
     /// Convert to PDF/A: Archive-ready PDF format conversion [Input: .pdf | Output: .pdf]
     /// Invert PDF colors or apply dark mode
+    #[command(name = "pdf-invert-colors", alias = "invert-colors")]
     InvertColors {
         #[arg(long)]
         input: PathBuf,
@@ -274,7 +315,7 @@ pub enum Commands {
         #[arg(long)]
         pages: Option<String>,
     },
-    #[command(alias = "to-pdf-a")]
+    #[command(name = "pdf-a", alias = "to-pdf-a", alias = "pdf-to-pdf-a", alias = "pdf_to_pdf_a")]
     PdfA {
         #[arg(long)]
         input: PathBuf,
@@ -282,27 +323,33 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Header & Footer: Add headers and footers to pages [Input: .pdf | Output: .pdf]
+    #[command(name = "header-footer", alias = "header_footer", alias = "pdf-header-footer", alias = "pdf_header_footer")]
     HeaderFooter {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         text: String,
+        #[arg(long, default_value = "header")]
+        position: String,
         #[arg(long)]
         output: PathBuf,
     },
     /// Bates Numbering: Apply Bates stamps to pages [Input: .pdf | Output: .pdf]
+    #[command(name = "bates", alias = "pdf-bates", alias = "pdf_bates")]
     Bates {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "CONF-")]
         prefix: String,
-        #[arg(long)]
+        #[arg(long, default_value_t = 1)]
         start: u32,
+        #[arg(long, default_value = "bottom-right")]
+        position: String,
         #[arg(long)]
         output: PathBuf,
     },
     /// Add Page Numbers: Add dynamic page numbering [Input: .pdf | Output: .pdf]
-    #[command(name = "page-numbers")]
+    #[command(name = "page-numbers", alias = "page_numbers", alias = "pdf-page-numbers", alias = "pdf_page_numbers")]
     PageNumbers {
         #[arg(long)]
         input: PathBuf,
@@ -333,34 +380,47 @@ pub enum Commands {
         #[arg(long, default_value = "all")]
         pages: String,
     },
+    #[command(name = "extract-images", alias = "pdf-extract-images", alias = "pdf_extract_images")]
     ExtractImages {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, alias = "output-dir")]
         output: PathBuf,
     },
     /// Search Text: Search for text across document [Input: .pdf | Output: .json]
+    #[command(name = "search", alias = "pdf-search", alias = "pdf_search")]
     Search {
         #[arg(long)]
-        input: PathBuf,
+        input: Option<PathBuf>,
         #[arg(long)]
         query: String,
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
-    /// Render Page: Render page to image format [Input: .pdf | Output: png images]
+    /// Render Page: Render page to image format [Input: .pdf | Output: png/jpeg/webp images]
+    #[command(name = "render", alias = "pdf-render", alias = "pdf_render")]
     Render {
         #[arg(long)]
         input: PathBuf,
         #[arg(long, default_value = "1")]
         page: u32,
+        #[arg(long, default_value_t = 150.0)]
+        dpi: f32,
+        #[arg(long)]
+        format: Option<String>,
         #[arg(long)]
         output: PathBuf,
     },
-    /// Compare PDFs: Diff two documents and highlight changes [Input: 2 .pdfs | Output: .pdf]
+    /// Compare PDFs: Diff two documents and highlight changes [Input: 2 .pdfs | Output: .pdf / .json]
     Compare {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         input_b: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     /// OCR Text Recognition: Run OCR on scanned pages [Input: .pdf | Output: .txt / .pdf]
     Ocr {
@@ -390,27 +450,37 @@ pub enum Commands {
 
     // --- Validate ---
     /// Add Annotations: Programmatically add annotations [Input: .pdf | Output: .pdf]
+    #[command(name = "annotate", alias = "pdf-annotate", alias = "pdf_annotate")]
     Annotate {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
+        #[arg(long, default_value = "[]")]
         data: PathBuf,
         #[arg(long)]
         output: PathBuf,
     },
+    #[command(name = "classify-type", alias = "classify", alias = "pdf-classify-type", alias = "pdf_classify_type")]
     Classify {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
-    /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt]
+    /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt/.json]
+    #[command(alias = "pdf-validate", alias = "pdf_validate")]
     Validate {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     /// Generate Hash: Calculate document checksums [Input: .pdf | Output: .txt]
+    #[command(alias = "pdf-hash", alias = "pdf_hash")]
     Hash {
         #[arg(long)]
         input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
     Verify {
         #[arg(long)]
@@ -420,6 +490,7 @@ pub enum Commands {
     },
 
     // --- Group E: Forms ---
+    #[command(alias = "pdf-form", alias = "pdf_form")]
     Form {
         #[command(subcommand)]
         command: FormCommands,
@@ -440,7 +511,7 @@ pub enum Commands {
         inline_css: Option<String>,
     },
     /// Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity.
-    #[command(name = "pdf-validate-signatures")]
+    #[command(name = "pdf-validate-signatures", alias = "validate-signatures", alias = "validate_signatures", alias = "pdf_validate_signatures")]
     PdfValidateSignatures {
         #[arg(long)]
         input: PathBuf,
@@ -459,23 +530,37 @@ pub enum Commands {
         output: PathBuf,
     },
     /// N-Up Page Imposition: Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.
-    #[command(name = "pdf-nup")]
+    #[command(name = "pdf-nup", alias = "nup", alias = "pdf_nup")]
     PdfNup {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, default_value_t = 2)]
+        nup: u32,
+        #[arg(long, default_value = "horizontal")]
+        ordering: String,
+        #[arg(long, default_value_t = 18.0)]
+        margin: f32,
+        #[arg(long, default_value_t = 10.0)]
+        spacing: f32,
+        #[arg(long, default_value_t = false)]
+        draw_borders: bool,
     },
     /// Scale Page Dimensions: Scale page dimensions between standard formats or percentages.
-    #[command(name = "pdf-scale-pages")]
+    #[command(name = "pdf-scale-pages", alias = "scale-pages", alias = "scale_pages", alias = "pdf_scale_pages")]
     PdfScalePages {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, default_value = "A4")]
+        target_size: Option<String>,
+        #[arg(long, default_value = "1.0")]
+        scale_factor: Option<f32>,
     },
     /// Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations.
-    #[command(name = "pdf-remove-signatures")]
+    #[command(name = "pdf-remove-signatures", alias = "remove-signatures", alias = "remove_signatures", alias = "pdf_remove_signatures")]
     PdfRemoveSignatures {
         #[arg(long)]
         input: PathBuf,
@@ -483,20 +568,72 @@ pub enum Commands {
         output: PathBuf,
     },
     /// Stamp Image & Logo: Place coordinate-exact images, logos, and badges onto PDF pages.
-    #[command(name = "pdf-stamp")]
+    #[command(name = "pdf-stamp", alias = "stamp", alias = "pdf_stamp")]
     PdfStamp {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        image: Option<PathBuf>,
+        #[arg(long)]
+        x: Option<f32>,
+        #[arg(long)]
+        y: Option<f32>,
+        #[arg(long)]
+        width: Option<f32>,
+        #[arg(long)]
+        height: Option<f32>,
+        #[arg(long)]
+        opacity: Option<f32>,
+        #[arg(long)]
+        pages: Option<String>,
+    },
+    /// Fill AcroForm Interactive Form: Populate text boxes, checkboxes and choices with JSON dataset.
+    #[command(name = "pdf-fill-form", alias = "fill-form", alias = "pdf_fill_form")]
+    PdfFillForm {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        data: PathBuf,
+        #[arg(short, long)]
+        output: PathBuf,
+    },
+    /// Add AcroForm Field: Append interactive widget annotation with coordinates and field name to target page.
+    #[command(name = "pdf-create-form-field", alias = "create-form-field", alias = "pdf_create_form_field", alias = "add-field")]
+    PdfCreateFormField {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        label: Option<String>,
+        #[arg(long, default_value = "text")]
+        r#type: String,
+        #[arg(long, default_value = "1")]
+        page: i32,
+        #[arg(long)]
+        rect: String,
+        #[arg(short, long)]
+        output: PathBuf,
     },
     /// Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground.
-    #[command(name = "pdf-overlay-underlay")]
+    #[command(name = "pdf-overlay-underlay", alias = "overlay-underlay", alias = "overlay_underlay", alias = "pdf_overlay_underlay")]
     PdfOverlayUnderlay {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        stationery: Option<PathBuf>,
+        #[arg(long)]
+        template: Option<PathBuf>,
+        #[arg(long)]
+        mode: Option<String>,
+        #[arg(long)]
+        pages: Option<String>,
+        #[arg(long)]
+        opacity: Option<f32>,
     },
     /// Auto Upright Orientation: Heuristically detect text baseline and rotation angle to automatically upright pages.
     #[command(name = "pdf-auto-rotate")]
@@ -535,20 +672,28 @@ pub enum Commands {
         file: Option<PathBuf>,
     },
     /// Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens.
-    #[command(name = "pdf-timestamp")]
+    #[command(name = "pdf-timestamp", alias = "timestamp")]
     PdfTimestamp {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        server_url: Option<String>,
     },
     /// Modify PDF Permissions: Configure user and owner permissions for printing, copying, and modification.
-    #[command(name = "pdf-change-permissions")]
+    #[command(name = "pdf-change-permissions", alias = "change-permissions")]
     PdfChangePermissions {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        allow_print: Option<bool>,
+        #[arg(long)]
+        allow_copy: Option<bool>,
+        #[arg(long)]
+        allow_modify: Option<bool>,
     },
     /// Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages.
     #[command(name = "pdf-split-scanned-book")]
@@ -568,7 +713,7 @@ pub enum Commands {
         split_horizontal: bool,
     },
     /// Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR).
-    #[command(name = "pdf-comic-archive")]
+    #[command(name = "pdf-comic-archive", alias = "comic-archive", alias = "pdf_comic_archive")]
     PdfComicArchive {
         #[arg(long)]
         input: PathBuf,
@@ -627,7 +772,177 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks
+    #[command(name = "pdf-to-epub", alias = "to-epub", alias = "pdf_to_epub")]
+    PdfToEpub {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-html")]
+    PdfToHtml {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-markdown")]
+    PdfToMarkdown {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-json")]
+    PdfToJson {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "json-to-pdf", alias = "json_to_pdf")]
+    JsonToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Render Markdown source documents into publication-ready styled PDF files
+    #[command(name = "md-to-pdf", alias = "md_to_pdf", alias = "convert-markdown", alias = "pdf-convert-markdown", alias = "pdf_convert_markdown")]
+    MdToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        custom_css: Option<String>,
+        #[arg(long)]
+        orientation: Option<String>,
+    },
+    /// Convert HTML source code and web pages directly into styled PDF documents
+    #[command(name = "html-to-pdf", alias = "html_to_pdf", alias = "convert-html", alias = "pdf-convert-html", alias = "pdf_convert_html")]
+    HtmlToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        custom_css: Option<String>,
+        #[arg(long)]
+        orientation: Option<String>,
+    },
+    /// Convert spreadsheet (Excel / CSV) to formatted PDF document
+    #[command(name = "convert-excel", alias = "convert_excel", alias = "pdf-convert-excel", alias = "pdf_convert_excel", alias = "excel-to-pdf", alias = "excel_to_pdf")]
+    ConvertExcel {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        preset: Option<String>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        custom_css: Option<String>,
+        #[arg(long)]
+        orientation: Option<String>,
+    },
+    #[command(name = "rag-chunks", alias = "rag_chunks", alias = "pdf-rag-chunks", alias = "pdf_rag_chunks")]
+    RagChunks {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Intelligent structure-aware semantic chunking with dynamic overlap for AI agents [Input: .pdf | Output: .json]
+    #[command(name = "pdf-chunk", alias = "pdf_chunk", alias = "chunk")]
+    PdfChunk {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, default_value_t = 500)]
+        target_tokens: usize,
+        #[arg(long, alias = "overlap-tokens", default_value_t = 50)]
+        overlap: usize,
+        #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
+        strip_boilerplate: bool,
+        #[arg(long, action = clap::ArgAction::SetTrue)]
+        no_strip_boilerplate: bool,
+        #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
+        break_on_headings: bool,
+        #[arg(long, action = clap::ArgAction::SetTrue)]
+        no_break_on_headings: bool,
+        #[arg(long, alias = "json-out")]
+        output: Option<PathBuf>,
+    },
+    #[command(name = "workspace-search", alias = "workspace_search")]
+    WorkspaceSearch {
+        #[arg(long)]
+        input: Option<PathBuf>,
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        #[arg(long)]
+        query: Option<String>,
+        #[arg(long)]
+        formats: Option<String>,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    #[command(name = "semantic-search", alias = "semantic_search")]
+    SemanticSearch {
+        #[arg(long)]
+        input: Option<PathBuf>,
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        #[arg(long)]
+        query: Option<String>,
+        #[arg(long)]
+        limit: Option<usize>,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]
+    #[command(name = "pdf-extract-patterns", alias = "extract-patterns", alias = "extract_patterns", alias = "pdf_extract_patterns")]
+    PdfExtractPatterns {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        /// Keywords to match
+        #[arg(long, value_delimiter = ',')]
+        keywords: Option<Vec<String>>,
+        /// Regex patterns formatted as label=regex (e.g. ssn=\d{3}-\d{2}-\d{4})
+        #[arg(long = "pattern", value_name = "LABEL=REGEX")]
+        patterns: Option<Vec<String>>,
+        /// Perform case-sensitive matching (default: false)
+        #[arg(long)]
+        case_sensitive: bool,
+        /// Context length in characters before and after match (default: 30)
+        #[arg(long)]
+        context_len: Option<usize>,
+    },
     /// Declarative multi-step document workflow execution
+    Run {
+        /// TOML .ppflow or JSON recipe
+        recipe: PathBuf,
+        /// Local input PDF
+        input: PathBuf,
+        #[arg(short, long)]
+        output: PathBuf,
+        /// With this template, --output is a directory; existing PDFs are preserved
+        #[arg(long)]
+        name_template: Option<String>,
+    },
+    /// List, inspect, or execute a document workflow
+    #[command(name = "workflow", alias = "document-workflow", alias = "document_workflow", alias = "recipe-run", alias = "recipe_run")]
     Workflow {
         #[command(subcommand)]
         subcommand: Option<WorkflowSubcommand>,
@@ -644,9 +959,12 @@ pub enum Commands {
         #[arg(long)]
         preset: Option<String>,
 
-        /// Path to custom workflow recipe JSON file
+        /// Path to custom workflow recipe (.ppflow TOML or JSON)
         #[arg(long)]
         recipe: Option<PathBuf>,
+        /// Output naming template; --output is then a directory
+        #[arg(long)]
+        name_template: Option<String>,
     },
     // --- Headless Server / Automation Gateway ---
     #[cfg(feature = "daemon")]
@@ -655,6 +973,33 @@ pub enum Commands {
         port: u16,
         #[arg(long, default_value = "127.0.0.1")]
         bind: String,
+    },
+
+    /// Ask in natural language: execute operations via natural language intent [e.g. "rotate 90 degrees" doc.pdf]
+    #[command(name = "ask", alias = "cli-ask", alias = "cli_ask")]
+    Ask {
+        /// Natural language instruction
+        prompt: String,
+
+        /// Optional target input PDF file
+        #[arg(value_name = "INPUT")]
+        input: Option<PathBuf>,
+
+        /// Skip confirmation prompt and execute immediately
+        #[arg(short = 'y', long)]
+        yes: bool,
+
+        /// Force offline NLP resolution only
+        #[arg(long)]
+        offline: bool,
+
+        /// Output path override
+        #[arg(short = 'o', long)]
+        output: Option<PathBuf>,
+
+        /// Parse and output plan without executing
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// List all available tools, capabilities, and launch status
@@ -668,18 +1013,51 @@ pub enum Commands {
     },
 }
 
+#[derive(Args, Debug)]
+pub struct FillBatchArgs {
+    /// Local AcroForm PDF template (text fields and checkboxes)
+    #[arg(long)]
+    pub template: PathBuf,
+    /// UTF-8 CSV with headers or a JSON array of record objects
+    #[arg(long)]
+    pub data: PathBuf,
+    #[arg(long)]
+    pub output_dir: PathBuf,
+    /// Output filename tokens: {row.column}, {date}, {index}, {index:04}
+    #[arg(long, default_value = "{index:04}.pdf")]
+    pub name_template: String,
+    /// Optional JSON object mapping PDF field names to input column names
+    #[arg(long)]
+    pub field_map: Option<PathBuf>,
+    /// Retain interactive fields instead of flattening their appearances
+    #[arg(long)]
+    pub keep_editable: bool,
+    /// Override the UTC batch date (YYYY-MM-DD), useful for repeatable runs
+    #[arg(long)]
+    pub date: Option<String>,
+}
+
 #[derive(Subcommand, Debug)]
 pub enum WorkflowSubcommand {
+    /// Query durable workflow, watcher or batch receipts from a local directory
+    History {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        id: Option<String>,
+        #[arg(long, default_value_t = 50)]
+        limit: usize,
+    },
     /// List all available workflow presets
     List,
-    /// Inspect step sequence of a preset or recipe JSON file
+    /// Inspect stages and conditions of a preset or TOML/JSON recipe
     Inspect {
         #[arg(long)]
         preset: Option<String>,
         #[arg(long)]
         recipe: Option<PathBuf>,
     },
-    /// Execute workflow preset or recipe JSON against input PDF
+    /// Execute workflow preset or TOML/JSON recipe against input PDF
     Run {
         #[arg(long)]
         input: PathBuf,
@@ -689,14 +1067,21 @@ pub enum WorkflowSubcommand {
         preset: Option<String>,
         #[arg(long)]
         recipe: Option<PathBuf>,
+        /// Output naming template; --output is then a directory
+        #[arg(long)]
+        name_template: Option<String>,
     },
 }
 
 #[derive(Subcommand, Debug)]
 pub enum FormCommands {
+    #[command(name = "read-form", alias = "read", alias = "pdf_read_form", alias = "pdf-read-form")]
     Read {
         input: PathBuf,
+        #[arg(short, long)]
+        output: Option<PathBuf>,
     },
+    #[command(name = "fill-form", alias = "fill", alias = "pdf_fill_form", alias = "pdf-fill-form")]
     Fill {
         input: PathBuf,
         #[arg(long)]
@@ -704,10 +1089,13 @@ pub enum FormCommands {
         #[arg(short, long)]
         output: PathBuf,
     },
+    #[command(name = "create-form-field", alias = "add-field", alias = "pdf_create_form_field", alias = "pdf-create-form-field")]
     AddField {
         input: PathBuf,
         #[arg(long)]
         name: String,
+        #[arg(long)]
+        label: Option<String>,
         #[arg(long, default_value = "text")]
         r#type: String,
         #[arg(long, default_value = "1")]
@@ -829,8 +1217,9 @@ mod tests {
         ];
         let cli = Cli::try_parse_from(args).unwrap();
         match cli.command {
-            Commands::RemoveBlank { input, output } => {
+            Commands::RemoveBlank { input, sensitivity, output } => {
                 assert_eq!(input, PathBuf::from("in.pdf"));
+                assert_eq!(sensitivity, 95);
                 assert_eq!(output, PathBuf::from("out.pdf"));
             }
             _ => panic!("Expected RemoveBlank command"),
@@ -979,6 +1368,7 @@ mod tests {
                         output,
                         preset,
                         recipe,
+                        ..
                     }),
                 ..
             } => {

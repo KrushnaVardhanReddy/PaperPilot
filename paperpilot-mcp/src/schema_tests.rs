@@ -3,7 +3,7 @@ use crate::server::PaperPilotMcpServer;
 #[test]
 fn test_schema_validation() {
     let list_tools_result =
-        PaperPilotMcpServer::execute_list_tools().expect("Failed to list tools");
+        PaperPilotMcpServer::new(None).execute_list_tools().expect("Failed to list tools");
 
     assert!(
         !list_tools_result.tools.is_empty(),

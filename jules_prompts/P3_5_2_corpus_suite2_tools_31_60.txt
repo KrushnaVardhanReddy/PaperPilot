@@ -1,0 +1,68 @@
+# Prompt P3_5_2: Enterprise Document Test Corpus & Deep Semantic Assertions (Suite 2: Tools 31–60)
+
+## Context & Objectives
+PaperPilot features a 90-tool zero-mock Playwright E2E test suite. Suite 2 (`apps/desktop/tests/e2e_suite_2_security_forms.spec.ts`) covers Tools 31–60 (Security, Cryptography, Annotations & Forms).
+Currently, fixtures such as `form.pdf`, `signed.pdf`, and `encrypted.pdf` are small stubs.
+
+In this task, you will:
+1. Create semantic HTML document templates in `tests/fixtures_templates/suite2/`:
+   - `pii_nda_agreement.html` containing realistic PII: full names (e.g. "Jane Doe", "Alexander Hamilton"), email addresses ("jane.doe@enterprise.corp"), SSNs ("123-45-6789"), phone numbers, and street addresses.
+2. Provide a valid AcroForm PDF `tests/e2e_fixtures/real/form.pdf` containing at least 4 interactive form fields:
+   - Text field: `FullName`
+   - Text field: `Email`
+   - Checkbox: `AgreedToTerms`
+   - Radio or Dropdown: `AccountType`
+3. Create companion data fixtures:
+   - `tests/e2e_fixtures/real/form_data.json` containing matching key-value pairs.
+   - `tests/e2e_fixtures/real/batch_data.csv` containing multi-row records for batch filling.
+4. Implement a deterministic corpus generation script `scripts/gen_corpus_suite2.sh` that dogfoods our native CLI:
+   - Renders `text_pii.pdf` from `pii_nda_agreement.html`.
+   - Generates `encrypted.pdf` by encrypting with password `testpassword123`.
+   - Generates `watermarked.pdf` by applying a text watermark.
+   - Generates `signed.pdf` using our digital signature operation or valid test keystore.
+5. Add Makefile target `gen-corpus-suite-2` that builds the CLI and runs `scripts/gen_corpus_suite2.sh`.
+6. Update `apps/desktop/tests/e2e_suite_2_security_forms.spec.ts` with deep domain invariant assertions:
+   - `pii_scan`: Verify detected entities contain expected emails and names.
+   - `redact`: Verify sensitive terms are excised from output text streams.
+   - `decrypt`: Verify document is successfully unlocked with known password and text is readable.
+   - `fill_form` & `export_form`: Verify written field data matches expected input JSON values.
+7. Ensure `make gen-corpus-suite-2 && make test-e2e-suite-2` passes 100% cleanly.
+
+---
+
+## Detailed Implementation Requirements
+
+### 1. Document Templates (`tests/fixtures_templates/suite2/`)
+- `pii_nda_agreement.html`: Multi-page confidentiality agreement containing realistic enterprise PII:
+  - Parties: "Alice Morgan (SSN: 111-22-3333)", "Bob Vance (Email: bob.vance@refrigeration.com)"
+  - Corporate addresses, phone numbers, and financial terms.
+
+### 2. Generator Script (`scripts/gen_corpus_suite2.sh`)
+- Executable bash script (`chmod +x scripts/gen_corpus_suite2.sh`).
+- Generates:
+  - `text_pii.pdf` via `$CLI_BIN convert --format pdf --input tests/fixtures_templates/suite2/pii_nda_agreement.html --output tests/e2e_fixtures/real/text_pii.pdf`
+  - `encrypted.pdf` via `$CLI_BIN encrypt --input tests/e2e_fixtures/real/text_pii.pdf --output tests/e2e_fixtures/real/encrypted.pdf --password testpassword123`
+  - `watermarked.pdf` via `$CLI_BIN watermark --input tests/e2e_fixtures/real/text_pii.pdf --output tests/e2e_fixtures/real/watermarked.pdf --text "CONFIDENTIAL"`
+  - `form.pdf`, `form_data.json`, `batch_data.csv` generated or copied into `tests/e2e_fixtures/real/`.
+
+### 3. Makefile Integration
+Add to `Makefile`:
+```makefile
+gen-corpus-suite-2: build-cli
+	@bash scripts/gen_corpus_suite2.sh
+```
+
+### 4. Deep Domain Invariants in `e2e_suite_2_security_forms.spec.ts`
+Upgrade assertions beyond just `.success`:
+- `pdf_pii_scan`: Assert detected entities length > 0, check for `EMAIL` or `SSN` types.
+- `pdf_decrypt`: Decrypt `encrypted.pdf` using `testpassword123` and assert output PDF is valid.
+- `pdf_fill_form`: Fill `form.pdf` with `form_data.json` and verify filled output byte size > original.
+- Ensure all 30 tool cases in Suite 2 pass cleanly.
+
+---
+
+## Verification Commands
+Before completing:
+1. `make build-cli`
+2. `make gen-corpus-suite-2`
+3. `make test-e2e-suite-2`

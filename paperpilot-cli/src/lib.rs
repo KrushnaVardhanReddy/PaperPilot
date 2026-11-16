@@ -7,25 +7,41 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "paperpilot watch")]
 pub struct WatchCli {
+    /// Directory to monitor for incoming PDF files
+    #[arg(short = 'd', long)]
     pub directory: PathBuf,
 
-    #[arg(long)]
+    /// Path to .ppflow TOML or JSON recipe to execute per file
+    #[arg(short = 'r', long)]
+    pub recipe: Option<PathBuf>,
+
+    /// Output directory for successfully processed PDFs
+    #[arg(short = 'o', long)]
     pub output: Option<PathBuf>,
 
+    /// Optional output basename template using input, UTC date, hash and index tokens
     #[arg(long)]
-    pub operation: Option<String>,
+    pub name_template: Option<String>,
 
+    /// Directory to move successfully processed originals (optional)
     #[arg(long)]
-    pub recipe: Option<String>,
+    pub move_original: Option<PathBuf>,
 
+    /// Directory for failure receipts; failed sources stay in place (default: <dir>/.error)
     #[arg(long)]
-    pub webhook: Option<String>,
+    pub error_dir: Option<PathBuf>,
 
+    /// Milliseconds of filesystem inactivity before a file is considered ready
     #[arg(long, default_value_t = 500)]
     pub settle_delay_ms: u64,
 
+    /// Optional webhook URL to POST the completion result and receipt path
     #[arg(long)]
-    pub move_original: Option<PathBuf>,
+    pub webhook: Option<String>,
+
+    /// Process existing files and exit (useful for one-shot batch and testing)
+    #[arg(long)]
+    pub once: bool,
 }
 
 use cli::Cli;
@@ -39,6 +55,10 @@ struct CommandResult {
     success: bool,
     operation: String,
     error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    batch: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workflow: Option<serde_json::Value>,
 }
 
 pub fn run() {
@@ -58,59 +78,200 @@ pub fn run() {
     }
 }
 
-fn run_impl() {
-    let _ = env_logger::try_init();
+pub fn init_logging(cli_format: Option<&str>, cli_level: Option<&str>) {
+    let no_log_env = std::env::var("NO_LOG")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
 
+    let is_zero_trace = no_log_env || cli_level == Some("off") || std::env::var("RUST_LOG").as_deref() == Ok("off");
+
+    let log_level = if is_zero_trace {
+        "off".to_string()
+    } else {
+        cli_level
+            .map(|s| s.to_string())
+            .or_else(|| std::env::var("RUST_LOG").ok())
+            .unwrap_or_else(|| "info".to_string())
+    };
+
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&log_level));
+
+    if is_zero_trace {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(std::io::sink)
+            .with_env_filter(env_filter)
+            .try_init();
+        return;
+    }
+
+    let log_format = cli_format
+        .map(|s| s.to_string())
+        .or_else(|| std::env::var("LOG_FORMAT").ok())
+        .unwrap_or_else(|| "text".to_string())
+        .to_lowercase();
+
+    match log_format.as_str() {
+        "json" => {
+            let _ = tracing_subscriber::fmt()
+                .json()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        "compact" => {
+            let _ = tracing_subscriber::fmt()
+                .compact()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        "pretty" => {
+            let _ = tracing_subscriber::fmt()
+                .pretty()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+        _ => {
+            let _ = tracing_subscriber::fmt()
+                .with_writer(std::io::stderr)
+                .with_env_filter(env_filter)
+                .try_init();
+        }
+    }
+}
+
+fn run_impl() {
     let mut args: Vec<String> = std::env::args().collect();
-    if args.len() > 1 && args[1] == "watch" {
-        args.remove(1);
-        let watch_cli = WatchCli::parse_from(args);
+    let is_log_level_off = args.iter().position(|a| a == "--log-level").and_then(|idx| args.get(idx + 1)).map_or(false, |l| l == "off");
+    
+    let is_watch = args.len() > 1 && args[1] == "watch" || args.len() > 3 && args[3] == "watch";
+    if is_watch {
+        init_logging(None, if is_log_level_off { Some("off") } else { None });
+        args.retain(|a| a != "watch" && a != "--log-level" && a != "off");
+        let mut new_args = vec![args[0].clone()];
+        new_args.extend_from_slice(&args[1..]);
+        let watch_cli = WatchCli::parse_from(new_args);
 
         let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-        if let Err(e) = rt.block_on(commands::watch::handle_watch(
+        if let Err(e) = rt.block_on(paperpilot_pdf::operations::watch::handle_watch_with_naming(
             watch_cli.directory,
             watch_cli.output,
-            watch_cli.operation,
             watch_cli.recipe,
             watch_cli.webhook,
             watch_cli.settle_delay_ms,
             watch_cli.move_original,
+            watch_cli.error_dir,
+            watch_cli.once,
+            None,
+            watch_cli.name_template,
         )) {
-            log::error!("Watch loop error: {}", e);
+            let no_log_env = std::env::var("NO_LOG").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false);
+            let is_zero_trace = no_log_env || is_log_level_off || std::env::var("RUST_LOG").as_deref() == Ok("off");
+            if !is_zero_trace {
+                tracing::error!(error = %e, "Watch loop failed");
+            }
             std::process::exit(1);
         }
         std::process::exit(0);
     }
 
-    let _ = env_logger::try_init();
+    let is_ui = args.len() > 1 && (args[1] == "ui" || args[1] == "gui");
+    if is_ui {
+        let exe_path = std::env::current_exe().unwrap_or_default();
+        let exe_dir = exe_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+        let candidates = [
+            exe_dir.join("PaperPilot"),
+            exe_dir.join("PaperPilot.AppImage"),
+            exe_dir.join("PaperPilot.exe"),
+            exe_dir.join("desktop"),
+            exe_dir.join("desktop.exe"),
+        ];
+        for candidate in &candidates {
+            if candidate.exists() {
+                println!("Launching PaperPilot Desktop GUI: {:?}", candidate);
+                let mut cmd = std::process::Command::new(candidate);
+                match cmd.spawn() {
+                    Ok(_) => std::process::exit(0),
+                    Err(e) => {
+                        eprintln!("Failed to launch {:?}: {}", candidate, e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+        eprintln!("PaperPilot Desktop GUI executable not found in {:?}", exe_dir);
+        eprintln!("To launch desktop UI in development mode, run: 'cd apps/desktop && pnpm tauri dev'");
+        std::process::exit(1);
+    }
 
     let cli = Cli::parse();
+    init_logging(cli.log_format.as_deref(), cli.log_level.as_deref());
 
-    let result = commands::execute_command(&cli.command);
+    let _ = env_logger::try_init();
+
+    let mut workflow = None;
+    let (result, batch) = match &cli.command {
+        cli::Commands::Workflow { .. } | cli::Commands::Run { .. } => {
+            let (result, report) = commands::workflow::execute(&cli.command, cli.json);
+            workflow = report;
+            (result, None)
+        }
+        #[cfg(feature = "pdf")]
+        cli::Commands::FillBatch(args) => match commands::fill_batch::run(args) {
+            Ok(receipt) => (
+                receipt.outcome(),
+                Some(serde_json::to_value(receipt).unwrap()),
+            ),
+            Err(error) => (Err(error), None),
+        },
+        _ => (commands::execute_command(&cli.command), None),
+    };
 
     let op_name = format!("{:?}", cli.command)
+        .split('(')
+        .next()
+        .unwrap_or("Unknown")
         .split_whitespace()
         .next()
         .unwrap_or("Unknown")
         .to_string();
 
+    tracing::debug!(subcommand = %op_name, "Dispatching CLI subcommand");
+
     let payload = match result {
         Ok(_) => CommandResult {
             success: true,
-            operation: op_name,
+            operation: op_name.clone(),
             error: None,
+            batch,
+            workflow,
         },
-        Err(e) => CommandResult {
-            success: false,
-            operation: op_name,
-            error: Some(e.to_string()),
-        },
+        Err(e) => {
+            tracing::error!(subcommand = %op_name, error = %e, "CLI execution failed");
+            CommandResult {
+                success: false,
+                operation: op_name.clone(),
+                error: Some(e.to_string()),
+                batch,
+                workflow,
+            }
+        }
     };
 
     if cli.json {
         let json_output = serde_json::to_string(&payload).unwrap();
         println!("{}", json_output);
     } else {
+        if let Some(batch) = &payload.batch {
+            eprintln!(
+                "Batch: {} succeeded, {} failed. Receipt: {}",
+                batch["succeeded"],
+                batch["failed"],
+                batch["receipt_path"].as_str().unwrap_or("")
+            );
+        }
         match &payload.error {
             Some(err) => error!("Operation failed: {}", err),
             None => info!("Operation completed successfully."),

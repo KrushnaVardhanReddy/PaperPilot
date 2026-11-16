@@ -9,7 +9,7 @@ describe('OperationsPanel', () => {
     appState.selectedDocumentIndex = -1;
   });
 
-  it('renders the operations search and directory initially', () => {
+  it('renders the operations search and directory initially', async () => {
     render(OperationsPanel);
 
     // Check if the search input is present
@@ -21,9 +21,9 @@ describe('OperationsPanel', () => {
     fireEvent.click(allChip);
 
     // Check if category headers are visible after clicking All Tools
-    waitFor(() => {
-       expect(screen.getAllByText('Quick Actions').length).toBeGreaterThan(0);
-       expect(screen.getAllByText('Page Management').length).toBeGreaterThan(0);
+    await waitFor(() => {
+       expect(screen.getAllByText(/Quick Actions/).length).toBeGreaterThan(0);
+       expect(screen.getAllByText(/Page Management/).length).toBeGreaterThan(0);
     });
   });
 
@@ -51,7 +51,7 @@ describe('OperationsPanel', () => {
     await fireEvent.click(backButton);
 
     // Click on the rotate tool card
-    const rotateButton = screen.getAllByText('Rotate Pages')[0].closest('button');
+    const rotateButton = screen.getAllByText('Rotate Document')[0].closest('button');
     expect(rotateButton).not.toBeNull();
     if (rotateButton) {
       await fireEvent.click(rotateButton);

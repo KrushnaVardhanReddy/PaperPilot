@@ -1,0 +1,54 @@
+TASK: Implement Spec 163 - Zero-Copy Memory-Mapped Document Handling (`DocumentSource`) & Universal Page Batching
+
+CONTEXT:
+PaperPilot frequently processes large PDF documents (multi-hundred MB or multi-thousand pages) across CLI, Gateway, and Desktop. Loading entire documents into heap-allocated `Vec<u8>` causes high RAM usage and OOM risks on resource-constrained agent environments.
+Spec 163 introduces zero-copy memory mapping (`memmap2`) via a `DocumentSource` abstraction with universal page batching / streaming helpers, while maintaining 100% clean WASM compilation.
+
+SPEC REFERENCE:
+specs/163-zero-copy-mmap-large-doc-handling/spec.md
+specs/163-zero-copy-mmap-large-doc-handling/task.md
+
+REQUIREMENTS:
+
+1. `paperpilot-core`:
+   - In `paperpilot-core/Cargo.toml`, add `memmap2 = "0.9"` under `[target.'cfg(not(target_arch = "wasm32"))'.dependencies]`.
+   - Implement `DocumentSource` in `paperpilot-core/src/document_source.rs` (and export in `paperpilot-core/src/lib.rs`):
+     - `pub enum DocumentSource { Bytes(Vec<u8>), #[cfg(not(target_arch = "wasm32"))] Mmap(memmap2::Mmap) }`
+     - Implement `std::ops::Deref<Target = [u8]>` and `AsRef<[u8]>` for `DocumentSource`.
+     - `DocumentSource::from_bytes(Vec<u8>) -> Self`
+     - `DocumentSource::from_slice(&[u8]) -> Self` (clones into `Bytes`)
+     - `DocumentSource::open<P: AsRef<Path>>(path: P, threshold_bytes: Option<u64>) -> std::io::Result<Self>`:
+       - Default threshold: 10 * 1024 * 1024 (10 MB).
+       - If native and file size >= threshold, open via `memmap2::MmapOptions::new().map(&file)`.
+       - Otherwise, read via `std::fs::read(path)`.
+     - Add `PageBatchIterator` helper in `paperpilot-core/src/document_source.rs`:
+       - `pub struct PageBatchIterator { total_pages: usize, batch_size: usize, current_page: usize }`
+       - Returns page ranges `std::ops::RangeInclusive<usize>` (e.g. `1..=25`, `26..=50`, etc.) to standardize chunked/streamed processing across iterative tools.
+     - Add unit tests in `paperpilot-core/src/document_source.rs` covering small buffer, threshold mmap, deref, slicing, and page batch calculations.
+
+2. `paperpilot-pdf` Integration:
+   - Export or re-export `DocumentSource` in `paperpilot-pdf/src/lib.rs`.
+   - Update read-heavy operations to accept or utilize `DocumentSource`:
+     - `paperpilot-pdf/src/operations/search.rs` (can accept `&[u8]` or `&DocumentSource` or use `DocumentSource::open`).
+     - `paperpilot-pdf/src/operations/pdf_extract_patterns.rs`
+     - `paperpilot-pdf/src/operations/pii.rs`
+   - Ensure existing signatures remain backwards-compatible (e.g. functions accepting `&[u8]` naturally work with `&document_source` because of `Deref<Target = [u8]>`).
+
+3. Verification & E2E Testing:
+   - Add integration test `tests/e2e/test_mmap_large_document.rs` (or in `paperpilot-core/tests/test_document_source.rs`):
+     - Generates/mocks a file above threshold (or uses a lower threshold test parameter) to verify `DocumentSource::Mmap` is selected on native.
+     - Verifies byte content equality between `DocumentSource::open` and `std::fs::read`.
+     - Verifies `PageBatchIterator` splits 100 pages into correct batch ranges.
+   - Verify WASM target builds without errors:
+     `cargo check -p paperpilot-wasm --target wasm32-unknown-unknown -j 4`
+   - Verify workspace compilation:
+     `cargo check --workspace --all-targets -j 4`
+   - Run tests:
+     `cargo test -p paperpilot-core -j 4`
+     `cargo test -p paperpilot-pdf search_test -j 4`
+
+IMPORTANT CONSTRAINTS:
+- Do not overload CPU/RAM: Always run cargo commands with `-j 4`.
+- Strict WASM safety: `memmap2` must never be compiled on `wasm32`. Keep `#[cfg(not(target_arch = "wasm32"))]` cleanly isolated.
+- Zero mock / genuine tests only.
+

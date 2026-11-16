@@ -1,28 +1,60 @@
-# Pure-Rust Jules Submitter CLI Tool (`tools/jules-submit`)
+# Pure-Rust Jules & Local Gemini CLI Task Submitter (`tools/jules-submit`)
 
 ## Overview
-The `jules-submit` tool replaces the old `scripts/jules_submit.py` Python script, converting the agent task-submission process into a fast, 100% pure-Rust binary. This removes Python from the PaperPilot toolchain for routine operations.
+The `jules-submit` tool is a pure-Rust multi-agent task dispatcher supporting two execution engines:
+1. **Cloud Agent (Jules)**: Dispatches async background PR sessions via Google Cloud Jules API.
+2. **Local Pair Programmer (Gemini CLI / `agy`)**: Dispatches local, low-latency agent turns using Google Antigravity / Gemini CLI (`agy`).
+
+This architecture allows developers to switch between remote cloud agents and local pair programmers using identical task prompt files (`prompts/tasks/`).
+
+---
 
 ## Architecture & Modules
-- **`src/cli.rs`**: Handled via `clap` (derive). Supports commands for `--list`, `--file`, `--task`, `--phase`, `--branch`, and `--dry-run`.
-- **`src/env.rs`**: Reads `JULES_API_KEY` from the local environment, `dotenvy`, or standard `.env` paths safely without leaking the API key to standard output.
-- **`src/fs.rs`**: Governs task file discovery, fuzzy matching by task ID (e.g. `P1-T1` -> `P1_T1_*.txt`), finding phase-specific prompts, and handles atomic archiving.
-- **`src/api.rs`**: Constructs the final payload to Jules, prepending `SAFETY_RULES`, setting up REST HTTP paths via `reqwest`, and returning the generated session ID link.
-- **`src/main.rs`**: Brings together the arguments and delegates to respective module logic.
+- **`src/cli.rs`**: Handled via `clap` (derive). Supports `--list`, `--file`, `--task`, `--phase`, `--branch`, `--dry-run`, `--agent` (`jules` | `gemini` | `agy`), and `--interactive`.
+- **`src/local_agent.rs`**: Locates local `agy` (Gemini CLI) binary at `~/.gemini/bin/agy` or `AGY_BIN`, and dispatches either autonomous non-interactive executions (`-p --dangerously-skip-permissions`) or interactive pair programming sessions (`-i`).
+- **`src/api.rs`**: Constructs the final payload to Jules Cloud API, prepends `SAFETY_RULES.md`, and sends authenticated HTTP requests via `reqwest`.
+- **`src/env.rs`**: Reads `JULES_API_KEY` securely from local environment or `.env` when using the cloud agent.
+- **`src/fs.rs`**: Governs task file discovery, fuzzy matching by task ID (e.g. `P1-T1` -> `P1_T1_*.txt`), and atomic prompt archiving to `prompts/tasks/done/`.
+- **`src/main.rs`**: Central dispatcher routing prompts to either the local Gemini CLI agent or the remote Jules agent.
+
+---
 
 ## Usage
-Through the shell wrapper `scripts/jules_submit.sh` or standard cargo:
+
+### 1. Using the Shell Wrappers
+
+```bash
+# Cloud Jules Agent
+./scripts/jules_submit.sh --list
+./scripts/jules_submit.sh --file prompts/tasks/phase3/my_task.txt
+
+# Local Gemini CLI Pair Programmer
+./scripts/gemini_pair.sh --list
+./scripts/gemini_pair.sh --file prompts/tasks/phase3/my_task.txt
+./scripts/gemini_pair.sh --file prompts/tasks/phase3/my_task.txt --interactive
+```
+
+### 2. Using the Makefile Targets
 
 ```bash
 # List all pending prompts
-cargo run -p jules-submit -- --list
+make gemini-list
+make jules-list
 
-# Submit a fuzzy task by ID
-cargo run -p jules-submit -- --task P1-T1
+# Dry run preview
+make gemini-dry-run FILE=prompts/tasks/phase3/my_task.txt
 
-# Submit an entire phase
-cargo run -p jules-submit -- --phase 5
+# Execute locally with Gemini CLI pair programmer
+make gemini-run FILE=prompts/tasks/phase3/my_task.txt
+
+# Launch interactive pair programming terminal session
+make gemini-pair FILE=prompts/tasks/phase3/my_task.txt
+
+# Dispatch to Cloud Jules
+make jules-submit FILE=prompts/tasks/phase3/my_task.txt
 ```
 
+---
+
 ## Atomic Archiving
-Once a task is successfully submitted, the file is atomically moved to `prompts/tasks/done/...` ensuring that there is no risk of duplicate prompt submission across varying workflow iterations.
+Once a task is successfully executed or submitted, the file is moved to `prompts/tasks/done/<relative_path>`, preventing duplicate prompt execution across sessions.

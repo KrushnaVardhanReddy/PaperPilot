@@ -1736,7 +1736,7 @@
   }
 
   .pp-studio-sidebar {
-    width: 280px;
+    width: 340px;
     border-right: 1px solid var(--pp-border);
     background: var(--pp-surface);
     display: flex;
@@ -1841,7 +1841,7 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 600px;
+    max-width: 760px;
   }
 
   .pp-empty-state {

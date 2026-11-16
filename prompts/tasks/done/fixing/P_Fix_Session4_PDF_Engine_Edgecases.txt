@@ -1,0 +1,55 @@
+# Task: Penta-Interface Remediation — Session 4: PDF Engine Edge-Cases (CBZ, Outline Split, Render Flush)
+# Base Branch: feat/penta-audit-remediation-all-waves
+# Target Spec: specs/145-penta-audit-remediation/spec.md
+# Workstream: 4 of 5
+
+## Objective
+Remediate engine edge-case failures in `paperpilot-pdf` and `paperpilot-core`:
+1. `pdf_comic_archive` CBZ archive stream packaging.
+2. `pdf_split_by_outline` bookmark handling and fallback.
+3. `pdf_render` disk file flushing.
+
+---
+
+## STRICT Constraints & File Ownership
+You may ONLY modify files inside:
+- `paperpilot-pdf/src/`
+- `paperpilot-core/src/`
+- `paperpilot-pdf/tests/`
+
+DO NOT modify root `Cargo.toml`, `Makefile`, or any files in other crates (`paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`, `paperpilot-nlp`).
+
+---
+
+## Detailed Implementation Tasks
+
+### 1. `pdf_comic_archive` (CBZ Packaging)
+In `paperpilot-pdf/src/operations/comic.rs` or `paperpilot-core/`:
+- When converting PDF to CBZ archive:
+  - Extract each page as PNG/JPEG.
+  - Create a valid zip archive using `zip::ZipWriter`.
+  - Add each image entry with standard naming (`page_001.png`, `page_002.png`, etc.).
+  - Ensure the writer is properly finished (`zip.finish()`) and flushed so the resulting `.cbz` file starts with valid magic bytes `[0x50, 0x4B, 0x03, 0x04]` (PK ZIP header).
+
+### 2. `pdf_split_by_outline`
+In `paperpilot-pdf/src/operations/` (split by outline/bookmarks):
+- Inspect the `/Outlines` dictionary in the PDF catalog.
+- If the document does not contain an `/Outlines` dictionary or has zero outline items:
+  - Do not panic or fail with an unhandled exception.
+  - Gracefully fallback to splitting by top-level section, single pages, or return `{ "success": false, "error": "Document contains no outlines/bookmarks to split by" }` without panicking.
+
+### 3. `pdf_render`
+In `paperpilot-pdf/src/operations/render.rs`:
+- When rendering pages to PNG/JPEG:
+  - Ensure the raster image is encoded and explicitly saved to the target `output` file path.
+  - Flush the file stream so that `std::fs::metadata(&output)` immediately returns `len > 0`.
+
+---
+
+## Verification
+Run tests:
+```bash
+cargo test -p paperpilot-pdf
+cargo test -p paperpilot-core
+```
+Ensure all engine unit and fixture tests pass without errors.

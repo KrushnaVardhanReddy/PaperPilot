@@ -1,0 +1,79 @@
+[Task 4.7.8 / Spec 142: Desktop Real Watched Folders Daemon & Document Smart Filter Tabs]
+
+Objective:
+Implement Spec 142 (`specs/142-desktop-watched-folders-and-smart-filters/spec.md`) and Task 4.7.8 across `apps/desktop/src-tauri` and `apps/desktop/src`.
+Connect the backend hot folder watcher daemon (`paperpilot_pdf::operations::watch`) to the Desktop Tauri GUI and replace the previously mocked categories with real, reactive document filter pills in `DocumentList.svelte`.
+
+Critical Guardrails & Guidelines:
+1. Pure Rust + Tauri IPC: Do not mock watched folders. Connect directly to `paperpilot_pdf::operations::watch::handle_watch` using tokio background tasks and oneshot cancellation channels.
+2. Real Data Only: Do not hardcode document counts. Smart filter pills must calculate counts dynamically from `appState.documents` and filter the rendered list reactively.
+3. Dark Theme & Svelte 5 Runes: Match existing dark mode design system (`--bg-surface`, `--text-primary`, `--border-color`, `--accent-color`). Use Svelte 5 runes (`$state`, `$derived`, `$props`).
+4. Test Verification: All tests must continue to pass cleanly via `pnpm --dir apps/desktop test`.
+
+---
+
+### Step-by-Step Implementation Details
+
+#### Step 1: Tauri IPC Commands in `apps/desktop/src-tauri`
+1. Create `apps/desktop/src-tauri/src/watch_commands.rs`:
+   - Structure `WatchedFolderConfig`: `{ id: String, path: String, recipe_id_or_path: String, output_dir: Option<String>, is_active: bool }`.
+   - Maintain global thread-safe state `WATCHER_HANDLES: Arc<Mutex<HashMap<String, oneshot::Sender<()>>>>`.
+   - Implement `start_watch_folder`:
+     - Spawns an asynchronous tokio task invoking `paperpilot_pdf::operations::watch::handle_watch`.
+     - Passes cancellation receiver.
+   - Implement `stop_watch_folder(folder_id: String)`:
+     - Signals cancellation channel.
+   - Implement `list_watched_folders()`:
+     - Returns current registered watcher configurations.
+2. In `apps/desktop/src-tauri/src/lib.rs`:
+   - Declare `pub mod watch_commands;`.
+   - Register `watch_commands::start_watch_folder`, `watch_commands::stop_watch_folder`, `watch_commands::list_watched_folders` in `tauri::generate_handler![]`.
+
+---
+
+#### Step 2: Svelte State Management in `apps/desktop/src/lib/state/watchers.svelte.ts`
+1. Create `WatchersState` class with runes:
+   - `folders = $state<WatchedFolder[]>([])`
+   - Persists folder settings in `localStorage.getItem('paperpilot_watched_folders')`.
+   - Methods: `addFolder(path, recipe, outputDir)`, `toggleFolder(id)`, `removeFolder(id)`.
+   - Safely invokes Tauri commands with fallback for browser mode.
+
+---
+
+#### Step 3: Watched Folders UI in `apps/desktop`
+1. Create `apps/desktop/src/lib/components/layout/WatchedFoldersPanel.svelte`:
+   - Header: "Watched Folders (Hot Folders)" with active status indicator.
+   - Form / Modal to add a new folder:
+     - Directory path input (with browse button or text input).
+     - Workflow recipe selector (dropdown from `pipelineState.savedFlows`).
+     - Optional Output directory input.
+   - List of configured watched folders with:
+     - Folder path and recipe name badge.
+     - Toggle switch to start/stop the watcher.
+     - Delete button.
+2. Provide access to this panel:
+   - In `apps/desktop/src/lib/components/layout/SettingsPanel.svelte`, add a dedicated "Hot Folder Watchers" section or tab.
+
+---
+
+#### Step 4: Real Document Smart Filter Pills in `apps/desktop/src/lib/components/ui/DocumentList.svelte`
+1. Add reactive filter pills at the top of the document list:
+   - `All` (count: `appState.documents.length`)
+   - `Scanned` (count: documents where `doc.isScanned === true`)
+   - `Signed` (count: documents where `doc.isSigned === true`)
+   - `Forms` (count: documents where `doc.hasFormFields === true`)
+   - `Multi-Page` (count: documents where `(doc as any).pageCount > 1`)
+2. Filter the rendered `{#each filteredDocuments as doc, index}` based on the selected active pill.
+3. Style the pills with glassmorphic dark buttons, subtle active borders, and count badges.
+
+---
+
+#### Step 5: Unit Tests & Verification
+1. Add tests in `apps/desktop/src/lib/components/__tests__/DocumentList.test.ts` verifying:
+   - Smart filter pill counts update as documents are added.
+   - Clicking a filter pill filters the displayed document items.
+2. Run test command:
+   ```bash
+   pnpm --dir apps/desktop test
+   ```
+   Ensure all tests pass with zero regressions.

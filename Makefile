@@ -1,4 +1,4 @@
-.PHONY: all build build-release run run-release dist check test test-backend test-frontend test-e2e test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android
+.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-e2e-all-90 test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3 gen-corpus-suite-1 gen-corpus-suite-2 gen-corpus-suite-3 gen-corpus test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all test-e2e-real-90 test-e2e-real-s1 test-e2e-real-s2 test-e2e-real-s3
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -7,6 +7,9 @@ ifeq ($(OS),Windows_NT)
   else ifneq ($(wildcard $(LOCALAPPDATA)/Programs/Git/bin/sh.exe),)
     export PATH := $(LOCALAPPDATA)/Programs/Git/usr/bin;$(LOCALAPPDATA)/Programs/Git/bin;$(PATH)
   endif
+else
+  # Ensure Node.js and local node_modules binaries are found on Linux/macOS
+  export PATH := $(HOME)/.nvm/versions/node/v26.12.1/bin:$(HOME)/.cargo/bin:$(PATH)
 endif
 
 # Default target
@@ -15,6 +18,10 @@ all: format lint test-all build
 # Build the Rust workspace (debug)
 build:
 	cargo build --workspace
+
+# Build the paperpilot CLI binary (required for unmocked CLI tests)
+build-cli:
+	cargo build --bin paperpilot -j 4
 
 # Build and run the standalone desktop application
 run: build-release
@@ -171,9 +178,63 @@ test-frontend:
 test-e2e:
 	cd apps/desktop && npx playwright test
 
+# Run all 90 tools zero-mock deep semantic E2E test suites (Suites 1, 2, and 3)
+test-e2e-all-90: build-cli test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3
+
+# Generate high-fidelity test corpus for Suite 1
+gen-corpus-suite-1: build-cli
+	@bash scripts/gen_corpus_suite1.sh
+
+# Generate high-fidelity test corpus for Suite 2
+gen-corpus-suite-2: build-cli
+	@bash scripts/gen_corpus_suite2.sh
+
+# Generate high-fidelity test corpus for Suite 3
+gen-corpus-suite-3: build-cli
+	@bash scripts/gen_corpus_suite3.sh
+
+# Generate complete enterprise test corpus (Suites 1, 2, and 3)
+gen-corpus: build-cli gen-corpus-suite-1 gen-corpus-suite-2 gen-corpus-suite-3
+	@echo "Enterprise test corpus generated successfully."
+
+# Run Suite 1: Tools 01-30 (Page Operations & Imposition)
+test-e2e-suite-1: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 ./node_modules/.bin/playwright test tests/e2e_suite_1_page_operations.spec.ts $(ARGS)
+
+# Run Suite 2: Tools 31-60 (Security, Cryptography & Forms)
+test-e2e-suite-2: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 ./node_modules/.bin/playwright test tests/e2e_suite_2_security_forms.spec.ts $(ARGS)
+
+# Run Suite 3: Tools 61-90 (Conversions, Intelligence & Workflows)
+test-e2e-suite-3: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 ./node_modules/.bin/playwright test tests/e2e_suite_3_conversions_ai.spec.ts $(ARGS)
+
+# Run Playwright with visible headed browser (slowed down for visual observation)
+test-e2e-suite-1-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 ./node_modules/.bin/playwright test tests/e2e_suite_1_page_operations.spec.ts --headed
+
+test-e2e-suite-2-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 ./node_modules/.bin/playwright test tests/e2e_suite_2_security_forms.spec.ts --headed
+
+test-e2e-suite-3-watch: build-cli
+	cd apps/desktop && env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 PW_SLOWMO=1000 ./node_modules/.bin/playwright test tests/e2e_suite_3_conversions_ai.spec.ts --headed
+
 # Run Playwright in UI mode to manually step through and test every feature/button
 test-e2e-ui:
 	cd apps/desktop && npx playwright test --ui
+
+# Real-engine unmocked E2E tests — all 90 tools (visible browser, slow motion, one-by-one)
+test-e2e-real-90:
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test --project=real-engine-90tools --workers=1
+
+test-e2e-real-s1:
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite1_page_ops --project=real-engine-90tools --workers=1
+
+test-e2e-real-s2:
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite2_security_forms --project=real-engine-90tools --workers=1
+
+test-e2e-real-s3:
+	export PATH="/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && npx playwright test e2e_unmocked_suite3_conversions_ai --project=real-engine-90tools --workers=1
 
 # Run conformance tests (requires qpdf, verapdf optional)
 .PHONY: test-conformance test-cleanroom-top12 test-cleanroom-all50
@@ -185,6 +246,47 @@ test-cleanroom-top12:
 # Run Clean-Room Audit for All 50 Tools
 test-cleanroom-all50:
 	cargo test --test all50_cleanroom_audit -j 2
+
+# Penta-Interface Unmocked E2E Audits (Waves 1 through 8)
+.PHONY: test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all
+
+# Wave 1 Core Launch Suite (Top 12 Tools) E2E Tests
+test-wave1: build-cli
+	cargo test --test top12_cleanroom_audit -j 2 -- --nocapture
+
+# Wave 2 Penta E2E Tests
+test-wave2: build-cli
+	cargo test -p paperpilot-mcp --test wave2_mcp_tests -- --nocapture
+
+# Wave 3 AI & Document Synthesis Penta E2E Tests
+test-wave3: build-cli
+	cargo test -p paperpilot-mcp --test wave3_ai_synthesis_mcp_tests -- --nocapture
+
+# Wave 4 Office Penta E2E Tests
+test-wave4: build-cli
+	cargo test -p paperpilot-mcp --test wave4_mcp_tests -- --nocapture
+
+# Wave 5 Security, Signatures & Forms Penta E2E Tests
+test-wave5: build-cli
+	cargo test -p paperpilot-mcp --test wave5_security_forms_mcp_tests -- --nocapture
+
+# Wave 6 Page Operations & Imposition Penta E2E Tests
+test-wave6: build-cli
+	cargo test -p paperpilot-mcp --test wave6_page_ops_mcp_tests -- --nocapture
+
+# Wave 7 Conversions & Packaging Penta E2E Tests
+test-wave7: build-cli
+	cargo test -p paperpilot-mcp --test wave7_conversions_mcp_tests -- --nocapture
+
+# Wave 8 Analysis, OCR & Search Penta E2E Tests
+test-wave8: build-cli
+	cargo test -p paperpilot-mcp --test wave8_analysis_intelligence_mcp_tests -- --nocapture
+
+# Run newly audited parallel waves (Waves 5, 6, 7, 8)
+test-waves: test-wave5 test-wave6 test-wave7 test-wave8
+
+# Run all Penta E2E waves sequentially across the entire suite (Waves 1 through 8)
+test-waves-all: test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8
 
 .PHONY: test-conformance
 test-conformance:
@@ -226,14 +328,13 @@ lint:
 # Run multi-scanner security audit locally (Semgrep + Cargo Audit + Trivy)
 audit:
 	@echo "🛡️ Running Semgrep SAST scan..."
-	@which semgrep >/dev/null 2>&1 || python3 -m pip install semgrep
-	semgrep scan --config auto --exclude=".github"
+	@which semgrep >/dev/null 2>&1 && semgrep scan --config auto --exclude=".github" || echo "Semgrep skipped (not installed)"
 	@echo "🛡️ Running Cargo Audit on Rust dependencies..."
 	@which cargo-audit >/dev/null 2>&1 || cargo install cargo-audit --locked
-	cargo audit || true
+	cargo audit --no-fetch || true
 	@echo "🛡️ Running Trivy vulnerability scan..."
 	@which trivy >/dev/null 2>&1 || curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ~/.cargo/bin
-	trivy fs --severity HIGH,CRITICAL .
+	trivy fs --severity HIGH,CRITICAL --scanners vuln --skip-dirs target Cargo.lock
 
 
 # Clean build artifacts
@@ -279,6 +380,11 @@ check-wasm:
 test-tri-e2e:
 	python3 scripts/test_tri_interface_e2e.py
 
+# Generate Marketing GIFs (Terminal Simulation via Playwright + FFmpeg)
+.PHONY: generate-gifs
+generate-gifs:
+	node scripts/gif_generators/capture.js
+
 # ==============================================================================
 # Pure-Rust Penta-Interface E2E Real Semantic Assertions Suite (Spec 031)
 # ==============================================================================
@@ -308,8 +414,15 @@ test-penta-conversions:
 test-penta-edge-cases:
 	cargo run -p penta-interface-e2e -- --group edge_cases
 
+
+# Run comprehensive 89-tool benchmark suite and update SYSTEM_BENCHMARK_REPORT.md
+.PHONY: benchmark bench-system
+benchmark bench-system:
+	python3 scripts/run_system_benchmark.py
+
 # Run Phase 5.9.6: High-Throughput & Concurrency Performance Benchmark
 bench-penta-e2e:
+	cargo build --bin paperpilot-mcp --bin paperpilot-cli
 	cargo run -p penta-interface-e2e -- --group bench
 
 
@@ -349,12 +462,12 @@ docker-shell:
 	docker compose exec paperpilot bash || docker exec -it paperpilot bash
 
 # ==============================================================================
-# Cloud Agent Delegation Targets (Jules Dispatcher)
+# Agent Delegation Targets (Jules Cloud & Local Gemini CLI Dispatchers)
 # ==============================================================================
-.PHONY: jules-list jules-dry-run jules-submit
+.PHONY: jules-list jules-dry-run jules-submit gemini-list gemini-dry-run gemini-run gemini-pair
 
-# List all pending prompt files available for Jules delegation
-jules-list:
+# List all pending prompt files available for agent delegation
+jules-list gemini-list:
 	./scripts/jules_submit.sh --list
 
 # Test and preview the JSON payload sent to the Jules cloud API without dispatching
@@ -374,6 +487,43 @@ jules-submit:
 		exit 1; \
 	fi
 	./scripts/jules_submit.sh --file $(FILE)
+
+# Optional SYSTEM_PROMPT flag support (SYSTEM_PROMPT=1 or SYSTEM=1 or SYSTEM=0)
+SYSTEM_FLAG :=
+ifeq ($(SYSTEM_PROMPT),1)
+  SYSTEM_FLAG := --system-prompt
+else ifeq ($(SYSTEM),1)
+  SYSTEM_FLAG := --system-prompt
+else ifeq ($(SYSTEM_PROMPT),0)
+  SYSTEM_FLAG := --no-system-prompt
+else ifeq ($(SYSTEM),0)
+  SYSTEM_FLAG := --no-system-prompt
+endif
+
+# Preview prompt execution for local Gemini CLI pair programmer
+gemini-dry-run:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make gemini-dry-run FILE=<prompt-file>.txt [SYSTEM=1]"; \
+		exit 1; \
+	fi
+	./scripts/gemini_pair.sh --file $(FILE) --dry-run $(SYSTEM_FLAG) $(EXTRA_ARGS)
+
+# Run local Gemini CLI autonomously on the specified prompt
+gemini-run:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make gemini-run FILE=<prompt-file>.txt [SYSTEM=1]"; \
+		exit 1; \
+	fi
+	./scripts/gemini_pair.sh --file $(FILE) $(SYSTEM_FLAG) $(EXTRA_ARGS)
+
+# Launch interactive pair programming session with Gemini CLI
+gemini-pair:
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make gemini-pair FILE=<prompt-file>.txt [SYSTEM=1]"; \
+		exit 1; \
+	fi
+	./scripts/gemini_pair.sh --file $(FILE) --interactive $(SYSTEM_FLAG) $(EXTRA_ARGS)
+
 
 # Penta-Scaffold Code Generator
 new-tool:

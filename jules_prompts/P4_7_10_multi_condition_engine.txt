@@ -1,0 +1,263 @@
+[Task 4.7.10 / 8.2.10: Advanced Multi-Condition Predicates & Combinators Engine]
+
+Objective:
+Implement Spec 137 (`specs/137-advanced-multi-condition-engine/spec.md`), extending the unified conditional workflow execution engine across `paperpilot-core`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-wasm`, `paperpilot-mcp`, and `paperpilot-gateway`.
+
+Critical Instructions & Guardrails:
+1. All 5 interfaces (CLI, Desktop, WASM, MCP, REST Gateway) already run on the single unified engine in `paperpilot-pdf/src/operations/workflow.rs`. Do NOT alter this unified architecture.
+2. WASM uses `web-time`. Do NOT use `std::time::Instant` in shared engine code.
+3. Keep existing tests intact: All 41 existing conditional workflow tests in `paperpilot-core`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-gateway`, `paperpilot-mcp`, and `paperpilot-wasm` MUST continue to pass cleanly.
+4. Always run cargo commands with `-j 2` to avoid memory thrashing.
+
+---
+
+### Step-by-Step Implementation Details & Code Examples
+
+#### Step 1: Core Data Models in `paperpilot-core/src/workflow.rs`
+Update `WorkflowCondition` to support recursive boolean combinators while maintaining 100% backward compatibility with flat Spec 136 conditions:
+
+```rust
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum WorkflowCondition {
+    /// Logical AND: all must be true (vacuous truth: empty vec = true)
+    All { all: Vec<WorkflowCondition> },
+    /// Logical OR: at least one must be true (empty vec = false)
+    Any { any: Vec<WorkflowCondition> },
+    /// Logical NOT: inverts the condition
+    Not { not: Box<WorkflowCondition> },
+    /// Leaf inspection predicate (flat struct)
+    Leaf(LeafCondition),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum NumericOp {
+    Eq,
+    Gt,
+    Gte,
+    Lt,
+    Lte,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+pub enum NumericComparator {
+    Between { between: [u64; 2] },
+    Comparison {
+        #[serde(default)]
+        eq: Option<u64>,
+        #[serde(default)]
+        gt: Option<u64>,
+        #[serde(default)]
+        gte: Option<u64>,
+        #[serde(default)]
+        lt: Option<u64>,
+        #[serde(default)]
+        lte: Option<u64>,
+    },
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct LeafCondition {
+    // Existing Spec 136 fields:
+    pub if_scanned: Option<bool>,
+    pub if_page_count_gt: Option<u32>,
+    pub comparator: Option<PageCountComparator>,
+    pub value: Option<u32>,
+
+    // New Spec 137 fields:
+    pub text_contains: Option<String>,
+    pub has_form_fields: Option<bool>,
+    pub is_signed: Option<bool>,
+    pub is_encrypted: Option<bool>,
+    pub file_size_bytes: Option<NumericComparator>,
+}
+
+impl Default for WorkflowCondition {
+    fn default() -> Self {
+        WorkflowCondition::Leaf(LeafCondition::default())
+    }
+}
+```
+
+#### Step 2: Recipe Validation in `paperpilot-core/src/workflow/recipe.rs`
+In `workflow_order`:
+- Validate that if `NumericComparator::Between { between: [min, max] }` is provided, `min <= max` (return `PdfError::InvalidInput("between: min must be <= max")`).
+- Validate that `LeafCondition` is not completely empty (at least one field must be populated).
+
+#### Step 3: Evaluation Engine in `paperpilot-pdf/src/operations/workflow/conditions.rs`
+Implement the recursive evaluation with short-circuiting:
+
+```rust
+pub(super) fn evaluate(
+    bytes: &[u8],
+    condition: &WorkflowCondition,
+) -> OperationResult<(bool, String)> {
+    let doc = load_pdf(bytes)?;
+    evaluate_node(bytes, &doc, condition)
+}
+
+fn evaluate_node(
+    bytes: &[u8],
+    doc: &Document,
+    condition: &WorkflowCondition,
+) -> OperationResult<(bool, String)> {
+    match condition {
+        WorkflowCondition::All { all } => {
+            if all.is_empty() {
+                return Ok((true, "all: [] (vacuous truth)".into()));
+            }
+            let mut reasons = Vec::new();
+            for (idx, child) in all.iter().enumerate() {
+                let (matched, reason) = evaluate_node(bytes, doc, child)?;
+                reasons.push(format!("all[{idx}]: {reason}"));
+                if !matched {
+                    return Ok((false, reasons.join("; ")));
+                }
+            }
+            Ok((true, reasons.join("; ")))
+        }
+        WorkflowCondition::Any { any } => {
+            if any.is_empty() {
+                return Ok((false, "any: [] (empty disjunction)".into()));
+            }
+            let mut reasons = Vec::new();
+            for (idx, child) in any.iter().enumerate() {
+                let (matched, reason) = evaluate_node(bytes, doc, child)?;
+                reasons.push(format!("any[{idx}]: {reason}"));
+                if matched {
+                    return Ok((true, reasons.join("; ")));
+                }
+            }
+            Ok((false, reasons.join("; ")))
+        }
+        WorkflowCondition::Not { not } => {
+            let (matched, reason) = evaluate_node(bytes, doc, not)?;
+            Ok((!matched, format!("not({reason})")))
+        }
+        WorkflowCondition::Leaf(leaf) => evaluate_leaf(bytes, doc, leaf),
+    }
+}
+```
+
+Implement the new leaf inspectors:
+1. **`text_contains`**:
+```rust
+if let Some(target) = &leaf.text_contains {
+    let target_lower = target.to_lowercase();
+    let mut found = false;
+    for (number, _) in doc.get_pages() {
+        if let Ok(text) = doc.extract_text_with_limit(&[number], 16 * 1024 * 1024) {
+            if text.to_lowercase().contains(&target_lower) {
+                found = true;
+                break;
+            }
+        }
+    }
+    matches &= found;
+    reasons.push(format!("text_contains('{target}')={found}"));
+}
+```
+
+2. **`has_form_fields`**:
+```rust
+if let Some(expected) = leaf.has_form_fields {
+    let has_forms = has_acroform_fields(doc)?;
+    matches &= has_forms == expected;
+    reasons.push(format!("has_form_fields={has_forms}, expected={expected}"));
+}
+
+fn has_acroform_fields(doc: &Document) -> OperationResult<bool> {
+    if let Ok(catalog) = doc.catalog() {
+        if let Ok(acroform) = catalog.get(b"AcroForm") {
+            if let Ok(dict) = doc.dereference(acroform).and_then(|(_, o)| o.as_dict()) {
+                if let Ok(fields) = dict.get(b"Fields").and_then(Object::as_array) {
+                    return Ok(!fields.is_empty());
+                }
+            }
+        }
+    }
+    Ok(false)
+}
+```
+
+3. **`is_signed`**:
+```rust
+if let Some(expected) = leaf.is_signed {
+    let signed = is_digitally_signed(doc)?;
+    matches &= signed == expected;
+    reasons.push(format!("is_signed={signed}, expected={expected}"));
+}
+
+fn is_digitally_signed(doc: &Document) -> OperationResult<bool> {
+    // Check catalog AcroForm for Sig fields or SigFlags
+    if let Ok(catalog) = doc.catalog() {
+        if let Ok(acroform) = catalog.get(b"AcroForm") {
+            if let Ok(dict) = doc.dereference(acroform).and_then(|(_, o)| o.as_dict()) {
+                if let Ok(sig_flags) = dict.get(b"SigFlags").and_then(Object::as_i64) {
+                    if sig_flags & 1 != 0 || sig_flags & 2 != 0 {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+    }
+    // Check annotations across pages
+    for (_, page_id) in doc.get_pages() {
+        if let Ok(dict) = doc.get_dictionary(page_id) {
+            if let Ok(annots) = dict.get(b"Annots").and_then(Object::as_array) {
+                for annot_ref in annots {
+                    if let Ok((_, annot_obj)) = doc.dereference(annot_ref) {
+                        if let Ok(annot_dict) = annot_obj.as_dict() {
+                            if annot_dict.get(b"FT").and_then(Object::as_name) == Ok(b"Sig") {
+                                return Ok(true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(false)
+}
+```
+
+4. **`file_size_bytes`**:
+```rust
+if let Some(comparator) = &leaf.file_size_bytes {
+    let size = bytes.len() as u64;
+    let satisfied = match comparator {
+        NumericComparator::Between { between: [min, max] } => size >= *min && size <= *max,
+        NumericComparator::Comparison { eq, gt, gte, lt, lte } => {
+            let mut ok = true;
+            if let Some(v) = eq { ok &= size == *v; }
+            if let Some(v) = gt { ok &= size > *v; }
+            if let Some(v) = gte { ok &= size >= *v; }
+            if let Some(v) = lt { ok &= size < *v; }
+            if let Some(v) = lte { ok &= size <= *v; }
+            ok
+        }
+    };
+    matches &= satisfied;
+    reasons.push(format!("file_size_bytes={size}, satisfied={satisfied}"));
+}
+```
+
+---
+
+### Step 4: Tests to Add
+In `paperpilot-pdf/tests/conditional_workflow.rs`:
+- Test `text_contains`: synthetic PDF with "INVOICE" text layer matches; non-matching query skips stage.
+- Test `has_form_fields`: PDF with interactive AcroForm matches; plain text PDF skips.
+- Test `any` combinator: passes when one branch matches.
+- Test `not` combinator: inverts match correctly.
+- Test `all` with `between: [min, max]` file size.
+
+### Verification Command:
+```bash
+cargo test -p paperpilot-core -p paperpilot-pdf -p paperpilot-cli -p paperpilot-mcp -p paperpilot-gateway -p paperpilot-wasm -j 2
+```

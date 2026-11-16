@@ -213,6 +213,9 @@
           toolName = `pdf_${intent.toLowerCase()}`;
       }
 
+      if (appState.zeroTrace) {
+        toolArgs._zero_trace = true;
+      }
       await safeInvoke('invoke_mcp_tool', {
         toolName: toolName,
         arguments: toolArgs

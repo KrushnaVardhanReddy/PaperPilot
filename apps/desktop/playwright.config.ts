@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:1420',
     trace: 'on-first-retry',
@@ -14,12 +14,42 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          slowMo: process.env.PW_SLOWMO ? parseInt(process.env.PW_SLOWMO, 10) : undefined,
+          args: ['--proxy-bypass-list=<-loopback>'],
+        },
+      },
+    },
+    {
+      name: 'real-engine-90tools',
+      fullyParallel: false,
+      use: {
+        ...devices['Desktop Chrome'],
+        headless: process.env.HEADED === 'true' ? false : true,
+        slowMo: process.env.HEADED === 'true' ? 500 : 0,
+        video: 'on',
+        screenshot: 'on',
+        launchOptions: {
+          args: ['--proxy-bypass-list=<-loopback>'],
+        },
+      },
+      testMatch: ['**/e2e_unmocked_suite*.spec.ts'],
     },
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:1420',
-    reuseExistingServer: !process.env.CI,
+    cwd: './',
+    url: 'http://127.0.0.1:1420',
+    reuseExistingServer: true,
+    env: {
+      NO_PROXY: 'localhost,127.0.0.1',
+      no_proxy: 'localhost,127.0.0.1',
+      HTTP_PROXY: '',
+      HTTPS_PROXY: '',
+      http_proxy: '',
+      https_proxy: '',
+    },
   },
 });

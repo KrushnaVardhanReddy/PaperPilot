@@ -1,0 +1,20 @@
+[
+  {
+    "full_name": "Alice Smith",
+    "email_address": "alice@test.org",
+    "company_name": "Alpha Corp",
+    "agree_terms": "Yes"
+  },
+  {
+    "full_name": "Bob Jones",
+    "email_address": "bob@test.org",
+    "company_name": "Beta Labs",
+    "agree_terms": "Yes"
+  },
+  {
+    "full_name": "Charlie Brown",
+    "email_address": "charlie@test.org",
+    "company_name": "Gamma Systems",
+    "agree_terms": "Yes"
+  }
+]

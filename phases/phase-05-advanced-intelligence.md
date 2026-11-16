@@ -70,7 +70,8 @@
 | 5.3.23 | EPUB eBook to PDF Conversion (`epub_to_pdf`) 💡 | **Planned** — Pure-Rust `.epub` container extraction, XHTML/CSS reflow parsing, and chapter-based pagination into printable PDF. |
 | 5.3.24 | Interleave / Alternate PDF Collation (`pdf_merge_alternate`) `[Spec 117]` ✅ | **Completed & Merged into `feature/dev` (PR #268)** — Interleave pages from two documents alternating between odd and even pages (e.g. Doc A p1, Doc B p1, Doc A p2, Doc B p2) with reverse even option for double-sided scanner batch intake (`specs/117-pdf-merge-alternate/spec.md`). |
 | 5.3.25 | Split PDF by Outline / Bookmarks (`pdf_split_by_outline`) `[Spec 118]` ✅ | **Completed & Merged (PR #264)** — Automatically traverse `/Outlines` hierarchy tree and split multi-chapter documents at named bookmark destinations into individual chapter PDFs (`specs/118-pdf-split-by-outline/spec.md`). |
-| 5.3.26 | Posterize / Multi-Sheet Tile Print (`pdf_posterize`) `[Spec 119]` 🚀 | **In Progress (Task 119A, Jules Session 14717167755470526744)** — Tile single large pages (A0, A1, A2, architectural blueprints) across standard grid of A4/Letter sheets with printable overlap crop marks (`specs/119-pdf-posterize/spec.md`). |
+| 5.3.26 | Posterize / Multi-Sheet Tile Print (`pdf_posterize`) `[Spec 119]` ✅ | **Completed & Merged** — Tile single large pages (A0, A1, A2, architectural blueprints) across standard grid of A4/Letter sheets with printable overlap crop marks (`specs/119-pdf-posterize/spec.md`). |
+| 5.3.27 | PDF to EPUB 3.0 eBook Engine (`pdf_to_epub`) `[Spec 127 / Task 127A]` 🚀 | **Active Feature Branch (`feat/pdf-to-epub-spec-127`)** — Pure-Rust reflowable EPUB 3.0 generation via semantic paragraph unwrapping, outline-based chapter splitting, and OCF container packaging (`specs/127-pdf-to-epub-semantic-engine/spec.md`). |
 
 ---
 
@@ -147,4 +148,18 @@
 | 5.8.4 | Key-Value & Form Entity Extraction (`pdf_extract_kv`) | Heuristic and layout-based key-value pair extractor for invoices, receipts, tax forms, and W-2/1099 documents without cloud LLM dependencies |
 | 5.8.5 | Local Embedding & Vector Export (`pdf_embed`) | Offline document vectorization via pure-Rust embedding crates (`candle` / `fastembed-rs`) generating 384/768-dim float arrays locally on CPU/WASM |
 | 5.8.6 | Tri-Interface & Python SDK Bindings (`paperpilot-py` via PyO3) | Expose fast Rust document parsers across CLI, MCP, REST Gateway, and a lightweight zero-dependency Python wheel (`pip install paperpilot`) to easily capture Python AI engineers |
+
+---
+
+### 5.9 — Penta-Interface Audit Remediation: 100% Green E2E Suite `[Spec 145]`
+
+> Remediation of all parameter schemas, missing tool registrations, CLI flags, and route handlers surfaced by the unmocked Penta-Interface E2E audits across Waves 5, 6, 7, and 8.
+
+| # | Task | Scope & Objectives | Status |
+|---|---|---|:---:|
+| 5.9.1 | Session 1: MCP Server Registry & Schema Corrections | Register `pdf_extract_tables` and `semantic_search`; fix schemas for `pdf_extract_text`, `pdf_rag_chunks`, `pdf_bates`, `pdf_merge`, `pdf_reorder_pages`, `pdf_encrypt`, `pdf_fill_form`, `pdf_redact` in `paperpilot-mcp` | 🚀 Active |
+| 5.9.2 | Session 2: CLI Subcommand Flag Normalization & Parity | Align clap CLI arguments and subcommands in `paperpilot-cli` for multi-inputs, formatting flags, and tool parameters | 🚀 Active |
+| 5.9.3 | Session 3: REST Gateway Route & Schema Parity | Route missing Wave 7 conversion and Wave 8 intelligence endpoints in `paperpilot-gateway`; align payload structures | 🚀 Active |
+| 5.9.4 | Session 4: PDF Engine Edge-Cases & Formatting | Fix CBZ comic book archive generation, bookmark hierarchy fallback in `pdf_split_by_outline`, and render disk flushing in `paperpilot-pdf` | 🚀 Active |
+| 5.9.5 | Session 5: OCR Model Packaging & Search Fallback | Add automatic model pack check / test fallback in `pdf_ocr` and recursive directory walking in `workspace_search` in `paperpilot-nlp` | 🚀 Active |
 

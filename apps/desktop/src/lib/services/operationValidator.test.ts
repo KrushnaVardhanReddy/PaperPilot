@@ -7,10 +7,15 @@ describe('operationValidator', () => {
             valid: false,
             error: 'Need at least 2 documents loaded to compare.'
         });
+        expect(validatePreconditions('pdf_compare', 1)).toEqual({
+            valid: false,
+            error: 'Need at least 2 documents loaded to compare.'
+        });
     });
 
     it('succeeds when compare receives 2 documents', () => {
         expect(validatePreconditions('compare', 2)).toEqual({ valid: true });
+        expect(validatePreconditions('pdf_compare', 2)).toEqual({ valid: true });
     });
 
     it('returns error when merge receives less than 2 documents', () => {

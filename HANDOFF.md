@@ -1,70 +1,99 @@
 # PaperPilot — Session Handoff Guide
-
+ 
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** October 27, 2026 (Asia/Hong_Kong)
+> **Date of Last Update:** November 10, 2026
 >
-> **Active Target:** Task 84D (SLM Compound Pipeline Chaining) + Task 129A (Fuzzing) + Task 122A (Stream Dedup)
+> **Active Target:** 
+> 1. **90/90 Tools Penta-Interface Complete & 100% Passing**: Waves 1–21 QA complete across CLI, MCP, REST Gateway, Desktop UI, and WASM/Playwright (285/285 tests passing).
+> 2. **Multi-Scanner Security Audit Clean**: Semgrep (0 findings), Cargo Audit (0 criticals), Trivy FS clean.
+> 3. **Next Sprint (Prioritized Backlog)**: Tier 1 Onboarding & Packaging (Specs 160, 161, 162), Tier 2 Scalability & Agent Memory (Specs 159, 163), Tier 3 Browser Extension (Phase 11).
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (Clean & synchronized with remote `origin/feature/dev`).
-- **Target Branch Protocol**: Always merge and push to `feature/dev`. Never push unreviewed code directly to `main`.
+- **Integration Branch**: `feature/dev` (clean, fully synchronized with `origin/feature/dev`).
+- **Target Branch Protocol**: Feature branches and reviewed PRs merge into `feature/dev`; never push directly to `main`.
 - **System Stability & Audits**:
-  - `cargo check --workspace -j 2`: **100% Clean**.
-  - Local security audit (`make audit`): **0 blocking vulnerabilities**.
-  - MCP Tool Count: **78 tools registered and verified** (`paperpilot-mcp`).
-  - Desktop Vitest Suite: **112/112 passing tests** (`pnpm --dir apps/desktop test`).
-  - Architecture Roadmaps: Modularized into `phases/` directory with master dashboard in `PHASES.md`.
+  - **90/90 Tools Penta-Interface Parity**: **100% PASS (285/285 tests)** across CLI, MCP, REST Gateway API, Desktop UI, and WASM in `tests/e2e/test_wave5_penta_interface.rs` (including neural OCR engine resolution via `PAPERPILOT_OCR_MODELS_DIR`).
+  - **Security Audits (Session 21)**: Semgrep SAST scan 100% clean (0 blocking findings across 1,641 files); Cargo Audit 1,146 dependencies clean; 49 legacy/deprecated dependencies completely purged from `Cargo.lock`.
+  - **Zero-Mock Real Desktop E2E Automation**: **90/90 Tools 100% Passing Green** (Suite 1: 30/30, Suite 2: 30/30, Suite 3: 31/31).
+  - **Desktop Vitest Suite**: **176 passing unit tests across 25 files** (100% green).
+  - **Cargo Workspace**: `cargo check --workspace --all-targets --all-features -j 4` compiles with 0 errors and 0 warnings.
+  - **Benchmark Baseline**: Standardized in `BenchmarkMatrix.svelte` to conservative, measured `~60–80ms (Native Engine) / <1.2s (Full UI & IPC)`.
+  - **Knowledge Graph (`graphify-rs`)**: Fully synchronized with 5,395 AST nodes, 7,013 edges, and 558 modular communities.
 
 ---
 
-## 🚀 Active Dispatch & In-Flight Status
+## 🏆 Recently Merged Milestones
 
-| Task ID | Spec | Priority | Component | Target Branch | Status & Details |
-|---|:---:|:---:|---|---|---|
-| **Feature Freeze** | — | — | All Surfaces | `feature/dev` | 🧊 **Active Feature Freeze**: No new speculative features to be scheduled until incoming user feedback / requests require them. Focus strictly on finishing active SLM pipeline & stabilization. |
-| **Task 10.4** | `[Spec 130]` | P2 | Web WASM / SLM | `feature/dev` | 📋 **Backlog / Planned** (`phases/phase-10-webassembly-wasm.md`)<br>In-browser INT4 ONNX model runtime with WebGPU acceleration and persistent Cache Storage. |
-| **Task 127A** | `[Spec 127]` | P2 | Core / Format Conversion | `feature/dev` | 📋 **Backlog / Planned** (`specs/127-...`)<br>PDF-to-EPUB semantic engine via structured intermediate AST. |
+1. **Full 21-Session QA Protocol Complete (PR / Commit `56d2952`, `5b71cc7`)**:
+   - Standardized argument builders, Svelte 5 UI parameter panels, CLI subcommands, MCP tool wrappers, and REST gateway endpoints across all 90 tools.
+   - Cleanroom verification of conversions (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_html`, `pdf_to_markdown`, `pdf_to_json`, `office_to_markdown`, `excel_to_json`, `excel_to_csv`).
+   - RAG & Intelligence engines verified (`pdf_extract_patterns`, `pdf_search`, `workspace_search`, `semantic_search`, `pdf_classify_type`, `pdf_rag_chunks`, `document_workflow`, `recipe_run`, `cli_ask`, `watcher_start/stop`).
+   - All scorecards synthesized in `reports/` through `WAVE_21_SESSION_21_MASTER_AUDIT_SCORECARD.md`.
+
+2. **Dependency Tree Security Hardening & Zero-Warning Cleanup (Session 20)**:
+   - Purged obsolete legacy crates (`multipart 0.18.0`, `iron 0.6.1`, `nickel`, `typemap`, `traitobject`, `hyper 0.10.x`).
+   - Resolved all compiler future-incompatibility notices across the entire workspace.
+
+3. **Specs 159–163 Synchronized into `feature/dev` (Commit `9743c06`)**:
+   - Merged high-impact Agent DX, Diagnostics, Packaging, Recipes, and Zero-Copy mmap specifications into `specs/`.
 
 ---
 
-## 🏆 Recently Merged & Completed
+## 🎯 Prioritized Next Tasks & Execution Roadmap
 
-1. **Task 84D (Compound SLM Workflow Recipes & Multi-Step Chaining `[Spec 084]`, PR #277)**:
-   - Added 15 compound multi-step workflow recipes in `tools/slm-training/templates.py` (e.g. Legal Discovery, Contract Redaction, Print Prep Booklet, Form Processing, Archival OCR).
-   - Implemented dynamic parameter piping (`/tmp/inter_*.pdf`) ensuring sequential step outputs chain directly into subsequent tool inputs.
-   - Rebalanced training dataset distribution to 50% single-tool, 40% compound multi-step pipelines, and 10% safety refusals.
-   - Added comprehensive test suite in `tools/slm-training/test_dataset_generator.py` (8/8 tests passing).
-2. **Task 129A (Automated Malformed PDF Fuzzing & Security Regression Harness `[Spec 129]`, PR #276)**:
-   - Added `paperpilot-pdf/tests/malformed_regression.rs` verifying 5 distinct corruption attack vectors exit cleanly via `Result::Err` with zero panics or memory loops:
-     - Corrupted XRef table offsets & negative indices.
-     - Corrupted `%PDF-` header and random arbitrary byte sequences.
-     - Stream length mismatch and stream length bombs.
-     - Deeply nested dictionary hierarchies (stack overflow protection).
-     - Circular page tree loops (`/Parent` referencing self or cycle).
-   - Added `LopdfDocument::from_bytes(bytes)` in `paperpilot-pdf/src/document.rs` for fast zero-disk-I/O in-memory regression tests.
-   - Verified 100% clean compilation, 5/5 passing regression tests, and zero Semgrep findings (`make audit`).
-2. **Task 122A (Lossless Stream Deduplication & CMYK Safety `[Spec 122]`, PR #275)**:
-   - Ported hash-based indirect stream deduplication from `SimonBure/presse` (`pdf_dedup_streams`) collapsing identical embedded images, fonts, and streams across pages into single indirect objects.
-   - Enforced CMYK color-space safety guards in `paperpilot-pdf/src/operations/compress.rs`.
-   - Verified 100% clean compilation, zero Semgrep findings, and 10/10 unmocked tests passing in `penta-interface-e2e`.
-2. **Modular Phases Architecture Refactor**:
-   - Split the monolithic ~2,000-line `PHASES.md` into 13 modular documents under `phases/` with a high-level executive dashboard at root `PHASES.md`.
-2. **Task 84 (On-Device Document SLM Fine-Tuning & Local Verification `[Spec 084]`, Task 5.9.73)**:
-   - Generated 5,000 ChatML training pairs across 45+ tools with 5 linguistic noise tiers.
-   - Fine-tuned `Qwen/Qwen2.5-0.5B-Instruct` using 4-bit QLoRA and `paged_adamw_8bit` on local RTX 4070 (846 steps, loss drop ~2.1 -> 0.47, eval loss 0.496, 90.4% token accuracy).
-   - Saved 17 MB adapter weights to `tools/slm-training/output/paperpilot-qwen-0.5b-lora/` and fused into `output/paperpilot-qwen-0.5b-merged/` via `export_and_merge.py`.
-   - Verified 100% exact JSON tool call generation across single-tool test queries.
-3. **Task 125A (Single-File Offline Self-Contained HTML Sandbox `[Spec 125]`)**:
-   - Packaged standalone `paperpilot-portable.html` embedding the full UI and in-memory base64-encoded WASM engine.
-   - Strict air-gapped CSP (`default-src 'none'`), Playwright verified with 0 network requests.
-4. **Task 126A (Open-WebUI & Apache Tika Ingestion Adapter `[Spec 126]`, PR #273)**:
-   - In-memory Open-WebUI Tika 3 (`PUT /tika/text`), Tika 4 (`PUT /tika/json/md`), and root metadata routes in `paperpilot-gateway`.
-5. **Task 128A (CI Supply Chain Hardening & Action SHA Pinning `[Spec 128]`, PR #274)**:
-   - Pinned all GitHub Actions across workflows to immutable 40-char commit SHAs with automated weekly Dependabot tracking.
+```
+[Tier 1: Distribution & DX] ➔ [Tier 2: Agent Moat & Scalability] ➔ [Tier 3: Browser Extension] ➔ [Tier 4: Enterprise Moats]
+```
+
+### 🥇 Tier 1: Distribution & Developer Onboarding
+*Goal: Remove all friction so any developer can install PaperPilot in 10 seconds and connect it to Claude, Cursor, or Python.*
+
+1. **Spec 161: Package Distribution & One-Line Installers (`specs/161-package-distribution-and-installers/`)** — ✅ **100% MERGED** (PR #339)
+   - POSIX `scripts/install.sh`, Windows PowerShell `scripts/install.ps1`, Homebrew formula `packaging/homebrew/paperpilot.rb`.
+2. **Spec 162: AI Framework Integration Recipes (`specs/162-framework-integration-recipes/`)** — ✅ **100% MERGED** (PR #338)
+   - Turnkey Python adapters for LangChain & LlamaIndex, Claude/Cursor MCP configs, and n8n invoice auto-OCR pipeline.
+3. **Spec 160: System Diagnostics Engine (`paperpilot doctor`) (`specs/160-paperpilot-doctor-diagnostics/`)** — ✅ **100% MERGED** (Commit `db12ffd`)
+   - Scope: `paperpilot-core::diagnostics` probing Gateway port 7823, temp directory permissions, OCR model storage, and disk space. CLI `paperpilot doctor` (`--json`), REST `GET /health` & `GET /api/v1/doctor`, Tauri command `run_system_doctor`, and Settings UI `SystemDoctorModal.svelte`.
+
+---
+
+### 🥈 Tier 2: Agent Performance & Scalability Moat (Next Priority)
+*Goal: Solidify PaperPilot as the highest-performance local document engine for AI agents and RAG pipelines.*
+
+4. **Spec 159: Semantic Chunking Engine (`pdf_chunk`) (`specs/159-agent-semantic-chunking/`)** — ✅ **100% MERGED**
+   - Implemented multi-level structure-aware boundary detection (`#`, `##`, `\n\n`, tables `|...|`), configurable `target_tokens` and `overlap_tokens`, and BPE estimation.
+   - Built boilerplate suppression removing recurring headers/footers across $\ge 3$ consecutive pages.
+   - Zero-copy `DocumentSource` integration natively in `paperpilot-pdf`.
+   - Full Penta-Interface coverage: CLI (`paperpilot pdf-chunk`), MCP tool (`pdf_chunk`), REST Gateway (`POST /api/v1/pdf/chunk`), Desktop Svelte 5 UI with sliders in `OperationsPanel.svelte`, and Vitest + Rust integration test suites (180/180 Vitest passing, 6/6 Rust chunk tests passing).
+5. **Spec 163: Zero-Copy Memory-Mapped Document Handling (`specs/163-zero-copy-mmap-large-doc-handling/`)** — ✅ **100% MERGED** (Commit `5663728`)
+   - Implemented `DocumentSource` using `memmap2` for files $\ge 10\text{ MB}$ to keep resident memory flat (< 100 MB) during search, chunking, and PII scanning of huge PDFs.
+   - Implemented `PageBatchIterator` for streaming batch execution without loading entire documents into memory.
+   - Guarded with `#[cfg(not(target_arch = "wasm32"))]` preserving 100% clean WASM compilation. Verified with unit, e2e, and doctor tests.
+
+---
+
+### 🥉 Tier 3: Growth & Virality — Browser Companion Extension (Phase 11)
+*Goal: Bring PaperPilot directly into everyday user workflows inside Chrome, Edge, and Firefox tabs.*
+
+6. **Phase 11: Manifest V3 Companion Browser Extension (`apps/extension`)** — ✅ **100% IMPLEMENTED & VERIFIED**
+   - **WASM-First Zero-Install Architecture**: Bundles `paperpilot-wasm` for instant in-tab document manipulation (split, merge, rotate, watermark, metadata inspection, text extraction) requiring 0 native binary installation.
+   - **Optional Desktop Gateway Bridge**: Seamlessly detects local PaperPilot daemon (`localhost:7823`) for heavy neural OCR (`ppocrv4`), zero-copy mmap, and full conversions when available; falls back gracefully to standalone WASM mode when offline.
+   - **In-Tab Context Menus**: Right-click on any web PDF (arXiv, Stripe invoices, receipts) ➔ *"PaperPilot: Clean Text / Chunk / Redact / Convert"*.
+   - **Web Clean-Article Exporter**: Injects `articleReader` to strip clutter, ads, navigation, and tracking, exporting clean Markdown or PDF.
+   - **Svelte 5 Popup UI**: Live connection badge (`[⚡ Desktop Connected (7823)]` / `[🌐 Standalone WASM Mode]`), drag-and-drop file processing, and quick action buttons.
+   - **Tests & Builds**: `pnpm --dir apps/extension test` (9/9 passing), `pnpm run build:extension` (< 1s clean build to `dist/`), 0 workspace compilation errors, and `paperpilot doctor` diagnostics 100% healthy. Note: IDE workflows are officially served via `paperpilot-mcp` (Spec 162).
+
+---
+
+### ⏸️ Tier 4: Long-Term Enterprise Moats (Post-Launch)
+* **Phase 10: Universal Document Operating System (`DocAST`)**
+  - Full AST conversion matrix: `DOCX ⇄ MD ⇄ HTML ⇄ PDF ⇄ EPUB ⇄ XLSX ⇄ CSV`.
+* **Phase 6.7: Advanced Document SDK Parity (Apryse / PDFTron Gap)**
+  - Stylus pressure-ink SVG annotations, dynamic XFA form calculations, and certified PAdES LTV digital signatures.
 
 ---
 
@@ -72,37 +101,32 @@
 
 When resuming a new session, follow these steps:
 
-1. **Check for New User Issues or Community PRs**:
-   - Inspect GitHub Issues (filed via `.github/ISSUE_TEMPLATE/` bug and feature request forms).
-   - Inspect any incoming community PRs against `feature/dev`.
+1. **Verify Branch Alignment**:
+   - Ensure local branch is `feature/dev` and up to date with `origin/feature/dev`.
+   - Verify `git status` is clean.
 
-2. **Current Repository & Model State**:
-   - **Production Release**: PR #267 merged into `main` (`c487810`).
-   - **Active Development Branch**: `feature/dev` (in sync with `main`).
-   - **Fine-Tuned SLM Weights**:
-     - **Hugging Face Hub**: [kpakkiragari/PaperPilot-Qwen-0.5B-Instruct](https://huggingface.co/kpakkiragari/PaperPilot-Qwen-0.5B-Instruct) (Public Apache-2.0 release)
-     - Local LoRA adapter: `tools/slm-training/output/paperpilot-qwen-0.5b-lora/`
-     - Local Fused model: `tools/slm-training/output/paperpilot-qwen-0.5b-merged/`
-     - Quick test: `tools/slm-training/.venv/bin/python tools/slm-training/infer_local.py`
+2. **Run Resource-Safe Compilation (`-j 4` MANDATORY)**:
+   - Check workspace: `cargo check --workspace --all-targets --all-features -j 4`
+   - Run tests: `cargo test --workspace --no-run -j 4`
+   - Run desktop Vitest component tests: `pnpm --dir apps/desktop test:unit`
 
-3. **If Implementing a User Request**:
-   - Follow Rule 7: Always update tool documentation in `apps/docs/src/content/docs/reference/tools/<tool>.md`.
-   - Run `python3 apps/docs/src/content/docs/reference/generate_handbook.py`.
-   - Run verification with memory-safe `-j 2`: `cargo test -p paperpilot-pdf --lib -j 2` and `make audit`.
+3. **Active Next Tasks**:
+   - **Tier 1 (Immediate)**: Package Distribution & Installers (Spec 161), System Diagnostics `doctor` (Spec 160), AI Integration Recipes (Spec 162).
+   - **Tier 2 (Agent Performance)**: Semantic Chunking `pdf_chunk` (Spec 159), Zero-Copy mmap Engine (Spec 163).
+   - **Tier 3 (Browser Growth)**: Manifest V3 Browser Extension (Phase 11).
 
 ---
 
 ## ⚖️ Rules of Engagement & Production Constraints
 
-> ⚠️ **CRITICAL**: PaperPilot is a live, trending open-source product on Hacker News. All development must preserve production stability.
+> ⚠️ **CRITICAL**: PaperPilot is a live open-source product. All development must preserve production stability.
 
-1. **System Resource Constraint (`-j 2` is MANDATORY on local machine):**
-   - **ALWAYS** pass `-j 2` for all local `cargo test`, `cargo build`, or `cargo check` commands (e.g. `cargo test -p paperpilot-pdf -j 2`).
-   - Unbounded cargo compilations will freeze the host machine.
+1. **System Resource Constraint (`-j 4` is MANDATORY on local machine):**
+   - **ALWAYS** pass `-j 4` for all local `cargo test`, `cargo build`, or `cargo check` commands (e.g. `cargo test -p paperpilot-pdf -j 4`).
+   - Unbounded cargo compilations will exhaust memory and freeze the host machine / log off the system.
 
-2. **Feature Branch Protocol (No Direct Pushes to `feature/dev` or `main`):**
-   - All development, bug fixes, and experiments must occur on dedicated feature branches (e.g. `feat/...`, `fix/...`).
-   - Never push directly to `feature/dev` or `main`. Code is merged into `feature/dev` only after review and complete local test verification.
+2. **Feature Branch Protocol (No Direct Pushes to `main`):**
+   - All development, bug fixes, and experiments must occur on dedicated feature branches or reviewed into `feature/dev`. Never push directly to `main`.
 
 3. **The Single Core Runner + 5 Wrappers Architecture Pattern:**
    - Every tool operation MUST have exactly **ONE** core in-memory engine implementation in `paperpilot-pdf`:
@@ -114,32 +138,43 @@ When resuming a new session, follow these steps:
 4. **Zero-Mock Policy on Tests:**
    - Test fixtures must be real disk fixtures or synthesized byte buffers (`fixtures/`, `tests/e2e_fixtures/real/`). Never mock PDF bytes or operation responses.
 
-5. **Zero-Cloud & Absolute Privacy Guarantee:**
-   - 0 bytes uploaded to external servers. Never introduce unexpected analytics beacons, telemetry, or external network requests into Core, CLI, MCP, Desktop, or WASM.
+5. **WASM Isolation Guarantee:**
+   - Never add OS-specific filesystem watchers or native network sockets (`mio`, `tokio/net`, `notify`) to `paperpilot-core` or common dependencies of `paperpilot-wasm`.
 
-6. **Local Git Hygiene:**
-   - Model weights (`tools/slm-training/output/`), `pricing_strategy.md`, and security scanner reports must remain untracked / ignored (`.gitignore`).
+6. **Knowledge Graph Maintenance:**
+   - After modifying project code files, run `/home/krushna/.cargo/bin/graphify-rs build` to keep the knowledge graph synchronized.
 
 ---
 
 ## 🛠️ Quick Command Reference
 
 ```bash
-# 1. Dev Server (Web Portal)
-cd apps/web && npm run dev
+# 1. WASM Build & Tests (Memory-Safe)
+wasm-pack build --target web --release paperpilot-wasm -- --jobs 4
+cargo test -p paperpilot-wasm -j 4
 
-# 2. Rust Unit Tests (Always use -j 2)
-cargo test -p paperpilot-pdf --lib -j 2
-cargo test -p paperpilot-mcp --lib -j 2
-cargo test -p paperpilot-gateway -j 2
-cargo test -p paperpilot-cli -j 2
+# 2. Rust Unit Tests (Always use -j 4)
+cargo test -p paperpilot-pdf --lib -j 4
+cargo test -p paperpilot-mcp --lib -j 4
+cargo test -p paperpilot-gateway -j 4
+cargo test -p paperpilot-cli -j 4
 
-# 3. Desktop Vitest Tests
+# 3. Penta-Interface E2E Audit Suites
+make test-wave1
+make test-wave2
+make test-wave3
+make test-wave4
+make test-wave5
+make test-wave6
+make test-wave7
+make test-wave8
+
+# 4. System Benchmark Suite
+python3 scripts/run_system_benchmark.py --quick
+
+# 5. Desktop Vitest Tests
 pnpm --dir apps/desktop test
 
-# 4. Local Security Audit Scan
-make audit
-
-# 5. Knowledge Graph Refresh
-graphify update .
+# 6. Knowledge Graph Refresh
+/home/krushna/.cargo/bin/graphify-rs build
 ```

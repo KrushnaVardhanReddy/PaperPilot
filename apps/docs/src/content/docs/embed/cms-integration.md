@@ -12,7 +12,7 @@ Integrating the PaperPilot widget into your Content Management System is easy.
 1. Add a **Custom HTML** block to your page or post.
 2. Paste the snippet:
    ```html
-   <script src="https://cdn.usepaperpilot.com/embed.js"></script>
+   <script src="https://usepaperpilot.com/embed.js"></script>
    <div id="paperpilot-portal"></div>
    ```
 

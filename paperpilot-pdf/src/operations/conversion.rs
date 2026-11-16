@@ -3,7 +3,7 @@ use lopdf::dictionary;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 #[cfg(feature = "office")]
-use rust_xlsxwriter::Workbook;
+use rust_xlsxwriter::{Color, Format, FormatBorder, Workbook};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::path::PathBuf;
@@ -152,6 +152,7 @@ pub struct HtmlToPdfOptions {
     pub custom_css: Option<String>, // inline CSS string
     pub page_size: Option<String>, // "A4", "Letter", etc.
     pub margin_mm: Option<f32>, // default 20mm
+    pub orientation: Option<String>, // "portrait", "landscape"
 }
 
 impl Default for HtmlToPdfOptions {
@@ -161,11 +162,21 @@ impl Default for HtmlToPdfOptions {
             custom_css: None,
             page_size: Some("A4".to_string()),
             margin_mm: Some(20.0),
+            orientation: None,
         }
     }
 }
 
 pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
+    resolve_css_with_options(preset, custom_css, None, None)
+}
+
+pub fn resolve_css_with_options(
+    preset: Option<&str>,
+    custom_css: Option<&str>,
+    page_size: Option<&str>,
+    orientation: Option<&str>,
+) -> String {
     let preset_css = match preset.unwrap_or("github") {
         "elegant" | "academic" => CSS_PRESET_ELEGANT,
         "minimal" | "minimalist" => CSS_PRESET_MINIMAL,
@@ -174,17 +185,36 @@ pub fn resolve_css(preset: Option<&str>, custom_css: Option<&str>) -> String {
         _ => CSS_PRESET_GITHUB,
     };
 
+    let mut css = preset_css.to_string();
+
     if let Some(custom) = custom_css
         && !custom.trim().is_empty()
     {
-        return format!("{}\n/* Custom CSS */\n{}", preset_css, custom);
+        css.push_str("\n/* Custom CSS */\n");
+        css.push_str(custom);
     }
-    preset_css.to_string()
+
+    if let Some(orient) = orientation {
+        let norm_orient = orient.trim().to_lowercase();
+        if norm_orient == "landscape" || norm_orient == "portrait" {
+            let psize = page_size.unwrap_or("A4");
+            css.push_str(&format!("\n@page {{ size: {} {}; }}\n", psize, norm_orient));
+        }
+    }
+
+    css
 }
 
 pub fn inject_css_into_html(html: &str, css: &str) -> String {
     let style_tag = format!("<style id=\"paperpilot-injected-css\">\n{}\n</style>", css);
-    if let Some(pos) = html.find("</head>") {
+    if let Some(pos) = html.find("<head>") {
+        // Inject right after opening <head> so user styles declared inside <head> take cascade precedence
+        let after_head = pos + 6;
+        let mut out = html[..after_head].to_string();
+        out.push_str(&style_tag);
+        out.push_str(&html[after_head..]);
+        out
+    } else if let Some(pos) = html.find("</head>") {
         let mut out = html[..pos].to_string();
         out.push_str(&style_tag);
         out.push_str(&html[pos..]);
@@ -213,9 +243,11 @@ impl HtmlToPdfOperation {
     }
 
     pub fn render(&self) -> OperationResult<()> {
-        let css = resolve_css(
+        let css = resolve_css_with_options(
             self.options.preset.as_deref(),
             self.options.custom_css.as_deref(),
+            self.options.page_size.as_deref(),
+            self.options.orientation.as_deref(),
         );
         let styled_html = inject_css_into_html(&self.input_html, &css);
 
@@ -374,12 +406,15 @@ impl ExcelToStyledHtmlOperation {
         let mut html =
             String::from("<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>");
 
+        let mut max_cols = 0;
+
         if self.input_path.extension().and_then(|s| s.to_str()) == Some("csv") {
             let mut rdr = csv::Reader::from_path(&self.input_path)
                 .map_err(|e| PdfError::Other(format!("Failed to parse CSV: {}", e)))?;
 
             html.push_str("<table>");
             if let Ok(headers) = rdr.headers() {
+                max_cols = max_cols.max(headers.len());
                 html.push_str("<tr>");
                 for h in headers {
                     html.push_str(&format!("<th>{}</th>", html_escape::encode_text(h)));
@@ -388,6 +423,7 @@ impl ExcelToStyledHtmlOperation {
             }
 
             for record in rdr.records().flatten() {
+                max_cols = max_cols.max(record.len());
                 html.push_str("<tr>");
                 for field in record.iter() {
                     html.push_str(&format!("<td>{}</td>", html_escape::encode_text(field)));
@@ -412,6 +448,7 @@ impl ExcelToStyledHtmlOperation {
                         html.push_str("<table>");
                         let mut is_first_row = true;
                         for row in range.rows() {
+                            max_cols = max_cols.max(row.len());
                             html.push_str("<tr>");
                             for cell in row {
                                 let cell_tag = if is_first_row { "th" } else { "td" };
@@ -449,7 +486,20 @@ impl ExcelToStyledHtmlOperation {
         }
         html.push_str("</body></html>");
 
-        let html_op = HtmlToPdfOperation::new(html, self.output_path.clone(), self.options.clone());
+        let mut options = self.options.clone();
+        let is_auto_or_none = match &options.orientation {
+            None => true,
+            Some(o) => {
+                let trimmed = o.trim().to_lowercase();
+                trimmed.is_empty() || trimmed == "auto"
+            }
+        };
+
+        if max_cols > 5 && is_auto_or_none {
+            options.orientation = Some("landscape".to_string());
+        }
+
+        let html_op = HtmlToPdfOperation::new(html, self.output_path.clone(), options);
         html_op.render()
     }
 }
@@ -699,15 +749,201 @@ fn extract_page_media(
     Ok(extracted)
 }
 
-#[derive(Default)]
+pub const DEFAULT_PDF_HTML_CSS: &str = r#"
+@page {
+    margin: 20mm;
+    size: A4;
+}
+@media print {
+    body {
+        background-color: transparent !important;
+        padding: 0 !important;
+    }
+    .page {
+        page-break-after: always;
+        break-after: page;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1e293b;
+    background-color: #f8fafc;
+    margin: 0;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.page {
+    background-color: #ffffff;
+    max-width: 850px;
+    width: 100%;
+    margin: 0 auto 32px auto;
+    padding: 40px 48px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    position: relative;
+    page-break-after: always;
+    break-after: page;
+}
+.page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+    margin-bottom: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #0f172a;
+}
+h1 { font-size: 2em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.25em; }
+p {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+    font-size: 13.5px;
+}
+table th, table td {
+    border: 1px solid #cbd5e1;
+    padding: 10px 14px;
+    text-align: left;
+}
+table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #334155;
+}
+tr:nth-child(even) td {
+    background-color: #fcfdfd;
+}
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+"#;
+
+fn normalize_search_text(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+fn color_to_hex(c: &pdf_oxide::layout::Color) -> String {
+    let r = (c.r.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let g = (c.g.clamp(0.0, 1.0) * 255.0).round() as u8;
+    let b = (c.b.clamp(0.0, 1.0) * 255.0).round() as u8;
+    format!("{:02X}{:02X}{:02X}", r, g, b)
+}
+
+/// Strips empty trailing `<td>` cells from rows in HTML tables.
+fn cleanup_trailing_empty_table_cells(html: &str) -> String {
+    let tr_regex = regex::Regex::new(r"(?is)(<tr\b[^>]*>)(.*?)(</tr>)").unwrap();
+    let empty_td_regex = regex::Regex::new(r"(?is)(?:<td\b[^>]*>\s*</td>\s*)+$").unwrap();
+
+    tr_regex
+        .replace_all(html, |caps: &regex::Captures| {
+            let open_tr = &caps[1];
+            let row_content = &caps[2];
+            let close_tr = &caps[3];
+
+            let cleaned_content = empty_td_regex.replace(row_content, "");
+            format!("{}{}{}", open_tr, cleaned_content, close_tr)
+        })
+        .into_owned()
+}
+
+/// Applies text colors extracted from PDF spans to matching HTML tags (e.g. `<h1>`, `<h2>`, `<p>`).
+fn apply_span_colors_to_html(html: &str, spans: &[pdf_oxide::layout::TextSpan]) -> String {
+    let tag_names = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "td", "th"];
+    let strip_tags_regex = regex::Regex::new(r"<[^>]*>").unwrap();
+    let style_attr_regex = regex::Regex::new(r#"style="([^"]*)""#).unwrap();
+
+    let mut result = html.to_string();
+
+    for tag in tag_names {
+        let pattern = format!(r"(?is)<({}\b[^>]*)>(.*?)</{}>", tag, tag);
+        if let Ok(re) = regex::Regex::new(&pattern) {
+            result = re
+                .replace_all(&result, |caps: &regex::Captures| {
+                    let open_tag = &caps[1];
+                    let inner_html = &caps[2];
+
+                    let text_stripped = strip_tags_regex.replace_all(inner_html, "");
+                    let norm_text = normalize_search_text(&text_stripped);
+
+                    if norm_text.is_empty() {
+                        return caps[0].to_string();
+                    }
+
+                    let mut matched_color = None;
+                    for span in spans {
+                        let span_norm = normalize_search_text(&span.text);
+                        if span_norm.is_empty() {
+                            continue;
+                        }
+                        if span_norm.contains(&norm_text) || norm_text.contains(&span_norm) {
+                            let hex = color_to_hex(&span.color);
+                            matched_color = Some(hex);
+                            break;
+                        }
+                    }
+
+                    if let Some(hex) = matched_color {
+                        if open_tag.contains("style=") {
+                            let new_open = style_attr_regex.replace(open_tag, |scaps: &regex::Captures| {
+                                let existing = &scaps[1];
+                                format!("style=\"color: #{}; {}\"", hex, existing)
+                            });
+                            format!("<{}>{}</{}>", new_open, inner_html, tag)
+                        } else {
+                            format!("<{} style=\"color: #{};\">{}</{}>", open_tag, hex, inner_html, tag)
+                        }
+                    } else {
+                        caps[0].to_string()
+                    }
+                })
+                .into_owned();
+        }
+    }
+
+    result
+}
+
+#[derive(Default, Clone)]
 pub struct PdfToHtmlOperation {
     pub extracted_html: Arc<Mutex<Option<String>>>,
+    pub preset: Option<String>,
+    pub custom_css: Option<String>,
 }
 
 impl PdfToHtmlOperation {
     pub fn new() -> Self {
         Self {
             extracted_html: Arc::new(Mutex::new(None)),
+            preset: None,
+            custom_css: None,
+        }
+    }
+
+    pub fn with_options(preset: Option<String>, custom_css: Option<String>) -> Self {
+        Self {
+            extracted_html: Arc::new(Mutex::new(None)),
+            preset,
+            custom_css,
         }
     }
 }
@@ -723,6 +959,13 @@ impl PdfOperation for PdfToHtmlOperation {
 
         let mut html = String::new();
 
+        // Resolve CSS using custom_css / preset or default PDF HTML CSS
+        let css = if self.preset.is_some() || self.custom_css.is_some() {
+            resolve_css(self.preset.as_deref(), self.custom_css.as_deref())
+        } else {
+            DEFAULT_PDF_HTML_CSS.trim().to_string()
+        };
+
         if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
             && !bytes.is_empty()
             && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
@@ -731,9 +974,10 @@ impl PdfOperation for PdfToHtmlOperation {
             let mut page_nums: Vec<u32> = lopdf_doc.inner.get_pages().keys().copied().collect();
             page_nums.sort();
 
-            html.push_str(
-                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
-            );
+            html.push_str("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>PDF Export</title>\n");
+            html.push_str(&format!("<style>\n{}\n</style>\n", css));
+            html.push_str("</head>\n<body>\n");
+
             for i in 0..page_count {
                 let page_id = i + 1;
 
@@ -750,8 +994,7 @@ impl PdfOperation for PdfToHtmlOperation {
                     Vec::new()
                 };
 
-                html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
-                html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                html.push_str(&format!("<div class=\"page\" id=\"page-{}\" data-page=\"{}\">\n", page_id, page_id));
 
                 let mut page_content = String::new();
                 if let Ok(page_html) = pdf.to_html(i) {
@@ -777,7 +1020,7 @@ impl PdfOperation for PdfToHtmlOperation {
                                         }
                                         pdf_oxide::extractors::PixelFormat::CMYK => {
                                             image::ColorType::Rgb8
-                                        } // Fallback mapping, Image API handles basic conversions or fails gracefully.
+                                        }
                                     };
                                     let mut png_bytes = Vec::new();
                                     use image::ImageEncoder;
@@ -861,7 +1104,13 @@ impl PdfOperation for PdfToHtmlOperation {
                     final_html.insert_str(insert_pos, &format!("\n{}\n", markup));
                 }
 
-                html.push_str(&final_html);
+                // Preserve colors from spans
+                let mut colored_html = apply_span_colors_to_html(&final_html, &spans);
+
+                // Clean up trailing empty cells in tables
+                colored_html = cleanup_trailing_empty_table_cells(&colored_html);
+
+                html.push_str(&colored_html);
 
                 html.push_str("</div>\n");
             }
@@ -872,15 +1121,15 @@ impl PdfOperation for PdfToHtmlOperation {
             let inner = &mut lopdf_doc.inner;
             let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
 
-            html = String::from(
-                "<!DOCTYPE html>\n<html>\n<head><title>PDF Export</title></head>\n<body>\n",
+            html = format!(
+                "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>PDF Export</title>\n<style>\n{}\n</style>\n</head>\n<body>\n",
+                css
             );
 
             for page_id in all_pages {
                 match inner.extract_text(&[page_id]) {
                     Ok(text) => {
-                        html.push_str(&format!("<div class=\"page\" id=\"page-{}\">\n", page_id));
-                        html.push_str(&format!("<h2>Page {}</h2>\n", page_id));
+                        html.push_str(&format!("<div class=\"page\" id=\"page-{}\" data-page=\"{}\">\n", page_id, page_id));
                         for line in text.lines() {
                             if !line.trim().is_empty() {
                                 html.push_str(&format!("<p>{}</p>\n", line.trim()));
@@ -1557,6 +1806,27 @@ pub enum LayoutItem {
 pub const EMUS_PER_INCH: u32 = 914_400;
 pub const MAX_DOCX_PAGE_WIDTH_EMUS: u32 = 4_500_000;
 
+fn parse_inline_css(style_str: &str) -> std::collections::HashMap<String, String> {
+    let mut map = std::collections::HashMap::new();
+    for part in style_str.split(';') {
+        if let Some((k, v)) = part.split_once(':') {
+            map.insert(k.trim().to_lowercase(), v.trim().to_string());
+        }
+    }
+    map
+}
+
+fn extract_hex_color_from_style(style_str: &str) -> Option<String> {
+    let styles = parse_inline_css(style_str);
+    if let Some(color) = styles.get("color") {
+        let trimmed = color.trim().trim_start_matches('#');
+        if trimmed.len() == 6 && trimmed.chars().all(|c| c.is_ascii_hexdigit()) {
+            return Some(trimmed.to_ascii_uppercase());
+        }
+    }
+    None
+}
+
 pub fn decode_data_uri(uri: &str) -> Option<(String, Vec<u8>)> {
     if !uri.starts_with("data:image/") {
         return None;
@@ -1575,6 +1845,14 @@ pub fn decode_data_uri(uri: &str) -> Option<(String, Vec<u8>)> {
 
 impl PdfOperation for PdfToDocxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        // Run PdfToHtmlOperation as Universal Intermediate Representation (IR)
+        let html_op = PdfToHtmlOperation::new();
+        html_op.execute(document)?;
+        let html = {
+            let guard = html_op.extracted_html.lock().unwrap();
+            guard.clone().unwrap_or_default()
+        };
+
         let _lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
@@ -1583,10 +1861,9 @@ impl PdfOperation for PdfToDocxOperation {
             })?;
 
         use docx_rs::{
-            AlignmentType, Docx, Paragraph, Run, Table, TableBorders, TableCell, TableRow,
-            WidthType,
+            AlignmentType, BorderType, Docx, Paragraph, Run, RunFonts, Shading, Table, TableBorder,
+            TableBorderPosition, TableBorders, TableCell, TableCellMargins, TableRow,
         };
-        use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
         let mut docx = Docx::new().page_margin(
             docx_rs::PageMargin::new()
@@ -1596,186 +1873,240 @@ impl PdfOperation for PdfToDocxOperation {
                 .right(720),
         );
 
-        let markdown_op = PdfToMarkdownOperation::new();
-        markdown_op.execute(document)?;
+        let parsed_doc = scraper::Html::parse_document(&html);
+        let page_sel = scraper::Selector::parse("div.page").unwrap();
+        let block_sel = scraper::Selector::parse("h1, h2, h3, h4, h5, h6, p, table, img").unwrap();
+        let tr_sel = scraper::Selector::parse("tr").unwrap();
+        let cell_sel = scraper::Selector::parse("th, td").unwrap();
 
-        let markdown = {
-            let guard = markdown_op.extracted_markdown.lock().unwrap();
-            guard.clone().unwrap_or_default()
-        };
+        // Helper to extract styled runs recursively from an HTML element
+        fn extract_runs_from_element(
+            node: scraper::ElementRef,
+            parent_bold: bool,
+            parent_italic: bool,
+            parent_color: Option<&str>,
+            font_size: usize,
+        ) -> Vec<Run> {
+            let mut runs = Vec::new();
 
-        let parser = Parser::new_ext(&markdown, Options::all());
-
-        let mut current_heading_level = 0;
-        let mut current_paragraph = Paragraph::new();
-        let mut has_run = false;
-
-        let mut pending_image: Option<(Vec<u8>, u32, u32)> = None;
-        let mut pending_image_paragraph: Option<Paragraph> = None;
-        let mut current_card_title: Option<Paragraph> = None;
-
-        let mut table_rows: Vec<TableRow> = Vec::new();
-        let mut current_row_cells: Vec<TableCell> = Vec::new();
-        let mut current_cell_paragraphs: Vec<Paragraph> = Vec::new();
-
-        for event in parser {
-            match event {
-                Event::Start(Tag::Image { dest_url, .. }) => {
-                    if let Some((_, bytes)) = decode_data_uri(&dest_url)
-                        && let Ok(img) = image::load_from_memory(&bytes)
-                    {
-                        let width_px = img.width() as f64;
-                        let height_px = img.height() as f64;
-                        // 150 DPI => 6096 EMUs per pixel
-                        let scale = 914_400.0 / 150.0;
-                        let mut width_emu = (width_px * scale) as u32;
-                        let mut height_emu = (height_px * scale) as u32;
-
-                        if width_emu > MAX_DOCX_PAGE_WIDTH_EMUS {
-                            let ratio = MAX_DOCX_PAGE_WIDTH_EMUS as f64 / width_emu as f64;
-                            width_emu = MAX_DOCX_PAGE_WIDTH_EMUS;
-                            height_emu = (height_emu as f64 * ratio) as u32;
+            for child in node.children() {
+                if let Some(text_node) = child.value().as_text() {
+                    let text = text_node.text.as_ref();
+                    if !text.is_empty() {
+                        let color_val = parent_color.unwrap_or("334155");
+                        let mut r = Run::new()
+                            .add_text(text)
+                            .fonts(RunFonts::new().ascii("Arial").hi_ansi("Arial"))
+                            .size(font_size)
+                            .color(color_val);
+                        if parent_bold {
+                            r = r.bold();
                         }
-                        pending_image = Some((bytes, width_emu, height_emu));
-                    }
-                }
-                Event::End(TagEnd::Image) => {
-                    if let Some((bytes, width, height)) = pending_image.take() {
-                        use docx_rs::Pic;
-                        let pic = Pic::new(&bytes).size(width, height);
-                        let pic_run = Run::new().add_image(pic);
-                        let pic_para = Paragraph::new()
-                            .align(AlignmentType::Center)
-                            .add_run(pic_run);
-                        pending_image_paragraph = Some(pic_para);
-                    }
-                }
-                Event::Start(Tag::Heading { level, .. }) => {
-                    let level_num = match level {
-                        pulldown_cmark::HeadingLevel::H1 => 1,
-                        pulldown_cmark::HeadingLevel::H2 => 2,
-                        pulldown_cmark::HeadingLevel::H3 => 3,
-                        pulldown_cmark::HeadingLevel::H4 => 4,
-                        pulldown_cmark::HeadingLevel::H5 => 5,
-                        pulldown_cmark::HeadingLevel::H6 => 6,
-                    };
-                    current_heading_level = level_num;
-                    current_paragraph = Paragraph::new();
-                    if current_heading_level == 1 || current_heading_level == 3 {
-                        current_paragraph = current_paragraph.align(AlignmentType::Center);
-                    }
-                    has_run = false;
-                }
-                Event::End(TagEnd::Heading(_)) => {
-                    if has_run {
-                        if current_heading_level == 3 || current_heading_level == 4 {
-                            current_card_title = Some(current_paragraph.clone());
-                        } else {
-                            if let Some(pic_para) = pending_image_paragraph.take() {
-                                docx = docx.add_paragraph(pic_para);
-                            }
-                            docx = docx.add_paragraph(current_paragraph.clone());
+                        if parent_italic {
+                            r = r.italic();
                         }
+                        runs.push(r);
                     }
-                    current_heading_level = 0;
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                Event::Start(Tag::Paragraph) => {
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                Event::End(TagEnd::Paragraph) => {
-                    if has_run {
-                        if let Some(title_para) = current_card_title.take() {
-                            if let Some(illus_para) = pending_image_paragraph.take() {
-                                let illus_cell = TableCell::new()
-                                    .add_paragraph(illus_para)
-                                    .width(3168, WidthType::Dxa);
+                } else if let Some(el_node) = child.value().as_element() {
+                    if let Some(child_ref) = scraper::ElementRef::wrap(child) {
+                        let tag = el_node.name();
+                        let is_bold = parent_bold || tag == "strong" || tag == "b";
+                        let is_italic = parent_italic || tag == "em" || tag == "i";
+                        let child_style = el_node.attr("style").unwrap_or_default();
+                        let child_color = extract_hex_color_from_style(child_style);
+                        let effective_color = child_color.as_deref().or(parent_color);
 
-                                let text_cell = TableCell::new()
-                                    .add_paragraph(title_para)
-                                    .add_paragraph(current_paragraph.clone())
-                                    .width(6912, WidthType::Dxa);
-
-                                let row_cells = vec![illus_cell, text_cell];
-
-                                let table = Table::new(vec![TableRow::new(row_cells)])
-                                    .set_borders(TableBorders::new().clear_all())
-                                    .layout(docx_rs::TableLayoutType::Fixed);
-                                docx = docx.add_table(table);
-                            } else {
-                                docx = docx.add_paragraph(title_para);
-                                docx = docx.add_paragraph(current_paragraph.clone());
-                            }
-                        } else {
-                            if let Some(pic_para) = pending_image_paragraph.take() {
-                                docx = docx.add_paragraph(pic_para);
-                            }
-                            docx = docx.add_paragraph(current_paragraph.clone());
-                        }
+                        runs.extend(extract_runs_from_element(
+                            child_ref,
+                            is_bold,
+                            is_italic,
+                            effective_color,
+                            font_size,
+                        ));
                     }
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
                 }
-                Event::Text(text) => {
-                    let mut run = Run::new().add_text(text.into_string());
-
-                    if current_heading_level == 1 {
-                        run = run.bold().size(44).color("1F242E");
-                    } else if current_heading_level == 3 || current_heading_level == 4 {
-                        run = run.bold().size(24).color("1F242E");
-                    } else {
-                        run = run.size(19).color("525C68");
-                    }
-
-                    current_paragraph = current_paragraph.add_run(run);
-                    has_run = true;
-                }
-                Event::Start(Tag::Table(_)) => {
-                    table_rows = Vec::new();
-                }
-                Event::End(TagEnd::Table) => {
-                    if !table_rows.is_empty() {
-                        let table = Table::new(table_rows.clone());
-                        docx = docx.add_table(table);
-                    }
-                    table_rows = Vec::new();
-                }
-                Event::Start(Tag::TableRow) => {
-                    current_row_cells = Vec::new();
-                }
-                Event::End(TagEnd::TableRow) => {
-                    if !current_row_cells.is_empty() {
-                        table_rows.push(TableRow::new(current_row_cells.clone()));
-                    }
-                    current_row_cells = Vec::new();
-                }
-                Event::Start(Tag::TableCell) => {
-                    current_cell_paragraphs = Vec::new();
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                Event::End(TagEnd::TableCell) => {
-                    if has_run {
-                        current_cell_paragraphs.push(current_paragraph.clone());
-                    }
-                    let mut cell = TableCell::new();
-                    for p in current_cell_paragraphs.clone() {
-                        cell = cell.add_paragraph(p);
-                    }
-                    current_row_cells.push(cell);
-                    current_cell_paragraphs = Vec::new();
-                    current_paragraph = Paragraph::new();
-                    has_run = false;
-                }
-                _ => {}
             }
+
+            runs
         }
 
-        // flush
-        if let Some(pic_para) = pending_image_paragraph.take() {
-            docx = docx.add_paragraph(pic_para);
+        let mut pages: Vec<scraper::ElementRef> = parsed_doc.select(&page_sel).collect();
+        // Fallback: if no div.page, parse root
+        let root_ref = parsed_doc.root_element();
+        let dummy_pages = vec![root_ref];
+        if pages.is_empty() {
+            pages = dummy_pages;
+        }
+
+        for page in pages {
+            for block in page.select(&block_sel) {
+                // Ensure we only process direct/top block elements of this page
+                let parent = block.parent().and_then(scraper::ElementRef::wrap);
+                if let Some(p) = parent {
+                    let p_name = p.value().name();
+                    if p_name != "div" && p_name != "body" && p_name != "html" {
+                        // Skip nested elements (like tr inside table, p inside td)
+                        continue;
+                    }
+                }
+
+                let tag_name = block.value().name();
+                let inline_style = block.value().attr("style").unwrap_or_default();
+                let inline_color = extract_hex_color_from_style(inline_style);
+
+                match tag_name {
+                    "h1" => {
+                        let color = inline_color.unwrap_or_else(|| "1E293B".to_string());
+                        let runs = extract_runs_from_element(block, true, false, Some(&color), 44);
+                        let mut p = Paragraph::new().align(AlignmentType::Center);
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "h2" => {
+                        let color = inline_color.unwrap_or_else(|| "2563EB".to_string());
+                        // Blue section headings
+                        let effective_color = if color == "000000" || color.is_empty() {
+                            "2563EB".to_string()
+                        } else {
+                            color
+                        };
+                        let runs = extract_runs_from_element(block, true, false, Some(&effective_color), 30);
+                        let mut p = Paragraph::new();
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "h3" | "h4" => {
+                        let color = inline_color.unwrap_or_else(|| "1E293B".to_string());
+                        let runs = extract_runs_from_element(block, true, false, Some(&color), 24);
+                        let mut p = Paragraph::new();
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "h5" | "h6" => {
+                        let color = inline_color.unwrap_or_else(|| "1E293B".to_string());
+                        let runs = extract_runs_from_element(block, true, false, Some(&color), 22);
+                        let mut p = Paragraph::new();
+                        for r in runs {
+                            p = p.add_run(r);
+                        }
+                        docx = docx.add_paragraph(p);
+                    }
+                    "p" => {
+                        let color = inline_color.unwrap_or_else(|| "334155".to_string());
+                        let runs = extract_runs_from_element(block, false, false, Some(&color), 22);
+                        if !runs.is_empty() {
+                            let mut p = Paragraph::new();
+                            for r in runs {
+                                p = p.add_run(r);
+                            }
+                            docx = docx.add_paragraph(p);
+                        }
+                    }
+                    "img" => {
+                        if let Some(src) = block.value().attr("src") {
+                            if let Some((_, bytes)) = decode_data_uri(src) {
+                                if let Ok(img) = image::load_from_memory(&bytes) {
+                                    let width_px = img.width() as f64;
+                                    let height_px = img.height() as f64;
+                                    let scale = 914_400.0 / 150.0;
+                                    let mut width_emu = (width_px * scale) as u32;
+                                    let mut height_emu = (height_px * scale) as u32;
+
+                                    if width_emu > MAX_DOCX_PAGE_WIDTH_EMUS {
+                                        let ratio = MAX_DOCX_PAGE_WIDTH_EMUS as f64 / width_emu as f64;
+                                        width_emu = MAX_DOCX_PAGE_WIDTH_EMUS;
+                                        height_emu = (height_emu as f64 * ratio) as u32;
+                                    }
+                                    use docx_rs::Pic;
+                                    let pic = Pic::new(&bytes).size(width_emu, height_emu);
+                                    let pic_run = Run::new().add_image(pic);
+                                    let pic_para = Paragraph::new()
+                                        .align(AlignmentType::Center)
+                                        .add_run(pic_run);
+                                    docx = docx.add_paragraph(pic_para);
+                                }
+                            }
+                        }
+                    }
+                    "table" => {
+                        let mut table_rows: Vec<TableRow> = Vec::new();
+                        let mut row_idx = 0;
+
+                        for tr in block.select(&tr_sel) {
+                            let mut row_cells: Vec<TableCell> = Vec::new();
+                            let is_first_row = row_idx == 0;
+
+                            for cell_node in tr.select(&cell_sel) {
+                                let tag = cell_node.value().name();
+                                let is_th = tag == "th" || is_first_row;
+                                let cell_style = cell_node.value().attr("style").unwrap_or_default();
+                                let cell_color = extract_hex_color_from_style(cell_style);
+
+                                let mut cell = TableCell::new();
+                                if is_th {
+                                    cell = cell.shading(Shading::new().fill("1E293B"));
+                                } else if row_idx % 2 == 1 {
+                                    cell = cell.shading(Shading::new().fill("F8FAFC"));
+                                } else {
+                                    cell = cell.shading(Shading::new().fill("FFFFFF"));
+                                }
+
+                                let text_color = if is_th {
+                                    "FFFFFF"
+                                } else if let Some(ref c) = cell_color {
+                                    c.as_str()
+                                } else {
+                                    "334155"
+                                };
+
+                                let font_size = if is_th { 20 } else { 18 };
+                                let runs = extract_runs_from_element(
+                                    cell_node,
+                                    is_th,
+                                    false,
+                                    Some(text_color),
+                                    font_size,
+                                );
+
+                                let mut p = Paragraph::new();
+                                for r in runs {
+                                    p = p.add_run(r);
+                                }
+                                cell = cell.add_paragraph(p);
+                                row_cells.push(cell);
+                            }
+
+                            if !row_cells.is_empty() {
+                                table_rows.push(TableRow::new(row_cells));
+                                row_idx += 1;
+                            }
+                        }
+
+                        if !table_rows.is_empty() {
+                            let borders = TableBorders::new()
+                                .set(TableBorder::new(TableBorderPosition::Top).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::Bottom).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::Left).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::Right).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::InsideH).color("CBD5E1").size(4).border_type(BorderType::Single))
+                                .set(TableBorder::new(TableBorderPosition::InsideV).color("CBD5E1").size(4).border_type(BorderType::Single));
+
+                            let table = Table::new(table_rows)
+                                .set_borders(borders)
+                                .layout(docx_rs::TableLayoutType::Fixed)
+                                .margins(TableCellMargins::new().margin(100, 150, 100, 150));
+                            docx = docx.add_table(table);
+                        }
+                    }
+                    _ => {}
+                }
+            }
         }
 
         let file = std::fs::File::create(&self.output_path)
@@ -1801,6 +2132,14 @@ impl PdfToXlsxOperation {
 #[cfg(feature = "office")]
 impl PdfOperation for PdfToXlsxOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
+        // Run PdfToHtmlOperation as Universal Intermediate Representation (IR)
+        let html_op = PdfToHtmlOperation::new();
+        html_op.execute(document)?;
+        let html = {
+            let guard = html_op.extracted_html.lock().unwrap();
+            guard.clone().unwrap_or_default()
+        };
+
         let lopdf_doc = document
             .as_any_mut()
             .downcast_mut::<LopdfDocument>()
@@ -1808,48 +2147,122 @@ impl PdfOperation for PdfToXlsxOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
-        let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
-        all_pages.sort_unstable();
-
         let mut workbook = Workbook::new();
         let worksheet = workbook.add_worksheet();
+
+        let header_format = Format::new()
+            .set_bold()
+            .set_background_color(Color::RGB(0x1E293B))
+            .set_font_color(Color::RGB(0xFFFFFF))
+            .set_border(FormatBorder::Thin);
+
+        let data_format = Format::new()
+            .set_border(FormatBorder::Thin);
+
         let mut current_row: u32 = 0;
-        let ws_regex = regex::Regex::new(r"\s{3,}").unwrap();
+        let mut table_count = 0;
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
-                    for line in text.lines() {
-                        let line_trimmed = line.trim();
-                        if line_trimmed.is_empty() {
-                            continue;
-                        }
+        let parsed_doc = scraper::Html::parse_document(&html);
+        let table_sel = scraper::Selector::parse("table").unwrap();
+        let tr_sel = scraper::Selector::parse("tr").unwrap();
+        let cell_sel = scraper::Selector::parse("th, td").unwrap();
+        let strong_sel = scraper::Selector::parse("strong, b").unwrap();
 
-                        let cols: Vec<&str> = ws_regex.split(line_trimmed).collect();
+        for table in parsed_doc.select(&table_sel) {
+            let mut is_first_row = true;
+            for tr in table.select(&tr_sel) {
+                let mut row_cells: Vec<(String, bool)> = Vec::new();
 
-                        for (col_idx, val) in cols.iter().enumerate() {
-                            worksheet
-                                .write_string(current_row, col_idx as u16, *val)
-                                .map_err(|e| {
-                                    PdfError::Other(format!("Failed to write XLSX cell: {}", e))
-                                })?;
-                        }
-                        current_row += 1;
+                for cell in tr.select(&cell_sel) {
+                    let is_th = cell.value().name() == "th"
+                        || is_first_row
+                        || cell.select(&strong_sel).next().is_some();
+                    let text: Vec<&str> = cell
+                        .text()
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                    let cell_str = text.join(" ");
+                    row_cells.push((cell_str, is_th));
+                }
+
+                // Strip trailing empty cells
+                while let Some(last) = row_cells.last() {
+                    if last.0.is_empty() {
+                        row_cells.pop();
+                    } else {
+                        break;
                     }
                 }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
+
+                if !row_cells.is_empty() {
+                    for (col_idx, (text, is_th)) in row_cells.iter().enumerate() {
+                        let col = col_idx as u16;
+                        if *is_th {
+                            worksheet
+                                .write_string_with_format(current_row, col, text, &header_format)
+                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX header: {e}")))?;
+                        } else if let Ok(num) = text.parse::<f64>() {
+                            worksheet
+                                .write_number_with_format(current_row, col, num, &data_format)
+                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                        } else {
+                            worksheet
+                                .write_string_with_format(current_row, col, text, &data_format)
+                                .map_err(|e| PdfError::Other(format!("Failed to write XLSX cell: {e}")))?;
+                        }
+                    }
+                    current_row += 1;
+                    table_count += 1;
+                    is_first_row = false;
+                }
+            }
+
+            if table_count > 0 {
+                current_row += 1; // blank line between tables
+            }
+        }
+
+        // Graceful fallback if PDF had no structured HTML tables
+        if table_count == 0 {
+            let inner = &mut lopdf_doc.inner;
+            let mut all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
+            all_pages.sort_unstable();
+
+            let ws_regex = regex::Regex::new(r"\s{3,}").unwrap();
+
+            for page_id in all_pages {
+                match inner.extract_text(&[page_id]) {
+                    Ok(text) => {
+                        for line in text.lines() {
+                            let line_trimmed = line.trim();
+                            if line_trimmed.is_empty() {
+                                continue;
+                            }
+
+                            let cols: Vec<&str> = ws_regex.split(line_trimmed).collect();
+                            for (col_idx, val) in cols.iter().enumerate() {
+                                worksheet
+                                    .write_string(current_row, col_idx as u16, *val)
+                                    .map_err(|e| {
+                                        PdfError::Other(format!("Failed to write fallback XLSX cell: {e}"))
+                                    })?;
+                            }
+                            current_row += 1;
+                        }
+                    }
+                    Err(e) => {
+                        return Err(PdfError::Other(format!(
+                            "Failed to extract fallback text from page {page_id}: {e}"
+                        )));
+                    }
                 }
             }
         }
 
         workbook
             .save(&self.output_path)
-            .map_err(|e| PdfError::Other(format!("Failed to save XLSX: {}", e)))?;
+            .map_err(|e| PdfError::Other(format!("Failed to save XLSX: {e}")))?;
 
         Ok(())
     }
@@ -1895,7 +2308,17 @@ impl PdfOperation for PdfToPptxOperation {
             .compression_method(zip::CompressionMethod::Deflated)
             .unix_permissions(0o755);
 
+        let mut slide_ids = String::new();
+        let mut slide_relationships = String::new();
+        let mut slide_content_types = String::new();
         for (i, page_id) in all_pages.iter().enumerate() {
+            slide_ids.push_str(&format!(
+                r#"<p:sldId id="{}" r:id="rId{}"/>"#,
+                256 + i,
+                i + 1
+            ));
+            slide_relationships.push_str(&format!(r#"<Relationship Id="rId{}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide{}.xml"/>"#, i + 1, i + 1));
+            slide_content_types.push_str(&format!(r#"<Override PartName="/ppt/slides/slide{}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>"#, i + 1));
             let slide_name = format!("ppt/slides/slide{}.xml", i + 1);
             zip.start_file(&slide_name, options)
                 .map_err(|e| PdfError::Other(format!("Failed to start ZIP file: {}", e)))?;
@@ -1906,8 +2329,13 @@ impl PdfOperation for PdfToPptxOperation {
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
     <p:cSld>
         <p:spTree>
+            <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+            <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
             <p:sp>
+                <p:nvSpPr><p:cNvPr id="2" name="Page text"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+                <p:spPr><a:xfrm><a:off x="457200" y="457200"/><a:ext cx="8229600" cy="5943600"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
                 <p:txBody>
+                    <a:bodyPr/><a:lstStyle/>
                     <a:p>
                         <a:r>
                             <a:t>{}</a:t>
@@ -1929,12 +2357,43 @@ impl PdfOperation for PdfToPptxOperation {
 
         zip.start_file("[Content_Types].xml", options)
             .map_err(|e| PdfError::Other(format!("Failed to start ZIP file: {}", e)))?;
-        let content_types = r#"<?xml version="1.0" encoding="UTF-8"?>
+        let content_types = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-    <Default Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
-</Types>"#;
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+    <Default Extension="xml" ContentType="application/xml"/>
+    <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+    {slide_content_types}
+</Types>"#
+        );
         zip.write_all(content_types.as_bytes())
             .map_err(|e| PdfError::Other(format!("Failed to write content types: {}", e)))?;
+
+        // OPC readers locate the presentation through the package relationship,
+        // then locate each slide through presentation.xml's relationship IDs.
+        let presentation = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<p:sldIdLst>{slide_ids}</p:sldIdLst><p:sldSz cx="9144000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/>
+</p:presentation>"#
+        );
+        let relationships = format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">{slide_relationships}</Relationships>"#
+        );
+        for (name, xml) in [
+            (
+                "_rels/.rels",
+                r#"<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>"#,
+            ),
+            ("ppt/presentation.xml", presentation.as_str()),
+            ("ppt/_rels/presentation.xml.rels", relationships.as_str()),
+        ] {
+            zip.start_file(name, options)
+                .map_err(|e| PdfError::Other(format!("Failed to start {name}: {e}")))?;
+            zip.write_all(xml.as_bytes())
+                .map_err(|e| PdfError::Other(format!("Failed to write {name}: {e}")))?;
+        }
 
         zip.finish()
             .map_err(|e| PdfError::Other(format!("Failed to finish ZIP file: {}", e)))?;
@@ -2025,6 +2484,34 @@ mod tests {
     }
 
     #[test]
+    fn test_css_orientation_resolution() {
+        let css_landscape = resolve_css_with_options(
+            Some("github"),
+            None,
+            Some("A4"),
+            Some("landscape"),
+        );
+        assert!(css_landscape.contains("@page { size: A4 landscape; }"));
+
+        let css_portrait = resolve_css_with_options(
+            Some("github"),
+            None,
+            Some("Letter"),
+            Some("portrait"),
+        );
+        assert!(css_portrait.contains("@page { size: Letter portrait; }"));
+
+        let css_none = resolve_css_with_options(
+            Some("github"),
+            None,
+            Some("A4"),
+            None,
+        );
+        assert!(!css_none.contains("@page { size: A4 landscape; }"));
+        assert!(!css_none.contains("@page { size: A4 portrait; }"));
+    }
+
+    #[test]
     fn test_inject_css_into_html() {
         let html = "<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>";
         let css = "body { color: red; }";
@@ -2055,7 +2542,59 @@ mod tests {
         assert!(text.is_some());
         let extracted = text.as_ref().unwrap();
         assert!(extracted.contains("<!DOCTYPE html>"));
-        assert!(extracted.contains("<div class=\"page\" id=\"page-1\">"));
+        assert!(extracted.contains("<div class=\"page\" id=\"page-1\" data-page=\"1\">"));
+        assert!(!extracted.contains("<h2>Page 1</h2>"));
+    }
+
+    #[test]
+    fn test_cleanup_trailing_empty_table_cells() {
+        let input = "<table><tr><td>Item</td><td>Qty</td><td></td><td>   </td></tr></table>";
+        let cleaned = cleanup_trailing_empty_table_cells(input);
+        assert_eq!(cleaned, "<table><tr><td>Item</td><td>Qty</td></tr></table>");
+    }
+
+    #[test]
+    fn test_apply_span_colors_to_html() {
+        let html = "<h1>INVOICE</h1><p>Date</p>";
+        let spans = vec![pdf_oxide::layout::TextSpan {
+            text: "INVOICE".to_string(),
+            color: pdf_oxide::layout::Color {
+                r: 0.11764706,
+                g: 0.22745098,
+                b: 0.5411765,
+            },
+            ..Default::default()
+        }];
+        let colored = apply_span_colors_to_html(html, &spans);
+        assert!(colored.contains("<h1 style=\"color: #1E3A8A;\">INVOICE</h1>"));
+    }
+
+    #[test]
+    fn test_convert_invoice_fixture_to_html() {
+        let input_path = std::path::Path::new("/home/krushna/Project/PaperPilot/ManaulTestingFixtures/pdf_to_html/Input/invoice_template_converted.pdf");
+        let alt_path = std::path::Path::new("/home/krushna/Project/ManaulTestingFixtures/pdf_to_html/Input/invoice_template_converted.pdf");
+        let path = if input_path.exists() { input_path } else { alt_path };
+
+        let output_path = if input_path.exists() {
+            "/home/krushna/Project/PaperPilot/ManaulTestingFixtures/pdf_to_html/Output/invoice_template_converted.html"
+        } else {
+            "/home/krushna/Project/ManaulTestingFixtures/pdf_to_html/Output/invoice_template_converted.html"
+        };
+        if let Ok(mut doc) = LopdfDocument::load(path) {
+            let op = PdfToHtmlOperation::new();
+            assert!(op.execute(&mut doc).is_ok());
+            let html = op.extracted_html.lock().unwrap().clone().unwrap_or_default();
+            let _ = std::fs::write(output_path, &html);
+
+            // Assertions
+            assert!(!html.contains("<h2>Page 1</h2>"));
+            assert!(html.contains("<div class=\"page\" id=\"page-1\" data-page=\"1\">"));
+            assert!(html.contains("border-collapse: collapse"));
+            assert!(html.contains("border: 1px solid #cbd5e1"));
+            assert!(html.contains("padding: 10px 14px"));
+            assert!(html.contains("#1E3A8A") || html.contains("#1e3a8a"));
+            assert!(!html.contains("<td></td>"));
+        }
     }
 
     #[test]
@@ -2182,6 +2721,38 @@ mod tests {
     }
 
     #[test]
+    fn test_pdf_to_xlsx_table_extraction() {
+        let md = "# Report\n\n| Col A | Col B |\n| --- | --- |\n| 10 | hello |\n| 20 | world |\n";
+        let dir = tempfile::tempdir().unwrap();
+        let pdf_path = dir.path().join("table_sample.pdf");
+        let xlsx_path = dir.path().join("table_sample.xlsx");
+
+        let md_op = MarkdownToPdfOperation::new(
+            md.to_string(),
+            pdf_path.clone(),
+            HtmlToPdfOptions::default(),
+        );
+        md_op.render().unwrap();
+
+        let mut doc = LopdfDocument::load(&pdf_path).unwrap();
+        let xlsx_op = PdfToXlsxOperation::new(xlsx_path.clone());
+        assert!(xlsx_op.execute(&mut doc).is_ok());
+        assert!(xlsx_path.exists());
+
+        // Validate sheet content with calamine
+        #[cfg(feature = "office")]
+        {
+            use calamine::{Data, Reader, Xlsx, open_workbook};
+            let mut excel: Xlsx<_> = open_workbook(&xlsx_path).unwrap();
+            let sheet = excel.worksheet_range("Sheet1").unwrap();
+            assert_eq!(sheet.get_value((0, 0)), Some(&Data::String("Col A".to_string())));
+            assert_eq!(sheet.get_value((0, 1)), Some(&Data::String("Col B".to_string())));
+            assert_eq!(sheet.get_value((1, 0)), Some(&Data::Float(10.0)));
+            assert_eq!(sheet.get_value((1, 1)), Some(&Data::String("hello".to_string())));
+        }
+    }
+
+    #[test]
     fn test_pdf_to_pptx() {
         let mut doc = create_dummy_doc(1, None);
         let dir = tempfile::tempdir().unwrap();
@@ -2192,6 +2763,26 @@ mod tests {
 
         assert!(path.exists());
         assert!(path.metadata().unwrap().len() > 0);
+        let mut package = zip::ZipArchive::new(std::fs::File::open(&path).unwrap()).unwrap();
+        for part in [
+            "_rels/.rels",
+            "ppt/presentation.xml",
+            "ppt/_rels/presentation.xml.rels",
+            "ppt/slides/slide1.xml",
+        ] {
+            assert!(package.by_name(part).is_ok(), "Missing OPC part: {part}");
+        }
+        #[cfg(feature = "office")]
+        {
+            let text_path = dir.path().join("presentation.txt");
+            crate::operations::office::OfficeExtractTextOperation::execute(&path, &text_path)
+                .unwrap();
+            assert!(
+                std::fs::read_to_string(text_path)
+                    .unwrap()
+                    .contains("Test Content")
+            );
+        }
     }
 
     #[test]
@@ -2206,6 +2797,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let op = ExcelToStyledHtmlOperation::new(csv_path.clone(), out_path.clone(), options);
@@ -2218,6 +2810,28 @@ mod tests {
     }
 
     #[test]
+    fn test_excel_to_html_csv_auto_landscape() {
+        let dir = tempfile::tempdir().unwrap();
+        let csv_path = dir.path().join("wide_test.csv");
+        let out_path = dir.path().join("wide_out.pdf");
+        // 6 columns (> 5)
+        std::fs::write(&csv_path, "C1,C2,C3,C4,C5,C6\n1,2,3,4,5,6").unwrap();
+
+        let options = HtmlToPdfOptions {
+            preset: None,
+            custom_css: None,
+            page_size: None,
+            margin_mm: None,
+            orientation: None,
+        };
+
+        let op = ExcelToStyledHtmlOperation::new(csv_path.clone(), out_path.clone(), options);
+        assert!(op.render().is_ok());
+        assert!(out_path.exists());
+        assert!(out_path.metadata().unwrap().len() > 0);
+    }
+
+    #[test]
     fn test_html_to_pdf_with_base64_image() {
         let dir = tempfile::tempdir().unwrap();
         let out_path = dir.path().join("out_html_img.pdf");
@@ -2226,6 +2840,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let html = r#"
@@ -2257,6 +2872,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
         let op = MarkdownToPdfOperation::new(md, out_path.clone(), options);
         let res = op.render();
@@ -2276,6 +2892,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let html = r#"
@@ -2307,6 +2924,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
 
         let html =
@@ -2334,6 +2952,7 @@ mod tests {
             custom_css: None,
             page_size: None,
             margin_mm: None,
+            orientation: None,
         };
         let op = MarkdownToPdfOperation::new(
             dir.path().join("in.md").to_string_lossy().to_string(),

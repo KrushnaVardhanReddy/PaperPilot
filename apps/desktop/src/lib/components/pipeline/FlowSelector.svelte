@@ -167,8 +167,8 @@
 
 <style>
     .flow-selector-toolbar {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--bg-surface-elevated, #0f172a);
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
         border-radius: 8px;
         padding: 8px 16px;
         display: flex;
@@ -178,6 +178,7 @@
         flex-wrap: wrap;
         position: relative;
         z-index: 10;
+        box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
     }
 
     .selector-group {
@@ -187,10 +188,10 @@
 
     .flow-select {
         width: 100%;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--bg-surface, rgba(0, 0, 0, 0.2));
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
         border-radius: 6px;
-        color: white;
+        color: var(--text-primary, white);
         padding: 0.5rem 0.75rem;
         font-family: inherit;
         font-size: 0.9rem;
@@ -205,18 +206,18 @@
     }
 
     .flow-select:focus {
-        border-color: #3b82f6;
+        border-color: var(--accent-primary, #3b82f6);
     }
 
     .flow-select optgroup {
-        background: #0f172a;
-        color: #94a3b8;
+        background: var(--bg-surface, #0f172a);
+        color: var(--text-secondary, #94a3b8);
         font-weight: 600;
     }
 
     .flow-select option {
-        background: #0f172a;
-        color: white;
+        background: var(--bg-surface, #0f172a);
+        color: var(--text-primary, white);
         font-weight: normal;
     }
 
@@ -229,14 +230,14 @@
     .divider {
         width: 1px;
         height: 24px;
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--border-color, rgba(255, 255, 255, 0.1));
         margin: 0 4px;
     }
 
     .tool-btn {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #e2e8f0;
+        background: var(--bg-surface, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        color: var(--text-primary, #e2e8f0);
         padding: 0.5rem 0.75rem;
         border-radius: 6px;
         font-size: 0.85rem;
@@ -249,8 +250,8 @@
     }
 
     .tool-btn:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
+        background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+        border-color: var(--accent-primary, rgba(255, 255, 255, 0.2));
     }
 
     .tool-btn:disabled {

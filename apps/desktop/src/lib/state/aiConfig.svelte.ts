@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { isNativeDesktop, safeInvoke } from '$lib/utils/tauri';
 
 export type AiProviderMode = 'offlinenlp' | 'llamafile' | 'universal' | 'byok';
 
@@ -40,8 +40,10 @@ export class AiConfigState {
     }
 
     async loadConfig() {
+        if (!isNativeDesktop()) return;
         try {
-            const config = await invoke<AiSettingsConfig>('get_ai_config');
+            const config = await safeInvoke('get_ai_config');
+            if (!config) return;
             this.mode = config.mode;
             this.universalEndpoint = config.universal_endpoint;
             this.byokProvider = config.byok_provider;
@@ -105,9 +107,12 @@ export class AiConfigState {
     }
 
     async loadModels() {
+        if (!isNativeDesktop()) return;
         try {
-             const models = await invoke<ModelInfo[]>('get_available_models');
-             this.availableModels = models;
+             const models = await safeInvoke('get_available_models');
+             if (models) {
+                 this.availableModels = models;
+             }
         } catch (e) {
             console.error('Failed to load available models:', e);
         }

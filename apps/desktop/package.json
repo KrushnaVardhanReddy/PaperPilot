@@ -24,10 +24,11 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.8.1",
     "@tauri-apps/plugin-opener": "^2.7.0",
+    "@xyflow/svelte": "^1.7.0",
+    "paperpilot-wasm": "file:../../paperpilot-wasm/pkg",
     "pdfjs-dist": "^6.3.289",
     "tailwindcss": "^4.3.3",
-    "xlsx": "^0.18.5",
-    "paperpilot-wasm": "file:../../paperpilot-wasm/pkg"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",

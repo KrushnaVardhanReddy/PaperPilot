@@ -32,11 +32,53 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
   if (outputFile) jsonArgs.output = output;
 
   switch (toolId) {
+    case 'pdf_posterize':
+    case 'posterize': {
+      const grid = params.grid || '2x2';
+      const sheet = params.target_sheet || 'a4';
+      const scale = params.scale || 1.0;
+      cli = `paperpilot pdf-posterize --input "${input}" --grid "${grid}" --target-sheet "${sheet}" --scale ${scale} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/posterize -F "file=@${input}" -F "grid=${grid}" -F "target_sheet=${sheet}"`;
+
+      const mcpArgs: any = { input, grid, target_sheet: sheet, scale, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_posterize", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Posterize "${input}" into a ${grid} grid of ${sheet} sheets and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_posterize', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
+    case 'pdf_nup':
+    case 'nup': {
+      const nup = params.nup || params.pages_per_sheet || 2;
+      const ordering = params.ordering || 'horizontal';
+      cli = `paperpilot nup --input "${input}" --nup ${nup} --ordering ${ordering} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/nup -F "file=@${input}" -F "nup=${nup}" -F "ordering=${ordering}"`;
+
+      const mcpArgs: any = { input, nup, ordering, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_nup", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Impose "${input}" with ${nup}-up page grid and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_nup', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
+    case 'pdf_crop':
+    case 'crop': {
+      const rect = params.rect || params.crop_box || '10,10,500,500';
+      const pagesStr = params.pages && params.pages !== 'all' ? ` --pages "${params.pages}"` : '';
+      cli = `paperpilot crop --input "${input}" --rect "${rect}"${pagesStr} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/crop -F "file=@${input}" -F "rect=${rect}"`;
+
+      const mcpArgs: any = { input, rect, output };
+      if (params.pages && params.pages !== 'all') mcpArgs.pages = params.pages;
+
+      mcpToolCall = JSON.stringify({ name: "pdf_crop", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Please crop "${input}" to rectangle "${rect}" and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_crop', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_rotate': {
       const angle = params.angle || 90;
       const pagesStr = params.pages && params.pages !== 'all' ? ` --pages "${params.pages}"` : '';
       cli = `paperpilot rotate --input "${input}" --angle ${angle}${pagesStr} --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/tools/rotate -F "file=@${input}" -F "angle=${angle}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/rotate -F "file=@${input}" -F "angle=${angle}"`;
 
       const mcpArgs: any = { input, angle, output };
       if (params.pages && params.pages !== 'all') mcpArgs.pages = params.pages;
@@ -51,7 +93,7 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       const start = params.start_number || 1;
       const padding = params.padding || 6;
       cli = `paperpilot bates --input "${input}" --prefix "${prefix}" --start ${start} --padding ${padding} --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/tools/bates -F "file=@${input}" -F "prefix=${prefix}" -F "start=${start}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/bates -F "file=@${input}" -F "prefix=${prefix}" -F "start=${start}"`;
 
       const mcpArgs = { input, prefix, start_number: start, output };
       mcpToolCall = JSON.stringify({ name: "pdf_bates", arguments: mcpArgs }, null, 2);
@@ -63,7 +105,7 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       const text = params.text || '';
       const opacity = params.opacity || 0.2;
       cli = `paperpilot watermark --input "${input}" --text "${text}" --opacity ${opacity} --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/tools/watermark -F "file=@${input}" -F "text=${text}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/watermark -F "file=@${input}" -F "text=${text}"`;
 
       const mcpArgs = { input, text, output };
       mcpToolCall = JSON.stringify({ name: "pdf_watermark", arguments: mcpArgs }, null, 2);
@@ -78,7 +120,7 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       const scan_phones = params.scan_phones !== undefined ? params.scan_phones : true;
       const scan_iban = params.scan_iban !== undefined ? params.scan_iban : true;
       cli = `paperpilot pii-scan --input "${input}" --scan-ssn ${scan_ssn} --scan-credit-cards ${scan_credit_cards} --scan-emails ${scan_emails} --scan-phones ${scan_phones} --scan-iban ${scan_iban} --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/pdf/pii-scan -H "Content-Type: application/json" -d '{"input": "${input}", "output": "${output}", "scan_ssn": ${scan_ssn}, "scan_credit_cards": ${scan_credit_cards}, "scan_emails": ${scan_emails}, "scan_phones": ${scan_phones}, "scan_iban": ${scan_iban}}'`;
+      curl = `curl -X POST http://localhost:7823/api/v1/pdf/pii-scan -H "Content-Type: application/json" -d '{"input": "${input}", "output": "${output}", "scan_ssn": ${scan_ssn}, "scan_credit_cards": ${scan_credit_cards}, "scan_emails": ${scan_emails}, "scan_phones": ${scan_phones}, "scan_iban": ${scan_iban}}'`;
 
       const mcpArgs = { input, output, scan_ssn, scan_credit_cards, scan_emails, scan_phones, scan_iban };
       mcpToolCall = JSON.stringify({ name: "document_pii_scan", arguments: mcpArgs }, null, 2);
@@ -91,7 +133,7 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       const rm_attachments = params.remove_attachments !== undefined ? params.remove_attachments : true;
       const rm_scripts = params.remove_scripts !== undefined ? params.remove_scripts : true;
       cli = `paperpilot sanitize --input "${input}" --remove-metadata ${rm_metadata} --remove-attachments ${rm_attachments} --remove-scripts ${rm_scripts} --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/pdf/sanitize -H "Content-Type: application/json" -d '{"input": "${input}", "output": "${output}", "remove_metadata": ${rm_metadata}, "remove_attachments": ${rm_attachments}, "remove_scripts": ${rm_scripts}}'`;
+      curl = `curl -X POST http://localhost:7823/api/v1/pdf/sanitize -H "Content-Type: application/json" -d '{"input": "${input}", "output": "${output}", "remove_metadata": ${rm_metadata}, "remove_attachments": ${rm_attachments}, "remove_scripts": ${rm_scripts}}'`;
 
       const mcpArgs = { input, output, remove_metadata: rm_metadata, remove_attachments: rm_attachments, remove_scripts: rm_scripts };
       mcpToolCall = JSON.stringify({ name: "pdf_sanitize", arguments: mcpArgs }, null, 2);
@@ -100,9 +142,9 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       break;
     }
     case 'pdf_encrypt': {
-      const password = params.password || params.user_password || '';
+      const password = params.password || params.user_password || 'paperpilot';
       cli = `paperpilot encrypt --input "${input}" --password "${password}" --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/tools/encrypt -F "file=@${input}" -F "password=${password}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/encrypt -F "file=@${input}" -F "password=${password}"`;
 
       const mcpArgs = { input, user_password: password, output };
       mcpToolCall = JSON.stringify({ name: "pdf_encrypt", arguments: mcpArgs }, null, 2);
@@ -110,9 +152,36 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_encrypt', ${JSON.stringify({ input, password, output })});`;
       break;
     }
+    case 'pdf_remove_blank':
+    case 'remove_blank':
+    case 'remove-blank': {
+      const sensitivity = params.sensitivity !== undefined ? params.sensitivity : 95;
+      cli = `paperpilot remove-blank --input "${input}" --sensitivity ${sensitivity} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/remove-blank -F "file=@${input}" -F "sensitivity=${sensitivity}"`;
+
+      const mcpArgs = { input, sensitivity, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_remove_blank", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Remove blank pages from "${input}" with sensitivity ${sensitivity} and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_remove_blank', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
+    case 'pdf_reorder_pages':
+    case 'reorder_pages':
+    case 'reorder': {
+      const order = params.order || '';
+      const orderArg = order ? ` --order "${order}"` : '';
+      cli = `paperpilot reorder-pages --input "${input}"${orderArg} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/reorder -F "file=@${input}" -F "order=${order}"`;
+
+      const mcpArgs = { input, order, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_reorder_pages", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Reorder pages of "${input}" to order [${order}] and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_reorder_pages', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_compress': {
       cli = `paperpilot compress --input "${input}" --quality 80 --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/tools/compress -F "file=@${input}" -F "quality=80"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/compress -F "file=@${input}" -F "quality=80"`;
 
       const mcpArgs = { input, output };
       mcpToolCall = JSON.stringify({ name: "pdf_compress", arguments: mcpArgs }, null, 2);
@@ -120,11 +189,53 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
       embedJs = `await window.PaperPilot.executeTool('pdf_compress', ${JSON.stringify(mcpArgs)});`;
       break;
     }
+    case 'pdf_images_to_pdf':
+    case 'pdf_img_to_pdf':
+    case 'img_to_pdf':
+    case 'images_to_pdf': {
+      const imgInputs = inputs && inputs.length > 0 ? inputs : [input];
+      const cliImages = imgInputs.map(f => `"${f}"`).join(' ');
+      cli = `paperpilot images-to-pdf --images ${cliImages} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/images-to-pdf ${imgInputs.map(f => `-F "files=@${f}"`).join(' ')}`;
+
+      const mcpArgs = { inputs: imgInputs, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_images_to_pdf", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Combine the following images in order: [${imgInputs.join(', ')}] into "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_images_to_pdf', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
+    case 'pdf_compare':
+    case 'compare': {
+      const docA = params.input_a || (inputs && inputs.length > 0 ? inputs[0] : input);
+      const docB = params.input_b || (inputs && inputs.length > 1 ? inputs[1] : input);
+      const outArg = output ? ` --output "${output}"` : '';
+      cli = `paperpilot compare --input "${docA}" --input-b "${docB}"${outArg}`;
+      curl = `curl -X POST http://localhost:7823/api/v1/pdf/compare -F "file_a=@${docA}" -F "file_b=@${docB}" -F "output=${output}"`;
+
+      const mcpArgs = { input_a: docA, input_b: docB, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_compare", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Compare "${docA}" against "${docB}" and save the discrepancy report to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_compare', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
+    case 'pdf_merge':
+    case 'merge': {
+      const docInputs = inputs && inputs.length > 0 ? inputs : [input];
+      const cliInputs = docInputs.map(f => `"${f}"`).join(' ');
+      cli = `paperpilot merge --input ${cliInputs} --output "${output}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/merge ${docInputs.map(f => `-F "files=@${f}"`).join(' ')}`;
+
+      const mcpArgs = { inputs: docInputs, output };
+      mcpToolCall = JSON.stringify({ name: "pdf_merge", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Merge the following documents in order: [${docInputs.join(', ')}] into "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_merge', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     default: {
       // Fallback
       const subcommand = toolId.replace('pdf_', '');
       cli = `paperpilot ${subcommand} --input "${input}" --output "${output}"`;
-      curl = `curl -X POST http://localhost:8080/api/v1/tools/${subcommand} -F "file=@${input}"`;
+      curl = `curl -X POST http://localhost:7823/api/v1/tools/${subcommand} -F "file=@${input}"`;
 
       const mcpArgs: any = { ...params };
       if (inputFile) mcpArgs.input = input;

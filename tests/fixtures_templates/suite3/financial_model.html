@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enterprise Multi-Year Consolidated Financial Model &amp; Projections</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 15mm;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.5pt;
+      color: #1a202c;
+      line-height: 1.35;
+      margin: 0;
+      padding: 0;
+    }
+    .page {
+      page-break-after: always;
+      box-sizing: border-box;
+      position: relative;
+      height: 255mm;
+      max-height: 255mm;
+      overflow: hidden;
+    }
+    .page:last-child {
+      page-break-after: avoid;
+    }
+    .header {
+      border-bottom: 2px solid #2b6cb0;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .title-block h1 {
+      font-size: 15pt;
+      color: #2b6cb0;
+      margin: 0 0 4px 0;
+      font-weight: bold;
+    }
+    .title-block p {
+      font-size: 8pt;
+      color: #718096;
+      margin: 0;
+    }
+    .meta-block {
+      text-align: right;
+      font-size: 7.5pt;
+      color: #4a5568;
+    }
+    .statement-title {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #2d3748;
+      margin-top: 10px;
+      margin-bottom: 8px;
+      border-left: 3px solid #2b6cb0;
+      padding-left: 8px;
+    }
+    table.fin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      font-size: 8pt;
+    }
+    table.fin-table th, table.fin-table td {
+      border: 1px solid #cbd5e0;
+      padding: 5px 8px;
+      text-align: right;
+    }
+    table.fin-table th:first-child, table.fin-table td:first-child {
+      text-align: left;
+    }
+    table.fin-table th {
+      background-color: #edf2f7;
+      color: #2d3748;
+      font-weight: bold;
+    }
+    table.fin-table tr.total-row {
+      background-color: #f7fafc;
+      font-weight: bold;
+      border-top: 2px solid #a0aec0;
+      border-bottom: 2px solid #a0aec0;
+    }
+    table.fin-table tr.subtotal-row {
+      background-color: #fcfcfc;
+      font-weight: bold;
+    }
+    .kpi-grid {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+    .kpi-card {
+      flex: 1;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .kpi-label {
+      font-size: 7.5pt;
+      color: #718096;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    .kpi-value {
+      font-size: 13pt;
+      color: #2b6cb0;
+      font-weight: bold;
+      margin-top: 2px;
+    }
+    .kpi-sub {
+      font-size: 7pt;
+      color: #38a169;
+      margin-top: 1px;
+    }
+    .footer-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      font-size: 7.5pt;
+      color: #718096;
+      border-top: 0.5px solid #e2e8f0;
+      padding-top: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: Consolidated Statement of Operations -->
+  <div class="page" id="page-1">
+    <div class="header">
+      <div class="title-block">
+        <h1>PaperPilot Enterprise Holdings, Inc.</h1>
+        <p>Three-Year Consolidated Financial Model &amp; Operational Forecast (FY2022 - FY2024)</p>
+      </div>
+      <div class="meta-block">
+        <div><strong>Filing Code:</strong> 10-K / GAAP-Compliant</div>
+        <div><strong>Currency:</strong> USD ($ Thousands)</div>
+        <div><strong>Reporting Date:</strong> November 2026</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Gross Revenue (FY24)</div>
+        <div class="kpi-value">$21,300,000</div>
+        <div class="kpi-sub">+34.8% YoY Expansion</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Gross Margin (FY24)</div>
+        <div class="kpi-value">71.36%</div>
+        <div class="kpi-sub">+428 bps Margin Gain</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Operating EBIT</div>
+        <div class="kpi-value">$6,200,000</div>
+        <div class="kpi-sub">29.11% Operating Margin</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Net Profit (GAAP)</div>
+        <div class="kpi-value">$4,898,000</div>
+        <div class="kpi-sub">+53.1% YoY Net Growth</div>
+      </div>
+    </div>
+
+    <div class="statement-title">Consolidated Statement of Operations &amp; Income Performance</div>
+    <table class="fin-table">
+      <thead>
+        <tr>
+          <th>FinancialMetric</th>
+          <th>FY2022</th>
+          <th>FY2023</th>
+          <th>FY2024</th>
+          <th>GrowthRate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>GrossRevenue</td>
+          <td>12450000</td>
+          <td>15800000</td>
+          <td>21300000</td>
+          <td>+34.8%</td>
+        </tr>
+        <tr>
+          <td>SubscriptionRevenue</td>
+          <td>9850000</td>
+          <td>13200000</td>
+          <td>18400000</td>
+          <td>+39.4%</td>
+        </tr>
+        <tr>
+          <td>ProfessionalServices</td>
+          <td>2600000</td>
+          <td>2600000</td>
+          <td>2900000</td>
+          <td>+11.5%</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>CostOfGoodsSold</td>
+          <td>4100000</td>
+          <td>4950000</td>
+          <td>6100000</td>
+          <td>+23.2%</td>
+        </tr>
+        <tr class="total-row">
+          <td>GrossProfit</td>
+          <td>8350000</td>
+          <td>10850000</td>
+          <td>15200000</td>
+          <td>+40.1%</td>
+        </tr>
+        <tr>
+          <td>ResearchAndDevelopment</td>
+          <td>1850000</td>
+          <td>2350000</td>
+          <td>3100000</td>
+          <td>+31.9%</td>
+        </tr>
+        <tr>
+          <td>SalesAndMarketing</td>
+          <td>2450000</td>
+          <td>3100000</td>
+          <td>4200000</td>
+          <td>+35.5%</td>
+        </tr>
+        <tr>
+          <td>GeneralAndAdministrative</td>
+          <td>1100000</td>
+          <td>1350000</td>
+          <td>1700000</td>
+          <td>+25.9%</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>OperatingExpenses</td>
+          <td>5400000</td>
+          <td>6800000</td>
+          <td>9000000</td>
+          <td>+32.4%</td>
+        </tr>
+        <tr class="total-row">
+          <td>OperatingIncome</td>
+          <td>2950000</td>
+          <td>4050000</td>
+          <td>6200000</td>
+          <td>+53.1%</td>
+        </tr>
+        <tr>
+          <td>IncomeTaxProvision</td>
+          <td>619500</td>
+          <td>850500</td>
+          <td>1302000</td>
+          <td>+53.1%</td>
+        </tr>
+        <tr class="total-row">
+          <td>NetIncome</td>
+          <td>2330500</td>
+          <td>3199500</td>
+          <td>4898000</td>
+          <td>+53.1%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer-bar">
+      <span>PaperPilot Enterprise Financial Disclosures &bull; SEC EDGAR Format</span>
+      <span>Page 1 of 3</span>
+    </div>
+  </div>
+
+  <!-- PAGE 2: Consolidated Balance Sheets -->
+  <div class="page" id="page-2">
+    <div class="header">
+      <div class="title-block">
+        <h1>PaperPilot Enterprise Holdings, Inc.</h1>
+        <p>Three-Year Consolidated Balance Sheets &amp; Capital Structure</p>
+      </div>
+      <div class="meta-block">
+        <div><strong>Statement:</strong> Balance Sheets</div>
+        <div><strong>Audited:</strong> True (Clean Opinion)</div>
+        <div><strong>Fiscal Period:</strong> December 31 End</div>
+      </div>
+    </div>
+
+    <div class="statement-title">Consolidated Balance Sheet Statement (Assets, Liabilities &amp; Equity)</div>
+    <table class="fin-table">
+      <thead>
+        <tr>
+          <th>BalanceSheetItem</th>
+          <th>FY2022</th>
+          <th>FY2023</th>
+          <th>FY2024</th>
+          <th>CapitalShare</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CashAndEquivalents</td>
+          <td>8450000</td>
+          <td>11200000</td>
+          <td>16500000</td>
+          <td>48.2%</td>
+        </tr>
+        <tr>
+          <td>ShortTermInvestments</td>
+          <td>2100000</td>
+          <td>3400000</td>
+          <td>5200000</td>
+          <td>15.2%</td>
+        </tr>
+        <tr>
+          <td>AccountsReceivable</td>
+          <td>1450000</td>
+          <td>1950000</td>
+          <td>2650000</td>
+          <td>7.7%</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>TotalCurrentAssets</td>
+          <td>12000000</td>
+          <td>16550000</td>
+          <td>24350000</td>
+          <td>71.1%</td>
+        </tr>
+        <tr>
+          <td>PropertyAndEquipment</td>
+          <td>3200000</td>
+          <td>4100000</td>
+          <td>5500000</td>
+          <td>16.1%</td>
+        </tr>
+        <tr>
+          <td>CapitalizedSoftwareRND</td>
+          <td>2100000</td>
+          <td>2900000</td>
+          <td>4400000</td>
+          <td>12.8%</td>
+        </tr>
+        <tr class="total-row">
+          <td>TotalAssets</td>
+          <td>17300000</td>
+          <td>23550000</td>
+          <td>34250000</td>
+          <td>100.0%</td>
+        </tr>
+        <tr>
+          <td>AccountsPayable</td>
+          <td>820000</td>
+          <td>1100000</td>
+          <td>1450000</td>
+          <td>4.2%</td>
+        </tr>
+        <tr>
+          <td>DeferredSubscriptionRevenue</td>
+          <td>2450000</td>
+          <td>3800000</td>
+          <td>5600000</td>
+          <td>16.3%</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>TotalCurrentLiabilities</td>
+          <td>3270000</td>
+          <td>4900000</td>
+          <td>7050000</td>
+          <td>20.6%</td>
+        </tr>
+        <tr>
+          <td>LongTermLiabilities</td>
+          <td>1200000</td>
+          <td>1000000</td>
+          <td>800000</td>
+          <td>2.3%</td>
+        </tr>
+        <tr class="total-row">
+          <td>TotalLiabilities</td>
+          <td>4470000</td>
+          <td>5900000</td>
+          <td>7850000</td>
+          <td>22.9%</td>
+        </tr>
+        <tr>
+          <td>CommonStockAndAdditionalPaidIn</td>
+          <td>8500000</td>
+          <td>8500000</td>
+          <td>8500000</td>
+          <td>24.8%</td>
+        </tr>
+        <tr>
+          <td>RetainedEarnings</td>
+          <td>4330000</td>
+          <td>9150000</td>
+          <td>17900000</td>
+          <td>52.3%</td>
+        </tr>
+        <tr class="total-row">
+          <td>TotalStockholdersEquity</td>
+          <td>12830000</td>
+          <td>17650000</td>
+          <td>26400000</td>
+          <td>77.1%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer-bar">
+      <span>PaperPilot Enterprise Financial Disclosures &bull; SEC EDGAR Format</span>
+      <span>Page 2 of 3</span>
+    </div>
+  </div>
+
+  <!-- PAGE 3: Statement of Cash Flows & Unit Economics -->
+  <div class="page" id="page-3">
+    <div class="header">
+      <div class="title-block">
+        <h1>PaperPilot Enterprise Holdings, Inc.</h1>
+        <p>Consolidated Statement of Cash Flows &amp; Unit Economics</p>
+      </div>
+      <div class="meta-block">
+        <div><strong>Statement:</strong> Cash Flows &amp; Metrics</div>
+        <div><strong>Free Cash Flow:</strong> Positive</div>
+        <div><strong>Method:</strong> Indirect Cash Method</div>
+      </div>
+    </div>
+
+    <div class="statement-title">Consolidated Statement of Cash Flows (Operating, Investing &amp; Financing)</div>
+    <table class="fin-table">
+      <thead>
+        <tr>
+          <th>CashFlowSegment</th>
+          <th>FY2022</th>
+          <th>FY2023</th>
+          <th>FY2024</th>
+          <th>NetChange</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>OperatingCashFlow</td>
+          <td>3450000</td>
+          <td>4850000</td>
+          <td>7650000</td>
+          <td>+57.7%</td>
+        </tr>
+        <tr>
+          <td>DepreciationAndAmortization</td>
+          <td>550000</td>
+          <td>720000</td>
+          <td>950000</td>
+          <td>+31.9%</td>
+        </tr>
+        <tr>
+          <td>StockBasedCompensation</td>
+          <td>320000</td>
+          <td>450000</td>
+          <td>650000</td>
+          <td>+44.4%</td>
+        </tr>
+        <tr>
+          <td>CapitalExpendituresCapEx</td>
+          <td>-850000</td>
+          <td>-1100000</td>
+          <td>-1450000</td>
+          <td>+31.8%</td>
+        </tr>
+        <tr class="total-row">
+          <td>FreeCashFlow</td>
+          <td>2600000</td>
+          <td>3750000</td>
+          <td>6200000</td>
+          <td>+65.3%</td>
+        </tr>
+        <tr>
+          <td>InvestingCashFlow</td>
+          <td>-1250000</td>
+          <td>-1650000</td>
+          <td>-2250000</td>
+          <td>+36.4%</td>
+        </tr>
+        <tr>
+          <td>FinancingCashFlow</td>
+          <td>-200000</td>
+          <td>-250000</td>
+          <td>-300000</td>
+          <td>+20.0%</td>
+        </tr>
+        <tr class="total-row">
+          <td>NetIncreaseInCash</td>
+          <td>2000000</td>
+          <td>2950000</td>
+          <td>5100000</td>
+          <td>+72.9%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="statement-title">SaaS Operational Unit Economics &amp; Customer Retention Invariants</div>
+    <table class="fin-table">
+      <thead>
+        <tr>
+          <th>OperationalCohort</th>
+          <th>EnterpriseTier</th>
+          <th>MidMarketTier</th>
+          <th>SMBTier</th>
+          <th>BlendedTotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AnnualContractValueACV</td>
+          <td>$125,000</td>
+          <td>$36,000</td>
+          <td>$8,400</td>
+          <td>$48,500</td>
+        </tr>
+        <tr>
+          <td>ActiveCustomerAccounts</td>
+          <td>85</td>
+          <td>240</td>
+          <td>780</td>
+          <td>1,105</td>
+        </tr>
+        <tr>
+          <td>NetRevenueRetentionNRR</td>
+          <td>138%</td>
+          <td>122%</td>
+          <td>108%</td>
+          <td>126%</td>
+        </tr>
+        <tr>
+          <td>CustomerAcquisitionCostCAC</td>
+          <td>$24,000</td>
+          <td>$9,500</td>
+          <td>$2,100</td>
+          <td>$6,800</td>
+        </tr>
+        <tr class="total-row">
+          <td>LTVToCACRatio</td>
+          <td>8.4x</td>
+          <td>6.2x</td>
+          <td>4.8x</td>
+          <td>6.9x</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer-bar">
+      <span>PaperPilot Enterprise Financial Disclosures &bull; SEC EDGAR Format</span>
+      <span>Page 3 of 3</span>
+    </div>
+  </div>
+
+</body>
+</html>

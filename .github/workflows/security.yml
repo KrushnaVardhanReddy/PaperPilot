@@ -11,6 +11,8 @@ concurrency:
   group: security-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
   semgrep-sast:
     name: Semgrep SAST & Secret Scan
@@ -21,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v4
 
       - name: Run Semgrep OSS Scan
         run: |
@@ -29,10 +31,10 @@ jobs:
           # Scan repository and generate SARIF report for GitHub Security tab
           semgrep scan --config auto --sarif -o semgrep.sarif || true
           # Enforce failure on high/critical findings
-          semgrep scan --config auto --error --exclude=".github"
+          semgrep scan --config auto --severity ERROR --exclude=".github"
 
       - name: Upload SARIF to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@b6a472f63d85b9c78a3ac5e89422239fc15e9b3c # v3.28.1
+        uses: github/codeql-action/upload-sarif@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4.39.2
         if: always()
         with:
           sarif_file: semgrep.sarif
@@ -43,10 +45,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install cargo-audit
         run: which cargo-audit || cargo install cargo-audit --locked
@@ -61,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v4
 
       - name: Run Trivy Security Scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

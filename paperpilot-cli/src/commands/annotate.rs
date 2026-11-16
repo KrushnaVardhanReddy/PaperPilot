@@ -21,14 +21,36 @@ pub fn handle_annotate(input: &Path, data: &Path, output: &Path) -> OperationRes
         }
     };
 
-    let annotations: Vec<AnnotationParams> =
-        serde_json::from_str(&data_str).map_err(|e| PdfError::InvalidInput(e.to_string()))?;
+    let mut op = AnnotateOperation::new();
+    if let Ok(rules) = serde_json::from_str::<Vec<paperpilot_pdf::operations::annotate::AnnotationRule>>(&data_str) {
+        if rules.iter().any(|r| r.search.is_some() || r.regex.is_some() || r.rect.is_some()) {
+            op = op.with_rules(rules);
+        } else if let Ok(annotations) = serde_json::from_str::<Vec<AnnotationParams>>(&data_str) {
+            op = op.with_annotations(annotations);
+        } else {
+            op = op.with_rules(rules);
+        }
+    } else if let Ok(annotations) = serde_json::from_str::<Vec<AnnotationParams>>(&data_str) {
+        op = op.with_annotations(annotations);
+    } else if let Ok(obj) = serde_json::from_str::<serde_json::Value>(&data_str) {
+        if let Some(rules_val) = obj.get("rules") {
+            let rules: Vec<paperpilot_pdf::operations::annotate::AnnotationRule> =
+                serde_json::from_value(rules_val.clone()).map_err(|e| PdfError::InvalidInput(e.to_string()))?;
+            op = op.with_rules(rules);
+        }
+        if let Some(annots_val) = obj.get("annotations") {
+            let annots: Vec<AnnotationParams> =
+                serde_json::from_value(annots_val.clone()).map_err(|e| PdfError::InvalidInput(e.to_string()))?;
+            op = op.with_annotations(annots);
+        }
+    } else {
+        return Err(PdfError::InvalidInput(
+            "Failed to parse annotations or rules from JSON".to_string(),
+        ));
+    }
 
     let mut doc = LopdfDocument::load(input)?;
-    let op = AnnotateOperation::new().with_annotations(annotations);
-
     op.execute(&mut doc.inner)?;
-
     doc.save(output)
 }
 

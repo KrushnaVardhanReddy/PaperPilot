@@ -1,0 +1,83 @@
+# Task: Wave 7 (Conversions, Inversions & Packaging) Real Unmocked Penta-Interface Audit
+# Target Branch: feat/unmocked-e2e-parallel-waves
+# Priority: HIGH
+
+Hey Jules! We have established real tests for Wave 1, Wave 2, and Wave 4 (refer to `tests/e2e/test_wave2_penta_interface.rs` and `wiki/09-Wave-2-Penta-Testing.md`). Now, we need the exact same unmocked real test coverage across ALL 5 INTERFACES for **Wave 7: Conversions, Transformations & Document Packaging**.
+
+---
+
+## STRICT MANDATES FOR JULES (CRITICAL):
+1. **AUDIT & TEST ONLY — DO NOT ATTEMPT TO FIX CODE**:
+   - Your sole responsibility is to write and execute the test harness against real fixtures and document the results.
+   - If a tool fails on any interface, returns an error, or encounters a defect:
+     - **DO NOT MODIFY** any production code in `paperpilot-pdf`, `paperpilot-core`, `paperpilot-gateway`, or `paperpilot-mcp`.
+     - **DO NOT ATTEMPT TO FIX** the underlying business logic.
+     - Simply record the failure, exit code, and error message into the test output and the markdown audit report in `reports/` and `wiki/`. In subsequent sessions, human engineers will address the defects.
+2. **STRICT FILE OWNERSHIP (ZERO MERGE CONFLICTS)**:
+   You may **ONLY** create and touch these files:
+   ```
+   tests/e2e/test_wave7_penta_interface.rs
+   reports/WAVE_7_CONVERSIONS_PENTA_SCORECARD.md
+   wiki/37-Wave-7-Conversions-Penta-Testing.md
+   ```
+   - **DO NOT touch** `Cargo.toml`, `Makefile`, or any crate source files.
+3. Commit message MUST start with `jules: ` prefix (e.g. `jules: add Wave 7 conversions penta-interface unmocked audit suite`).
+
+---
+
+## Reference Implementation to Follow
+- Study `tests/e2e/test_wave2_penta_interface.rs` as the exact blueprint:
+  - CLI: `run_cli(&[...])` testing real `paperpilot` binary.
+  - MCP: `call_mcp_tool(tool_id, payload)` testing in-memory MCP server.
+  - REST API: `run_api(endpoint, payload)` testing live `paperpilot-gateway` HTTP server.
+  - Validates output file existence, non-zero size, and format headers.
+- Real fixtures are located at:
+  - `fixtures/Get_Started_With_Smallpdf.pdf`
+  - `tests/e2e_fixtures/real/test.xlsx`
+  - `tests/e2e_fixtures/real/test.csv`
+  - `tests/e2e_fixtures/real/json_doc.json`
+  - `tests/e2e_fixtures/real/single_page.pdf`
+
+---
+
+## Step 1: Implement `tests/e2e/test_wave7_penta_interface.rs`
+Create `tests/e2e/test_wave7_penta_interface.rs`:
+Follow `tests/e2e/test_wave2_penta_interface.rs` to audit the 13 Conversion, Transformation & Packaging tools across interfaces:
+1. `pdf_to_html`
+2. `pdf_to_markdown`
+3. `pdf_to_json`
+4. `json_to_pdf`
+5. `pdf_to_epub`
+6. `pdf_to_pdf_a`
+7. `pdf_comic_archive`
+8. `excel_to_json`
+9. `excel_to_csv`
+10. `pdf_dedup_streams`
+11. `pdf_invert_colors`
+12. `pdf_linearize`
+13. `pdf_repair`
+
+For each tool, test:
+- **CLI**: Execute command and verify output.
+- **MCP**: Execute tool call and verify response and output file.
+- **API**: Execute HTTP request against gateway and verify response.
+- **WASM & Desktop**: Record status in scorecard.
+
+If any test fails, record `passed = false` and continue so all tools are thoroughly audited without crashing.
+
+---
+
+## Step 2: Generate Reports
+1. **`reports/WAVE_7_CONVERSIONS_PENTA_SCORECARD.md`**:
+   - Table with Tool Name, Interface (CLI, MCP, API, WASM, Desktop), Latency (ms), Output Size (bytes), Status (✅ PASS / ❌ FAIL), and error notes.
+2. **`wiki/37-Wave-7-Conversions-Penta-Testing.md`**:
+   - Living tester documentation with copy-pasteable CLI commands, MCP JSON-RPC payloads, and REST curl commands.
+
+---
+
+## Step 3: Verification
+Run:
+```bash
+cargo test --test test_wave7_penta_interface -j 2 -- --nocapture
+```
+Confirm the audit executes and generates the scorecard.

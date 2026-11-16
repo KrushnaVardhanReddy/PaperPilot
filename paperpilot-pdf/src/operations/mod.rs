@@ -1,3 +1,4 @@
+pub mod batch_fill;
 pub mod annotate;
 pub mod bates;
 pub mod bookmarks;
@@ -10,12 +11,14 @@ pub mod conversion;
 pub mod crop;
 pub mod decrypt;
 pub mod delete;
+pub mod document_inspection;
 pub mod encrypt;
 pub mod extract;
 pub mod extract_images;
 pub mod extract_text;
 pub mod flatten;
 pub mod form;
+pub mod form_fill;
 pub mod hash;
 pub mod header_footer;
 pub mod images_to_pdf;
@@ -48,6 +51,8 @@ pub mod rag_chunks;
 pub mod redact;
 pub mod render;
 pub mod reorder;
+pub mod receipts;
+pub mod output_naming;
 pub mod repair;
 pub mod rotate;
 pub mod sanitize;
@@ -59,8 +64,13 @@ pub mod validate;
 pub mod watermark;
 pub mod workflow;
 
-pub use pii::scan_pii;
+pub use pdf_extract_patterns::{
+    extract_patterns, extract_patterns_path, extract_patterns_source, pdf_extract_patterns_path,
+    pdf_extract_patterns_source,
+};
+pub use pii::{scan_pii, scan_pii_path, scan_pii_source};
 pub use sanitize::sanitize_pdf;
+pub use search::{search_pdf_bytes, search_pdf_path, search_pdf_source};
 pub use table::extract_tables_bytes;
 pub use workflow::run_workflow_bytes;
 pub mod pdf_dedup_streams;
@@ -68,4 +78,14 @@ pub mod pdf_invert_colors;
 pub mod pdf_merge_alternate;
 pub mod pdf_posterize;
 pub mod pdf_split_by_outline;
+pub mod pdf_to_epub;
 pub use pdf_invert_colors::{InvertColorsOptions, InvertMode, invert_pdf_colors};
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod watch;
+pub mod pdf_extract_patterns;
+pub mod pdf_chunk;
+pub use pdf_chunk::{
+    chunk_pdf_bytes, chunk_pdf_path, chunk_pdf_source, pdf_chunk_bytes, ChunkOptions, ChunkResult,
+    DocumentChunk, PdfChunkOperation,
+};

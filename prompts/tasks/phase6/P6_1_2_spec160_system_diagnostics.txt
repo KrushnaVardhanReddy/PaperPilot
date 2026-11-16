@@ -1,0 +1,90 @@
+# Task 6.1.2: Spec 160 — System Diagnostics Engine (`paperpilot doctor`)
+
+## Goal
+Implement Spec 160 to provide comprehensive environment and system diagnostics across CLI, REST Gateway, and Desktop UI.
+
+## Architecture Boundaries
+- `crates/paperpilot-core/src/diagnostics.rs` (new diagnostic probes)
+- `crates/paperpilot-core/src/lib.rs` (export diagnostics module)
+- `paperpilot-cli/src/commands/doctor.rs` (new CLI subcommand)
+- `paperpilot-cli/src/cli.rs` (register Doctor command)
+- `paperpilot-gateway/src/handlers.rs` (add `GET /health` and `GET /api/v1/doctor`)
+- `apps/desktop/src/lib/components/settings/SystemDoctorModal.svelte` (new UI diagnostic view)
+
+---
+
+## Detailed Implementation Steps
+
+### 1. Diagnostics Probe Module (`paperpilot-core/src/diagnostics.rs`)
+Implement `SystemDiagnostic` struct and probes:
+```rust
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiagnosticReport {
+    pub timestamp: String,
+    pub status: HealthStatus,
+    pub checks: Vec<CheckResult>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum HealthStatus {
+    Healthy,
+    Degraded,
+    Unhealthy,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CheckResult {
+    pub name: String,
+    pub passed: bool,
+    pub message: String,
+    pub suggestion: Option<String>,
+}
+
+pub fn run_diagnostics() -> DiagnosticReport {
+    let mut checks = Vec::new();
+    // 1. Temp Directory write & delete probe
+    // 2. Gateway port 7823 availability probe
+    // 3. OCR model weights presence probe (models/ocr/ppocrv4 or PAPERPILOT_OCR_MODELS_DIR)
+    // 4. Free disk space probe
+    // ...
+}
+```
+
+### 2. CLI `paperpilot doctor` Command (`paperpilot-cli/src/commands/doctor.rs`)
+- Render ANSI-colored checklist:
+  - `[✓] Temp Directory: /tmp (writable & ephemeral cleanup verified)`
+  - `[✓] OCR Models: models/ocr/ppocrv4 (det.onnx, rec.onnx found)`
+  - `[✓] Gateway Port: 7823 available`
+  - `[✓] Disk Space: > 5 GB available`
+- Support `--json` flag to emit raw `DiagnosticReport` as JSON.
+
+### 3. Gateway Health & Diagnostics Endpoints (`paperpilot-gateway`)
+- `GET /health`: Fast 200 OK lightweight probe `{"status": "ok", "version": "1.0.0"}`.
+- `GET /api/v1/doctor`: Executes `run_diagnostics()` and returns full `DiagnosticReport`.
+
+### 4. Desktop Diagnostics Panel
+- Add "Run Diagnostics" button in Settings that opens `SystemDoctorModal.svelte`, displaying real-time probe statuses with green/amber/red indicators.
+
+---
+
+## 🔒 Post-Validation Checks (MANDATORY)
+1. Verify workspace compilation:
+   ```bash
+   cargo check --workspace --all-targets -j 4
+   ```
+2. Verify unit tests for diagnostics probe:
+   ```bash
+   cargo test -p paperpilot-core diagnostics -j 4
+   ```
+3. Verify CLI execution:
+   ```bash
+   cargo run -p paperpilot-cli -- doctor
+   cargo run -p paperpilot-cli -- doctor --json
+   ```
+4. Verify gateway endpoints compile cleanly:
+   ```bash
+   cargo check -p paperpilot-gateway -j 4
+   ```

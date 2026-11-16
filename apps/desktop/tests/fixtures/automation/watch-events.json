@@ -1,0 +1,64 @@
+[
+  {
+    "error": null,
+    "file": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\initial.pdf",
+    "kind": "file_processed",
+    "output": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\initial.pdf",
+    "receipt": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\initial.pdf.receipt.json",
+    "watcher": {
+      "directory": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi",
+      "failed": 0,
+      "id": "qa",
+      "last_error": null,
+      "last_output": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\initial.pdf",
+      "last_processed_at": "2026-10-29T05:20:31.366881900+00:00",
+      "last_processed_file": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\initial.pdf",
+      "last_receipt": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\initial.pdf.receipt.json",
+      "output_dir": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed",
+      "recipe_name": "Desktop QA",
+      "run_id": 2,
+      "status": "watching",
+      "succeeded": 1
+    }
+  },
+  {
+    "error": null,
+    "file": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\arrived.pdf",
+    "kind": "file_processed",
+    "output": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\arrived.pdf",
+    "receipt": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\arrived.pdf.receipt.json",
+    "watcher": {
+      "directory": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi",
+      "failed": 0,
+      "id": "qa",
+      "last_error": null,
+      "last_output": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\arrived.pdf",
+      "last_processed_at": "2026-10-29T05:20:31.499114100+00:00",
+      "last_processed_file": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\arrived.pdf",
+      "last_receipt": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\arrived.pdf.receipt.json",
+      "output_dir": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed",
+      "recipe_name": "Desktop QA",
+      "run_id": 2,
+      "status": "watching",
+      "succeeded": 2
+    }
+  },
+  {
+    "kind": "stopped",
+    "watcher": {
+      "directory": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi",
+      "failed": 0,
+      "id": "qa",
+      "last_error": null,
+      "last_output": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\arrived.pdf",
+      "last_processed_at": "2026-10-29T05:20:31.499114100+00:00",
+      "last_processed_file": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\arrived.pdf",
+      "last_receipt": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed\\arrived.pdf.receipt.json",
+      "output_dir": "\\\\?\\D:\\building\\.paperpilot-tools\\fill-batch-tmp\\.tmpJeteFi\\processed",
+      "recipe_name": "Desktop QA",
+      "run_id": 2,
+      "status": "stopped",
+      "succeeded": 2
+    }
+  }
+]

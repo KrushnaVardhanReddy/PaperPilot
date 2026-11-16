@@ -26,4 +26,21 @@ pub struct Cli {
     /// Format payload and display target without making network call
     #[arg(long)]
     pub dry_run: bool,
+
+    /// Target agent engine ('jules' for remote cloud session, 'gemini' / 'agy' for local pair programmer)
+    #[arg(long, default_value = "jules")]
+    pub agent: String,
+
+    /// Interactive mode for local agent (launches agy in interactive pair programming session)
+    #[arg(long)]
+    pub interactive: bool,
+
+    /// Include SYSTEM_PROMPT.md standards at the beginning of prompt (default: true for Jules, optional for Gemini)
+    #[arg(long)]
+    pub system_prompt: bool,
+
+    /// Explicitly exclude SYSTEM_PROMPT.md / SAFETY_RULES.md from the prompt
+    #[arg(long)]
+    pub no_system_prompt: bool,
 }
+

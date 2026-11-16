@@ -6,7 +6,6 @@ use axum::{
     },
 };
 use futures::stream::Stream;
-use paperpilot_mcp::server::PaperPilotMcpServer;
 use rmcp::model::{CallToolRequestParams, CallToolResponse};
 use serde::Deserialize;
 use serde_json::Value;
@@ -19,7 +18,7 @@ pub struct SessionQuery {
     session_id: Option<String>,
 }
 
-pub async fn sse_handler() -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+pub async fn sse_handler(axum::extract::State(_registry): axum::extract::State<crate::server::WatcherRegistry>) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let session_id = uuid::Uuid::new_v4().to_string();
 
     let stream = tokio_stream::iter(vec![Ok(Event::default()
@@ -34,6 +33,7 @@ pub async fn sse_handler() -> Sse<impl Stream<Item = Result<Event, Infallible>>>
 }
 
 pub async fn messages_handler(
+    axum::extract::State(registry): axum::extract::State<crate::server::WatcherRegistry>,
     Query(_query): Query<SessionQuery>,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
@@ -53,7 +53,7 @@ pub async fn messages_handler(
         req.name = name.into();
         req.arguments = args;
 
-        match PaperPilotMcpServer::execute_call_tool(req) {
+        match paperpilot_mcp::server::PaperPilotMcpServer::new(Some(std::sync::Arc::new(crate::server::WatcherRegistryAdapter(registry)))).execute_call_tool(req) {
             Ok(CallToolResponse::Complete(result)) => {
                 return Json(serde_json::json!({
                     "jsonrpc": "2.0",
@@ -102,7 +102,7 @@ pub async fn messages_handler(
             }
         }));
     } else if payload.get("method").and_then(|m| m.as_str()) == Some("tools/list") {
-        let tools_result = PaperPilotMcpServer::execute_list_tools().unwrap();
+        let tools_result = paperpilot_mcp::server::PaperPilotMcpServer::new(Some(std::sync::Arc::new(crate::server::WatcherRegistryAdapter(registry)))).execute_list_tools().unwrap();
         let tools_list: Vec<_> = tools_result
             .tools
             .into_iter()

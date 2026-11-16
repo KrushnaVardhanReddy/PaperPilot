@@ -2,12 +2,16 @@
 .env.*
 target/
 node_modules/
+.pnpm-store/
 dist/
 dist-portable/
 build/
 *.pdf
 !tests/fixtures/*.pdf
 !paperpilot-pdf/tests/fixtures/*.pdf
+!reports/fill-batch-validation/template.pdf
+!reports/fill-batch-validation/filled-flattened.pdf
+!reports/fill-batch-validation/filled-editable.pdf
 pricing_strategy.md
 COMPETITORS.md
 v1_launch_plan.md
@@ -41,6 +45,8 @@ update_*.py
 !tools/slm-training/*.py
 !docs/integrations/open_webui_tool.py
 *.sh
+!scripts/gen_corpus_suite1.sh
+!scripts/gen_corpus_suite2.sh
 run_tests.sh
 parse_test.rs
 apps/desktop/src-tauri/gen/android/.gradle/
@@ -59,3 +65,13 @@ wiki/vault/
 # Local Strategy & Security Scan Reports
 pricing_strategy.md
 semgrep_report.json
+
+# Public synthetic evidence for the conditional workflow engine.
+!reports/conditional-workflow-validation/text.pdf
+!reports/conditional-workflow-validation/scan-jpeg.pdf
+!reports/conditional-workflow-validation/text-output.pdf
+!reports/conditional-workflow-validation/scan-jpeg-output.pdf
+
+# Complete synthetic PDFs for desktop native automation and smart-filter tests.
+!apps/desktop/tests/fixtures/automation/*.pdf
+LINKEDIN_POST_V0.7.0.md

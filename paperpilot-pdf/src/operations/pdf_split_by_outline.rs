@@ -177,24 +177,6 @@ pub fn pdf_split_by_outline_bytes(
 ) -> Result<Vec<u8>, PdfError> {
     let doc = Document::load_mem(input_bytes).map_err(|e| PdfError::Other(e.to_string()))?;
 
-    let catalog = doc.catalog().map_err(|e| PdfError::Other(e.to_string()))?;
-    let outlines_ref = match catalog.get(b"Outlines").and_then(Object::as_reference) {
-        Ok(r) => r,
-        Err(_) => {
-            return Err(PdfError::Other(
-                "No bookmarks (/Outlines) found".to_string(),
-            ));
-        }
-    };
-
-    let outlines_dict = doc
-        .get_dictionary(outlines_ref)
-        .map_err(|e| PdfError::Other(e.to_string()))?;
-    let first_ref = match outlines_dict.get(b"First").and_then(Object::as_reference) {
-        Ok(r) => r,
-        Err(_) => return Err(PdfError::Other("Bookmarks outline is empty".to_string())),
-    };
-
     let pages = doc.get_pages();
     if pages.is_empty() {
         return Err(PdfError::Other("Document has no pages".to_string()));
@@ -211,25 +193,42 @@ pub fn pdf_split_by_outline_bytes(
     let max_depth = options.max_depth.unwrap_or(1);
 
     let mut sections = Vec::new();
-    traverse_outlines(&doc, first_ref, 1, max_depth, &page_to_index, &mut sections)?;
 
-    if sections.is_empty() {
-        return Err(PdfError::Other(
-            "No valid bookmarks with page destinations found".to_string(),
-        ));
+    // Check if we have valid outlines
+    let catalog = doc.catalog().map_err(|e| PdfError::Other(e.to_string()))?;
+    let mut has_valid_outlines = false;
+
+    if let Ok(outlines_ref) = catalog.get(b"Outlines").and_then(Object::as_reference) {
+        if let Ok(outlines_dict) = doc.get_dictionary(outlines_ref) {
+            if let Ok(first_ref) = outlines_dict.get(b"First").and_then(Object::as_reference) {
+                traverse_outlines(&doc, first_ref, 1, max_depth, &page_to_index, &mut sections)?;
+                has_valid_outlines = !sections.is_empty();
+            }
+        }
     }
 
-    sections.sort_by_key(|s| s.start_page);
+    // Fallback to single page split
+    if !has_valid_outlines {
+        for page_idx in 1..=total_pages {
+            sections.push(OutlineSectionResult {
+                title: format!("Page_{}", page_idx),
+                start_page: page_idx,
+                end_page: page_idx,
+            });
+        }
+    } else {
+        sections.sort_by_key(|s| s.start_page);
 
-    for i in 0..sections.len() {
-        let next_start = if i + 1 < sections.len() {
-            sections[i + 1].start_page
-        } else {
-            total_pages + 1
-        };
+        for i in 0..sections.len() {
+            let next_start = if i + 1 < sections.len() {
+                sections[i + 1].start_page
+            } else {
+                total_pages + 1
+            };
 
-        let end_page = next_start.saturating_sub(1);
-        sections[i].end_page = std::cmp::max(sections[i].start_page, end_page);
+            let end_page = next_start.saturating_sub(1);
+            sections[i].end_page = std::cmp::max(sections[i].start_page, end_page);
+        }
     }
 
     // Process ZIP
@@ -342,6 +341,7 @@ impl PdfOperation for PdfSplitByOutlineOperation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use lopdf::dictionary;
 
     #[test]
     fn test_sanitize_filename() {
@@ -385,8 +385,10 @@ mod tests {
 
         let options = PdfSplitByOutlineOptions::default();
         let result = pdf_split_by_outline_bytes(&bytes, &options);
+
+        // Document has no pages, should fail with standard error
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("No bookmarks"));
+        assert!(result.unwrap_err().to_string().contains("Document has no pages"));
     }
 
     #[test]
@@ -412,5 +414,62 @@ mod tests {
             assert_eq!(file_names[1], "02_Chapter 2.pdf");
             assert_eq!(file_names[2], "03_Chapter 3.pdf");
         }
+    }
+
+    #[test]
+    fn test_pdf_split_by_outline_fallback() {
+        let mut inner = Document::with_version("1.5");
+        let pages_id = inner.new_object_id();
+
+        // Add two pages to test the fallback works and splits by page
+        let page1_id = inner.add_object(dictionary! {
+            "Type" => "Page",
+            "Parent" => pages_id,
+        });
+
+        let page2_id = inner.add_object(dictionary! {
+            "Type" => "Page",
+            "Parent" => pages_id,
+        });
+
+        let mut pages_dict = lopdf::Dictionary::new();
+        pages_dict.set("Type", lopdf::Object::Name(b"Pages".to_vec()));
+        pages_dict.set("Kids", lopdf::Object::Array(vec![
+            lopdf::Object::Reference(page1_id),
+            lopdf::Object::Reference(page2_id)
+        ]));
+        pages_dict.set("Count", lopdf::Object::Integer(2));
+        inner.set_object(pages_id, pages_dict);
+
+        let mut catalog_dict = lopdf::Dictionary::new();
+        catalog_dict.set("Type", lopdf::Object::Name(b"Catalog".to_vec()));
+        catalog_dict.set("Pages", lopdf::Object::Reference(pages_id));
+        let catalog_id = inner.add_object(catalog_dict);
+
+        inner
+            .trailer
+            .set("Root", lopdf::Object::Reference(catalog_id));
+
+        let mut bytes = Vec::new();
+        inner.save_to(&mut bytes).unwrap();
+
+        let options = PdfSplitByOutlineOptions::default();
+        let result = pdf_split_by_outline_bytes(&bytes, &options);
+
+        // Document has pages but no outlines, should fallback and succeed
+        assert!(result.is_ok());
+
+        let zip_bytes = result.unwrap();
+        let cursor = std::io::Cursor::new(zip_bytes);
+        let mut archive = zip::ZipArchive::new(cursor).unwrap();
+
+        assert_eq!(archive.len(), 2);
+        let mut file_names: Vec<String> = (0..archive.len())
+            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .collect();
+        file_names.sort();
+
+        assert_eq!(file_names[0], "01_Page_1.pdf");
+        assert_eq!(file_names[1], "02_Page_2.pdf");
     }
 }

@@ -3,12 +3,14 @@
 **PDF tools for your AI agent — and for you. Pure Rust. Runs locally. Files never leave your machine.**
 
 [![CI](https://github.com/KrushnaVardhanReddy/PaperPilot/actions/workflows/rust.yml/badge.svg)](https://github.com/KrushnaVardhanReddy/PaperPilot/actions)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/KrushnaVardhanReddy/PaperPilot/badge)](https://securityscorecards.dev/viewer/?uri=github.com/KrushnaVardhanReddy/PaperPilot)
+[![Security Policy](https://img.shields.io/badge/Security-Policy_Enforced-brightgreen.svg)](SECURITY.md)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Rust 1.75+](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
 [![MCP Compatible](https://img.shields.io/badge/MCP-100%25_Compatible-purple.svg)](https://modelcontextprotocol.io)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-![PaperPilot demo](docs/assets/demo.gif)
+![PaperPilot demo](docs/assets/gifs/demo_01_ask_natural_language.gif)
 
 [**Try it in your browser →**](https://usepaperpilot.com) · [Download](https://github.com/KrushnaVardhanReddy/PaperPilot/releases) · [Contributing](CONTRIBUTING.md) · [Roadmap](ROADMAP.md)
 
@@ -16,13 +18,29 @@ PaperPilot is a PDF and document toolkit written in Rust. The same engine runs a
 
 | Surface | Use it for |
 |---|---|
-| **MCP server** | Give Codex, Claude Code, Kimi Code, Pi, Claude Desktop, Cursor, or any MCP client the ability to merge, split, OCR, and compress PDFs |
-| **CLI** | Batch and scripted workflows |
-| **Browser (WASM)** | Zero-install tools; files are processed in browser memory, nothing is uploaded |
-| **Desktop app** | Tauri + Svelte GUI with viewer, markup, and diff |
-| **Local REST API** | Call it from Python, Node, or n8n at `localhost:7823` |
+| **MCP server** | Give Codex, Claude Code, Gemini CLI, Cursor, Claude Desktop, or any MCP client instant document superpowers |
+| **CLI** | High-speed batch workflows and automated terminal pipelines |
+| **Browser Extension** | In-tab right-click actions on web/arXiv PDFs, clean article capture, and WASM toolkit |
+| **Browser (WASM)** | Zero-install web tools; files are processed in browser memory, nothing is uploaded |
+| **Desktop app** | Tauri + Svelte 5 GUI with interactive canvas, viewer, and pipeline builder |
+| **Local REST API** | Call it from Python, Node.js, n8n, LangChain, or LlamaIndex at `localhost:7823` |
 
 No Chromium, no C++ runtime, no cloud calls.
+
+---
+
+## Self-Healing System Diagnostics
+Verify your environment, gateway port, temp storage, and OCR models with one command:
+```bash
+paperpilot doctor
+# PaperPilot System Diagnostics (v0.7.0)
+# ==================================================
+# Status:    Healthy
+# [✓] Temp Directory: /tmp (writable & ephemeral cleanup verified)
+# [✓] Gateway Port: 7823 available
+# [✓] OCR Models: models/ocr/ppocrv4 (det.onnx, rec.onnx found)
+# [✓] Disk Space: > 5 GB available
+```
 
 **Open-WebUI integration (source builds):** use the local gateway as a
 PDF-only Tika-compatible extraction server. See the
@@ -61,19 +79,26 @@ Restart Claude and try: *"Merge these two PDFs and compress the result."*
 ### 2. Use the CLI
 
 ```bash
-# Merge
+# Semantic Chunking for AI Agents & RAG (Spec 159)
+paperpilot pdf-chunk --input contract.pdf --target-tokens 500 --overlap 50 --json
+
+# Merge multiple documents
 paperpilot merge --inputs doc1.pdf doc2.pdf --output merged.pdf
 
-# Compress
+# High-efficiency compression
 paperpilot compress --input in.pdf --quality 75 --output compressed.pdf
+
+# Search pattern or keywords across document pages
+paperpilot search --input in.pdf --query "Invoice" --json
 
 # Rotate pages 1, 3–5 by 90°
 paperpilot rotate --input in.pdf --pages 1,3-5 --angle 90 --output out.pdf
 ```
 
-### 3. Use it in the browser
+### 3. Use it in the browser & extension
 
-Go to [usepaperpilot.com](https://usepaperpilot.com). Open your browser's Network tab while you work — you'll see no file uploads.
+- **Web App**: Go to [usepaperpilot.com](https://usepaperpilot.com) for zero-install client-side WebAssembly tools.
+- **Companion Extension**: Load the Manifest V3 browser extension from [`apps/extension`](apps/extension) for in-tab context menus, right-click PDF actions, and clean web article capture.
 
 ### 4. Build from source
 
@@ -93,13 +118,35 @@ Requires Rust 1.75+, Node.js, and pnpm.
 
 ---
 
-## What it can do today (v0.6)
+## What it can do (92 Tools Across 5 Interfaces)
 
-- **Organize & Layout:** merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid, multi-sheet poster tile slicing (`pdf_posterize`)
-- **Optimize & Compress:** lossy compression, stream deduplication, CMYK safety guards
-- **Extract & Ingest:** structured text, detected Markdown tables, native Open-WebUI & Apache Tika ingestion adapter (`/tika/text`, `/tika/json/md`, `/rmeta/text`), pure-Rust OCR (PaddleOCR via `rten`)
-- **Security & Analysis:** watermark, validate signatures, remove signatures, PII scan, deep sanitize, malformed fuzzing & panic-free error handling
-- **Office Data:** Excel → JSON, Excel → CSV
+- **AI Agent Intelligence, Semantic Search & Workflows**:
+  - `document_workflow` & `recipe_run`: Declarative `.ppflow` DAG workflows with step dependencies, conditions, and cryptographic audit receipts.
+  - `workspace_search` & `semantic_search`: Multi-format recursive workspace search (`.pdf`, `.docx`, `.xlsx`, `.md`, `.txt`, `.csv`, `.json`) and normalized vector chunk retrieval.
+  - `cli_ask`: Natural language intent planner and instant execution agent.
+  - `pdf_chunk` & `pdf_rag_chunks`: Structure-aware semantic chunker respecting `#`/`##` headings, `\n\n` paragraphs, and keeping Markdown tables atomic.
+  - `pdf_search` & `pdf_extract_patterns`: High-precision regex and pattern extraction for invoices, order IDs, and legal identifiers.
+  - `pdf_classify_type`: Automatic document categorization (invoices, receipts, legal briefs, tax filings, research papers).
+- **Core Layout, Bates Numbering & Imposition**:
+  - `pdf_bates`: Standard legal discovery Bates numbering across 6 customizable anchor positions.
+  - Merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid, and multi-sheet poster tile slicing (`pdf_posterize`).
+  - Interactive forms: read form fields (`pdf_read_form`), fill (`pdf_fill_form`, `batch_fill`), create form fields (`pdf_create_form_field`), and flatten (`pdf_flatten`).
+  - Digital signatures & timestamps (`pdf_sign`, `pdf_validate_signatures`, `pdf_timestamp`), bookmarks (`pdf_bookmarks`), and crop/scale (`pdf_crop`, `pdf_scale_pages`).
+- **Office & Cross-Format Transformations**:
+  - Bidirectional PDF ⇄ Word (`pdf_to_docx`, `pdf_convert_markdown`).
+  - Bidirectional PDF ⇄ Excel (`pdf_to_xlsx`, `pdf_convert_excel`, `excel_to_csv`, `excel_to_json`).
+  - EPUB eBooks (`pdf_to_epub`), PowerPoint slides (`pdf_to_pptx`), HTML (`pdf_to_html`, `pdf_convert_html`), and JSON ASTs (`pdf_to_json`, `json_to_pdf`).
+  - Legacy Office modernization (`office_modernize_legacy`, `office_extract_text`, `office_to_markdown`).
+- **OCR & Document Vision**:
+  - Neural PP-OCRv4 detection & recognition via `rten` and `ocrs` (det.onnx + rec.onnx).
+  - Searchable OCR text layer injection, auto-rotation (`pdf_auto_rotate`), page rendering (`pdf_render`), and blank page removal (`pdf_remove_blank`).
+- **Security & PII Redaction**:
+  - Automated PII scanning (`document_pii_scan`) detecting SSNs, credit cards, emails, phone numbers, and IBANs.
+  - Permanent redaction (`pdf_redact`) via coordinates, keywords, regex, or structured JSON datasets.
+  - Cryptographic validation & hashing (`pdf_validate`, `pdf_hash`), encryption/decryption (`pdf_encrypt`, `pdf_decrypt`), permissions bitmask (`pdf_change_permissions`), and sanitization (`pdf_sanitize`).
+- **Zero-Copy High Performance Engine**:
+  - Zero-copy memory-mapped I/O (`DocumentSource` via `memmap2`) for files $\ge 10\text{ MB}$, keeping resident memory flat (< 100 MB) during search, chunking, and PII scanning of 500+ page documents.
+  - Universal streaming page batching (`PageBatchIterator`) to prevent OOM errors.
 
 ---
 
@@ -130,7 +177,7 @@ Desktop (Tauri) · CLI · REST (Axum) · MCP (stdio) · WASM (browser / edge)
 ## Embed in your own site
 
 ```html
-<script src="https://cdn.usepaperpilot.com/embed.js" data-tools="merge,compress,ocr"></script>
+<script src="https://usepaperpilot.com/embed.js" data-tools="merge,compress,ocr"></script>
 <div id="paperpilot-widget"></div>
 ```
 
@@ -151,9 +198,20 @@ curl -X PUT http://localhost:7823/tika/text \
 
 Interactive Swagger OpenAPI docs at `http://localhost:7823/swagger-ui`.
 
+## Security & Supply Chain Integrity
+
+PaperPilot processes sensitive, proprietary, and personal documents on-device without cloud dependencies. We maintain rigorous software supply chain and security compliance:
+
+- **OpenSSF Scorecard**: **8.2 / 10**
+- **Token Permissions**: 100% scoped to `permissions: read-all` (principle of least privilege).
+- **SAST & Secret Gate**: Continuous Semgrep OSS and Trivy security audits gating all commits.
+- **Dependency Hardening**: All third-party GitHub Actions pinned to immutable 40-character commit SHAs.
+- **Responsible Disclosure**: See [`SECURITY.md`](SECURITY.md) for our vulnerability disclosure policy and 48-hour response SLA.
+
 ---
 
 ## Contributing & Community
+
 
 Issues and PRs are welcome. Good first contributions: bug reports with a sample PDF, new tool requests, and docs fixes.
 

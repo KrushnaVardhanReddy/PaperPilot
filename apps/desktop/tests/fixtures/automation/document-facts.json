@@ -1,0 +1,50 @@
+{
+  "form.pdf": {
+    "hasFormFields": true,
+    "isEncrypted": false,
+    "isScanned": false,
+    "isSigned": false,
+    "pageCount": 1,
+    "sizeBytes": 1100
+  },
+  "multi.pdf": {
+    "hasFormFields": false,
+    "isEncrypted": false,
+    "isScanned": false,
+    "isSigned": false,
+    "pageCount": 2,
+    "sizeBytes": 1146
+  },
+  "scan.pdf": {
+    "hasFormFields": false,
+    "isEncrypted": false,
+    "isScanned": true,
+    "isSigned": false,
+    "pageCount": 1,
+    "sizeBytes": 908
+  },
+  "signed.pdf": {
+    "hasFormFields": true,
+    "isEncrypted": false,
+    "isScanned": false,
+    "isSigned": true,
+    "pageCount": 1,
+    "sizeBytes": 17910
+  },
+  "text.pdf": {
+    "hasFormFields": false,
+    "isEncrypted": false,
+    "isScanned": false,
+    "isSigned": false,
+    "pageCount": 1,
+    "sizeBytes": 927
+  },
+  "unsigned.pdf": {
+    "hasFormFields": false,
+    "isEncrypted": false,
+    "isScanned": false,
+    "isSigned": false,
+    "pageCount": 1,
+    "sizeBytes": 988
+  }
+}

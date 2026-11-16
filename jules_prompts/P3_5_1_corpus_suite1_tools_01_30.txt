@@ -1,0 +1,66 @@
+# Prompt P3_5_1: Enterprise Document Test Corpus & Deep Semantic Assertions (Suite 1: Tools 01–30)
+
+## Context & Objectives
+PaperPilot features a 90-tool zero-mock Playwright E2E test suite. Suite 1 (`apps/desktop/tests/e2e_suite_1_page_operations.spec.ts`) covers Tools 01–30 (Page Operations, Merging, Splitting, Imposition, Optimization & Rendering).
+Currently, the test fixtures in `tests/e2e_fixtures/real/` are small synthetic stubs (500–1,400 bytes).
+
+In this task, you will:
+1. Create semantic HTML document templates in `tests/fixtures_templates/suite1/`.
+2. Implement a deterministic corpus generation script `scripts/gen_corpus_suite1.sh` that dogfoods our native CLI `paperpilot convert --format pdf` to generate realistic, high-fidelity PDF fixtures in `tests/e2e_fixtures/real/`:
+   - `multi_page.pdf` (8-10 pages with varying text, headings, sections)
+   - `single_page.pdf` (1 page document with headers, metadata, and body)
+   - `merge_a.pdf` (Part 1 document, 4 pages)
+   - `merge_b.pdf` (Part 2 document, 3 pages)
+   - `test.png` (high-resolution rendered page image)
+3. Add Makefile target `gen-corpus-suite-1` that builds the CLI and runs `scripts/gen_corpus_suite1.sh`.
+4. Update `apps/desktop/tests/e2e_suite_1_page_operations.spec.ts` to assert real domain invariants for Tools 01–30 (e.g. verifying exact combined page counts on merge, page extractions, burst count, aspect ratio / dimensions on crop, rendering pixel dimensions).
+5. Ensure `make gen-corpus-suite-1 && make test-e2e-suite-1` passes 100% cleanly.
+
+---
+
+## Detailed Implementation Requirements
+
+### 1. Document Templates (`tests/fixtures_templates/suite1/`)
+Create clean, self-contained HTML files:
+- `multi_page_contract.html`: A multi-page legal agreement with styled sections, page breaks (`<div style="page-break-after: always;"></div>` or CSS `@page`), numbered paragraphs, and headers/footers resulting in 8 to 10 pages when rendered.
+- `single_page_doc.html`: A single page corporate memo or invoice with letterhead, title, summary, and date.
+- `merge_doc_a.html`: A 4-page technical specification (Chapters 1–4).
+- `merge_doc_b.html`: A 3-page appendix and sign-off document (Chapters 5–7).
+
+### 2. Generator Script (`scripts/gen_corpus_suite1.sh`)
+- Executable bash script (`chmod +x scripts/gen_corpus_suite1.sh`).
+- Resolves the binary: `CLI_BIN="${CLI_BIN:-./target/debug/paperpilot}"`.
+- Output directory: `tests/e2e_fixtures/real`.
+- Generates:
+  - `multi_page.pdf` via `$CLI_BIN convert --format pdf --input tests/fixtures_templates/suite1/multi_page_contract.html --output tests/e2e_fixtures/real/multi_page.pdf`
+  - `single_page.pdf` via `$CLI_BIN convert --format pdf --input tests/fixtures_templates/suite1/single_page_doc.html --output tests/e2e_fixtures/real/single_page.pdf`
+  - `merge_a.pdf` via `$CLI_BIN convert --format pdf --input tests/fixtures_templates/suite1/merge_doc_a.html --output tests/e2e_fixtures/real/merge_a.pdf`
+  - `merge_b.pdf` via `$CLI_BIN convert --format pdf --input tests/fixtures_templates/suite1/merge_doc_b.html --output tests/e2e_fixtures/real/merge_b.pdf`
+  - `test.png` via `$CLI_BIN render --input tests/e2e_fixtures/real/single_page.pdf --output tests/e2e_fixtures/real/test.png`
+
+### 3. Makefile Integration
+Add to `Makefile`:
+```makefile
+gen-corpus-suite-1: build-cli
+	@bash scripts/gen_corpus_suite1.sh
+```
+
+### 4. Deep Domain Invariants in `e2e_suite_1_page_operations.spec.ts`
+Upgrade assertions beyond just `.success`:
+- `pdf_merge`: Assert output file page count equals `pages(merge_a) + pages(merge_b)`.
+- `pdf_split`: Assert generated split files exist and have expected page distributions.
+- `pdf_burst`: Assert number of individual page files equals the source `multi_page.pdf` page count.
+- `pdf_delete_pages`: Assert output page count is `original_pages - deleted_pages_count`.
+- `pdf_extract_pages`: Assert output page count equals the exact extracted count.
+- `pdf_rotate` / `pdf_auto_rotate`: Assert valid PDF produced with verified page count.
+- `pdf_render`: Assert output PNG exists, has non-zero byte size, and matches PNG magic bytes `\x89PNG`.
+- Ensure all 30 tool cases in Suite 1 pass cleanly.
+
+---
+
+## Verification Commands
+Before completing:
+1. `make build-cli`
+2. `make gen-corpus-suite-1`
+3. Verify generated files exist in `tests/e2e_fixtures/real/` with sizes > 5 KB.
+4. `make test-e2e-suite-1`

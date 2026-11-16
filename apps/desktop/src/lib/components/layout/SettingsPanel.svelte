@@ -1,13 +1,16 @@
 <script lang="ts">
   import { appState } from '$lib/state/app.svelte';
+  import WatchedFoldersPanel from './WatchedFoldersPanel.svelte';
   import OcrModelDownloader from '$lib/components/settings/OcrModelDownloader.svelte';
   import ModelDownloader from '$lib/components/settings/ModelDownloader.svelte';
+  import SystemDoctorModal from '$lib/components/settings/SystemDoctorModal.svelte';
   import { aiConfig } from '$lib/state/aiConfig.svelte';
 
-  type SettingsCategory = 'ai' | 'packs' | 'ocr' | 'general' | 'developer';
+  type SettingsCategory = 'automations' | 'ai' | 'packs' | 'ocr' | 'general' | 'developer' | 'privacy';
   let activeCategory = $state<SettingsCategory>('ai');
 
   let outputDir = $state('');
+  let showDoctorModal = $state(false);
 
   function handleBrowse() {
     // Mock browse action
@@ -15,10 +18,12 @@
   }
 
   const categories = [
+    { id: 'automations' as const, label: 'Watched Folders', icon: '📁', description: 'Local document automations' },
     { id: 'ai' as const, label: 'AI Engine & Models', icon: '🤖', description: 'Local LLMs, runners & BYOK' },
     { id: 'packs' as const, label: 'Feature Packs', icon: '📦', description: 'Modular extensions & plugins' },
     { id: 'ocr' as const, label: 'OCR & Vision Models', icon: '👁️', description: 'On-device recognition engines' },
     { id: 'general' as const, label: 'General & Storage', icon: '⚙️', description: 'Paths, files & interface' },
+    { id: 'privacy' as const, label: 'Privacy & Security', icon: '🔒', description: 'Zero-Trace & Security' },
     { id: 'developer' as const, label: 'Developer & Gateway', icon: '💻', description: 'REST API, Swagger & Port 7823' },
   ];
 </script>
@@ -61,7 +66,9 @@
 
   <!-- Right Full-Width Settings Canvas -->
   <main class="settings-main-canvas">
-    {#if activeCategory === 'ai'}
+    {#if activeCategory === 'automations'}
+      <WatchedFoldersPanel />
+    {:else if activeCategory === 'ai'}
       <div class="category-section active-section">
         <div class="section-title-wrap">
           <div class="icon-bubble">🤖</div>
@@ -333,6 +340,37 @@
         </div>
       </div>
 
+    {:else if activeCategory === 'privacy'}
+      <div class="category-section active-section">
+        <div class="section-title-wrap">
+          <div class="icon-bubble">🔒</div>
+          <div>
+            <h3>Privacy & Security</h3>
+            <p class="section-subtitle">Control privacy, zero-trace logs, and application security.</p>
+          </div>
+        </div>
+
+        <div class="setting-group" id="setting-group-privacy-mode">
+          <div class="setting-item toggle-item dev-toggle-row">
+            <div class="setting-info">
+              <label for="privacy-mode-toggle" class="dev-toggle-label">Zero-Trace Processing</label>
+              <p class="help-text">
+                When enabled, logs will skip request URLs, IP addresses, document names, and payload bytes across PaperPilot interfaces (append X-Zero-Trace: true).
+              </p>
+            </div>
+            <label class="switch">
+              <input
+                type="checkbox"
+                id="privacy-mode-toggle"
+                checked={appState.zeroTrace}
+                onchange={(e) => appState.zeroTrace = e.currentTarget.checked}
+              />
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
     {:else if activeCategory === 'developer'}
       <div class="category-section active-section">
         <div class="section-title-wrap">
@@ -372,8 +410,29 @@
             </div>
           {/if}
         </div>
+
+        <div class="setting-group" id="setting-group-system-doctor">
+          <h4>System Health & Diagnostics</h4>
+          <p class="help-text">
+            Audit offline neural model caches, gateway ports, temp directory permissions, and disk storage.
+          </p>
+          <div class="doctor-action-row" style="margin-top: 0.75rem;">
+            <button
+              class="btn primary"
+              id="run-system-diagnostics-btn"
+              onclick={() => (showDoctorModal = true)}
+            >
+              🩺 Run System Diagnostics
+            </button>
+          </div>
+        </div>
       </div>
     {/if}
+
+    <SystemDoctorModal
+      isOpen={showDoctorModal}
+      onClose={() => (showDoctorModal = false)}
+    />
   </main>
 </div>
 

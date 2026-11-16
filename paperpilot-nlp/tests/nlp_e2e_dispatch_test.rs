@@ -89,7 +89,8 @@ fn test_full_nlp_to_mcp_dispatch() {
     );
 
     // Execute MCP dispatch (it is synchronous in the codebase)
-    let res = PaperPilotMcpServer::execute_call_tool(request);
+    let server = PaperPilotMcpServer::new(None);
+    let res = server.execute_call_tool(request);
     assert!(res.is_ok(), "MCP execution failed: {:?}", res);
 
     // Verify output

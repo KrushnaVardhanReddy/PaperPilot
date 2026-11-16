@@ -1,36 +1,68 @@
 <script lang="ts">
   import * as pdfjsLib from 'pdfjs-dist';
 
-  let { pdfDoc, pageNum, scale, formValues = $bindable({}), hasFormFields = $bindable(false) } = $props();
+  let {
+    pdfDoc,
+    pageNum = 1,
+    scale = 1.0,
+    formValues = $bindable({}),
+    hasFormFields = $bindable(false)
+  } = $props<{
+    pdfDoc?: any;
+    pageNum?: number;
+    scale?: number;
+    formValues?: Record<string, any>;
+    hasFormFields?: boolean;
+  }>();
+
   let fields: any[] = $state([]);
+  let lastDoc: any = null;
 
   $effect(() => {
+    // Explicitly reference pageNum and scale so Svelte tracks reactive changes
+    const currentDoc = pdfDoc;
+    const currentPage = pageNum;
+    const currentScale = scale;
+
+    if (currentDoc !== lastDoc) {
+      lastDoc = currentDoc;
+      formValues = {};
+    }
+
     async function fetchFields() {
-      if (!pdfDoc) return;
+      if (!currentDoc) {
+        fields = [];
+        hasFormFields = false;
+        return;
+      }
       try {
-        const page = await pdfDoc.getPage(pageNum);
+        const page = await currentDoc.getPage(currentPage);
         const annotations = await page.getAnnotations();
-        const viewport = page.getViewport({ scale: 1.0 });
+        const viewport = page.getViewport({ scale: currentScale });
 
         // Filter for AcroForm Widgets
-        fields = annotations.filter((a: any) => a.subtype === 'Widget');
-        hasFormFields = fields.length > 0;
-        fields = fields.map((a: any) => {
-            if (formValues[a.fieldName] === undefined && a.fieldValue !== undefined) {
-               formValues[a.fieldName] = a.fieldValue;
+        const widgetAnnotations = annotations.filter((a: any) => a.subtype === 'Widget');
+        hasFormFields = widgetAnnotations.length > 0;
+        fields = widgetAnnotations.map((a: any) => {
+          if (formValues[a.fieldName] === undefined && a.fieldValue !== undefined) {
+            if (a.fieldType === 'Btn') {
+              formValues[a.fieldName] = a.fieldValue !== 'Off' && a.fieldValue !== '' && a.fieldValue !== false && a.fieldValue !== 0;
+            } else {
+              formValues[a.fieldName] = a.fieldValue;
             }
+          }
 
-            const [x1, y1, x2, y2] = a.rect;
-            const rect = pdfjsLib.Util.normalizeRect([x1, y1, x2, y2]);
-            const p1 = viewport.convertToViewportPoint(rect[0], rect[1]);
-            const p2 = viewport.convertToViewportPoint(rect[2], rect[3]);
+          const [x1, y1, x2, y2] = a.rect;
+          const rect = pdfjsLib.Util.normalizeRect([x1, y1, x2, y2]);
+          const p1 = viewport.convertToViewportPoint(rect[0], rect[1]);
+          const p2 = viewport.convertToViewportPoint(rect[2], rect[3]);
 
-            const left = Math.min(p1[0], p2[0]);
-            const top = Math.min(p1[1], p2[1]);
-            const width = Math.abs(p2[0] - p1[0]);
-            const height = Math.abs(p2[1] - p1[1]);
+          const left = Math.min(p1[0], p2[0]);
+          const top = Math.min(p1[1], p2[1]);
+          const width = Math.abs(p2[0] - p1[0]);
+          const height = Math.abs(p2[1] - p1[1]);
 
-            return { ...a, style: `left: ${left}px; top: ${top}px; width: ${width}px; height: ${height}px;` };
+          return { ...a, style: `left: ${left}px; top: ${top}px; width: ${width}px; height: ${height}px;` };
         });
       } catch (e) {
         console.error('Failed to load form fields', e);
@@ -40,7 +72,7 @@
   });
 </script>
 
-<div class="form-layer" style="transform: scale({scale}); transform-origin: top left;">
+<div class="form-layer">
   {#each fields as field}
     {#if field.fieldType === 'Tx'}
       <input
@@ -85,9 +117,11 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
+    z-index: 15;
   }
   .pdf-input, .pdf-select, .pdf-checkbox {
     position: absolute;
+    box-sizing: border-box;
     background: rgba(238, 242, 255, 0.4);
     border: 1px solid #c7d2fe;
     font-family: inherit;

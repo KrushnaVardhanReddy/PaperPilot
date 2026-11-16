@@ -1,0 +1,78 @@
+# Task 6.1.2: Complete Spec 160 (System Diagnostics) & Fix ZAP Workflow Port
+
+## Objective
+1. Complete the implementation of Spec 160 (`paperpilot doctor` and Desktop UI SystemDoctorModal) properly without shortcuts.
+2. Fix `.github/workflows/zap.yml` where the OWASP ZAP dynamic API security scan failed due to port mismatch (Gateway defaults to 7823, but ZAP was curling 8080).
+
+---
+
+## Part 1: Fix `.github/workflows/zap.yml`
+
+In `.github/workflows/zap.yml`:
+The gateway executable `./target/release/paperpilot-gateway` defaults to port `7823` unless `PORT` is explicitly passed in its environment.
+The workflow launches it and curls `http://localhost:8080`:
+```yaml
+      - name: Launch Gateway Server
+        run: |
+          PORT=8080 ./target/release/paperpilot-gateway &
+          echo "Waiting for PaperPilot Gateway to become healthy..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/health | grep -q "ok"; then
+              echo "Gateway is healthy and listening on port 8080"
+              break
+            fi
+            sleep 1
+          done
+```
+Ensure `PORT=8080` is exported/passed before launching `paperpilot-gateway` in that step, and upgrade `upload-sarif` to `@v4` (v4.39.2) if on `@v3`.
+
+---
+
+## Part 2: Spec 160 Diagnostics Engine & Desktop UI
+
+### 1. `paperpilot-core/src/diagnostics.rs` & `lib.rs`
+Ensure `DiagnosticReport`, `HealthStatus`, `CheckResult`, and `run_diagnostics()` are implemented and exported:
+- Probe 1: Ephemeral temp directory write & cleanup (`paperpilot_probe.tmp`).
+- Probe 2: Gateway port availability (`7823`).
+- Probe 3: Local OCR neural model weights (`models/ocr/ppocrv4` or `PAPERPILOT_OCR_MODELS_DIR`).
+- Probe 4: Free disk space (> 5 GB check).
+Include unit tests in `diagnostics.rs` to verify that `run_diagnostics()` returns valid timestamps and probe results.
+
+### 2. `paperpilot-cli/src/commands/doctor.rs` & `cli.rs`
+- Add `Commands::Doctor { json: bool }` subcommand in `cli.rs`.
+- Wire `doctor.rs` with formatted ANSI output (`[✓]` / `[✗]`) and support `--json` outputting structured `DiagnosticReport`.
+
+### 3. `paperpilot-gateway/src/handlers.rs` & `server.rs`
+- Ensure `GET /health` returns lightweight status `{"status": "ok", "version": "...", "tools_count": ...}`.
+- Register `GET /api/v1/doctor` returning `(StatusCode::OK, Json(run_diagnostics()))`.
+- Include `/api/v1/doctor` in OpenAPI docs.
+
+### 4. `apps/desktop/src/lib/components/settings/SystemDoctorModal.svelte`
+Actually implement the modal (do NOT leave it empty):
+- Svelte 5 runes (`$props`, `$state`, `$derived`).
+- Invoke `run_system_doctor` Tauri command or fetch `http://127.0.0.1:7823/api/v1/doctor` (with fallback to core IPC/REST).
+- Display probe items with badges (`Pass` green, `Fail` red, `Warning` amber).
+- Include "Copy JSON" and "Export Report" buttons.
+- Wire into `apps/desktop/src/lib/components/layout/SettingsPanel.svelte` with a "Run System Diagnostics" button.
+
+### 5. Desktop Tauri Command
+In `apps/desktop/src-tauri/src/main.rs`:
+- Register Tauri command `run_system_doctor` returning `paperpilot_core::diagnostics::DiagnosticReport`.
+- Add to `invoke_handler!`.
+
+### 6. Clean Up & Docs
+- Add `apps/docs/src/content/docs/reference/tools/doctor.md`.
+- Update `apps/docs/src/content/docs/reference/tools-handbook.md`.
+- Do NOT generate or commit `apps/docs/pnpm-lock.yaml`.
+- Do NOT overwrite existing passing audit reports with failing mock data.
+
+---
+
+## 🔒 Verification Commands (Always use -j 4)
+```bash
+cargo check --workspace --all-targets -j 4
+cargo test -p paperpilot-core diagnostics -j 4
+cargo run -p paperpilot-cli -- doctor --json
+cd apps/desktop && pnpm test
+```
+

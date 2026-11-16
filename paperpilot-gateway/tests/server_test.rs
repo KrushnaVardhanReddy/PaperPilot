@@ -2,7 +2,12 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use paperpilot_gateway::server::build_app;
+async fn build_app() -> axum::Router {
+    paperpilot_gateway::server::build_app(std::sync::Arc::new(
+        paperpilot_pdf::operations::watch::WatcherManager::default(),
+    ))
+    .await
+}
 use serde_json::Value;
 use tower::ServiceExt;
 
@@ -26,6 +31,29 @@ async fn test_health_endpoint() {
     let json: Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(json["status"], "ok");
     assert!(json["tools_count"].as_u64().unwrap() > 0);
+}
+
+#[tokio::test]
+async fn test_doctor_endpoint() {
+    let app = build_app().await;
+
+    let request = Request::builder()
+        .uri("/api/v1/doctor")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+    assert!(json["status"].is_string());
+    assert!(json["checks"].is_array());
+    assert!(json["checks"].as_array().unwrap().len() >= 4);
 }
 
 #[tokio::test]
@@ -64,10 +92,17 @@ async fn test_mcp_exec_tool() {
 async fn test_multipart_and_json_endpoints() {
     let app = build_app().await;
 
+    // Create a real temp input PDF
+    let temp_input = tempfile::NamedTempFile::new().unwrap();
+    let pdf_bytes = ingestion_pdf();
+    std::fs::write(temp_input.path(), &pdf_bytes).unwrap();
+
+    let temp_output = tempfile::NamedTempFile::new().unwrap();
+
     // Test JSON Endpoint on a multipart route
     let payload = serde_json::json!({
-        "input": "tests/e2e_fixtures/secret_999.pdf",
-        "output": "/tmp/test.pdf",
+        "input": temp_input.path().to_string_lossy().to_string(),
+        "output": temp_output.path().to_string_lossy().to_string(),
         "password": "test"
     });
 
@@ -80,8 +115,7 @@ async fn test_multipart_and_json_endpoints() {
 
     let response = app.oneshot(request).await.unwrap();
 
-    // Just check the parsing didn't fail with BAD_REQUEST
-    assert_ne!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[tokio::test]

@@ -65,14 +65,41 @@ impl PdfOperation for HeaderFooterOperation {
 
             let escaped_text = self.text.replace("(", "\\(").replace(")", "\\)");
 
-            let y_pos = if self.position == "header" {
-                750.0
+            let pos_lower = self.position.to_lowercase();
+            let is_header = pos_lower.contains("header") || pos_lower.contains("top");
+
+            let mut width = 612.0;
+            let mut height = 792.0;
+            if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object(object_id) {
+                if let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox") {
+                    if rect.len() == 4 {
+                        if let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32()) {
+                            width = x2;
+                            height = y2;
+                        }
+                    }
+                }
+            }
+
+            let y_pos = if is_header {
+                height - 40.0
+            } else {
+                40.0
+            };
+
+            let x_pos = if pos_lower.contains("center") {
+                let text_width = escaped_text.len() as f32 * 6.5;
+                ((width - text_width) / 2.0).max(20.0)
+            } else if pos_lower.contains("right") {
+                let text_width = escaped_text.len() as f32 * 6.5;
+                (width - text_width - 50.0).max(20.0)
             } else {
                 50.0
             };
 
             let content = format!(
-                "q\nBT\n/F1 12 Tf\n1 0 0 1 50 {} Tm\n0 g\n({text}) Tj\nET\nQ\n",
+                "q\nBT\n/F1 12 Tf\n1 0 0 1 {} {} Tm\n0 g\n({text}) Tj\nET\nQ\n",
+                x_pos,
                 y_pos,
                 text = escaped_text
             );

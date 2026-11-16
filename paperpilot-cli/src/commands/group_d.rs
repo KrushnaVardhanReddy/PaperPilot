@@ -12,6 +12,18 @@ pub fn handle_convert(
     css_preset: Option<&str>,
     inline_css: Option<&str>,
 ) -> OperationResult<()> {
+    handle_convert_with_orientation(format, input, output, css, css_preset, inline_css, None)
+}
+
+pub fn handle_convert_with_orientation(
+    format: &str,
+    input: &Path,
+    output: Option<&Path>,
+    css: Option<&Path>,
+    css_preset: Option<&str>,
+    inline_css: Option<&str>,
+    orientation: Option<&str>,
+) -> OperationResult<()> {
     let build_options =
         || -> OperationResult<paperpilot_pdf::operations::conversion::HtmlToPdfOptions> {
             let mut custom_css_str = String::new();
@@ -42,6 +54,7 @@ pub fn handle_convert(
                 custom_css: final_css,
                 page_size: Some("A4".to_string()),
                 margin_mm: Some(20.0),
+                orientation: orientation.map(|s| s.to_string()),
             })
         };
 
@@ -70,7 +83,7 @@ pub fn handle_convert(
     };
 
     match actual_format {
-        "json_to_pdf" => {
+        "json_to_pdf" | "json-to-pdf" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = if input == Path::new("-") {
                 use std::io::Read;
@@ -96,7 +109,7 @@ pub fn handle_convert(
             })?;
             return Ok(());
         }
-        "html_to_pdf" => {
+        "html_to_pdf" | "html-to-pdf" | "pdf_convert_html" | "pdf-convert-html" | "convert-html" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = std::fs::read_to_string(input).map_err(|e| {
                 paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e))
@@ -109,7 +122,7 @@ pub fn handle_convert(
             op.render()?;
             return Ok(());
         }
-        "md_to_pdf" => {
+        "md_to_pdf" | "md-to-pdf" | "pdf_convert_markdown" | "pdf-convert-markdown" | "convert-markdown" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let input_str = std::fs::read_to_string(input).map_err(|e| {
                 paperpilot_core::error::PdfError::Other(format!("Failed to read input file: {}", e))
@@ -122,7 +135,7 @@ pub fn handle_convert(
             op.render()?;
             return Ok(());
         }
-        "excel_to_pdf" => {
+        "excel_to_pdf" | "excel-to-pdf" | "pdf_convert_excel" | "pdf-convert-excel" | "convert-excel" | "convert_excel" => {
             let out_path = output.unwrap_or(Path::new("output.pdf"));
             let op = paperpilot_pdf::operations::conversion::ExcelToStyledHtmlOperation::new(
                 input.to_path_buf(),
@@ -138,9 +151,13 @@ pub fn handle_convert(
     let mut doc = LopdfDocument::load(input)?;
 
     match actual_format {
-        "html" => {
+        "html" | "htm" => {
             let out_path = output.unwrap_or(Path::new("output.html"));
-            let op = paperpilot_pdf::operations::conversion::PdfToHtmlOperation::new();
+            let opts = build_options()?;
+            let op = paperpilot_pdf::operations::conversion::PdfToHtmlOperation::with_options(
+                opts.preset,
+                opts.custom_css,
+            );
             op.execute(&mut doc)?;
             let html = op
                 .extracted_html
@@ -151,7 +168,7 @@ pub fn handle_convert(
             std::fs::write(out_path, html)
                 .map_err(|e| paperpilot_core::error::PdfError::Other(e.to_string()))?;
         }
-        "md" => {
+        "md" | "markdown" => {
             let out_path = output.unwrap_or(Path::new("output.md"));
             let op = paperpilot_pdf::operations::conversion::PdfToMarkdownOperation::new();
             op.execute(&mut doc)?;
@@ -238,15 +255,27 @@ pub fn handle_convert(
     Ok(())
 }
 
-pub fn handle_classify(input: &Path) -> OperationResult<()> {
+pub fn handle_classify(input: &Path, output: Option<&Path>) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let op = paperpilot_pdf::operations::classify::PdfClassifyOperation::new();
     op.execute(&mut doc)?;
 
     let res = op.classification.lock().unwrap().clone();
-    if let Some(c) = res {
-        let json = serde_json::to_string_pretty(&c).unwrap_or_default();
-        println!("{}", json);
+    let json = if let Some(ref c) = res {
+        serde_json::to_string_pretty(&c).unwrap_or_default()
+    } else {
+        serde_json::to_string_pretty(&serde_json::json!({
+            "type": "unknown",
+            "confidence": 0.0
+        })).unwrap_or_default()
+    };
+    println!("{}", json);
+
+    if let Some(out_path) = output {
+        if let Some(parent) = out_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let _ = std::fs::write(out_path, &json);
     }
 
     Ok(())

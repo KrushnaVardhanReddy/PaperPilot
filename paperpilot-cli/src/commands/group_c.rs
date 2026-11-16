@@ -39,42 +39,109 @@ pub fn handle_extract_images(
     op.execute(&mut doc)
 }
 
-pub fn handle_search(input: &std::path::Path, query: &str) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
-    let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
-    op.execute(&mut doc)?;
-    let matches = op.match_pages.lock().unwrap().clone();
+pub fn handle_search(input: &std::path::Path, query: &str, output: Option<&std::path::Path>) -> OperationResult<()> {
+    let mut matches = Vec::new();
+    if input.is_dir() {
+        if let Ok(entries) = std::fs::read_dir(input) {
+            for entry in entries.flatten() {
+                let ep = entry.path();
+                if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
+                    if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+                        if op.execute(&mut doc).is_ok() {
+                            let p = op.match_pages.lock().unwrap().clone();
+                            matches.extend(p);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        let mut doc = LopdfDocument::load(input)?;
+        let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
+        op.execute(&mut doc)?;
+        matches = op.match_pages.lock().unwrap().clone();
+    }
+
     if matches.is_empty() {
         println!("No matches found for '{}'.", query);
     } else {
         println!("Found '{}' on page(s): {:?}", query, matches);
     }
+
+    if let Some(out_path) = output {
+        if let Some(parent) = out_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let res_json = serde_json::json!({
+            "query": query,
+            "matches": matches,
+        });
+        let _ = std::fs::write(out_path, serde_json::to_string_pretty(&res_json).unwrap_or_default());
+    }
+
     Ok(())
 }
 
 pub fn handle_render(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
+    handle_render_with_options(input, output, 1, 150.0, None)
+}
+
+pub fn handle_render_with_options(
+    input: &std::path::Path,
+    output: &std::path::Path,
+    page: u32,
+    dpi: f32,
+    format: Option<&str>,
+) -> OperationResult<()> {
     if let Some(parent) = output.parent() {
         std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
     }
+    let parsed_format = if let Some(fmt_str) = format {
+        Some(fmt_str.parse::<paperpilot_pdf::operations::render::ImageOutputFormat>().map_err(paperpilot_core::error::PdfError::ParseError)?)
+    } else {
+        None
+    };
+
     let mut doc = LopdfDocument::load(input)?;
-    // RenderOperation delegates to ExtractTextOperation internally.
-    // Access the text directly here so we can write to the output path.
-    // This is the promised follow-up: CLI writes the output file.
-    let text_op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(None);
-    text_op.execute(&mut doc)?;
-    let text_lock = text_op.extracted_text.lock().unwrap();
-    let content = text_lock
-        .as_ref()
-        .map(|pages| pages.join("\n"))
-        .unwrap_or_default();
-    std::fs::write(output, content.as_bytes()).map_err(paperpilot_core::error::PdfError::IoError)
+    let op = paperpilot_pdf::operations::render::RenderOperation {
+        page: Some(page),
+        dpi,
+        format: parsed_format,
+        output_path: Some(output.to_path_buf()),
+        rendered_images: std::sync::Mutex::new(Vec::new()),
+    };
+    op.execute(&mut doc)?;
+    let images = op.rendered_images.lock().map_err(|_| paperpilot_core::error::PdfError::Other("Mutex poisoned".to_string()))?;
+    if let Some(first_img) = images.first() {
+        std::fs::write(output, first_img).map_err(paperpilot_core::error::PdfError::IoError)?;
+    }
+    Ok(())
 }
 
-pub fn handle_compare(input: &std::path::Path, input_b: &std::path::Path) -> OperationResult<()> {
+pub fn handle_compare(
+    input: &std::path::Path,
+    input_b: &std::path::Path,
+    output: Option<&std::path::Path>,
+) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
     let mut op = paperpilot_pdf::operations::compare::CompareOperation::new();
     op.input_b = Some(input_b.to_string_lossy().to_string());
-    op.execute(&mut doc)
+    op.execute(&mut doc)?;
+
+    if let Some(out) = output {
+        if let Some(parent) = out.parent() {
+            std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
+        }
+        let result_opt = op.result.lock().unwrap().take();
+        let diff_report = if let Some(res) = result_opt {
+            serde_json::to_string_pretty(&res).unwrap_or_else(|_| "{}".to_string())
+        } else {
+            "{}".to_string()
+        };
+        std::fs::write(out, diff_report).map_err(paperpilot_core::error::PdfError::IoError)?;
+    }
+    Ok(())
 }
 
 pub fn handle_ocr(

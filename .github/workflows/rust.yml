@@ -6,25 +6,33 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions: read-all
+
 jobs:
   lint:
     name: Lint & Format (Linux)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
       - name: Rust Cache
-        uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+        uses: swatinem/rust-cache@v2
 
       - name: Install Linux GUI Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+          echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf.new
+          echo "nameserver 1.1.1.1" | sudo tee -a /etc/resolv.conf.new
+          cat /etc/resolv.conf >> /etc/resolv.conf.new 2>/dev/null || true
+          sudo mv /etc/resolv.conf.new /etc/resolv.conf
+          sudo sed -i 's|http://azure.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::ForceIPv4=true install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
 
       - name: Check Formatting
         run: cargo fmt --all -- --check
@@ -38,22 +46,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-22.04, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Rust Cache
-        uses: swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2.7.7
+        uses: swatinem/rust-cache@v2
 
       - name: Install Linux GUI Dependencies
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev qpdf
+          echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf.new
+          echo "nameserver 1.1.1.1" | sudo tee -a /etc/resolv.conf.new
+          cat /etc/resolv.conf >> /etc/resolv.conf.new 2>/dev/null || true
+          sudo mv /etc/resolv.conf.new /etc/resolv.conf
+          sudo sed -i 's|http://azure.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo sed -i 's|http://.*.archive.ubuntu.com|http://archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          sudo apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=5 update
+          sudo apt-get -o Acquire::ForceIPv4=true install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev qpdf
 
       - name: Build Workspace
         run: cargo build --workspace --all-targets
@@ -83,7 +97,7 @@ jobs:
           cp target/debug/desktop.exe dist-bin/ 2>/dev/null || true
 
       - name: Upload Test Binaries
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb99ba841c # v4.6.1
+        uses: actions/upload-artifact@v4
         with:
           name: paperpilot-${{ matrix.os }}
           path: dist-bin/*

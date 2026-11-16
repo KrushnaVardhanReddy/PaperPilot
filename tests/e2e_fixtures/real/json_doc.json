@@ -1,0 +1,11 @@
+{
+  "document_name": "test.pdf",
+  "pages": [
+    {
+      "page_number": 1,
+      "text": "Hello World from JSON to PDF",
+      "char_count": 28,
+      "images": []
+    }
+  ]
+}

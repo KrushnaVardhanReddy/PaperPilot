@@ -1,0 +1,44 @@
+name: AcroForm Batch Mail Merge
+
+on:
+  pull_request:
+    paths:
+      - 'paperpilot-cli/**'
+      - 'paperpilot-pdf/src/operations/form*'
+      - 'paperpilot-pdf/src/operations/flatten.rs'
+      - 'paperpilot-pdf/tests/form_fill_regression.rs'
+      - 'Cargo.lock'
+      - '.github/workflows/fill-batch.yml'
+  push:
+    branches: [main, feature/dev]
+    paths:
+      - 'paperpilot-cli/**'
+      - 'paperpilot-pdf/src/operations/form*'
+      - 'paperpilot-pdf/src/operations/flatten.rs'
+      - 'paperpilot-pdf/tests/form_fill_regression.rs'
+      - '.github/workflows/fill-batch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-form-regression:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+      - name: Batch CLI and 1,000 real PDF outputs
+        run: cargo test -p paperpilot-cli --test test_fill_batch -j 2 -- --test-threads=2
+      - name: Shared form engine regressions
+        run: cargo test -p paperpilot-pdf --test form_fill_regression -j 2
+      - name: Existing form and flatten operations
+        run: |
+          cargo test -p paperpilot-pdf --lib operations::form::tests -j 2
+          cargo test -p paperpilot-pdf --lib operations::flatten::tests -j 2

@@ -1,7 +1,7 @@
 use crate::{handlers, sse};
 use axum::{
     Router,
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
 };
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
@@ -11,6 +11,7 @@ use utoipa_swagger_ui::SwaggerUi;
 #[openapi(
     paths(
         handlers::health,
+        handlers::doctor,
         handlers::tika,
         handlers::tika_text,
         handlers::tika_markdown,
@@ -36,6 +37,8 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::pdf_extract_patterns,
+        handlers::pdf_to_epub,
         handlers::pdf_dedup_streams,
         handlers::pdf_posterize,
         handlers::pdf_split_by_outline,
@@ -56,13 +59,20 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::pdf_validate_signatures,
         handlers::workflow_presets,
         handlers::workflow_validate,
-        handlers::workflow_run_json
+        handlers::workflow_run_json,
+        handlers::start_watcher,
+        handlers::list_watchers,
+        handlers::stop_watcher,
+        handlers::run_recipe_once,
+        handlers::pdf_chunk_endpoint
     ),
     components(
         schemas(
         handlers::PdfInvertColorsJsonRequest,
             handlers::PdfSplitScannedBookJsonRequest,
             handlers::HealthResponse,
+            handlers::DoctorReportSchema,
+            handlers::DoctorCheckResultSchema,
             handlers::McpExecRequest,
             handlers::ApiResponse,
             handlers::TikaMetadata,
@@ -84,8 +94,67 @@ use utoipa_swagger_ui::SwaggerUi;
             handlers::WorkflowRunJsonRequest,
             handlers::PdfValidateSignaturesJsonRequest,
             handlers::PdfPosterizeJsonRequest,
-            handlers::PdfAttachmentsJsonRequest
-        )
+            handlers::PdfAttachmentsJsonRequest,
+            handlers::PdfToEpubJsonRequest,
+            handlers::StartWatcherRequest,
+            handlers::StartWatcherResponse,
+            handlers::WatcherListResponse,
+            handlers::WatcherSummary,
+            handlers::RunRecipeOnceResponse,
+            handlers::PdfChunkJsonRequest,
+            handlers::ChunkResultSchema,
+            handlers::DocumentChunkSchema
+        ,
+            handlers::PdfEncryptJsonRequest,
+            handlers::PdfDecryptJsonRequest,
+            handlers::PdfSanitizeJsonRequest,
+            handlers::PdfRedactJsonRequest,
+            handlers::PdfReadFormJsonRequest,
+            handlers::PdfFillFormJsonRequest,
+            handlers::PdfFlattenJsonRequest,
+            handlers::PdfStampJsonRequest,
+            handlers::PdfRemoveSignaturesJsonRequest,
+            handlers::PdfChangePermissionsJsonRequest,
+            handlers::PdfCreateFormFieldJsonRequest,
+            handlers::PdfTimestampJsonRequest,
+            handlers::PdfBatesJsonRequest,
+            handlers::PdfMergeJsonRequest,
+            handlers::PdfMergeAlternateJsonRequest,
+            handlers::PdfSplitJsonRequest,
+            handlers::PdfSplitByOutlineJsonRequest,
+            handlers::PdfRotateJsonRequest,
+            handlers::PdfAutoRotateJsonRequest,
+            handlers::PdfCropJsonRequest,
+            handlers::PdfScalePagesJsonRequest,
+            handlers::PdfDeletePagesJsonRequest,
+            handlers::PdfReorderPagesJsonRequest,
+            handlers::PdfExtractPagesJsonRequest,
+            handlers::PdfNupJsonRequest,
+            handlers::PdfBookletJsonRequest,
+            handlers::PdfStitchCanvasJsonRequest,
+            handlers::PdfToHtmlJsonRequest,
+            handlers::PdfToMarkdownJsonRequest,
+            handlers::PdfToJsonJsonRequest,
+            handlers::JsonToPdfJsonRequest,
+            handlers::PdfToPdfAJsonRequest,
+            handlers::PdfComicArchiveJsonRequest,
+            handlers::ExcelToJsonJsonRequest,
+            handlers::PdfLinearizeJsonRequest,
+            handlers::PdfRepairJsonRequest,
+            handlers::PdfExtractTextJsonRequest,
+            handlers::PdfOcrJsonRequest,
+            handlers::PdfExtractTablesJsonRequest,
+            handlers::DocumentPiiScanJsonRequest,
+            handlers::PdfBookmarksJsonRequest,
+            handlers::PdfHeaderFooterJsonRequest,
+            handlers::PdfClassifyTypeJsonRequest,
+            handlers::PdfCompareJsonRequest,
+            handlers::PdfHashJsonRequest,
+            handlers::PdfValidateJsonRequest,
+            handlers::PdfRenderJsonRequest,
+            handlers::PdfRagChunksJsonRequest,
+            handlers::WorkspaceSearchJsonRequest,
+            handlers::SemanticSearchJsonRequest)
     ),
     tags(
         (name = "Health", description = "Gateway health check and tool status"),
@@ -104,7 +173,129 @@ use utoipa_swagger_ui::SwaggerUi;
 )]
 pub struct ApiDoc;
 
-pub async fn build_app() -> Router {
+use paperpilot_pdf::operations::watch::{
+    WatchConfig, WatchSnapshot, WatcherManager, shared_watcher_manager,
+};
+use std::sync::Arc;
+pub type WatcherRegistry = Arc<WatcherManager>;
+pub struct WatcherRegistryAdapter(pub WatcherRegistry);
+impl paperpilot_mcp::server::WatcherRegistryTrait for WatcherRegistryAdapter {
+    fn add_named_watcher(&self, id: String, config: WatchConfig, name_template: Option<String>) -> Result<WatchSnapshot, String> {
+        self.0.start_with_naming(id, config, name_template, Arc::new(|_| {})).map_err(|e|e.to_string())
+    }
+    fn add_watcher(&self, id: String, config: WatchConfig) -> Result<WatchSnapshot, String> {
+        self.0
+            .start(id, config, Arc::new(|_| {}))
+            .map_err(|e| e.to_string())
+    }
+    fn remove_watcher(&self, id: &str) -> Result<(), String> {
+        self.0.remove(id).map_err(|e| e.to_string())
+    }
+    fn list_watchers(&self) -> Vec<WatchSnapshot> {
+        self.0.list()
+    }
+}
+
+use axum::{
+    extract::Request,
+    middleware::{self, Next},
+    response::Response,
+};
+use axum::http::{HeaderName, HeaderValue};
+use std::time::Instant;
+
+#[derive(Clone)]
+pub struct RequestId(pub String);
+
+#[derive(Clone, Copy, Debug)]
+pub struct ZeroTrace(pub bool);
+
+async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Response {
+    let req_id = req
+        .headers()
+        .get("x-request-id")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+    req.extensions_mut().insert(RequestId(req_id.clone()));
+
+    let header_zero_trace = req.headers().contains_key("x-zero-trace")
+        || req.headers()
+            .get("x-log-level")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.eq_ignore_ascii_case("off"))
+            .unwrap_or(false);
+
+    let query_zero_trace = req.uri().query()
+        .map(|q| q.contains("zero_trace=true") || q.contains("log_level=off"))
+        .unwrap_or(false);
+
+    let is_zero_trace = header_zero_trace || query_zero_trace;
+    req.extensions_mut().insert(ZeroTrace(is_zero_trace));
+
+    let method = req.method().to_string();
+    let uri = req.uri().to_string();
+    let client_ip = req
+        .headers()
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("127.0.0.1")
+        .to_string();
+
+    let span = tracing::info_span!(
+        "http_request",
+        request_id = %req_id,
+        http.method = %method,
+        http.route = %uri,
+        client.ip = %client_ip
+    );
+
+    let start_time = Instant::now();
+    let response = if is_zero_trace {
+        next.run(req).await
+    } else {
+        let _guard = span.enter();
+        tracing::debug!(
+            request_id = %req_id,
+            http.method = %method,
+            http.route = %uri,
+            "Incoming request started"
+        );
+        next.run(req).await
+    };
+
+    let duration_ms = start_time.elapsed().as_secs_f64() * 1000.0;
+    let status_code = response.status().as_u16();
+
+    if !is_zero_trace {
+        let _guard = span.enter();
+        tracing::info!(
+            request_id = %req_id,
+            http.method = %method,
+            http.route = %uri,
+            http.status_code = status_code,
+            duration_ms = %duration_ms,
+            "Request completed"
+        );
+    }
+
+    let mut response = response;
+    if is_zero_trace {
+        response.headers_mut().insert(
+            HeaderName::from_static("x-zero-trace-enforced"),
+            HeaderValue::from_static("true"),
+        );
+    } else {
+        if let Ok(hdr_val) = HeaderValue::from_str(&req_id) {
+            response.headers_mut().insert("X-Request-ID", hdr_val);
+        }
+    }
+
+    response
+}
+
+pub async fn build_app(registry: WatcherRegistry) -> Router {
     // Restrict CORS: Allow only trusted local origins (Tauri desktop client, Vite dev server, localhost)
     let cors = CorsLayer::new()
         .allow_origin(tower_http::cors::AllowOrigin::predicate(|origin, _| {
@@ -121,6 +312,7 @@ pub async fn build_app() -> Router {
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/health", get(handlers::health))
+        .route("/api/v1/doctor", get(handlers::doctor))
         .route("/tika", put(handlers::tika))
         .route("/tika/text", put(handlers::tika_text))
         .route("/tika/json/md", put(handlers::tika_markdown))
@@ -152,6 +344,8 @@ pub async fn build_app() -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/extract-patterns", post(handlers::pdf_extract_patterns) )
+        .route("/api/v1/pdf/to-epub", post(handlers::pdf_to_epub))
         .route(
             "/api/v1/pdf/dedup-streams",
             post(handlers::pdf_dedup_streams),
@@ -234,8 +428,87 @@ pub async fn build_app() -> Router {
             post(handlers::workflow_run_json),
         )
         .route("/api/v1/workflow/run", post(handlers::workflow_run))
+        .route(
+            "/v1/automation/watchers",
+            post(handlers::start_watcher).get(handlers::list_watchers),
+        )
+        .route(
+            "/v1/automation/watchers/{id}",
+            delete(handlers::stop_watcher),
+        )
+        .route("/v1/automation/fill-batch", post(crate::batch_routes::fill))
+        .route("/v1/automation/run", post(handlers::run_recipe_once))
+        .route("/v1/automation/receipts", get(crate::receipt_routes::list))
+        .route(
+            "/v1/automation/receipts/{id}",
+            get(crate::receipt_routes::get),
+        )
+
+        .route("/api/v1/pdf/pdf_encrypt", post(handlers::pdf_encrypt))
+        .route("/api/v1/pdf/pdf_decrypt", post(handlers::pdf_decrypt))
+        .route("/api/v1/pdf/pdf_sanitize", post(handlers::pdf_sanitize))
+        .route("/api/v1/pdf/pdf_redact", post(handlers::pdf_redact))
+        .route("/api/v1/pdf/pdf_read_form", post(handlers::pdf_read_form))
+        .route("/api/v1/pdf/pdf_fill_form", post(handlers::pdf_fill_form))
+        .route("/api/v1/pdf/pdf_flatten", post(handlers::pdf_flatten))
+        .route("/api/v1/pdf/pdf_stamp", post(handlers::pdf_stamp))
+        .route("/api/v1/pdf/pdf_validate_signatures", post(handlers::pdf_validate_signatures))
+        .route("/api/v1/pdf/pdf_remove_signatures", post(handlers::pdf_remove_signatures))
+        .route("/api/v1/pdf/pdf_change_permissions", post(handlers::pdf_change_permissions))
+        .route("/api/v1/pdf/pdf_create_form_field", post(handlers::pdf_create_form_field))
+        .route("/api/v1/pdf/pdf_timestamp", post(handlers::pdf_timestamp))
+        .route("/api/v1/pdf/pdf_bates", post(handlers::pdf_bates))
+        .route("/api/v1/pdf/pdf_merge", post(handlers::pdf_merge))
+        .route("/api/v1/pdf/pdf_merge_alternate", post(handlers::pdf_merge_alternate))
+        .route("/api/v1/pdf/pdf_split", post(handlers::pdf_split))
+        .route("/api/v1/pdf/pdf_split_by_outline", post(handlers::pdf_split_by_outline))
+        .route("/api/v1/pdf/pdf_split_scanned_book", post(handlers::pdf_split_scanned_book))
+        .route("/api/v1/pdf/pdf_rotate", post(handlers::pdf_rotate))
+        .route("/api/v1/pdf/pdf_auto_rotate", post(handlers::pdf_auto_rotate))
+        .route("/api/v1/pdf/pdf_crop", post(handlers::pdf_crop))
+        .route("/api/v1/pdf/pdf_scale_pages", post(handlers::pdf_scale_pages))
+        .route("/api/v1/pdf/pdf_delete_pages", post(handlers::pdf_delete_pages))
+        .route("/api/v1/pdf/pdf_reorder_pages", post(handlers::pdf_reorder_pages))
+        .route("/api/v1/pdf/pdf_extract_pages", post(handlers::pdf_extract_pages))
+        .route("/api/v1/pdf/pdf_nup", post(handlers::pdf_nup))
+        .route("/api/v1/pdf/pdf_booklet", post(handlers::pdf_booklet))
+        .route("/api/v1/pdf/pdf_posterize", post(handlers::pdf_posterize))
+        .route("/api/v1/pdf/pdf_stitch_canvas", post(handlers::pdf_stitch_canvas))
+        .route("/api/v1/pdf/pdf_to_html", post(handlers::pdf_to_html))
+        .route("/api/v1/pdf/pdf_to_markdown", post(handlers::pdf_to_markdown))
+        .route("/api/v1/pdf/pdf_to_json", post(handlers::pdf_to_json))
+        .route("/api/v1/pdf/json_to_pdf", post(handlers::json_to_pdf))
+        .route("/api/v1/pdf/pdf_to_epub", post(handlers::pdf_to_epub))
+        .route("/api/v1/pdf/pdf_to_pdf_a", post(handlers::pdf_to_pdf_a))
+        .route("/api/v1/pdf/pdf_comic_archive", post(handlers::pdf_comic_archive))
+        .route("/api/v1/pdf/excel_to_json", post(handlers::excel_to_json))
+        .route("/api/v1/pdf/excel_to_csv", post(handlers::excel_to_csv))
+        .route("/api/v1/pdf/pdf_dedup_streams", post(handlers::pdf_dedup_streams))
+        .route("/api/v1/pdf/pdf_invert_colors", post(handlers::pdf_invert_colors))
+        .route("/api/v1/pdf/pdf_linearize", post(handlers::pdf_linearize))
+        .route("/api/v1/pdf/pdf_repair", post(handlers::pdf_repair))
+        .route("/api/v1/pdf/pdf_extract_text", post(handlers::pdf_extract_text))
+        .route("/api/v1/pdf/pdf_ocr", post(handlers::pdf_ocr))
+        .route("/api/v1/pdf/pdf_extract_tables", post(handlers::pdf_extract_tables))
+        .route("/api/v1/pdf/document_pii_scan", post(handlers::document_pii_scan))
+        .route("/api/v1/pdf/pdf_bookmarks", post(handlers::pdf_bookmarks))
+        .route("/api/v1/pdf/pdf_header_footer", post(handlers::pdf_header_footer))
+        .route("/api/v1/pdf/pdf_classify_type", post(handlers::pdf_classify_type))
+        .route("/api/v1/pdf/pdf_compare", post(handlers::pdf_compare))
+        .route("/api/v1/pdf/pdf_hash", post(handlers::pdf_hash))
+        .route("/api/v1/pdf/pdf_validate", post(handlers::pdf_validate))
+        .route("/api/v1/pdf/pdf_render", post(handlers::pdf_render))
+        .route("/api/v1/pdf/pdf_rag_chunks", post(handlers::pdf_rag_chunks))
+        .route("/api/v1/pdf/chunk", post(handlers::pdf_chunk_endpoint))
+        .route("/api/v1/pdf/pdf_chunk", post(handlers::pdf_chunk_endpoint))
+
+        .route("/api/v1/search/semantic_search", post(handlers::semantic_search))
+
+        .route("/api/v1/pdf/pdf_watermark", post(handlers::watermark))
         .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
         .layer(cors)
+        .layer(middleware::from_fn(request_id_and_tracing_middleware))
+        .with_state(registry)
 }
 
 pub async fn start(
@@ -243,7 +516,8 @@ pub async fn start(
     bind: &str,
     shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> std::io::Result<()> {
-    let app = build_app().await;
+    let registry: WatcherRegistry = shared_watcher_manager();
+    let app = build_app(registry).await;
     let addr = format!("{}:{}", bind, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!("Starting gateway server on {}", addr);
