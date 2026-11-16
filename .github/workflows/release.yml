@@ -87,6 +87,17 @@ jobs:
         with:
           node-version: 22
 
+      - name: Set up wasm32 Target & wasm-pack
+        shell: bash
+        run: |
+          rustup target add wasm32-unknown-unknown
+          which wasm-pack || cargo install wasm-pack --locked
+
+      - name: Build WebAssembly Package for Desktop
+        shell: bash
+        run: |
+          wasm-pack build --target web --release paperpilot-wasm
+
       - name: Install Desktop Frontend Dependencies
         run: |
           cd apps/desktop
