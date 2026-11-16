@@ -39,6 +39,194 @@ pub struct PatternFinding {
     pub value: String,
     pub page: u32,
     pub context_snippet: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rect: Option<[f64; 4]>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct MatchedPattern {
+    pub page: u32,
+    pub text: String,
+    pub rect: [f64; 4], // [x, y, width, height]
+    pub line_text: String,
+}
+
+pub fn filter_occurrences<T>(items: Vec<T>, occurrence: &str) -> Vec<T> {
+    if items.is_empty() {
+        return items;
+    }
+    let occ = occurrence.trim().to_lowercase();
+    match occ.as_str() {
+        "all" | "" => items,
+        "first" => vec![items.into_iter().next().unwrap()],
+        "last" => vec![items.into_iter().last().unwrap()],
+        other => {
+            let indices: Vec<usize> = other
+                .trim_matches(|c| c == '[' || c == ']')
+                .split(',')
+                .filter_map(|s| s.trim().parse::<usize>().ok())
+                .collect();
+            if indices.is_empty() {
+                items
+            } else {
+                items
+                    .into_iter()
+                    .enumerate()
+                    .filter(|(idx, _)| indices.contains(idx))
+                    .map(|(_, item)| item)
+                    .collect()
+            }
+        }
+    }
+}
+
+fn compute_match_bbox(line: &pdf_oxide::layout::TextLine, byte_start: usize, byte_end: usize) -> [f64; 4] {
+    let matched_text = &line.text[byte_start..byte_end];
+
+    // Priority 1: Check if the match corresponds to complete words or consecutive words in line.words
+    let mut matched_words_bbox: Vec<&pdf_oxide::layout::TextBlock> = Vec::new();
+    let mut current_offset = 0;
+    for w in &line.words {
+        // Find position of this word in line.text starting from current_offset
+        if let Some(pos) = line.text[current_offset..].find(&w.text) {
+            let word_start = current_offset + pos;
+            let word_end = word_start + w.text.len();
+            current_offset = word_end;
+
+            // Check if this word overlaps with [byte_start, byte_end]
+            if word_start < byte_end && word_end > byte_start {
+                matched_words_bbox.push(w);
+            }
+        }
+    }
+
+    if !matched_words_bbox.is_empty() {
+        // If it's a sub-word match within a single word, refine using word's chars
+        if matched_words_bbox.len() == 1 {
+            let single_word = matched_words_bbox[0];
+            let word_text = &single_word.text;
+            if let Some(sub_start) = word_text.find(matched_text) {
+                let sub_char_start = word_text[..sub_start].chars().count();
+                let sub_char_len = matched_text.chars().count();
+                let sub_char_end = sub_char_start + sub_char_len;
+                if sub_char_start < single_word.chars.len() {
+                    let chars_slice = &single_word.chars[sub_char_start..sub_char_end.min(single_word.chars.len())];
+                    if !chars_slice.is_empty() {
+                        let min_x = chars_slice.iter().map(|c| c.bbox.x as f64).fold(f64::INFINITY, f64::min);
+                        let min_y = chars_slice.iter().map(|c| c.bbox.y as f64).fold(f64::INFINITY, f64::min);
+                        let max_x = chars_slice.iter().map(|c| (c.bbox.x + c.bbox.width) as f64).fold(f64::NEG_INFINITY, f64::max);
+                        let max_y = chars_slice.iter().map(|c| (c.bbox.y + c.bbox.height) as f64).fold(f64::NEG_INFINITY, f64::max);
+                        let w = (max_x - min_x).max(1.0);
+                        let h = (max_y - min_y).max(1.0);
+                        if min_x.is_finite() && min_y.is_finite() {
+                            return [min_x, min_y, w, h];
+                        }
+                    }
+                }
+            }
+        }
+
+        let min_x = matched_words_bbox.iter().map(|b| b.bbox.x as f64).fold(f64::INFINITY, f64::min);
+        let min_y = matched_words_bbox.iter().map(|b| b.bbox.y as f64).fold(f64::INFINITY, f64::min);
+        let max_x = matched_words_bbox.iter().map(|b| (b.bbox.x + b.bbox.width) as f64).fold(f64::NEG_INFINITY, f64::max);
+        let max_y = matched_words_bbox.iter().map(|b| (b.bbox.y + b.bbox.height) as f64).fold(f64::NEG_INFINITY, f64::max);
+        let w = (max_x - min_x).max(1.0);
+        let h = (max_y - min_y).max(1.0);
+        if min_x.is_finite() && min_y.is_finite() {
+            return [min_x, min_y, w, h];
+        }
+    }
+
+    let char_start = line.text[..byte_start].chars().count();
+    let char_len = line.text[byte_start..byte_end].chars().count();
+    let char_end = char_start + char_len;
+    let total_chars = line.text.chars().count().max(1) as f64;
+    let start_ratio = char_start as f64 / total_chars;
+    let end_ratio = char_end as f64 / total_chars;
+    let x = line.bbox.x as f64 + start_ratio * line.bbox.width as f64;
+    let w = ((end_ratio - start_ratio) * line.bbox.width as f64).max(5.0);
+    let y = line.bbox.y as f64;
+    let h = (line.bbox.height as f64).max(10.0);
+    [x, y, w, h]
+}
+
+pub fn find_text_matches(
+    pdf_bytes: &[u8],
+    search: Option<&str>,
+    regex_pattern: Option<&str>,
+    case_sensitive: bool,
+    pages_filter: Option<&[u32]>,
+) -> Vec<MatchedPattern> {
+    let mut results = Vec::new();
+    if pdf_bytes.is_empty() {
+        return results;
+    }
+    let mut pdf = match pdf_oxide::api::Pdf::from_bytes(pdf_bytes.to_vec()) {
+        Ok(p) => p,
+        Err(_) => return results,
+    };
+    let page_count = match pdf.page_count() {
+        Ok(c) => c,
+        Err(_) => return results,
+    };
+
+    let compiled_regex = if let Some(re_str) = regex_pattern {
+        if re_str.trim().is_empty() {
+            None
+        } else {
+            regex::RegexBuilder::new(re_str)
+                .case_insensitive(!case_sensitive)
+                .build()
+                .ok()
+        }
+    } else if let Some(kw) = search {
+        if kw.trim().is_empty() {
+            None
+        } else {
+            let escaped = regex::escape(kw);
+            regex::RegexBuilder::new(&escaped)
+                .case_insensitive(!case_sensitive)
+                .build()
+                .ok()
+        }
+    } else {
+        None
+    };
+
+    let Some(regex) = compiled_regex else {
+        return results;
+    };
+
+    for page_idx in 0..page_count {
+        let page_num = (page_idx + 1) as u32;
+        if let Some(target_pages) = pages_filter {
+            if !target_pages.contains(&page_num) {
+                continue;
+            }
+        }
+
+        let lines = pdf.extract_text_lines(page_idx).unwrap_or_default();
+        for line in &lines {
+            if line.text.trim().is_empty() {
+                continue;
+            }
+            for m in regex.find_iter(&line.text) {
+                let matched_text = m.as_str().to_string();
+                let match_start = m.start();
+                let match_end = m.end();
+
+                let rect = compute_match_bbox(line, match_start, match_end);
+                results.push(MatchedPattern {
+                    page: page_num,
+                    text: matched_text,
+                    rect,
+                    line_text: line.text.clone(),
+                });
+            }
+        }
+    }
+
+    results
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -137,6 +325,7 @@ pub fn extract_patterns(
                                 match_end,
                                 options.context_len,
                             ),
+                            rect: None,
                         });
                         *matches_by_label.entry(keyword.clone()).or_insert(0) += 1;
                         search_start = match_end;
@@ -163,6 +352,7 @@ pub fn extract_patterns(
                                 m.end(),
                                 options.context_len,
                             ),
+                            rect: None,
                         });
                         *matches_by_label.entry(keyword.clone()).or_insert(0) += 1;
                     }
@@ -184,9 +374,24 @@ pub fn extract_patterns(
                         m.end(),
                         options.context_len,
                     ),
+                    rect: None,
                 });
                 *matches_by_label.entry(label.clone()).or_insert(0) += 1;
             }
+        }
+    }
+
+    // Enrich findings with bounding coordinates from find_text_matches
+    for finding in &mut findings {
+        let matches = find_text_matches(
+            input_bytes,
+            Some(&finding.value),
+            None,
+            options.case_sensitive,
+            Some(&[finding.page]),
+        );
+        if let Some(m) = matches.into_iter().next() {
+            finding.rect = Some(m.rect);
         }
     }
 
@@ -320,5 +525,25 @@ mod tests {
         let source = DocumentSource::from_bytes(bytes);
         let src_report = extract_patterns_source(&source, &options).expect("Failed via source");
         assert_eq!(src_report.total_matches, report.total_matches);
+    }
+
+    #[test]
+    fn test_find_text_matches_and_filter_occurrences() {
+        let pdf_path = std::path::Path::new("../ManaulTestingFixtures/pdf_redact/Input/sensitive_customer_records.pdf");
+        let alt_path = std::path::Path::new("ManaulTestingFixtures/pdf_redact/Input/sensitive_customer_records.pdf");
+        let p = if pdf_path.exists() { pdf_path } else { alt_path };
+        if let Ok(bytes) = std::fs::read(p) {
+            let matches = find_text_matches(&bytes, Some("123-45-6789"), None, false, None);
+            assert!(!matches.is_empty());
+            assert_eq!(matches[0].page, 1);
+            assert!(matches[0].rect[2] > 0.0);
+            assert!(matches[0].rect[3] > 0.0);
+
+            let first = filter_occurrences(matches.clone(), "first");
+            assert_eq!(first.len(), 1);
+
+            let all = filter_occurrences(matches.clone(), "all");
+            assert_eq!(all.len(), matches.len());
+        }
     }
 }

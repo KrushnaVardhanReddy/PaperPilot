@@ -122,11 +122,37 @@ export interface OperationContext {
     piiScanIban?: boolean;
     redactQuery?: string;
     redactRect?: string;
+    redactIsRegex?: boolean;
+    redactOverlayText?: string;
+    redactOccurrence?: string;
+    redactRules?: Array<{
+        search?: string;
+        regex?: string;
+        case_sensitive?: boolean;
+        rect?: number[];
+        page?: number;
+        occurrence?: string;
+        overlay_text?: string;
+    }>;
     annotationType?: string;
     annotationContent?: string;
     annotationColor?: string;
     annotationRect?: string;
     annotationPage?: number;
+    annotationSearchPattern?: string;
+    annotationIsRegex?: boolean;
+    annotationOccurrence?: string;
+    annotationRules?: Array<{
+        type?: string;
+        color?: string;
+        search?: string;
+        regex?: string;
+        case_sensitive?: boolean;
+        rect?: number[];
+        page?: number;
+        occurrence?: string;
+        content?: string;
+    }>;
     formDataPath?: string;
     formFieldRect?: string;
     formFieldName?: string;
@@ -428,15 +454,32 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         case 'redact':
-        case 'pdf_redact':
+        case 'pdf_redact': {
+            const rules: any[] = [];
+            if (context.redactRules && context.redactRules.length > 0) {
+                rules.push(...context.redactRules);
+            } else if (context.redactQuery) {
+                rules.push({
+                    search: context.redactIsRegex ? undefined : context.redactQuery,
+                    regex: context.redactIsRegex ? context.redactQuery : undefined,
+                    occurrence: context.redactOccurrence || 'all',
+                    overlay_text: context.redactOverlayText || undefined,
+                });
+            }
+
             args = {
                 input: docPath,
                 query: context.redactQuery || searchQuery || 'CONFIDENTIAL',
+                regex: context.redactIsRegex ? context.redactQuery : undefined,
                 rect: context.redactRect || '0,0,100,100',
                 regions: context.redactRect || '0,0,100,100',
+                rules: rules.length > 0 ? rules : undefined,
+                overlay_text: context.redactOverlayText || undefined,
+                occurrence: context.redactOccurrence || 'all',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_redacted.pdf`)
             };
             break;
+        }
         case 'sign':
         case 'pdf_sign':
             args = {
@@ -675,6 +718,20 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         }
         case 'annotate':
         case 'pdf_annotate': {
+            const rules: any[] = [];
+            if (context.annotationRules && context.annotationRules.length > 0) {
+                rules.push(...context.annotationRules);
+            } else if (context.annotationSearchPattern) {
+                rules.push({
+                    type: context.annotationType || 'highlight',
+                    color: context.annotationColor || '#FFFF00',
+                    search: context.annotationIsRegex ? undefined : context.annotationSearchPattern,
+                    regex: context.annotationIsRegex ? context.annotationSearchPattern : undefined,
+                    occurrence: context.annotationOccurrence || 'all',
+                    content: context.annotationContent || undefined,
+                });
+            }
+
             const annoType = context.annotationType || 'highlight';
             const annoContent = context.annotationContent || 'Note';
             const annoColor = context.annotationColor || '#FFFF00';
@@ -699,8 +756,9 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
 
             args = {
                 input: docPath,
-                annotations,
-                data: annotations,
+                annotations: rules.length > 0 ? rules : annotations,
+                rules: rules.length > 0 ? rules : undefined,
+                data: rules.length > 0 ? rules : annotations,
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_annotated.pdf`)
             };
             break;

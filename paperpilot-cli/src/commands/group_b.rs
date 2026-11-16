@@ -75,31 +75,59 @@ pub fn handle_redact(
     input: &std::path::Path,
     pages: &str,
     rect: &str,
+    query: Option<&str>,
+    regex: Option<&str>,
+    overlay_text: Option<&str>,
+    occurrence: Option<&str>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
 
-    let parts: Vec<&str> = rect.split(',').collect();
-    let x = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0.0);
-    let y = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-    let width = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-    let height = parts.get(3).and_then(|s| s.parse().ok()).unwrap_or(0.0);
-
-    let page_number = pages
+    let target_pages: Vec<u32> = pages
         .split(',')
-        .next()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(1);
+        .filter_map(|s| s.trim().parse().ok())
+        .collect();
 
-    let op = paperpilot_pdf::operations::redact::RedactOperation::new(
-        page_number,
-        paperpilot_pdf::operations::redact::BoundingBox {
-            x,
-            y,
-            width,
-            height,
-        },
-    );
+    let op = if query.is_some() || regex.is_some() {
+        let rule = paperpilot_pdf::operations::redact::RedactRule {
+            search: query.map(|s| s.to_string()),
+            regex: regex.map(|s| s.to_string()),
+            case_sensitive: false,
+            pages: if target_pages.is_empty() {
+                None
+            } else {
+                Some(target_pages)
+            },
+            rect: None,
+            page: None,
+            occurrence: occurrence.unwrap_or("all").to_string(),
+            overlay_text: overlay_text.map(|s| s.to_string()),
+        };
+        paperpilot_pdf::operations::redact::RedactOperation::from_rules(vec![rule])
+    } else {
+        let parts: Vec<&str> = rect.split(',').collect();
+        let x = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0.0);
+        let y = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0.0);
+        let width = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0.0);
+        let height = parts.get(3).and_then(|s| s.parse().ok()).unwrap_or(0.0);
+
+        let page_number = target_pages.first().copied().unwrap_or(1);
+
+        let mut redact_op = paperpilot_pdf::operations::redact::RedactOperation::new(
+            page_number,
+            paperpilot_pdf::operations::redact::BoundingBox {
+                x,
+                y,
+                width,
+                height,
+            },
+        );
+        if let Some(ot) = overlay_text {
+            redact_op = redact_op.with_overlay_text(ot);
+        }
+        redact_op
+    };
+
     op.execute(&mut doc)?;
     doc.save(output)
 }

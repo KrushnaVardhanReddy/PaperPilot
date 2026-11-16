@@ -228,6 +228,12 @@ pub enum Commands {
         #[arg(long)]
         query: Option<String>,
         #[arg(long)]
+        regex: Option<String>,
+        #[arg(long)]
+        overlay_text: Option<String>,
+        #[arg(long, default_value = "all")]
+        occurrence: String,
+        #[arg(long)]
         output: PathBuf,
     },
     /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]

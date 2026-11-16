@@ -264,7 +264,16 @@ pub fn handle_ask(
                 ));
             }
             let out = output_path.unwrap_or_else(|| std::path::PathBuf::from("redact_out.pdf"));
-            crate::commands::group_b::handle_redact(&inputs_paths[0], "redact", "0,0,10,10", &out)
+            crate::commands::group_b::handle_redact(
+                &inputs_paths[0],
+                "1",
+                "0,0,10,10",
+                None,
+                None,
+                None,
+                None,
+                &out,
+            )
         }
         Intent::Metadata => {
             if inputs_paths.is_empty() {

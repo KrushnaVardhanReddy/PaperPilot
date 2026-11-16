@@ -2425,6 +2425,26 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_height_redact),
         );
 
+        let mut prop_query_redact = serde_json::Map::new();
+        prop_query_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_query_redact.insert("description".to_string(), serde_json::Value::String("Search keyword or pattern to redact permanently.".to_string()));
+        props_redact.insert("query".to_string(), serde_json::Value::Object(prop_query_redact));
+
+        let mut prop_regex_redact = serde_json::Map::new();
+        prop_regex_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_regex_redact.insert("description".to_string(), serde_json::Value::String("Regular expression to match and redact.".to_string()));
+        props_redact.insert("regex".to_string(), serde_json::Value::Object(prop_regex_redact));
+
+        let mut prop_overlay_redact = serde_json::Map::new();
+        prop_overlay_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_overlay_redact.insert("description".to_string(), serde_json::Value::String("Optional overlay text (e.g. '[REDACTED]').".to_string()));
+        props_redact.insert("overlay_text".to_string(), serde_json::Value::Object(prop_overlay_redact));
+
+        let mut prop_occurrence_redact = serde_json::Map::new();
+        prop_occurrence_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_occurrence_redact.insert("description".to_string(), serde_json::Value::String("Occurrence filter: 'all', 'first', 'last', or indices.".to_string()));
+        props_redact.insert("occurrence".to_string(), serde_json::Value::Object(prop_occurrence_redact));
+
         schema_redact.insert(
             "properties".to_string(),
             serde_json::Value::Object(props_redact),
@@ -2434,18 +2454,13 @@ impl PaperPilotMcpServer {
             serde_json::Value::Array(vec![
                 serde_json::Value::String("input".to_string()),
                 serde_json::Value::String("output".to_string()),
-                serde_json::Value::String("page".to_string()),
-                serde_json::Value::String("x".to_string()),
-                serde_json::Value::String("y".to_string()),
-                serde_json::Value::String("width".to_string()),
-                serde_json::Value::String("height".to_string()),
             ]),
         );
 
         let mut tool_redact = Tool::default();
         tool_redact.name = "pdf_redact".into();
         tool_redact.description = Some(
-            "Redacts a specified area of a PDF page. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
+            "Permanently redacts sensitive text glyphs, patterns, regexes, or specified bounding areas with blackout boxes and optional overlay text. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
                 .into(),
         );
         tool_redact.input_schema = Arc::new(schema_redact);
@@ -4515,6 +4530,21 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_annotations_ann),
         );
 
+        let mut prop_rules_ann = serde_json::Map::new();
+        prop_rules_ann.insert("type".to_string(), serde_json::Value::String("array".to_string()));
+        prop_rules_ann.insert("description".to_string(), serde_json::Value::String("List of pattern/rule-based annotation objects (type, color, search, regex, occurrence).".to_string()));
+        props_ann.insert("rules".to_string(), serde_json::Value::Object(prop_rules_ann));
+
+        let mut prop_search_ann = serde_json::Map::new();
+        prop_search_ann.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_search_ann.insert("description".to_string(), serde_json::Value::String("Keyword text to find and annotate.".to_string()));
+        props_ann.insert("search".to_string(), serde_json::Value::Object(prop_search_ann));
+
+        let mut prop_regex_ann = serde_json::Map::new();
+        prop_regex_ann.insert("type".to_string(), serde_json::Value::String("string".to_string()));
+        prop_regex_ann.insert("description".to_string(), serde_json::Value::String("Regex pattern to find and annotate.".to_string()));
+        props_ann.insert("regex".to_string(), serde_json::Value::Object(prop_regex_ann));
+
         schema_ann.insert(
             "properties".to_string(),
             serde_json::Value::Object(props_ann),
@@ -4524,7 +4554,6 @@ impl PaperPilotMcpServer {
             serde_json::Value::Array(vec![
                 serde_json::Value::String("input".to_string()),
                 serde_json::Value::String("output".to_string()),
-                serde_json::Value::String("annotations".to_string()),
             ]),
         );
 
@@ -5886,32 +5915,100 @@ impl PaperPilotMcpServer {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
 
-                let default_annots = serde_json::Value::Array(vec![]);
-                let annotations_value = args
+                let default_val = serde_json::Value::Array(vec![]);
+                let raw_val = args
                     .get("annotations")
+                    .or_else(|| args.get("rules"))
                     .or_else(|| args.get("data"))
-                    .unwrap_or(&default_annots);
+                    .unwrap_or(&default_val);
 
-                let annotations: Vec<paperpilot_pdf::operations::annotate::AnnotationParams> =
-                    if let Some(s) = annotations_value.as_str() {
-                        if s.starts_with('[') || s.starts_with('{') {
-                            serde_json::from_str(s).unwrap_or_default()
-                        } else if let Ok(content) = std::fs::read_to_string(s) {
-                            serde_json::from_str(&content).unwrap_or_default()
-                        } else {
-                            vec![]
-                        }
+                let json_val = if let Some(s) = raw_val.as_str() {
+                    if s.starts_with('[') || s.starts_with('{') {
+                        serde_json::from_str(s).unwrap_or(serde_json::Value::Array(vec![]))
+                    } else if let Ok(content) = std::fs::read_to_string(s) {
+                        serde_json::from_str(&content).unwrap_or(serde_json::Value::Array(vec![]))
                     } else {
-                        serde_json::from_value(annotations_value.clone()).unwrap_or_default()
-                    };
+                        serde_json::Value::Array(vec![])
+                    }
+                } else {
+                    raw_val.clone()
+                };
+
+                let mut rules: Vec<paperpilot_pdf::operations::annotate::AnnotationRule> = Vec::new();
+                let mut annotations: Vec<paperpilot_pdf::operations::annotate::AnnotationParams> = Vec::new();
+
+                if let Ok(parsed_rules) = serde_json::from_value::<Vec<paperpilot_pdf::operations::annotate::AnnotationRule>>(json_val.clone()) {
+                    if parsed_rules.iter().any(|r| r.search.is_some() || r.regex.is_some() || r.rect.is_some()) {
+                        rules = parsed_rules;
+                    } else if let Ok(parsed_annots) = serde_json::from_value::<Vec<paperpilot_pdf::operations::annotate::AnnotationParams>>(json_val.clone()) {
+                        annotations = parsed_annots;
+                    } else {
+                        rules = parsed_rules;
+                    }
+                } else if let Ok(parsed_annots) = serde_json::from_value::<Vec<paperpilot_pdf::operations::annotate::AnnotationParams>>(json_val.clone()) {
+                    annotations = parsed_annots;
+                } else if let Some(obj) = json_val.as_object() {
+                    if let Some(r_val) = obj.get("rules") {
+                        if let Ok(r) = serde_json::from_value(r_val.clone()) {
+                            rules = r;
+                        }
+                    }
+                    if let Some(a_val) = obj.get("annotations") {
+                        if let Ok(a) = serde_json::from_value(a_val.clone()) {
+                            annotations = a;
+                        }
+                    }
+                }
+
+                // Support top-level search/regex shorthand arguments
+                if let Some(search_val) = args.get("search").and_then(|v| v.as_str()) {
+                    let annot_type = args.get("type").and_then(|v| v.as_str()).unwrap_or("highlight").to_string();
+                    let color = args.get("color").and_then(|v| v.as_str()).unwrap_or("#FFFF00").to_string();
+                    let occurrence = args.get("occurrence").and_then(|v| v.as_str()).unwrap_or("all").to_string();
+                    rules.push(paperpilot_pdf::operations::annotate::AnnotationRule {
+                        id: None,
+                        r#type: annot_type,
+                        color,
+                        search: Some(search_val.to_string()),
+                        regex: None,
+                        case_sensitive: args.get("case_sensitive").and_then(|v| v.as_bool()).unwrap_or(false),
+                        pages: None,
+                        rect: None,
+                        page: None,
+                        occurrence,
+                        content: args.get("content").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    });
+                } else if let Some(regex_val) = args.get("regex").and_then(|v| v.as_str()) {
+                    let annot_type = args.get("type").and_then(|v| v.as_str()).unwrap_or("highlight").to_string();
+                    let color = args.get("color").and_then(|v| v.as_str()).unwrap_or("#FFFF00").to_string();
+                    let occurrence = args.get("occurrence").and_then(|v| v.as_str()).unwrap_or("all").to_string();
+                    rules.push(paperpilot_pdf::operations::annotate::AnnotationRule {
+                        id: None,
+                        r#type: annot_type,
+                        color,
+                        search: None,
+                        regex: Some(regex_val.to_string()),
+                        case_sensitive: args.get("case_sensitive").and_then(|v| v.as_bool()).unwrap_or(false),
+                        pages: None,
+                        rect: None,
+                        page: None,
+                        occurrence,
+                        content: args.get("content").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    });
+                }
 
                 ensure_parent_dir(&output)?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
 
-                let op = paperpilot_pdf::operations::annotate::AnnotateOperation::new()
-                    .with_annotations(annotations);
+                let mut op = paperpilot_pdf::operations::annotate::AnnotateOperation::new();
+                if !annotations.is_empty() {
+                    op = op.with_annotations(annotations);
+                }
+                if !rules.is_empty() {
+                    op = op.with_rules(rules);
+                }
 
                 op.execute(&mut doc.inner)
                     .map_err(crate::error::to_mcp_error)?;
@@ -6767,49 +6864,113 @@ impl PaperPilotMcpServer {
             "pdf_redact" | "redact" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
-                let page = args.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
+                let overlay_text = args.get("overlay_text").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let occurrence = args.get("occurrence").and_then(|v| v.as_str()).unwrap_or("all").to_string();
 
-                let (x, y, width, height) = if let Some(serde_json::Value::Array(arr)) = args.get("rect") {
-                    if arr.len() == 4 {
-                        (
-                            arr[0].as_f64().unwrap_or(0.0) as f32,
-                            arr[1].as_f64().unwrap_or(0.0) as f32,
-                            arr[2].as_f64().unwrap_or(0.0) as f32,
-                            arr[3].as_f64().unwrap_or(0.0) as f32,
-                        )
-                    } else {
-                        return Err(ErrorData::invalid_params("rect must be an array of 4 numbers", None));
-                    }
-                } else if let Some(rect_str) = args.get("rect").and_then(|v| v.as_str()) {
-                    let parts: Vec<f32> = rect_str.split(',').filter_map(|s| s.trim().parse().ok()).collect();
-                    if parts.len() == 4 {
-                        (parts[0], parts[1], parts[2], parts[3])
-                    } else {
-                        (0.0, 0.0, 100.0, 100.0)
-                    }
-                } else if args.get("x").is_some() && args.get("y").is_some() {
-                    let x = get_f64("x").unwrap_or(0.0) as f32;
-                    let y = get_f64("y").unwrap_or(0.0) as f32;
-                    let width = get_f64("width").unwrap_or(100.0) as f32;
-                    let height = get_f64("height").unwrap_or(100.0) as f32;
-                    (x, y, width, height)
-                } else {
-                    (0.0, 0.0, 100.0, 100.0)
-                };
+                let mut rules: Vec<paperpilot_pdf::operations::redact::RedactRule> = Vec::new();
 
-                let _color = args.get("color").and_then(|v| v.as_str());
+                if let Some(rules_val) = args.get("rules") {
+                    if let Ok(parsed_rules) = serde_json::from_value::<Vec<paperpilot_pdf::operations::redact::RedactRule>>(rules_val.clone()) {
+                        rules = parsed_rules;
+                    }
+                }
+
+                if let Some(query_str) = args.get("query").or_else(|| args.get("search")).and_then(|v| v.as_str()) {
+                    rules.push(paperpilot_pdf::operations::redact::RedactRule {
+                        search: Some(query_str.to_string()),
+                        regex: None,
+                        case_sensitive: args.get("case_sensitive").and_then(|v| v.as_bool()).unwrap_or(false),
+                        pages: None,
+                        rect: None,
+                        page: None,
+                        occurrence: occurrence.clone(),
+                        overlay_text: overlay_text.clone(),
+                    });
+                }
+                if let Some(regex_str) = args.get("regex").and_then(|v| v.as_str()) {
+                    rules.push(paperpilot_pdf::operations::redact::RedactRule {
+                        search: None,
+                        regex: Some(regex_str.to_string()),
+                        case_sensitive: args.get("case_sensitive").and_then(|v| v.as_bool()).unwrap_or(false),
+                        pages: None,
+                        rect: None,
+                        page: None,
+                        occurrence: occurrence.clone(),
+                        overlay_text: overlay_text.clone(),
+                    });
+                }
+                if let Some(serde_json::Value::Array(pats)) = args.get("patterns") {
+                    for p in pats {
+                        if let Some(s) = p.as_str() {
+                            rules.push(paperpilot_pdf::operations::redact::RedactRule {
+                                search: Some(s.to_string()),
+                                regex: None,
+                                case_sensitive: false,
+                                pages: None,
+                                rect: None,
+                                page: None,
+                                occurrence: occurrence.clone(),
+                                overlay_text: overlay_text.clone(),
+                            });
+                        }
+                    }
+                }
 
                 ensure_parent_dir(&output)?;
 
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
-                let bbox = paperpilot_pdf::operations::redact::BoundingBox {
-                    x,
-                    y,
-                    width,
-                    height,
+
+                let op = if !rules.is_empty() {
+                    let mut op = paperpilot_pdf::operations::redact::RedactOperation::from_rules(rules);
+                    if let Some(ot) = overlay_text {
+                        op = op.with_overlay_text(ot);
+                    }
+                    op
+                } else {
+                    let page = args.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as u32;
+
+                    let (x, y, width, height) = if let Some(serde_json::Value::Array(arr)) = args.get("rect") {
+                        if arr.len() == 4 {
+                            (
+                                arr[0].as_f64().unwrap_or(0.0) as f32,
+                                arr[1].as_f64().unwrap_or(0.0) as f32,
+                                arr[2].as_f64().unwrap_or(0.0) as f32,
+                                arr[3].as_f64().unwrap_or(0.0) as f32,
+                            )
+                        } else {
+                            return Err(ErrorData::invalid_params("rect must be an array of 4 numbers", None));
+                        }
+                    } else if let Some(rect_str) = args.get("rect").and_then(|v| v.as_str()) {
+                        let parts: Vec<f32> = rect_str.split(',').filter_map(|s| s.trim().parse().ok()).collect();
+                        if parts.len() == 4 {
+                            (parts[0], parts[1], parts[2], parts[3])
+                        } else {
+                            (0.0, 0.0, 100.0, 100.0)
+                        }
+                    } else if args.get("x").is_some() && args.get("y").is_some() {
+                        let x = get_f64("x").unwrap_or(0.0) as f32;
+                        let y = get_f64("y").unwrap_or(0.0) as f32;
+                        let width = get_f64("width").unwrap_or(100.0) as f32;
+                        let height = get_f64("height").unwrap_or(100.0) as f32;
+                        (x, y, width, height)
+                    } else {
+                        (0.0, 0.0, 100.0, 100.0)
+                    };
+
+                    let bbox = paperpilot_pdf::operations::redact::BoundingBox {
+                        x,
+                        y,
+                        width,
+                        height,
+                    };
+                    let mut op = paperpilot_pdf::operations::redact::RedactOperation::new(page, bbox);
+                    if let Some(ot) = overlay_text {
+                        op = op.with_overlay_text(ot);
+                    }
+                    op
                 };
-                let op = paperpilot_pdf::operations::redact::RedactOperation::new(page, bbox);
+
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
                 doc.save(&std::path::PathBuf::from(&output))
                     .map_err(crate::error::to_mcp_error)?;

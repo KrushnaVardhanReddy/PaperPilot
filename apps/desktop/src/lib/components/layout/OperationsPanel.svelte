@@ -212,6 +212,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let piiScanIban = $state(true);
   let redactQuery = $state('');
   let redactRect = $state('0,0,100,100');
+  let redactIsRegex = $state(false);
+  let redactOverlayText = $state('[REDACTED]');
+  let redactOccurrence = $state('all');
+  let redactRules = $state<Array<{ search?: string; regex?: string; occurrence: string; overlay_text?: string }>>([]);
 
   // Stamping & Annotation Parameter States (Tools 51-55)
   let annotationType = $state('highlight');
@@ -219,6 +223,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let annotationColor = $state('#FFFF00');
   let annotationRect = $state('50,50,150,20');
   let annotationPage = $state(1);
+  let annotationSearchPattern = $state('');
+  let annotationIsRegex = $state(false);
+  let annotationOccurrence = $state('all');
+  let annotationRules = $state<Array<{ type: string; color: string; search?: string; regex?: string; occurrence: string; content?: string }>>([]);
 
   // Form Field, Fill & Batch Parameter States (Tools 46-50)
   let formDataPath = $state('tests/e2e_fixtures/real/form_data.json');
@@ -853,11 +861,19 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             piiScanIban,
             redactQuery,
             redactRect,
+            redactIsRegex,
+            redactOverlayText,
+            redactOccurrence,
+            redactRules,
             annotationType,
             annotationContent,
             annotationColor,
             annotationRect,
             annotationPage,
+            annotationSearchPattern,
+            annotationIsRegex,
+            annotationOccurrence,
+            annotationRules,
             formDataPath,
             formFieldName,
             formFieldLabel,
@@ -1106,11 +1122,19 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           piiScanIban,
           redactQuery,
           redactRect,
+          redactIsRegex,
+          redactOverlayText,
+          redactOccurrence,
+          redactRules,
           annotationType,
           annotationContent,
           annotationColor,
           annotationRect,
           annotationPage,
+          annotationSearchPattern,
+          annotationIsRegex,
+          annotationOccurrence,
+          annotationRules,
           formDataPath,
           formFieldName,
           formFieldLabel,
@@ -2195,6 +2219,32 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {:else if activeTool.id === 'annotate' || activeTool.id === 'pdf_annotate'}
         <div class="operation-config">
+          <label for="annotationSearchPattern" class="section-desc">Search Text or Regex Pattern:</label>
+          <input
+            id="annotationSearchPattern"
+            type="text"
+            class="form-input"
+            bind:value={annotationSearchPattern}
+            placeholder="e.g. Artificial Intelligence or \b\d{4}\b"
+          />
+          <div style="display: flex; gap: 16px; align-items: center; margin-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #cbd5e1; cursor: pointer;">
+              <input type="checkbox" bind:checked={annotationIsRegex} />
+              Use Regular Expression
+            </label>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label for="annotationOccurrence" style="font-size: 0.85rem; color: #cbd5e1;">Occurrence:</label>
+              <select id="annotationOccurrence" bind:value={annotationOccurrence} class="form-input" style="width: auto; padding: 2px 8px; font-size: 0.85rem;">
+                <option value="all">All Occurrences</option>
+                <option value="first">First Only</option>
+                <option value="last">Last Only</option>
+              </select>
+            </div>
+          </div>
+          <span class="field-hint">Automatically searches the document and positions annotations over matching text coordinates.</span>
+        </div>
+
+        <div class="operation-config" style="margin-top: 10px;">
           <label for="annotationType" class="section-desc">Annotation Type:</label>
           <select id="annotationType" bind:value={annotationType} class="form-input">
             <option value="highlight">Highlight</option>
@@ -2205,29 +2255,166 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           </select>
           <span class="field-hint">PDF standard annotation dictionary /Subtype entry.</span>
         </div>
-        <div class="operation-config" style="margin-top: 10px;">
-          <label for="annotationContent" class="section-desc">Note / Comment Content:</label>
-          <input id="annotationContent" type="text" class="form-input" bind:value={annotationContent} placeholder="e.g. Legal review requested" />
-          <span class="field-hint">Content text attached to the note /Contents attribute.</span>
-        </div>
+
         <div class="operation-config" style="margin-top: 10px;">
           <label for="annotationColor" class="section-desc">Color Hex:</label>
           <input id="annotationColor" type="text" class="form-input" bind:value={annotationColor} placeholder="#FFFF00" />
           <span class="field-hint">Hex color code formatted as #RRGGBB.</span>
         </div>
+
         <div class="operation-config" style="margin-top: 10px;">
-          <label for="annotationRect" class="section-desc">Bounding Coordinates (x,y,w,h):</label>
+          <label for="annotationContent" class="section-desc">Note / Comment Content:</label>
+          <input id="annotationContent" type="text" class="form-input" bind:value={annotationContent} placeholder="e.g. Legal review requested" />
+          <span class="field-hint">Content text attached to the note /Contents attribute.</span>
+        </div>
+
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="annotationRect" class="section-desc">Bounding Coordinates (x,y,w,h) (Optional if Pattern is set):</label>
           <input id="annotationRect" type="text" class="form-input" bind:value={annotationRect} placeholder="50,50,150,20" />
-          <span class="field-hint">Rectangular boundary [x, y, width, height] in PDF points.</span>
+          <span class="field-hint">Rectangular boundary [x, y, width, height] in PDF points (used if no pattern is specified).</span>
+        </div>
+
+        <div class="operation-config" style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 0.85rem; color: #e2e8f0;">Batch Rules ({annotationRules.length})</span>
+            <div style="display: flex; gap: 6px;">
+              <button
+                type="button"
+                class="password-toggle-btn"
+                onclick={() => {
+                  annotationRules.push({
+                    type: annotationType,
+                    color: annotationColor,
+                    search: annotationIsRegex ? undefined : (annotationSearchPattern || undefined),
+                    regex: annotationIsRegex ? (annotationSearchPattern || undefined) : undefined,
+                    occurrence: annotationOccurrence,
+                    content: annotationContent || undefined,
+                  });
+                  annotationSearchPattern = '';
+                }}
+              >
+                + Add Current Rule
+              </button>
+              {#if annotationRules.length > 0}
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  onclick={() => { annotationRules = []; }}
+                >
+                  Clear All
+                </button>
+              {/if}
+            </div>
+          </div>
+          {#if annotationRules.length > 0}
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+              {#each annotationRules as rule, idx}
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px;">
+                  <span>
+                    <strong style="color: {rule.color};">{rule.type.toUpperCase()}</strong>:
+                    {rule.search || rule.regex || 'Manual rect'} ({rule.occurrence})
+                  </span>
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    style="color: #ef4444;"
+                    onclick={() => { annotationRules = annotationRules.filter((_, i) => i !== idx); }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
       {:else if activeTool.id === 'redact' || activeTool.id === 'pdf_redact'}
         <div class="operation-config">
           <label for="redactQuery" class="section-desc">Search Query / Pattern to Redact:</label>
-          <input id="redactQuery" type="text" class="form-input" bind:value={redactQuery} placeholder="e.g. SSN, CONFIDENTIAL, or regex pattern" style="margin-bottom: 8px;" />
-          <div style="margin-top: 8px;">
-            <label for="redactRect" class="section-desc">Redaction Box (x,y,w,h):</label>
-            <input id="redactRect" type="text" class="form-input" bind:value={redactRect} placeholder="0,0,100,100" />
+          <input id="redactQuery" type="text" class="form-input" bind:value={redactQuery} placeholder="e.g. 123-45-6789, CONFIDENTIAL, or regex" style="margin-bottom: 8px;" />
+
+          <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 8px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #cbd5e1; cursor: pointer;">
+              <input type="checkbox" bind:checked={redactIsRegex} />
+              Use Regular Expression
+            </label>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label for="redactOccurrence" style="font-size: 0.85rem; color: #cbd5e1;">Occurrence:</label>
+              <select id="redactOccurrence" bind:value={redactOccurrence} class="form-input" style="width: auto; padding: 2px 8px; font-size: 0.85rem;">
+                <option value="all">All Occurrences</option>
+                <option value="first">First Only</option>
+                <option value="last">Last Only</option>
+              </select>
+            </div>
           </div>
+
+          <div style="margin-top: 8px;">
+            <label for="redactOverlayText" class="section-desc">Overlay Text (Optional):</label>
+            <input id="redactOverlayText" type="text" class="form-input" bind:value={redactOverlayText} placeholder="e.g. [REDACTED]" />
+            <span class="field-hint">White text displayed centered inside the blackout box.</span>
+          </div>
+
+          <div style="margin-top: 8px;">
+            <label for="redactRect" class="section-desc">Redaction Box (x,y,w,h) (Optional if Pattern is set):</label>
+            <input id="redactRect" type="text" class="form-input" bind:value={redactRect} placeholder="0,0,100,100" />
+            <span class="field-hint">Used for manual zone blackout when no search query is specified.</span>
+          </div>
+
+          <div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-weight: 600; font-size: 0.85rem; color: #e2e8f0;">Batch Redaction Rules ({redactRules.length})</span>
+              <div style="display: flex; gap: 6px;">
+                <button
+                  type="button"
+                  class="password-toggle-btn"
+                  onclick={() => {
+                    if (redactQuery.trim()) {
+                      redactRules.push({
+                        search: redactIsRegex ? undefined : redactQuery.trim(),
+                        regex: redactIsRegex ? redactQuery.trim() : undefined,
+                        occurrence: redactOccurrence,
+                        overlay_text: redactOverlayText || undefined,
+                      });
+                      redactQuery = '';
+                    }
+                  }}
+                >
+                  + Add Current Rule
+                </button>
+                {#if redactRules.length > 0}
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    onclick={() => { redactRules = []; }}
+                  >
+                    Clear All
+                  </button>
+                {/if}
+              </div>
+            </div>
+            {#if redactRules.length > 0}
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;">
+                {#each redactRules as rule, idx}
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px;">
+                    <span>
+                      <strong>{rule.search || rule.regex}</strong> ({rule.occurrence})
+                      {#if rule.overlay_text}
+                        <span style="color: #94a3b8; margin-left: 4px;">[{rule.overlay_text}]</span>
+                      {/if}
+                    </span>
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      style="color: #ef4444;"
+                      onclick={() => { redactRules = redactRules.filter((_, i) => i !== idx); }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Permanently redacts matching sensitive patterns, text glyphs, and rectangular zones from the document stream.
           </p>
