@@ -74,3 +74,4 @@ semgrep_report.json
 
 # Complete synthetic PDFs for desktop native automation and smart-filter tests.
 !apps/desktop/tests/fixtures/automation/*.pdf
+LINKEDIN_POST_V0.7.0.md
