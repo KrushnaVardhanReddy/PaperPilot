@@ -15,3 +15,6 @@ apps/desktop/src-tauri/gen/android/app/src/main/AndroidManifest.xml
 # Swagger UI public documentation CDN assets & canonical link tag
 apps/web/public/swagger-ui.html
 apps/web/index.html
+
+# GitHub Actions workflows are managed via GitHub repository settings
+.github/workflows/

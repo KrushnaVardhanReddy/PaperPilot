@@ -153,9 +153,10 @@ jobs:
 
       - name: Set Dynamic Version in Desktop App
         shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          CLEAN_VER="${{ inputs.version }}"
-          CLEAN_VER="${CLEAN_VER#v}"
+          CLEAN_VER="${INPUT_VERSION#v}"
           echo "Setting desktop version to ${CLEAN_VER}..."
           cd apps/desktop
           node -e '
@@ -602,15 +603,16 @@ jobs:
 
       - name: Update Packaging Manifests Version
         shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          CLEAN_VER="${{ inputs.version }}"
-          CLEAN_VER="${CLEAN_VER#v}"
+          CLEAN_VER="${INPUT_VERSION#v}"
           TODAY=$(date -u +'%Y-%m-%d')
           echo "Updating packaging manifests to version ${CLEAN_VER} (date: ${TODAY})..."
 
           # 1. Update Flatpak manifest URL and AppStream metainfo release tag
           sed -i "s|<release version=\"[^\"]*\" date=\"[^\"]*\">|<release version=\"${CLEAN_VER}\" date=\"${TODAY}\">|g" packaging/flatpak/com.usepaperpilot.PaperPilot.metainfo.xml 2>/dev/null || true
-          sed -i "s|download/v[^/]*/|download/${{ inputs.version }}/|g" packaging/flatpak/com.usepaperpilot.PaperPilot.yml 2>/dev/null || true
+          sed -i "s|download/v[^/]*/|download/${INPUT_VERSION}/|g" packaging/flatpak/com.usepaperpilot.PaperPilot.yml 2>/dev/null || true
           sed -i "s|PaperPilot_[0-9.]*_[a-zA-Z0-9_-]*.deb|PaperPilot_${CLEAN_VER}_amd64.deb|g" packaging/flatpak/com.usepaperpilot.PaperPilot.yml 2>/dev/null || true
 
           # Inject real SHA256 for release .deb into Flatpak manifest
