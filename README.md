@@ -29,29 +29,11 @@ No Chromium, no C++ runtime, no cloud calls.
 
 ---
 
-## ⚡ 10-Second Installation
-
-### Homebrew (macOS & Linux)
-```bash
-brew install KrushnaVardhanReddy/tap/paperpilot
-```
-
-### One-Line Install Script
-**macOS & Linux (POSIX):**
-```bash
-curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | sh
-```
-
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
-```
-
-### Self-Healing System Diagnostics
+## Self-Healing System Diagnostics
 Verify your environment, gateway port, temp storage, and OCR models with one command:
 ```bash
 paperpilot doctor
-# PaperPilot System Diagnostics (v0.1.0)
+# PaperPilot System Diagnostics (v0.7.0)
 # ==================================================
 # Status:    Healthy
 # [✓] Temp Directory: /tmp (writable & ephemeral cleanup verified)
@@ -136,27 +118,32 @@ Requires Rust 1.75+, Node.js, and pnpm.
 
 ---
 
-## What it can do (91 Tools Across 5 Interfaces)
+## What it can do (92 Tools Across 5 Interfaces)
 
-- **AI Agent Intelligence & RAG**:
-  - `pdf_chunk`: Structure-aware semantic chunker respecting `#`/`##` headings, `\n\n` paragraphs, and keeping Markdown tables (`|...|`) atomic with dynamic overlap rewinding and boilerplate running header/footer suppression.
-  - `pdf_search` & `workspace_search`: Sub-millisecond grep and pattern searching across multi-document repositories.
-  - `pdf_extract_patterns`: High-precision regex and pattern extraction for invoices, order IDs, tracking numbers, and dates.
-  - `pdf_classify_type`: Automatic document classification (invoices, receipts, legal briefs, tax filings, research papers).
-- **Core Layout & Imposition**:
+- **AI Agent Intelligence, Semantic Search & Workflows**:
+  - `document_workflow` & `recipe_run`: Declarative `.ppflow` DAG workflows with step dependencies, conditions, and cryptographic audit receipts.
+  - `workspace_search` & `semantic_search`: Multi-format recursive workspace search (`.pdf`, `.docx`, `.xlsx`, `.md`, `.txt`, `.csv`, `.json`) and normalized vector chunk retrieval.
+  - `cli_ask`: Natural language intent planner and instant execution agent.
+  - `pdf_chunk` & `pdf_rag_chunks`: Structure-aware semantic chunker respecting `#`/`##` headings, `\n\n` paragraphs, and keeping Markdown tables atomic.
+  - `pdf_search` & `pdf_extract_patterns`: High-precision regex and pattern extraction for invoices, order IDs, and legal identifiers.
+  - `pdf_classify_type`: Automatic document categorization (invoices, receipts, legal briefs, tax filings, research papers).
+- **Core Layout, Bates Numbering & Imposition**:
+  - `pdf_bates`: Standard legal discovery Bates numbering across 6 customizable anchor positions.
   - Merge, split, rotate, delete pages, reorder pages, extract pages, booklet imposition, N-up grid, and multi-sheet poster tile slicing (`pdf_posterize`).
-  - Interactive forms: fill (`pdf_form_fill`), extract form fields (`pdf_form_extract`), and flatten.
-  - Digital signatures (`pdf_sign`), bookmarks/TOC (`pdf_bookmarks`), and crop/margins (`pdf_crop`, `pdf_margin`).
+  - Interactive forms: read form fields (`pdf_read_form`), fill (`pdf_fill_form`, `batch_fill`), create form fields (`pdf_create_form_field`), and flatten (`pdf_flatten`).
+  - Digital signatures & timestamps (`pdf_sign`, `pdf_validate_signatures`, `pdf_timestamp`), bookmarks (`pdf_bookmarks`), and crop/scale (`pdf_crop`, `pdf_scale_pages`).
 - **Office & Cross-Format Transformations**:
-  - Bidirectional PDF ⇄ Word (`pdf_to_docx`, `docx_to_pdf`).
-  - Bidirectional PDF ⇄ Excel (`pdf_to_xlsx`, `excel_to_csv`, `excel_to_json`).
-  - PowerPoint slides (`pdf_to_pptx`), HTML (`pdf_to_html`), and clean Markdown (`pdf_to_markdown`, `office_to_markdown`).
+  - Bidirectional PDF ⇄ Word (`pdf_to_docx`, `pdf_convert_markdown`).
+  - Bidirectional PDF ⇄ Excel (`pdf_to_xlsx`, `pdf_convert_excel`, `excel_to_csv`, `excel_to_json`).
+  - EPUB eBooks (`pdf_to_epub`), PowerPoint slides (`pdf_to_pptx`), HTML (`pdf_to_html`, `pdf_convert_html`), and JSON ASTs (`pdf_to_json`, `json_to_pdf`).
+  - Legacy Office modernization (`office_modernize_legacy`, `office_extract_text`, `office_to_markdown`).
 - **OCR & Document Vision**:
   - Neural PP-OCRv4 detection & recognition via `rten` and `ocrs` (det.onnx + rec.onnx).
-  - Searchable OCR text layer injection (`pdf_ocr_layer`) and auto-deskewing (`pdf_deskew`).
+  - Searchable OCR text layer injection, auto-rotation (`pdf_auto_rotate`), page rendering (`pdf_render`), and blank page removal (`pdf_remove_blank`).
 - **Security & PII Redaction**:
-  - Automated PII scanning (`pdf_pii_scanner`) detecting SSNs, credit cards, emails, phone numbers.
-  - Cryptographic validation & hashing (`pdf_validate`, `pdf_hash`), password protection (`pdf_protect`, `pdf_unlock`), and irreversible redaction (`pdf_redact`).
+  - Automated PII scanning (`document_pii_scan`) detecting SSNs, credit cards, emails, phone numbers, and IBANs.
+  - Permanent redaction (`pdf_redact`) via coordinates, keywords, regex, or structured JSON datasets.
+  - Cryptographic validation & hashing (`pdf_validate`, `pdf_hash`), encryption/decryption (`pdf_encrypt`, `pdf_decrypt`), permissions bitmask (`pdf_change_permissions`), and sanitization (`pdf_sanitize`).
 - **Zero-Copy High Performance Engine**:
   - Zero-copy memory-mapped I/O (`DocumentSource` via `memmap2`) for files $\ge 10\text{ MB}$, keeping resident memory flat (< 100 MB) during search, chunking, and PII scanning of 500+ page documents.
   - Universal streaming page batching (`PageBatchIterator`) to prevent OOM errors.
