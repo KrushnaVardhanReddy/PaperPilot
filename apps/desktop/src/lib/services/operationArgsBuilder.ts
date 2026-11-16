@@ -474,6 +474,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 rect: context.redactRect || '0,0,100,100',
                 regions: context.redactRect || '0,0,100,100',
                 rules: rules.length > 0 ? rules : undefined,
+                data: rules.length > 0 ? rules : undefined,
                 overlay_text: context.redactOverlayText || undefined,
                 occurrence: context.redactOccurrence || 'all',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_redacted.pdf`)
