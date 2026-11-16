@@ -1004,13 +1004,15 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                             let final_score = (match_score * 100.0).round() / 100.0;
                             let chunk_id = format!("{}_chunk_{}", file_name, chunk.chunk_index);
 
-                            all_scored_chunks.push(ScoredChunk {
-                                chunk_id,
-                                page: chunk.page_start,
-                                score: final_score,
-                                heading: if heading_str.is_empty() { "Document Section".to_string() } else { heading_str },
-                                content: chunk.text,
-                            });
+                            if final_score > 0.0 {
+                                all_scored_chunks.push(ScoredChunk {
+                                    chunk_id,
+                                    page: chunk.page_start,
+                                    score: final_score,
+                                    heading: if heading_str.is_empty() { "Document Section".to_string() } else { heading_str },
+                                    content: chunk.text,
+                                });
+                            }
                         }
                     }
                 }
