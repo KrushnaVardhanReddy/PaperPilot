@@ -11,6 +11,7 @@ import urllib.request
 import urllib.error
 import math
 import copy
+import shlex
 
 # Bypass proxy for localhost / 127.0.0.1
 proxy_handler = urllib.request.ProxyHandler({})

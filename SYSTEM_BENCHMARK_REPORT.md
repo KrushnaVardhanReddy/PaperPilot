@@ -1,76 +1,76 @@
 # PaperPilot — System Benchmark Report
-Generated: 2026-11-08 09:58:20
-Platform: Linux 7.0.0-42-generic, 13th Gen Intel(R) Core(TM) i9-13900H, 15 GB
-Mode: Full (20 iterations)
+Generated: 2026-11-16 15:18:23
+Platform: Linux 7.0.0-43-generic, 13th Gen Intel(R) Core(TM) i9-13900H, 15 GB
+Mode: Quick (1 iteration)
 
 ## Executive Summary
 | Metric | Value |
 |---|---|
 | Total Tools Tested | 89/89 |
-| Total Invocations | 3000 |
-| Average Latency | 27.22 ms |
+| Total Invocations | 150 |
+| Average Latency | 21.94 ms |
 | WASM Latency | N/A (Node environment not tested here) |
 | Zero-Leak Confirmation | ✅ Confirmed |
 
 ## Category Latency Matrix
 | Category | Tools Included | P50 (ms) | P95 (ms) |
 |---|---|---|---|
-| Document Manipulation | 9 tools | 14.38 ms | 23.93 ms |
-| Optimization & Security | 11 tools | 18.45 ms | 32.93 ms |
-| Analysis, Rendering & OCR | 9 tools | 21.75 ms | 65.84 ms |
-| Forms & Formatting | 8 tools | 17.89 ms | 31.12 ms |
-| Office & Web Conversions | 13 tools | 24.49 ms | 136.21 ms |
+| Document Manipulation | 9 tools | 15.68 ms | 20.75 ms |
+| Optimization & Security | 11 tools | 16.51 ms | 26.44 ms |
+| Analysis, Rendering & OCR | 9 tools | 14.19 ms | 60.03 ms |
+| Forms & Formatting | 8 tools | 16.58 ms | 23.88 ms |
+| Office & Web Conversions | 13 tools | 18.60 ms | 149.59 ms |
 
 ## Individual Tool Scorecard
 | Tool ID | CLI Latency | MCP Latency | REST Latency | Status |
 |---|---|---|---|---|
-| `pdf_merge` | 20.56 ms | 25.27 ms | 5.39 ms | ✅ PASS |
-| `pdf_split` | 16.11 ms | 15.50 ms | 2.76 ms | ✅ PASS |
-| `pdf_extract_pages` | 14.12 ms | 13.44 ms | 2.37 ms | ✅ PASS |
-| `pdf_delete_pages` | 15.28 ms | 18.93 ms | 3.82 ms | ✅ PASS |
-| `pdf_reorder_pages` | 18.27 ms | 19.61 ms | 5.54 ms | ✅ PASS |
-| `pdf_rotate` | 19.36 ms | 18.10 ms | 2.74 ms | ✅ PASS |
-| `pdf_crop` | 18.21 ms | 17.69 ms | 1.82 ms | ✅ PASS |
-| `pdf_burst` | 14.10 ms | 14.48 ms | 4.17 ms | ✅ PASS |
-| `pdf_remove_blank` | 16.90 ms | 18.13 ms | 2.87 ms | ✅ PASS |
-| `pdf_compress` | 15.18 ms | 18.50 ms | 2.59 ms | ✅ PASS |
-| `pdf_repair` | 23.03 ms | 15.89 ms | 4.42 ms | ✅ PASS |
-| `pdf_linearize` | 21.53 ms | 21.81 ms | 4.46 ms | ✅ PASS |
-| `pdf_encrypt` | 22.37 ms | 25.95 ms | 5.57 ms | ✅ PASS |
-| `pdf_decrypt` | 19.90 ms | 24.91 ms | 6.62 ms | ✅ PASS |
-| `pdf_watermark` | 18.85 ms | 26.36 ms | 4.95 ms | ✅ PASS |
-| `pdf_redact` | 24.47 ms | 21.35 ms | 3.50 ms | ✅ PASS |
-| `pdf_metadata` | 16.09 ms | 15.78 ms | 1.74 ms | ✅ PASS |
-| `pdf_sign` | 22.75 ms | 30.96 ms | 5.67 ms | ✅ PASS |
-| `pdf_flatten` | 28.16 ms | 22.23 ms | 4.07 ms | ✅ PASS |
-| `pdf_to_pdf_a` | 20.70 ms | 21.18 ms | 4.35 ms | ✅ PASS |
-| `pdf_header_footer` | 27.58 ms | 27.58 ms | 7.46 ms | ✅ PASS |
-| `pdf_bates` | 20.66 ms | 18.22 ms | 2.55 ms | ✅ PASS |
-| `pdf_page_numbers` | 19.66 ms | 20.59 ms | 7.08 ms | ✅ PASS |
-| `pdf_extract_text` | 41.76 ms | 37.87 ms | 5.50 ms | ✅ PASS |
-| `pdf_extract_images` | 21.37 ms | 20.99 ms | 3.86 ms | ✅ PASS |
-| `pdf_search` | 20.66 ms | 28.13 ms | 4.30 ms | ✅ PASS |
-| `pdf_render` | 451.65 ms | 20.90 ms | 3.14 ms | ✅ PASS |
-| `pdf_compare` | 43.50 ms | 39.42 ms | 10.22 ms | ✅ PASS |
-| `pdf_ocr` | 49.39 ms | 60.53 ms | 24.17 ms | ✅ PASS |
-| `pdf_bookmarks` | 20.01 ms | 21.25 ms | 4.30 ms | ✅ PASS |
-| `pdf_images_to_pdf` | 18.19 ms | 20.48 ms | 4.00 ms | ✅ PASS |
-| `pdf_annotate` | 22.53 ms | 32.01 ms | 5.13 ms | ✅ PASS |
-| `pdf_classify_type` | 25.64 ms | 24.07 ms | 3.12 ms | ✅ PASS |
-| `pdf_validate` | 19.37 ms | 23.59 ms | 5.21 ms | ✅ PASS |
-| `pdf_hash` | 23.03 ms | 17.49 ms | 2.36 ms | ✅ PASS |
-| `pdf_read_form` | 22.57 ms | 20.03 ms | 4.26 ms | ✅ PASS |
-| `pdf_fill_form` | 23.47 ms | 30.32 ms | 6.99 ms | ✅ PASS |
-| `pdf_create_form_field` | 26.26 ms | 20.56 ms | 1.49 ms | ✅ PASS |
-| `pdf_to_docx` | 35.34 ms | 27.86 ms | 3.48 ms | ✅ PASS |
-| `pdf_to_xlsx` | 30.48 ms | 34.32 ms | 7.40 ms | ✅ PASS |
-| `pdf_to_pptx` | 23.42 ms | 21.38 ms | 6.10 ms | ✅ PASS |
-| `pdf_convert_html` | 130.17 ms | 130.99 ms | 108.20 ms | ✅ PASS |
-| `pdf_convert_markdown` | 126.51 ms | 134.66 ms | 103.54 ms | ✅ PASS |
-| `pdf_convert_excel` | 128.14 ms | 136.36 ms | 114.88 ms | ✅ PASS |
-| `pdf_to_html` | 26.32 ms | 28.63 ms | 6.29 ms | ✅ PASS |
-| `pdf_to_markdown` | 33.20 ms | 40.34 ms | 7.51 ms | ✅ PASS |
-| `pdf_to_json` | 18.94 ms | 17.73 ms | 2.41 ms | ✅ PASS |
-| `json_to_pdf` | 21.26 ms | 16.54 ms | 1.71 ms | ✅ PASS |
-| `pdf_info` | 18.21 ms | 20.19 ms | 3.73 ms | ✅ PASS |
-| `pdf_rag_chunks` | 34.39 ms | 32.51 ms | 6.68 ms | ✅ PASS |
+| `pdf_merge` | 21.07 ms | 17.24 ms | 5.65 ms | ✅ PASS |
+| `pdf_split` | 10.61 ms | 12.82 ms | 2.65 ms | ✅ PASS |
+| `pdf_extract_pages` | 11.92 ms | 16.14 ms | 3.52 ms | ✅ PASS |
+| `pdf_delete_pages` | 17.64 ms | 17.55 ms | 3.16 ms | ✅ PASS |
+| `pdf_reorder_pages` | 16.17 ms | 18.65 ms | 4.65 ms | ✅ PASS |
+| `pdf_rotate` | 18.57 ms | 20.75 ms | 3.21 ms | ✅ PASS |
+| `pdf_crop` | 20.64 ms | 13.93 ms | 2.89 ms | ✅ PASS |
+| `pdf_burst` | 18.39 ms | 17.63 ms | 4.99 ms | ✅ PASS |
+| `pdf_remove_blank` | 18.46 ms | 15.68 ms | 3.47 ms | ✅ PASS |
+| `pdf_compress` | 17.69 ms | 18.08 ms | 3.71 ms | ✅ PASS |
+| `pdf_repair` | 16.51 ms | 16.89 ms | 2.93 ms | ✅ PASS |
+| `pdf_linearize` | 17.88 ms | 15.08 ms | 3.86 ms | ✅ PASS |
+| `pdf_encrypt` | 17.71 ms | 19.41 ms | 4.15 ms | ✅ PASS |
+| `pdf_decrypt` | 18.66 ms | 12.34 ms | 4.28 ms | ✅ PASS |
+| `pdf_watermark` | 20.00 ms | 17.05 ms | 4.42 ms | ✅ PASS |
+| `pdf_redact` | 17.90 ms | 14.84 ms | 2.29 ms | ✅ PASS |
+| `pdf_metadata` | 15.17 ms | 18.60 ms | 3.49 ms | ✅ PASS |
+| `pdf_sign` | 20.75 ms | 17.97 ms | 4.15 ms | ✅ PASS |
+| `pdf_flatten` | 26.44 ms | 17.30 ms | 4.69 ms | ✅ PASS |
+| `pdf_to_pdf_a` | 22.52 ms | 27.81 ms | 5.41 ms | ✅ PASS |
+| `pdf_header_footer` | 23.88 ms | 22.68 ms | 5.97 ms | ✅ PASS |
+| `pdf_bates` | 21.65 ms | 18.18 ms | 3.58 ms | ✅ PASS |
+| `pdf_page_numbers` | 19.16 ms | 12.39 ms | 2.07 ms | ✅ PASS |
+| `pdf_extract_text` | 11.90 ms | 14.24 ms | 4.31 ms | ✅ PASS |
+| `pdf_extract_images` | 15.44 ms | 16.12 ms | 4.23 ms | ✅ PASS |
+| `pdf_search` | 21.59 ms | 20.10 ms | 4.10 ms | ✅ PASS |
+| `pdf_render` | 60.03 ms | 60.40 ms | 40.57 ms | ✅ PASS |
+| `pdf_compare` | 11.64 ms | 21.38 ms | 5.24 ms | ✅ PASS |
+| `pdf_ocr` | 37.75 ms | 40.12 ms | 21.77 ms | ✅ PASS |
+| `pdf_bookmarks` | 13.56 ms | 22.03 ms | 7.34 ms | ✅ PASS |
+| `pdf_images_to_pdf` | 39.98 ms | 19.95 ms | 3.26 ms | ✅ PASS |
+| `pdf_annotate` | 16.15 ms | 10.91 ms | 2.17 ms | ✅ PASS |
+| `pdf_classify_type` | 13.04 ms | 12.38 ms | 2.62 ms | ✅ PASS |
+| `pdf_validate` | 14.19 ms | 10.41 ms | 2.83 ms | ✅ PASS |
+| `pdf_hash` | 17.95 ms | 12.05 ms | 2.32 ms | ✅ PASS |
+| `pdf_read_form` | 22.09 ms | 15.52 ms | 3.14 ms | ✅ PASS |
+| `pdf_fill_form` | 19.31 ms | 16.58 ms | 6.92 ms | ✅ PASS |
+| `pdf_create_form_field` | 18.55 ms | 8.69 ms | 2.20 ms | ✅ PASS |
+| `pdf_to_docx` | 31.49 ms | 40.53 ms | 17.85 ms | ✅ PASS |
+| `pdf_to_xlsx` | 31.22 ms | 19.19 ms | 6.85 ms | ✅ PASS |
+| `pdf_to_pptx` | 11.76 ms | 16.96 ms | 5.73 ms | ✅ PASS |
+| `pdf_convert_html` | 196.43 ms | 149.59 ms | 93.08 ms | ✅ PASS |
+| `pdf_convert_markdown` | 130.64 ms | 143.92 ms | 122.49 ms | ✅ PASS |
+| `pdf_convert_excel` | 112.79 ms | 139.93 ms | 81.57 ms | ✅ PASS |
+| `pdf_to_html` | 18.23 ms | 22.84 ms | 8.72 ms | ✅ PASS |
+| `pdf_to_markdown` | 22.80 ms | 33.46 ms | 4.66 ms | ✅ PASS |
+| `pdf_to_json` | 19.56 ms | 17.96 ms | 4.45 ms | ✅ PASS |
+| `json_to_pdf` | 17.64 ms | 10.41 ms | 2.45 ms | ✅ PASS |
+| `pdf_info` | 16.69 ms | 17.35 ms | 3.40 ms | ✅ PASS |
+| `pdf_rag_chunks` | 25.48 ms | 24.39 ms | 3.22 ms | ✅ PASS |
