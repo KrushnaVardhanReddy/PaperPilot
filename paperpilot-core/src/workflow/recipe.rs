@@ -18,6 +18,11 @@ pub fn parse_workflow(content: &str) -> OperationResult<SavedWorkflow> {
     if workflow.id.is_empty() {
         workflow.id = workflow.name.clone();
     }
+    for (index, step) in workflow.steps.iter_mut().enumerate() {
+        if step.id.trim().is_empty() {
+            step.id = format!("step_{}", index + 1);
+        }
+    }
     workflow_order(&workflow)?;
     Ok(workflow)
 }
@@ -27,8 +32,9 @@ pub fn parse_workflow(content: &str) -> OperationResult<SavedWorkflow> {
 /// Joining multiple PDF artifacts requires a future explicit merge operation.
 pub fn workflow_order(workflow: &SavedWorkflow) -> OperationResult<Vec<usize>> {
     let invalid = |message: String| PdfError::InvalidInput(message);
-    if workflow.version != "1" {
-        return Err(invalid("Unsupported workflow version (expected 1)".into()));
+    let ver = workflow.version.trim();
+    if ver != "1" && ver != "1.0" {
+        return Err(invalid("Unsupported workflow version (expected 1 or 1.0)".into()));
     }
     if workflow.name.trim().is_empty() || workflow.steps.is_empty() || workflow.steps.len() > 256 {
         return Err(invalid(
@@ -37,7 +43,12 @@ pub fn workflow_order(workflow: &SavedWorkflow) -> OperationResult<Vec<usize>> {
     }
     let mut ids = HashMap::new();
     for (index, step) in workflow.steps.iter().enumerate() {
-        if step.id.trim().is_empty() || ids.insert(step.id.as_str(), index).is_some() {
+        let step_id = if step.id.trim().is_empty() {
+            format!("step_{}", index + 1)
+        } else {
+            step.id.clone()
+        };
+        if ids.insert(step_id.clone(), index).is_some() {
             return Err(invalid("Stage IDs must be nonempty and unique".into()));
         }
         if step.operation_id.trim().is_empty() {

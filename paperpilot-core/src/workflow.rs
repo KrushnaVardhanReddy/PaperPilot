@@ -87,6 +87,7 @@ pub enum OnNoMatch {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct WorkflowStep {
+    #[serde(default)]
     pub id: String,
     #[serde(
         rename = "operationId",
