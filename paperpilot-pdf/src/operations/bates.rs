@@ -7,6 +7,7 @@ pub struct BatesNumberingOperation {
     start_number: u32,
     prefix: String,
     padding: usize,
+    position: Option<String>,
 }
 
 impl BatesNumberingOperation {
@@ -15,7 +16,13 @@ impl BatesNumberingOperation {
             start_number,
             prefix,
             padding,
+            position: None,
         }
+    }
+
+    pub fn with_position(mut self, position: impl Into<String>) -> Self {
+        self.position = Some(position.into());
+        self
     }
 }
 
@@ -42,6 +49,18 @@ impl PdfOperation for BatesNumberingOperation {
 
         for (current_number, page_number) in (self.start_number..).zip(sorted_page_numbers) {
             let object_id = *pages.get(&page_number).unwrap();
+
+            let mut width = 595.0;
+            let mut height = 842.0;
+
+            if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object(object_id)
+                && let Ok(lopdf::Object::Array(rect)) = page_dict.get(b"MediaBox")
+                && rect.len() == 4
+                && let (Ok(x2), Ok(y2)) = (rect[2].as_f32(), rect[3].as_f32())
+            {
+                width = x2;
+                height = y2;
+            }
 
             if let Ok(lopdf::Object::Dictionary(page_dict)) = inner.get_object_mut(object_id) {
                 let mut new_resources = None;
@@ -73,8 +92,19 @@ impl PdfOperation for BatesNumberingOperation {
             let text = format!("{}{}", self.prefix, bates_number);
             let escaped_text = text.replace("(", "\\(").replace(")", "\\)");
 
-            let y_pos = 30.0;
-            let x_pos = 500.0;
+            let margin = 30.0;
+            let text_width = text.len() as f32 * 6.0;
+
+            let pos = self.position.as_deref().unwrap_or("bottom-right");
+            let (x_pos, y_pos) = match pos {
+                "bottom-right" => (width - margin - text_width, margin),
+                "bottom-left" => (margin, margin),
+                "bottom-center" => (width / 2.0 - (text_width / 2.0), margin),
+                "top-right" => (width - margin - text_width, height - margin - 12.0),
+                "top-left" => (margin, height - margin - 12.0),
+                "top-center" => (width / 2.0 - (text_width / 2.0), height - margin - 12.0),
+                _ => (width - margin - text_width, margin),
+            };
 
             let content = format!(
                 "q\nBT\n/F1 10 Tf\n1 0 0 1 {} {} Tm\n0 g\n({text}) Tj\nET\nQ\n",
@@ -170,6 +200,22 @@ mod tests {
                 assert_eq!(arr.len(), 1); // 0 original, 1 added
             }
             _ => panic!("Contents is not Reference or Array"),
+        }
+    }
+
+    #[test]
+    fn test_bates_numbering_positions() {
+        for pos in [
+            "bottom-right",
+            "bottom-left",
+            "bottom-center",
+            "top-right",
+            "top-left",
+            "top-center",
+        ] {
+            let mut doc = create_test_document();
+            let op = BatesNumberingOperation::new(100, "DOC-".to_string(), 4).with_position(pos);
+            assert!(op.execute(&mut doc).is_ok());
         }
     }
 }

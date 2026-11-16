@@ -330,7 +330,7 @@ pub fn handle_ask(
                 ));
             }
             let out = output_path.unwrap_or_else(|| std::path::PathBuf::from("bates_out.pdf"));
-            crate::commands::group_b::handle_bates(&inputs_paths[0], "PREFIX-", 1, &out)
+            crate::commands::group_b::handle_bates(&inputs_paths[0], "PREFIX-", 1, "bottom-right", &out)
         }
         Intent::ExtractText => {
             if inputs_paths.is_empty() {

@@ -27,6 +27,7 @@ export interface OperationContext {
     batesPrefix: string;
     batesStart: number;
     batesPadding: number;
+    batesPosition?: string;
     ocrOutputFormat: string;
     ocrLanguage: string;
     cropBox: string;
@@ -628,6 +629,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 start_number: batesStart || 1,
                 start: batesStart || 1,
                 padding: batesPadding || 6,
+                position: context.batesPosition || 'bottom-right',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.pdf$/i, '')}_bates.pdf`)
             };
             break;

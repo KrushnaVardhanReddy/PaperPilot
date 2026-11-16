@@ -3951,6 +3951,20 @@ impl PaperPilotMcpServer {
             serde_json::Value::Object(prop_padding),
         );
 
+        let mut prop_pos = serde_json::Map::new();
+        prop_pos.insert(
+            "type".to_string(),
+            serde_json::Value::String("string".to_string()),
+        );
+        prop_pos.insert(
+            "description".to_string(),
+            serde_json::Value::String("Position (bottom-right, bottom-left, bottom-center, top-right, top-left, top-center). Default: bottom-right.".to_string()),
+        );
+        props_bates.insert(
+            "position".to_string(),
+            serde_json::Value::Object(prop_pos),
+        );
+
         schema_bates.insert(
             "properties".to_string(),
             serde_json::Value::Object(props_bates),
@@ -7967,6 +7981,10 @@ impl PaperPilotMcpServer {
                     .unwrap_or("CONF-")
                     .to_string();
                 let padding = args.get("padding").and_then(|v| v.as_u64()).unwrap_or(6) as usize;
+                let position = args
+                    .get("position")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("bottom-right");
 
                 ensure_parent_dir(&output)?;
 
@@ -7976,7 +7994,8 @@ impl PaperPilotMcpServer {
                     start_number,
                     prefix,
                     padding,
-                );
+                )
+                .with_position(position);
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
                 doc.save(&std::path::PathBuf::from(&output))
                     .map_err(crate::error::to_mcp_error)?;

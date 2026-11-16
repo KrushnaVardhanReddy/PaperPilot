@@ -343,6 +343,8 @@ pub enum Commands {
         prefix: String,
         #[arg(long, default_value_t = 1)]
         start: u32,
+        #[arg(long, default_value = "bottom-right")]
+        position: String,
         #[arg(long)]
         output: PathBuf,
     },

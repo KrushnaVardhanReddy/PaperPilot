@@ -160,6 +160,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let batesPrefix = $state('CONF-');
   let batesStart = $state(1);
   let batesPadding = $state(6);
+  let batesPosition = $state('bottom-right');
   let reorderList = $state('');
   let cropBox = $state('');
   let signCertPath = $state('');
@@ -757,6 +758,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             batesPrefix,
             batesStart,
             batesPadding,
+            batesPosition,
             ocrOutputFormat,
             ocrLanguage: "eng",
             cropBox,
@@ -1013,6 +1015,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           batesPrefix,
           batesStart,
           batesPadding,
+          batesPosition,
           ocrOutputFormat,
           ocrLanguage: "eng",
 
@@ -1334,6 +1337,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       prefix: batesPrefix || 'BATES-',
       start_number: batesStart || 1,
       padding: batesPadding || 6,
+      position: batesPosition || 'bottom-right',
       quality: compressQuality || 80,
       order: reorderList || '',
       rect: cropBox || '0,0,500,500',
@@ -1784,6 +1788,18 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <label for="batesPadding" class="section-desc">Padding:</label>
           <input id="batesPadding" type="number" class="form-input" bind:value={batesPadding} min="1" />
           <span class="field-hint">Total digit count with zero padding (e.g. 6 produces 000001).</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
+          <label for="batesPosition" class="section-desc">Position:</label>
+          <select id="batesPosition" bind:value={batesPosition} class="form-input">
+            <option value="bottom-right">Bottom Right</option>
+            <option value="bottom-center">Bottom Center</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="top-right">Top Right</option>
+            <option value="top-center">Top Center</option>
+            <option value="top-left">Top Left</option>
+          </select>
+          <span class="field-hint">Location of the Bates stamp on each page.</span>
         </div>
       {:else if activeTool.id === 'reorder_pages' || activeTool.id === 'pdf_reorder_pages'}
         <div class="operation-config">

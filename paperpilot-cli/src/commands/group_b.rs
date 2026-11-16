@@ -215,6 +215,7 @@ pub fn handle_bates(
     input: &std::path::Path,
     prefix: &str,
     start: u32,
+    position: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
     let mut doc = LopdfDocument::load(input)?;
@@ -222,7 +223,8 @@ pub fn handle_bates(
         start,
         prefix.to_string(),
         6,
-    );
+    )
+    .with_position(position);
     op.execute(&mut doc)?;
     doc.save(output)
 }

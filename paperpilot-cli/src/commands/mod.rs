@@ -287,8 +287,9 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             input,
             prefix,
             start,
+            position,
             output,
-        } => group_b::handle_bates(&resolve_input_path(input)?, prefix, *start, output),
+        } => group_b::handle_bates(&resolve_input_path(input)?, prefix, *start, position, output),
         Commands::PageNumbers {
             input,
             output,
