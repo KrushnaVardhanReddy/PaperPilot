@@ -441,6 +441,7 @@ pub fn handle_ask(
                 "text",
                 1,
                 "0,0,100,20",
+                None,
                 &out,
             )
         }

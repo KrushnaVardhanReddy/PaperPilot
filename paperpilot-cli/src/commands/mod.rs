@@ -376,6 +376,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             crate::cli::FormCommands::AddField {
                 input,
                 name,
+                label,
                 r#type,
                 page,
                 rect,
@@ -386,6 +387,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                 r#type,
                 *page,
                 rect,
+                label.clone(),
                 output,
             ),
         },
@@ -564,6 +566,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::PdfCreateFormField {
             input,
             name,
+            label,
             r#type,
             page,
             rect,
@@ -574,6 +577,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             r#type,
             *page,
             rect,
+            label.clone(),
             output,
         ),
         Commands::PdfDedupStreams { input, output } => {

@@ -6144,6 +6144,13 @@ impl PaperPilotMcpServer {
                     } else {
                         return Err(ErrorData::invalid_params("rect must be an array of 4 numbers", None));
                     }
+                } else if let Some(rect_str) = args.get("rect").and_then(|v| v.as_str()) {
+                    let parts: Vec<f32> = rect_str.split(',').filter_map(|s| s.trim().parse().ok()).collect();
+                    if parts.len() == 4 {
+                        [parts[0], parts[1], parts[2], parts[3]]
+                    } else {
+                        return Err(ErrorData::invalid_params("rect string must be in format 'llx,lly,urx,ury'", None));
+                    }
                 } else {
                     let x = args.get("x").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
                     let y = args.get("y").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
@@ -6157,9 +6164,12 @@ impl PaperPilotMcpServer {
                 let mut doc = LopdfDocument::load(&std::path::PathBuf::from(&input))
                     .map_err(crate::error::to_mcp_error)?;
 
-                let op = paperpilot_pdf::operations::form::CreateFormFieldOperation::new(
+                let mut op = paperpilot_pdf::operations::form::CreateFormFieldOperation::new(
                     field_name, field_type, page, rect,
                 );
+                if let Some(lbl) = args.get("label").and_then(|v| v.as_str()) {
+                    op = op.with_label(Some(lbl.to_string()));
+                }
                 op.execute(&mut doc).map_err(crate::error::to_mcp_error)?;
                 doc.save(&std::path::PathBuf::from(&output))
                     .map_err(crate::error::to_mcp_error)?;

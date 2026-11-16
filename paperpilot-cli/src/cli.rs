@@ -596,6 +596,8 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         name: String,
+        #[arg(long)]
+        label: Option<String>,
         #[arg(long, default_value = "text")]
         r#type: String,
         #[arg(long, default_value = "1")]
@@ -1080,6 +1082,8 @@ pub enum FormCommands {
         input: PathBuf,
         #[arg(long)]
         name: String,
+        #[arg(long)]
+        label: Option<String>,
         #[arg(long, default_value = "text")]
         r#type: String,
         #[arg(long, default_value = "1")]

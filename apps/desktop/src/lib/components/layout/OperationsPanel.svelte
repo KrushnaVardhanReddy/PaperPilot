@@ -223,9 +223,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   // Form Field, Fill & Batch Parameter States (Tools 46-50)
   let formDataPath = $state('tests/e2e_fixtures/real/form_data.json');
   let formFieldName = $state('ApplicantName');
+  let formFieldLabel = $state('');
   let formFieldType = $state('text');
   let formFieldPage = $state(1);
-  let formFieldRect = $state('50,50,200,80');
+  let formFieldRect = $state('145,666,450,686');
   let batchCsvPath = $state('tests/e2e_fixtures/real/batch_data.csv');
 
   // Conversions & Packaging parameter states (Tools 61-65)
@@ -859,6 +860,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             annotationPage,
             formDataPath,
             formFieldName,
+            formFieldLabel,
             formFieldType,
             formFieldPage,
             formFieldRect,
@@ -1111,6 +1113,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           annotationPage,
           formDataPath,
           formFieldName,
+          formFieldLabel,
           formFieldType,
           formFieldPage,
           formFieldRect,
@@ -2483,6 +2486,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <span class="field-hint">Unique identifier for the form widget annotation.</span>
         </div>
         <div class="operation-config" style="margin-top: 10px;">
+          <label for="formFieldLabel" class="section-desc">Field Label (Optional printed text):</label>
+          <input id="formFieldLabel" type="text" class="form-input" bind:value={formFieldLabel} placeholder="e.g. Applicant Signature:" />
+          <span class="field-hint">Prints a visible text label directly onto the page in front of the input field.</span>
+        </div>
+        <div class="operation-config" style="margin-top: 10px;">
           <label for="formFieldType" class="section-desc">Field Type:</label>
           <select id="formFieldType" bind:value={formFieldType} class="form-input">
             <option value="text">Text Box (Tx)</option>
@@ -2496,8 +2504,34 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
         <div class="operation-config" style="margin-top: 10px;">
           <label for="formFieldRect" class="section-desc">Bounding Rect (llx,lly,urx,ury):</label>
-          <input id="formFieldRect" type="text" class="form-input" bind:value={formFieldRect} placeholder="50,50,200,80" />
+          <input id="formFieldRect" type="text" class="form-input" bind:value={formFieldRect} placeholder="145,666,450,686" />
           <span class="field-hint">Coordinates in points: lower-left X, lower-left Y, upper-right X, upper-right Y.</span>
+          <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+            <button
+              type="button"
+              class="browse-btn"
+              style="padding: 3px 8px; font-size: 11px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #93c5fd; border-radius: 4px; cursor: pointer;"
+              onclick={() => { formFieldName = 'ApplicantName'; formFieldLabel = ''; formFieldRect = '145,666,450,686'; }}
+            >
+              📍 Over "Applicant Name"
+            </button>
+            <button
+              type="button"
+              class="browse-btn"
+              style="padding: 3px 8px; font-size: 11px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #93c5fd; border-radius: 4px; cursor: pointer;"
+              onclick={() => { formFieldName = 'SecurityClearance'; formFieldLabel = ''; formFieldRect = '175,616,450,636'; }}
+            >
+              📍 Over "Security Clearance"
+            </button>
+            <button
+              type="button"
+              class="browse-btn"
+              style="padding: 3px 8px; font-size: 11px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #93c5fd; border-radius: 4px; cursor: pointer;"
+              onclick={() => { formFieldName = 'ApplicantSignature'; formFieldLabel = 'Applicant Signature:'; formFieldRect = '180,540,450,565'; }}
+            >
+              ➕ New Field with Label (Below Lines)
+            </button>
+          </div>
         </div>
       {:else if activeTool.id === 'batch_fill' || activeTool.id === 'cli_fill_batch'}
         <div class="operation-config">

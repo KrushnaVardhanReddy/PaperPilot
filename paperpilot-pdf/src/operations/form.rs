@@ -1,6 +1,6 @@
 #![allow(clippy::collapsible_if)]
 use crate::document::LopdfDocument;
-use lopdf::{Dictionary, Object, StringFormat};
+use lopdf::{Dictionary, Object, Stream, StringFormat};
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::collections::HashMap;
@@ -64,6 +64,7 @@ pub struct CreateFormFieldOperation {
     pub field_type: String, // "text" or "checkbox"
     pub page: i32,          // 1-based index
     pub rect: [f32; 4],     // [llx, lly, urx, ury]
+    pub label: Option<String>,
 }
 
 impl CreateFormFieldOperation {
@@ -73,7 +74,13 @@ impl CreateFormFieldOperation {
             field_type,
             page,
             rect,
+            label: None,
         }
+    }
+
+    pub fn with_label(mut self, label: Option<String>) -> Self {
+        self.label = label;
+        self
     }
 }
 
@@ -93,6 +100,7 @@ impl PdfOperation for CreateFormFieldOperation {
         let mut widget_dict = Dictionary::new();
         widget_dict.set("Type", Object::Name(b"Annot".to_vec()));
         widget_dict.set("Subtype", Object::Name(b"Widget".to_vec()));
+        widget_dict.set("F", Object::Integer(4)); // Print flag
 
         let ft = if self.field_type == "checkbox" {
             b"Btn".to_vec()
@@ -118,6 +126,36 @@ impl PdfOperation for CreateFormFieldOperation {
                 self.rect[3].into(),
             ],
         );
+
+        // Standard visual appearance characteristics (/BS and /MK) for PDF viewers (Evince, Acrobat, Preview)
+        let mut bs_dict = Dictionary::new();
+        bs_dict.set("W", Object::Integer(1));
+        bs_dict.set("S", Object::Name(b"S".to_vec())); // Solid border
+        widget_dict.set("BS", Object::Dictionary(bs_dict));
+
+        let mut mk_dict = Dictionary::new();
+        // Border color: subtle slate grey [0.58, 0.64, 0.72]
+        mk_dict.set(
+            "BC",
+            vec![
+                0.58f32.into(),
+                0.64f32.into(),
+                0.72f32.into(),
+            ],
+        );
+        // Background fill: soft light blue [0.93, 0.95, 1.0]
+        mk_dict.set(
+            "BG",
+            vec![
+                0.93f32.into(),
+                0.95f32.into(),
+                1.0f32.into(),
+            ],
+        );
+        widget_dict.set("MK", Object::Dictionary(mk_dict));
+
+        // Default Appearance string (/DA) for text rendering
+        widget_dict.set("DA", Object::String(b"/Helv 11 Tf 0.1 0.1 0.1 rg".to_vec(), StringFormat::Literal));
 
         if self.field_type == "checkbox" {
             widget_dict.set("V", Object::Name(b"Off".to_vec()));
@@ -151,6 +189,81 @@ impl PdfOperation for CreateFormFieldOperation {
                 }
                 _ => {
                     page_dict.set("Annots", vec![Object::Reference(widget_id)]);
+                }
+            }
+        }
+
+        // If a label was provided, stamp it cleanly onto the page text stream before the field
+        if let Some(ref label_text) = self.label {
+            if !label_text.trim().is_empty() {
+                // Ensure page resources has standard Font /F1
+                let font_obj_id = {
+                    let mut font_dict = Dictionary::new();
+                    font_dict.set("Type", Object::Name(b"Font".to_vec()));
+                    font_dict.set("Subtype", Object::Name(b"Type1".to_vec()));
+                    font_dict.set("BaseFont", Object::Name(b"Helvetica-Bold".to_vec()));
+                    font_dict.set("Encoding", Object::Name(b"WinAnsiEncoding".to_vec()));
+                    doc.inner.add_object(font_dict)
+                };
+
+                if let Ok(page_dict) = doc.inner.get_object_mut(page_id).and_then(Object::as_dict_mut) {
+                    if let Ok(res) = page_dict.get_mut(b"Resources") {
+                        if let Object::Dictionary(res_dict) = res {
+                            if let Ok(font_res) = res_dict.get_mut(b"Font") {
+                                if let Object::Dictionary(fonts) = font_res {
+                                    fonts.set("F1", Object::Reference(font_obj_id));
+                                }
+                            } else {
+                                let mut fonts = Dictionary::new();
+                                fonts.set("F1", Object::Reference(font_obj_id));
+                                res_dict.set("Font", Object::Dictionary(fonts));
+                            }
+                        }
+                    } else {
+                        let mut res_dict = Dictionary::new();
+                        let mut fonts = Dictionary::new();
+                        fonts.set("F1", Object::Reference(font_obj_id));
+                        res_dict.set("Font", Object::Dictionary(fonts));
+                        page_dict.set("Resources", Object::Dictionary(res_dict));
+                    }
+                }
+
+                let escaped_label = label_text
+                    .replace('\\', "\\\\")
+                    .replace('(', "\\(")
+                    .replace(')', "\\)");
+
+                // Position label: vertically centered with the rect, placed either to the left or just above the box
+                // Default: 12pt font, placed at left of field (llx - text_width) or at llx if placed above
+                let label_y = self.rect[1] + (self.rect[3] - self.rect[1] - 10.0) / 2.0;
+                let text_approx_width = escaped_label.len() as f32 * 6.5;
+                let label_x = (self.rect[0] - text_approx_width - 8.0).max(54.0);
+
+                let label_stream_content = format!(
+                    "q\nBT\n/F1 11 Tf\n0 0 0 rg\n1 0 0 1 {} {} Tm\n({}) Tj\nET\nQ\n",
+                    label_x,
+                    label_y,
+                    escaped_label
+                );
+
+                let stream_id = doc.inner.add_object(Stream::new(
+                    Dictionary::new(),
+                    label_stream_content.into_bytes(),
+                ));
+
+                if let Ok(page_dict) = doc.inner.get_object_mut(page_id).and_then(Object::as_dict_mut) {
+                    match page_dict.get_mut(b"Contents") {
+                        Ok(Object::Array(contents)) => {
+                            contents.push(Object::Reference(stream_id));
+                        }
+                        Ok(Object::Reference(existing_id)) => {
+                            let existing_ref = *existing_id;
+                            page_dict.set("Contents", vec![Object::Reference(existing_ref), Object::Reference(stream_id)]);
+                        }
+                        _ => {
+                            page_dict.set("Contents", vec![Object::Reference(stream_id)]);
+                        }
+                    }
                 }
             }
         }
@@ -196,6 +309,7 @@ impl PdfOperation for CreateFormFieldOperation {
             .get_object_mut(af_id)
             .and_then(Object::as_dict_mut)
         {
+            af_dict.set("NeedAppearances", Object::Boolean(true));
             match af_dict.get_mut(b"Fields") {
                 Ok(Object::Array(fields)) => {
                     fields.push(Object::Reference(widget_id));

@@ -14,7 +14,7 @@ export interface OperationContext {
     splitPoints: string;
     deletePages?: string;
     extractPages?: string;
-  tableFormat?: string;
+    tableFormat?: string;
     rotateAngle: string;
     rotatePages?: string;
     watermarkText: string;
@@ -130,6 +130,7 @@ export interface OperationContext {
     formDataPath?: string;
     formFieldRect?: string;
     formFieldName?: string;
+    formFieldLabel?: string;
     formFieldType?: string;
     formFieldPage?: number;
     batchCsvPath?: string;
@@ -235,7 +236,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                         });
                         if (!outputPath) return null;
                     }
-                } catch(e) {
+                } catch (e) {
                     return null;
                 }
             }
@@ -272,7 +273,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                         });
                         if (!outputPath) return null;
                     }
-                } catch(e) {
+                } catch (e) {
                     return null;
                 }
             }
@@ -322,7 +323,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                         });
                         if (!outputPath) return null;
                     }
-                } catch(e) {
+                } catch (e) {
                     return null;
                 }
             }
@@ -357,7 +358,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                         });
                         if (!outputPath) return null;
                     }
-                } catch(e) {
+                } catch (e) {
                     return null;
                 }
             }
@@ -502,8 +503,9 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 field_name: context.formFieldName || 'ApplicantName',
                 type: context.formFieldType || 'text',
                 field_type: context.formFieldType || 'text',
+                label: context.formFieldLabel || undefined,
                 page: context.formFieldPage ?? 1,
-                rect: context.formFieldRect || '50,50,200,80',
+                rect: context.formFieldRect || '145,666,450,686',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_with_field.pdf`)
             };
             break;
@@ -1074,7 +1076,7 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                         });
                         if (!outputPath) return null;
                     }
-                } catch(e) {
+                } catch (e) {
                     return null;
                 }
             }
