@@ -75,6 +75,7 @@ pub fn handle_redact(
     input: &std::path::Path,
     pages: &str,
     rect: &str,
+    data: Option<&str>,
     query: Option<&str>,
     regex: Option<&str>,
     overlay_text: Option<&str>,
@@ -88,7 +89,27 @@ pub fn handle_redact(
         .filter_map(|s| s.trim().parse().ok())
         .collect();
 
-    let op = if query.is_some() || regex.is_some() {
+    let op = if let Some(d) = data {
+        let json_content = if let Ok(content) = std::fs::read_to_string(d) {
+            content
+        } else {
+            d.to_string()
+        };
+
+        if let Ok(rules) = serde_json::from_str::<Vec<paperpilot_pdf::operations::redact::RedactRule>>(&json_content) {
+            paperpilot_pdf::operations::redact::RedactOperation::from_rules(rules)
+        } else if let Ok(wrapper) = serde_json::from_str::<serde_json::Value>(&json_content) {
+            if let Some(rules_val) = wrapper.get("rules") {
+                let rules: Vec<paperpilot_pdf::operations::redact::RedactRule> =
+                    serde_json::from_value(rules_val.clone()).unwrap_or_default();
+                paperpilot_pdf::operations::redact::RedactOperation::from_rules(rules)
+            } else {
+                paperpilot_pdf::operations::redact::RedactOperation::from_rules(vec![])
+            }
+        } else {
+            paperpilot_pdf::operations::redact::RedactOperation::from_rules(vec![])
+        }
+    } else if query.is_some() || regex.is_some() {
         let rule = paperpilot_pdf::operations::redact::RedactRule {
             search: query.map(|s| s.to_string()),
             regex: regex.map(|s| s.to_string()),

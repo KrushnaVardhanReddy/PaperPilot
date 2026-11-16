@@ -226,6 +226,8 @@ pub enum Commands {
         #[arg(long, default_value = "0,0,100,100")]
         rect: String,
         #[arg(long)]
+        data: Option<String>,
+        #[arg(long)]
         query: Option<String>,
         #[arg(long)]
         regex: Option<String>,
