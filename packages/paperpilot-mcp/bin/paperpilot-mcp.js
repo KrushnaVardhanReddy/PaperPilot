@@ -282,57 +282,78 @@ async function ensureBinary(info) {
   // Construct download URL
   // GitHub Release asset patterns:
   // Tar: paperpilot-mcp-<os>-<target>.tar.gz or direct binary
-  // Release fallback asset name candidates
+  // Matches .github/workflows/release.yml backend build matrix:
+  // - paperpilot-mcp-ubuntu-22.04-x86_64-unknown-linux-gnu.tar.gz
+  // - paperpilot-mcp-windows-latest-x86_64-pc-windows-msvc.zip
+  // - paperpilot-mcp-macos-latest-aarch64-apple-darwin.tar.gz
+  const pkgVersion = require('../package.json').version || '0.7.0';
+  const tag = `v${pkgVersion}`;
   const archiveExt = info.isZip ? '.zip' : '.tar.gz';
+
   const assetCandidates = [
-    `paperpilot-mcp-${info.osTarget}-${info.archTarget}${info.ext}`,
+    // Standard release matrix names
+    info.platform === 'linux' ? 'paperpilot-mcp-ubuntu-22.04-x86_64-unknown-linux-gnu.tar.gz' : null,
+    info.platform === 'win32' ? 'paperpilot-mcp-windows-latest-x86_64-pc-windows-msvc.zip' : null,
+    info.platform === 'darwin' ? 'paperpilot-mcp-macos-latest-aarch64-apple-darwin.tar.gz' : null,
+    // Generic fallback naming schemes
     `paperpilot-mcp-${info.osTarget}-${info.archTarget}${archiveExt}`,
+    `paperpilot-mcp-${info.osTarget}-${info.archTarget}${info.ext}`,
     `paperpilot-mcp${info.ext}`,
-  ];
+  ].filter(Boolean);
 
   process.stderr.write(`[paperpilot-mcp] PaperPilot MCP binary not found locally.\n`);
-  process.stderr.write(`[paperpilot-mcp] Downloading precompiled binary for ${info.osTarget}-${info.archTarget}...\n`);
+  process.stderr.write(`[paperpilot-mcp] Downloading precompiled binary for ${info.osTarget}-${info.archTarget} (${tag})...\n`);
 
   let downloaded = false;
   let lastError = null;
 
   for (const asset of assetCandidates) {
-    const downloadUrl = `https://github.com/KrushnaVardhanReddy/PaperPilot/releases/latest/download/${asset}`;
-    const tmpDest = path.join(cacheDir, `download-${Date.now()}-${asset}`);
+    const downloadUrls = [
+      `https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/${tag}/${asset}`,
+      `https://github.com/KrushnaVardhanReddy/PaperPilot/releases/latest/download/${asset}`,
+    ];
 
-    try {
-      process.stderr.write(`[paperpilot-mcp] Trying: ${downloadUrl}\n`);
-      await downloadFile(downloadUrl, tmpDest, (curr, total) => {
-        const pct = Math.floor((curr / total) * 100);
-        process.stderr.write(`\r[paperpilot-mcp] Downloading: ${pct}% (${(curr / 1024 / 1024).toFixed(1)}MB / ${(total / 1024 / 1024).toFixed(1)}MB)`);
-      });
-      process.stderr.write('\n');
+    for (const downloadUrl of downloadUrls) {
+      const tmpDest = path.join(cacheDir, `download-${Date.now()}-${asset}`);
 
-      // Check if it's an archive or direct binary
-      if (asset.endsWith('.tar.gz')) {
-        await extractTarGz(tmpDest, cacheDir, binaryName);
-        fs.unlinkSync(tmpDest);
-      } else if (asset.endsWith('.zip')) {
-        await extractZip(tmpDest, cacheDir, binaryName);
-        fs.unlinkSync(tmpDest);
-      } else {
-        // Direct binary
-        fs.renameSync(tmpDest, binaryPath);
-      }
+      try {
+        process.stderr.write(`[paperpilot-mcp] Trying: ${downloadUrl}\n`);
+        await downloadFile(downloadUrl, tmpDest, (curr, total) => {
+          const pct = Math.floor((curr / total) * 100);
+          process.stderr.write(`\r[paperpilot-mcp] Downloading: ${pct}% (${(curr / 1024 / 1024).toFixed(1)}MB / ${(total / 1024 / 1024).toFixed(1)}MB)`);
+        });
+        process.stderr.write('\n');
 
-      if (fs.existsSync(binaryPath)) {
-        if (info.platform !== 'win32') {
-          fs.chmodSync(binaryPath, 0o755);
+        // Check if it's an archive or direct binary
+        if (asset.endsWith('.tar.gz')) {
+          await extractTarGz(tmpDest, cacheDir, binaryName);
+          fs.unlinkSync(tmpDest);
+        } else if (asset.endsWith('.zip')) {
+          await extractZip(tmpDest, cacheDir, binaryName);
+          fs.unlinkSync(tmpDest);
+        } else {
+          // Direct binary
+          fs.renameSync(tmpDest, binaryPath);
         }
-        process.stderr.write(`[paperpilot-mcp] Successfully installed PaperPilot MCP binary to ${binaryPath}\n`);
-        downloaded = true;
-        break;
+
+        if (fs.existsSync(binaryPath)) {
+          if (info.platform !== 'win32') {
+            fs.chmodSync(binaryPath, 0o755);
+          }
+          process.stderr.write(`[paperpilot-mcp] Successfully installed PaperPilot MCP binary to ${binaryPath}\n`);
+          downloaded = true;
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+        if (fs.existsSync(tmpDest)) {
+          try { fs.unlinkSync(tmpDest); } catch (_) {}
+        }
       }
-    } catch (err) {
-      lastError = err;
-      if (fs.existsSync(tmpDest)) {
-        try { fs.unlinkSync(tmpDest); } catch (_) {}
-      }
+    }
+
+    if (downloaded) {
+      break;
     }
   }
 
