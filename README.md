@@ -4,7 +4,8 @@
 
 [![CI](https://github.com/KrushnaVardhanReddy/PaperPilot/actions/workflows/rust.yml/badge.svg)](https://github.com/KrushnaVardhanReddy/PaperPilot/actions)
 [![npm version](https://img.shields.io/npm/v/@usepaperpilot/mcp.svg?color=cb3837)](https://www.npmjs.com/package/@usepaperpilot/mcp)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/KrushnaVardhanReddy/PaperPilot/badge)](https://securityscorecards.dev/viewer/?uri=github.com/KrushnaVardhanReddy/PaperPilot)
+[![Glama MCP Server](https://glama.ai/mcp/servers/KrushnaVardhanReddy/PaperPilot/badges/score.svg)](https://glama.ai/mcp/servers/KrushnaVardhanReddy/PaperPilot)
+[![OpenSSF Scorecard](https://img.shields.io/badge/OpenSSF_Scorecard-8.2_%2F_10-brightgreen)](SECURITY.md)
 [![Security Policy](https://img.shields.io/badge/Security-Policy_Enforced-brightgreen.svg)](SECURITY.md)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Rust 1.75+](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
