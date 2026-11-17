@@ -27,9 +27,9 @@
 
 | Phase | Scope & Title | Status | Exit Condition / Summary | Detailed Spec File |
 |:---:|---|:---:|---|:---:|
-| **01** | **Rust Core Engine** | ✅ **100% Done** | 90 pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
-| **02** | **MCP Server** | ✅ **100% Done** | 90 MCP tools registered, parameter-aligned, and validated across Waves 1–21 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
-| **03** | **Desktop + Mobile App** | ✅ **100% Done** | All 90 tools wired with dedicated Svelte 5 UI parameter panels and validated via zero-mock Playwright E2E suites | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
+| **01** | **Rust Core Engine** | ✅ **100% Done** | 92 pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
+| **02** | **MCP Server** | ✅ **100% Done** | 92 MCP tools registered, parameter-aligned, and validated across Waves 1–21 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
+| **03** | **Desktop + Mobile App** | ✅ **100% Done** | All 92 tools wired with dedicated Svelte 5 UI parameter panels and validated via zero-mock Playwright E2E suites | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
 | **04** | **AI Layer & Workflows** | ✅ **100% Done** | Watched folders, declarative `.ppflow` workflows, instant recipes, and `cli_ask` natural language assistant | [phase-04-ai-layer.md](phases/phase-04-ai-layer.md) |
 | **05** | **Advanced Intelligence** | ✅ **100% Done** | Neural OCR, on-device SLM, RAG chunking, pattern extraction, and vector semantic search | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
 | **06** | **Enterprise Security** | 📋 **Planned (Tier 4)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs, Spec 150 Hexagonal DatabasePort | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
