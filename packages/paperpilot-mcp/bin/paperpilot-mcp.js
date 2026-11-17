@@ -59,19 +59,43 @@ function getPlatformInfo() {
   return { osTarget, archTarget, ext, isZip, platform };
 }
 
+// Safely sanitize and join path segments against directory traversal attacks (SAST compliance)
+function safeJoin(baseDir, ...segments) {
+  const sanitizedSegments = segments.map((seg) => {
+    if (typeof seg !== 'string') return '';
+    // Strip leading separators and traversal components
+    const base = path.basename(seg);
+    if (!base || base === '.' || base === '..') {
+      throw new Error(`Invalid path segment: ${seg}`);
+    }
+    return base;
+  });
+
+  const resolvedBase = path.resolve(baseDir);
+  const resolvedTarget = path.resolve(resolvedBase, ...sanitizedSegments);
+
+  // Ensure target strictly stays inside or equals base directory
+  const relative = path.relative(resolvedBase, resolvedTarget);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`Path traversal attempt detected: ${resolvedTarget}`);
+  }
+
+  return resolvedTarget;
+}
+
 // Determine writeable cache directory
 function getCacheDir() {
   if (process.env.PAPERPILOT_CACHE_DIR) {
     return process.env.PAPERPILOT_CACHE_DIR;
   }
   const homeDir = os.homedir();
-  const primaryCache = path.join(homeDir, '.paperpilot', 'bin');
+  const primaryCache = safeJoin(homeDir, '.paperpilot', 'bin');
   try {
     fs.mkdirSync(primaryCache, { recursive: true });
     return primaryCache;
   } catch (_) {
     // If ~/.paperpilot is read-only (e.g. sandbox or restricted environment), fallback to temp directory
-    const fallbackCache = path.join(os.tmpdir(), '.paperpilot', 'bin');
+    const fallbackCache = safeJoin(os.tmpdir(), '.paperpilot', 'bin');
     try {
       fs.mkdirSync(fallbackCache, { recursive: true });
     } catch (_) {}
@@ -81,7 +105,7 @@ function getCacheDir() {
 
 // Locate local or cached binary
 function getBinaryPath(info) {
-  const binaryName = `paperpilot-mcp${info.ext}`;
+  const binaryName = path.basename(`paperpilot-mcp${info.ext}`);
 
   // 1. Check custom override env var
   if (process.env.PAPERPILOT_MCP_PATH && fs.existsSync(process.env.PAPERPILOT_MCP_PATH)) {
@@ -90,12 +114,12 @@ function getBinaryPath(info) {
 
   // 2. Check user cache directory (~/.paperpilot/bin or temp fallback)
   const homeDir = os.homedir();
-  const primaryCachedBinary = path.join(homeDir, '.paperpilot', 'bin', binaryName);
+  const primaryCachedBinary = safeJoin(homeDir, '.paperpilot', 'bin', binaryName);
   if (fs.existsSync(primaryCachedBinary)) {
     return primaryCachedBinary;
   }
 
-  const fallbackCachedBinary = path.join(os.tmpdir(), '.paperpilot', 'bin', binaryName);
+  const fallbackCachedBinary = safeJoin(os.tmpdir(), '.paperpilot', 'bin', binaryName);
   if (fs.existsSync(fallbackCachedBinary)) {
     return fallbackCachedBinary;
   }
@@ -103,9 +127,9 @@ function getBinaryPath(info) {
   // 3. Check workspace / target builds if running inside repo or nearby
   const repoRoot = path.resolve(__dirname, '..', '..', '..');
   const possiblePaths = [
-    path.join(repoRoot, 'target', 'release', binaryName),
-    path.join(repoRoot, 'target', 'debug', binaryName),
-    path.join(__dirname, '..', binaryName),
+    safeJoin(repoRoot, 'target', 'release', binaryName),
+    safeJoin(repoRoot, 'target', 'debug', binaryName),
+    safeJoin(path.resolve(__dirname, '..'), binaryName),
   ];
   for (const p of possiblePaths) {
     if (fs.existsSync(p)) {
@@ -115,7 +139,7 @@ function getBinaryPath(info) {
 
   // Default target path for download
   const cacheDir = getCacheDir();
-  return path.join(cacheDir, binaryName);
+  return safeJoin(cacheDir, binaryName);
 }
 
 // Download helper with redirect handling
@@ -194,7 +218,7 @@ function extractTarGz(tarGzPath, targetDir, binaryFilename) {
         // Parse TAR blocks (512 bytes)
         let offset = 0;
         let extracted = false;
-        const outPath = path.join(targetDir, binaryFilename);
+        const outPath = safeJoin(targetDir, binaryFilename);
 
         while (offset + 512 <= buffer.length) {
           const header = buffer.subarray(offset, offset + 512);
@@ -253,7 +277,7 @@ function extractZip(zipPath, targetDir, binaryFilename) {
     ], { stdio: 'inherit' });
 
     child.on('close', (code) => {
-      const outPath = path.join(targetDir, binaryFilename);
+      const outPath = safeJoin(targetDir, binaryFilename);
       if (code === 0 && fs.existsSync(outPath)) {
         resolve(outPath);
       } else {
@@ -314,7 +338,8 @@ async function ensureBinary(info) {
     ];
 
     for (const downloadUrl of downloadUrls) {
-      const tmpDest = path.join(cacheDir, `download-${Date.now()}-${asset}`);
+      const sanitizedAsset = path.basename(asset);
+      const tmpDest = safeJoin(cacheDir, `download-${Date.now()}-${sanitizedAsset}`);
 
       try {
         process.stderr.write(`[paperpilot-mcp] Trying: ${downloadUrl}\n`);
