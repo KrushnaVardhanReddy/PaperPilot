@@ -2,11 +2,15 @@
 
 > **Architecture Mandate:** 100% Pure-Rust engine, Zero-Python/Zero-C++ runtime, Penta-Interface Parity (Core Engine ➔ CLI ➔ MCP Server ➔ REST Gateway ➔ WASM/Edge).
 
-## Current Community delivery — 2026-10-29
+## Current Status & Milestones Update — November 2026
 
-Spec 141 condition-editor compatibility repairs and [Spec 142 desktop watched folders / smart filters](specs/142-desktop-watched-folders-and-smart-filters/spec.md) are implemented on `feat/desktop-watched-folders-and-smart-filters-task-4-7-8`, awaiting review into `feature/dev`. The branch includes the UI-polish base and PR #305. See [validation and limitations](reports/DESKTOP_AUTOMATION_REPORT.md).
-
-Spec 140's V2 workspace remains reverted. Phase 3/4 still have open Community tasks; the phase dashboard no longer labels these phases 100% complete. Filesystem watchers are native-only; PDF workflow operations continue to use the shared core engine.
+- **Core Engine & Penta-Interface Parity (Phases 1–5, 8–10, 12)**: ✅ **100% Complete**. All 92 pure-Rust tools are implemented, validated with zero-mock tests across all 5 surfaces (Core Engine, CLI, MCP Server, REST Gateway, WASM Web Studio).
+- **Phase 11 (Browser Companion Extension - Spec 164)**: ✅ **Complete & Packaged**. Manifest V3 companion extension (`apps/extension`) with WebAssembly client engine and local daemon bridge packaged for Chrome Web Store, Microsoft Edge, and submitted to Mozilla Firefox Add-on Developer Hub.
+- **Phase 6.0 (Adoption, Distribution & UX Polish - Specs 165, 166)**: 🚀 **In Progress**:
+  - **Item 1: `@usepaperpilot/mcp` on npm**: ✅ **Published & Live**. 5-second `npx` runner live on npmjs.com (`@usepaperpilot/mcp@0.7.0`), official Glama MCP server listing verified (Grade B), and submitted to `punkpeye/awesome-mcp-servers`.
+  - **Item 2: One-Click Sample PDFs in Web Studio**: ✅ **Live**. Integrated 3-page rich sample document (`sample_document.pdf`) with "✨ Try with Sample PDF" and "👁️ View Sample" directly into Web Studio drop zones.
+  - **Item 3: Community Submissions & Registries**: ✅ PR #3064 submitted to `rust-unofficial/awesome-rust`, PR #19825 submitted to `punkpeye/awesome-mcp-servers`.
+  - **Item 4: Package Managers & Next Items**: Homebrew tap, crates.io publishing, and in-memory self-healing parser.
 
 ---
 
@@ -300,11 +304,25 @@ Spec 140's V2 workspace remains reverted. Phase 3/4 still have open Community ta
 
 ---
 
-### 11. Browser Extensions & Web Integrations (Phase 11)
+### 11. Browser Extensions & Web Integrations (Phase 11 - Spec 164)
 *Brings PaperPilot's document engine directly into browser tabs with zero friction.*
 
-| Task # | Feature Name | Core Functionality | Impact / Market Need |
-|---|---|---|---|
-| **11.1** | PaperPilot Browser Extension (MV3) | Manifest V3 companion extension (Chrome/Edge/Firefox) with context menu & toolbar actions for in-tab PDFs (arXiv, invoices, web articles). Native Messaging / local REST bridge to PaperPilot daemon for instant sign, OCR, summarize, convert, and redact. | Zero-Friction User Acquisition & In-Tab Workflows |
-| **11.2** | Web Clean-Article to PDF/A Exporter | One-click web page to sanitized PDF/A or clean Markdown export. Strips ads, generates table of contents, and embeds metadata. | Research & Archival Capture |
-| **11.3** | In-Browser Client WASM Toolkit | Lightweight pure-Rust WASM compilation for client-side merge, split, watermark, and form inspection without native backend required. | Privacy-Preserving Instant Tools |
+| Task # | Feature Name | Core Functionality | Impact / Market Need | Status |
+|---|---|---|---|:---:|
+| **11.1** | PaperPilot Browser Extension (MV3) | Manifest V3 companion extension (Chrome/Edge/Firefox) with context menu & toolbar actions for in-tab PDFs (arXiv, invoices, web articles). Native Messaging / local REST bridge to PaperPilot daemon for instant sign, OCR, summarize, convert, and redact. | Zero-Friction User Acquisition & In-Tab Workflows | ✅ Complete & Packaged (AMO Submitted) |
+| **11.2** | Web Clean-Article to PDF/A Exporter | One-click web page to sanitized PDF/A or clean Markdown export. Strips ads, generates table of contents, and embeds metadata. | Research & Archival Capture | ✅ Implemented |
+| **11.3** | In-Browser Client WASM Toolkit | Lightweight pure-Rust WASM compilation for client-side merge, split, watermark, and form inspection without native backend required. | Privacy-Preserving Instant Tools | ✅ Implemented (`paperpilot-wasm`) |
+
+---
+
+### 12. Pre-Enterprise Adoption, Distribution & UX Polish (Phase 6.0 - Specs 165, 166)
+*Frictionless onboarding, package managers, and community registry presence.*
+
+| Task # | Feature Name | Core Functionality | Impact / Market Need | Status |
+|---|---|---|---|:---:|
+| **12.1** | `@usepaperpilot/mcp` NPM Package | Zero-install `npx -y @usepaperpilot/mcp` stdio runner with cross-platform release binary auto-downloader | 5-Second Agent Setup (Claude/Cursor) | ✅ Published (`v0.7.0`) |
+| **12.2** | One-Click Sample PDFs in Web Studio | 3-page rich sample document with instant "✨ Try with Sample PDF" and "👁️ View Sample" links in drop zones | Instant Zero-File Evaluation | ✅ Live (`usepaperpilot.com`) |
+| **12.3** | Model Context Protocol Registry Presence | Glama.ai MCP server listing with automated container introspection & score badge (Grade B) | Community Discovery & Social Proof | ✅ Verified & Live |
+| **12.4** | Awesome Registry PRs | Inclusion in `rust-unofficial/awesome-rust` (PR #3064) and `punkpeye/awesome-mcp-servers` (PR #19825) | Organic Stars & Developer Traffic | ⏳ In Review |
+| **12.5** | Homebrew Tap & Crates.io | `brew install usepaperpilot/tap/paperpilot` formula and `cargo binstall paperpilot-cli` | Native Developer Package Management | 📋 Next Sprint |
+| **12.6** | In-Memory Parser Self-Healing | Pre-flight repair of malformed XREF tables and truncated streams across all 92 tools | Resilient Corrupt PDF Intake | 📋 Next Sprint |
