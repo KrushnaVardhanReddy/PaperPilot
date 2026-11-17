@@ -27,9 +27,9 @@
 
 | Phase | Scope & Title | Status | Exit Condition / Summary | Detailed Spec File |
 |:---:|---|:---:|---|:---:|
-| **01** | **Rust Core Engine** | ✅ **100% Done** | 90 pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
-| **02** | **MCP Server** | ✅ **100% Done** | 90 MCP tools registered, parameter-aligned, and validated across Waves 1–21 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
-| **03** | **Desktop + Mobile App** | ✅ **100% Done** | All 90 tools wired with dedicated Svelte 5 UI parameter panels and validated via zero-mock Playwright E2E suites | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
+| **01** | **Rust Core Engine** | ✅ **100% Done** | 92 pure-Rust operations, zero-panic parser, verified CLI | [phase-01-rust-core.md](file:///home/krushna/Project/PaperPilot/phases/phase-01-rust-core.md) |
+| **02** | **MCP Server** | ✅ **100% Done** | 92 MCP tools registered, parameter-aligned, and validated across Waves 1–21 | [phase-02-mcp-server.md](file:///home/krushna/Project/PaperPilot/phases/phase-02-mcp-server.md) |
+| **03** | **Desktop + Mobile App** | ✅ **100% Done** | All 92 tools wired with dedicated Svelte 5 UI parameter panels and validated via zero-mock Playwright E2E suites | [phase-03-desktop-mobile-app.md](phases/phase-03-desktop-mobile-app.md) |
 | **04** | **AI Layer & Workflows** | ✅ **100% Done** | Watched folders, declarative `.ppflow` workflows, instant recipes, and `cli_ask` natural language assistant | [phase-04-ai-layer.md](phases/phase-04-ai-layer.md) |
 | **05** | **Advanced Intelligence** | ✅ **100% Done** | Neural OCR, on-device SLM, RAG chunking, pattern extraction, and vector semantic search | [phase-05-advanced-intelligence.md](file:///home/krushna/Project/PaperPilot/phases/phase-05-advanced-intelligence.md) |
 | **06** | **Enterprise Security** | 📋 **Planned (Tier 4)** | SSO (SAML/OIDC), RBAC, Ed25519 offline license validation, SIEM logs, Spec 150 Hexagonal DatabasePort | [phase-06-enterprise.md](file:///home/krushna/Project/PaperPilot/phases/phase-06-enterprise.md) |
@@ -44,10 +44,20 @@
 ---
 
 ## 🎯 Active Development Focus & Parallel Jules Sprints
+- **Phase 6.0: Pre-Enterprise Adoption, Distribution & UX Polish (ACTIVE)**:
+  - **Item 1: `@usepaperpilot/mcp` on npm (`npx` runner)**: Zero-install one-liner for Claude Desktop, Cursor, and agent configs (`npx -y @usepaperpilot/mcp`) without manual binary management.
+  - **Item 2: One-Click Sample PDFs in Web Studio**: Provide instant demo files (Invoice, NDA Contract, Academic Paper) on `usepaperpilot.com` for immediate 0-friction evaluation.
+  - **Item 3: Interactive Pre-Download Preview**: Real-time before/after canvas preview for visual operations (Redact, Watermark, Bates Numbering, Rotate).
+  - **Item 4: Package Manager Distribution**:
+    - Publish core CLI to `crates.io` and enable `cargo binstall paperpilot-cli`.
+    - Publish official Homebrew Tap (`brew install usepaperpilot/tap/paperpilot`) & Windows Winget manifest.
+  - **Item 5: Automatic In-Memory PDF Healing**: Robust pre-flight self-repair on broken XREF tables and malformed streams across all 92 tools.
+  - **Item 6: Community Launch & Social Proof**: Deliver GitHub README hero split-screen GIF and coordinated technical launch on `r/rust`, `r/selfhosted`, and Hacker News ("Show HN").
+
 - **Phase 6.1 (Tier 1 Developer Onboarding & Distribution)**:
   - **Task 6.1.1 (Spec 161)**: Universal one-line install scripts (`install.sh`, `install.ps1`, Homebrew formula `paperpilot.rb`) — ✅ **MERGED (PR #339)**.
   - **Task 6.1.3 (Spec 162)**: AI framework integration recipes (LangChain `PaperPilotLoader`, LlamaIndex `PaperPilotReader`, Claude/Cursor MCP presets, n8n OCR workflow) — ✅ **MERGED (PR #338)**.
-  - **Task 6.1.2 (Spec 160)**: System diagnostics engine (`paperpilot doctor`, `GET /health`, `GET /api/v1/doctor`, Settings UI modal) — 🚀 **Session 308936918267204628** (`in-progress`).
+  - **Task 6.1.2 (Spec 160)**: System diagnostics engine (`paperpilot doctor`, `GET /health`, `GET /api/v1/doctor`, Settings UI modal) — ✅ **Merged & Verified**.
 
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
 
