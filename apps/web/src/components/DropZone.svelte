@@ -99,6 +99,16 @@
       >
         <span class="sparkle">✨</span> {isLoadingSample ? 'Loading...' : 'Try with Sample PDF'}
       </button>
+
+      <a
+        href="/samples/sample_document.pdf"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="view-sample-link"
+        title="View or preview sample PDF in a new tab"
+      >
+        👁️ View Sample
+      </a>
     </div>
   </div>
 </div>
@@ -206,6 +216,21 @@
 
   .sparkle {
     font-size: 1rem;
+  }
+
+  .view-sample-link {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #4B5563);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color var(--transition-fast, 150ms ease);
+  }
+
+  .view-sample-link:hover {
+    color: var(--accent-primary, #4F46E5);
   }
 
   .browse-btn {
