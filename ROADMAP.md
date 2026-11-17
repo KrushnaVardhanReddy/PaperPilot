@@ -9,7 +9,7 @@
 - **Phase 6.0 (Adoption, Distribution & UX Polish - Specs 165, 166)**: 🚀 **In Progress**:
   - **Item 1: `@usepaperpilot/mcp` on npm**: ✅ **Published & Live**. 5-second `npx` runner live on npmjs.com (`@usepaperpilot/mcp@0.7.0`), official Glama MCP server listing verified (Grade B), and submitted to `punkpeye/awesome-mcp-servers`.
   - **Item 2: One-Click Sample PDFs in Web Studio**: ✅ **Live**. Integrated 3-page rich sample document (`sample_document.pdf`) with "✨ Try with Sample PDF" and "👁️ View Sample" directly into Web Studio drop zones.
-  - **Item 3: Community Submissions & Registries**: ✅ PR #3064 submitted to `rust-unofficial/awesome-rust`, PR #19825 submitted to `punkpeye/awesome-mcp-servers`.
+  - **Item 3: Community Submissions & Registries**: ✅ **Merged into `rust-unofficial/awesome-rust`** (PR #3064 merged), PR #19825 submitted to `punkpeye/awesome-mcp-servers`.
   - **Item 4: Package Managers & Next Items**: Homebrew tap, crates.io publishing, and in-memory self-healing parser.
 
 ---
@@ -323,6 +323,6 @@
 | **12.1** | `@usepaperpilot/mcp` NPM Package | Zero-install `npx -y @usepaperpilot/mcp` stdio runner with cross-platform release binary auto-downloader | 5-Second Agent Setup (Claude/Cursor) | ✅ Published (`v0.7.0`) |
 | **12.2** | One-Click Sample PDFs in Web Studio | 3-page rich sample document with instant "✨ Try with Sample PDF" and "👁️ View Sample" links in drop zones | Instant Zero-File Evaluation | ✅ Live (`usepaperpilot.com`) |
 | **12.3** | Model Context Protocol Registry Presence | Glama.ai MCP server listing with automated container introspection & score badge (Grade B) | Community Discovery & Social Proof | ✅ Verified & Live |
-| **12.4** | Awesome Registry PRs | Inclusion in `rust-unofficial/awesome-rust` (PR #3064) and `punkpeye/awesome-mcp-servers` (PR #19825) | Organic Stars & Developer Traffic | ⏳ In Review |
+| **12.4** | Awesome Registry PRs | Inclusion in `rust-unofficial/awesome-rust` (PR #3064 merged ✅) and `punkpeye/awesome-mcp-servers` (PR #19825) | Organic Stars & Developer Traffic | ✅ Merged in Awesome-Rust |
 | **12.5** | Homebrew Tap & Crates.io | `brew install usepaperpilot/tap/paperpilot` formula and `cargo binstall paperpilot-cli` | Native Developer Package Management | 📋 Next Sprint |
 | **12.6** | In-Memory Parser Self-Healing | Pre-flight repair of malformed XREF tables and truncated streams across all 92 tools | Resilient Corrupt PDF Intake | 📋 Next Sprint |
