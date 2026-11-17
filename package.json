@@ -1,6 +1,7 @@
 {
   "name": "paperpilot-monorepo",
   "private": true,
+  "license": "Apache-2.0",
   "scripts": {
     "build:extension": "pnpm --dir apps/extension build",
     "pack:extension": "pnpm --dir apps/extension pack"

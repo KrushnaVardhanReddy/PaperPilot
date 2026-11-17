@@ -177,24 +177,3 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
----
-
-NOTE ON OPEN CORE MODEL:
-
-This repository contains two categories of software:
-
-1. COMMUNITY EDITION (this repository, Apache 2.0):
-   - paperpilot-core, paperpilot-pdf, paperpilot-cli, paperpilot-mcp
-   - The Tauri desktop application (Phases 1–5)
-   - All PDF operations, CLI commands, and MCP tools
-
-2. ENTERPRISE EDITION (separate repository, Commercial License):
-   - SSO (SAML 2.0 / OIDC), SCIM provisioning
-   - Role-based access control (RBAC), multi-org management
-   - Audit logging, data processing policies
-   - License key management and enforcement
-   - Phase 6 and Phase 7 features
-
-Enterprise features require a valid commercial license key.
-Contact: [enterprise@paperpilot.dev] for licensing inquiries.
