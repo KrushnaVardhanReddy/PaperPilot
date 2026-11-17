@@ -3,6 +3,7 @@
 **PDF tools for your AI agent — and for you. Pure Rust. Runs locally. Files never leave your machine.**
 
 [![CI](https://github.com/KrushnaVardhanReddy/PaperPilot/actions/workflows/rust.yml/badge.svg)](https://github.com/KrushnaVardhanReddy/PaperPilot/actions)
+[![npm version](https://img.shields.io/npm/v/@usepaperpilot/mcp.svg?color=cb3837)](https://www.npmjs.com/package/@usepaperpilot/mcp)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/KrushnaVardhanReddy/PaperPilot/badge)](https://securityscorecards.dev/viewer/?uri=github.com/KrushnaVardhanReddy/PaperPilot)
 [![Security Policy](https://img.shields.io/badge/Security-Policy_Enforced-brightgreen.svg)](SECURITY.md)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -50,28 +51,32 @@ PDF-only Tika-compatible extraction server. See the
 
 ## Quick start
 
-### 1. Use it with your coding agent (MCP)
+### 1. Use it with your AI / Coding Agent (5-Second MCP Setup)
 
-Codex, Claude Code, Kimi Code, and current Pi releases connect to the same local
-stdio server. See the [coding agent setup guide](docs/coding-agents.md) for each
-client's configuration and verification steps. Builds from this source can also
-print ready-to-merge configuration:
+No manual build or binary download required! Run instantly via `npx`:
 
 ```bash
-paperpilot-mcp --client-config codex
-# Also: claude-code, kimi-code, pi, claude-desktop, cursor
+# Test MCP server directly
+npx -y @usepaperpilot/mcp --help
 ```
 
-Download `paperpilot-mcp` from [Releases](https://github.com/KrushnaVardhanReddy/PaperPilot/releases), then add it to `claude_desktop_config.json`:
+Add to **Claude Desktop** (`claude_desktop_config.json`), **Cursor** (`cursor_mcp_config.json`), **Windsurf**, or **Zed**:
 
 ```json
 {
   "mcpServers": {
     "paperpilot": {
-      "command": "/path/to/paperpilot-mcp"
+      "command": "npx",
+      "args": ["-y", "@usepaperpilot/mcp"]
     }
   }
 }
+```
+
+Or if using the precompiled native binary, download `paperpilot-mcp` from [Releases](https://github.com/KrushnaVardhanReddy/PaperPilot/releases) or use client config generators:
+```bash
+paperpilot-mcp --client-config cursor
+# Also: claude-desktop, claude-code, codex, kimi-code, pi
 ```
 
 Restart Claude and try: *"Merge these two PDFs and compress the result."*
