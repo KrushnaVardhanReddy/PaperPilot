@@ -1,0 +1,37 @@
+{
+  "name": "@usepaperpilot/mcp",
+  "version": "0.7.0",
+  "description": "Zero-install Model Context Protocol (MCP) server for PaperPilot PDF manipulation & intelligence",
+  "main": "bin/paperpilot-mcp.js",
+  "bin": {
+    "paperpilot-mcp": "./bin/paperpilot-mcp.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KrushnaVardhanReddy/PaperPilot.git",
+    "directory": "packages/paperpilot-mcp"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "pdf",
+    "paperpilot",
+    "ai-agent",
+    "claude",
+    "cursor"
+  ],
+  "author": "Krushna Vardhan Reddy <krushnavardhanreddy@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/KrushnaVardhanReddy/PaperPilot/issues"
+  },
+  "homepage": "https://usepaperpilot.com"
+}
