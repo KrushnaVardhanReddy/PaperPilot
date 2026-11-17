@@ -9,6 +9,7 @@ build/
 *.pdf
 !tests/fixtures/*.pdf
 !paperpilot-pdf/tests/fixtures/*.pdf
+!apps/web/public/samples/*.pdf
 !reports/fill-batch-validation/template.pdf
 !reports/fill-batch-validation/filled-flattened.pdf
 !reports/fill-batch-validation/filled-editable.pdf

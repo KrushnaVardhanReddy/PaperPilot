@@ -1,6 +1,26 @@
 <script lang="ts">
   let isDragging = $state(false);
+  let isLoadingSample = $state(false);
   let { ondrop, multiple = true }: { ondrop: (files: File[]) => void; multiple?: boolean } = $props();
+
+  async function loadSamplePdf(samplePath: string, fileName: string) {
+    if (isLoadingSample) return;
+    isLoadingSample = true;
+    try {
+      const response = await fetch(samplePath);
+      if (!response.ok) {
+        throw new Error(`Failed to load sample: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+      const sampleFile = new File([blob], fileName, { type: 'application/pdf' });
+      ondrop([sampleFile]);
+    } catch (err) {
+      console.error('Failed to load sample PDF:', err);
+      alert('Could not load sample PDF. Please browse or drop a local file.');
+    } finally {
+      isLoadingSample = false;
+    }
+  }
 
   function handleDragEnter(e: DragEvent) {
     e.preventDefault();
@@ -55,18 +75,31 @@
   ondragleave={handleDragLeave}
   ondragover={handleDragOver}
   ondrop={handleDrop}
-  role="button"
-  tabindex="0"
+  role="region"
+  aria-label="PDF drop zone"
 >
   <div class="drop-content">
     <div class="icon">📄</div>
     <h3 class="title">Drop PDF file{multiple ? 's' : ''} here</h3>
     <p class="subtitle">or click to browse</p>
 
-    <label class="browse-btn">
-      Browse Files
-      <input type="file" {multiple} accept=".pdf,application/pdf" onchange={handleFileInputChange} />
-    </label>
+    <div class="actions-row">
+      <label class="browse-btn">
+        Browse Files
+        <input type="file" {multiple} accept=".pdf,application/pdf" onchange={handleFileInputChange} />
+      </label>
+
+      <span class="or-divider">or</span>
+
+      <button
+        type="button"
+        class="sample-btn"
+        disabled={isLoadingSample}
+        onclick={() => loadSamplePdf('/samples/sample_document.pdf', 'sample_document.pdf')}
+      >
+        <span class="sparkle">✨</span> {isLoadingSample ? 'Loading...' : 'Try with Sample PDF'}
+      </button>
+    </div>
   </div>
 </div>
 
@@ -128,6 +161,53 @@
     margin-bottom: 24px;
   }
 
+  .actions-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .or-divider {
+    font-size: 0.875rem;
+    color: var(--text-muted, #9CA3AF);
+    font-weight: 500;
+  }
+
+  .sample-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background-color: var(--bg-surface, #FFFFFF);
+    color: var(--text-primary, #1F2937);
+    border: 1px solid var(--border-color, #D1D5DB);
+    border-radius: var(--border-radius-md, 8px);
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition-fast, 150ms ease);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .sample-btn:hover:not(:disabled) {
+    background-color: var(--bg-surface-hover, #F9FAFB);
+    border-color: var(--accent-primary, #4F46E5);
+    color: var(--accent-primary, #4F46E5);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
+  }
+
+  .sample-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .sparkle {
+    font-size: 1rem;
+  }
+
   .browse-btn {
     display: inline-block;
     padding: 10px 20px;
@@ -135,6 +215,7 @@
     color: #ffffff;
     border-radius: var(--border-radius-md, 8px);
     font-weight: 500;
+    font-size: 0.95rem;
     cursor: pointer;
     transition: background-color var(--transition-fast, 150ms ease);
     position: relative;
