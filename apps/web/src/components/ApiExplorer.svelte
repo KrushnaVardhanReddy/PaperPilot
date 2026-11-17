@@ -17,10 +17,7 @@ curl -X POST http://localhost:8080/api/v1/pdf/merge \\
   -F "files=@report1.pdf" \\
   -F "files=@report2.pdf" \\
   -o merged_report.pdf`,
-    wasm: `// 100% In-Browser WASM Engine — files never leave client
-import { WasmPdfEngine } from '@paperpilot/wasm';
-
-const mergedBytes = await WasmPdfEngine.merge([pdfBytes1, pdfBytes2]);`
+    wasm: `// 100% In-Browser WASM Engine — files never leave client\nimport { WasmPdfEngine } from '` + `@paperpilot/wasm` + `';\n\nconst mergedBytes = await WasmPdfEngine.merge([pdfBytes1, pdfBytes2]);`
   };
 </script>
 
