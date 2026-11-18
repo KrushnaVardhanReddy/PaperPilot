@@ -44,7 +44,37 @@ No Chromium, no C++ runtime, no cloud calls.
 
 ## Quick start
 
-### 1. Use it with your AI / Coding Agent (5-Second MCP Setup)
+### 1. Flash Install the CLI (5-Second Setup — No Rust or Node.js Required)
+
+Install the precompiled native `paperpilot` binary with zero toolchain prerequisites:
+
+**Linux & macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+```
+
+To pin a specific release version instead of `latest` (leading `v` is normalized automatically):
+
+```bash
+# Linux & macOS: pass version as an argument or via VERSION / PAPERPILOT_VERSION
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- 0.7.0
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | VERSION=v0.7.0 bash
+```
+
+```powershell
+# Windows PowerShell: set $env:PAPERPILOT_VERSION or pass -Version locally
+$env:PAPERPILOT_VERSION="0.7.0"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+.\scripts\install.ps1 -Version 0.7.0
+```
+
+> Linux/macOS installs to `~/.local/bin` (or `/usr/local/bin` as `root`), verifies SHA-256 checksums when present, and validates `paperpilot --version`. Windows installs `paperpilot.exe` to `$HOME\.paperpilot\bin` and adds it to your User `PATH`.
+
+### 2. Use it with your AI / Coding Agent (5-Second MCP Setup)
 
 No manual build or binary download required! Run instantly via `npx`:
 
@@ -74,7 +104,7 @@ paperpilot-mcp --client-config cursor
 
 Restart Claude and try: *"Merge these two PDFs and compress the result."*
 
-### 2. Use the CLI
+### 3. Use the CLI
 
 ```bash
 # Semantic Chunking for AI Agents & RAG (Spec 159)
@@ -93,12 +123,12 @@ paperpilot search --input in.pdf --query "Invoice" --json
 paperpilot rotate --input in.pdf --pages 1,3-5 --angle 90 --output out.pdf
 ```
 
-### 3. Use it in the browser & extension
+### 4. Use it in the browser & extension
 
 - **Web App**: Go to [usepaperpilot.com](https://usepaperpilot.com) for zero-install client-side WebAssembly tools.
 - **Companion Extension**: Load the Manifest V3 browser extension from [`apps/extension`](apps/extension) for in-tab context menus, right-click PDF actions, and clean web article capture.
 
-### 4. Build from source
+### 5. Build from source
 
 ```bash
 git clone https://github.com/KrushnaVardhanReddy/PaperPilot.git
