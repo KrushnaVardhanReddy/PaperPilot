@@ -44,35 +44,53 @@ No Chromium, no C++ runtime, no cloud calls.
 
 ## Quick start
 
-### 1. Flash Install the CLI (5-Second Setup — No Rust or Node.js Required)
+### 1. Flash Install PaperPilot (5-Second Setup — No Rust or Node.js Required)
 
-Install the precompiled native `paperpilot` binary with zero toolchain prerequisites:
+Install PaperPilot with zero toolchain prerequisites. Choose between the **Desktop App** (default), standalone **CLI**, or **All-in-One** (Desktop App + CLI + MCP Server):
 
 **Linux & macOS:**
 ```bash
+# Default: installs Desktop App when GUI is available (or CLI on headless Linux servers)
 curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash
+
+# Explicit component flags:
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --desktop
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --cli
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --all
 ```
 
 **Windows (PowerShell):**
 ```powershell
+# Default: installs Desktop App (or prompts interactively for Desktop / CLI / All-in-One)
 irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+
+# Select component explicitly via $env:PAPERPILOT_COMPONENT or -Component:
+$env:PAPERPILOT_COMPONENT="All"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+.\scripts\install.ps1 -Component Desktop   # Desktop GUI App (.exe / .msi) [Default]
+.\scripts\install.ps1 -Component CLI       # Standalone paperpilot.exe CLI only
+.\scripts\install.ps1 -Component All       # Desktop App + CLI + MCP Server
 ```
 
-To pin a specific release version instead of `latest` (leading `v` is normalized automatically):
+When run directly in an interactive terminal without component flags, the installer prompts you to pick **1) Desktop App [Default]**, **2) CLI only**, or **3) All-in-One**.
+
+To pin a specific release version instead of `latest` (leading `v` is normalized automatically) or preview actions with `--dry-run` / `DRY_RUN=1`:
 
 ```bash
 # Linux & macOS: pass version as an argument or via VERSION / PAPERPILOT_VERSION
-curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- 0.7.0
-curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | VERSION=v0.7.0 bash
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --all 0.7.0
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | VERSION=v0.7.0 COMPONENT=cli bash
+DRY_RUN=1 sh scripts/install.sh --desktop
 ```
 
 ```powershell
-# Windows PowerShell: set $env:PAPERPILOT_VERSION or pass -Version locally
+# Windows PowerShell: set $env:PAPERPILOT_VERSION or pass -Version / -DryRun locally
 $env:PAPERPILOT_VERSION="0.7.0"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
-.\scripts\install.ps1 -Version 0.7.0
+.\scripts\install.ps1 -Component All -Version 0.7.0 -DryRun
 ```
 
-> Linux/macOS installs to `~/.local/bin` (or `/usr/local/bin` as `root`), verifies SHA-256 checksums when present, and validates `paperpilot --version`. Windows installs `paperpilot.exe` to `$HOME\.paperpilot\bin` and adds it to your User `PATH`.
+> **Install locations & verification:**
+> - **Desktop App:** On Linux, places the verified AppImage at `~/.local/bin/paperpilot-desktop` (or `/usr/local/bin` as `root`) and registers an application icon + launcher at `~/.local/share/applications/paperpilot.desktop`. On macOS, mounts the `.dmg` and installs `PaperPilot.app` to `/Applications`. On Windows, downloads and runs the `.exe` / `.msi` desktop installer.
+> - **CLI & MCP (`--cli` / `--all`):** Linux/macOS installs `paperpilot` (and `paperpilot-mcp` with `--all`) to `~/.local/bin` (or `/usr/local/bin` as `root`), verifies SHA-256 checksums, and validates `--version`. Windows installs `paperpilot.exe` (and `paperpilot-mcp.exe` with `-Component All`) to `$HOME\.paperpilot\bin` and adds it to your User `PATH`.
 
 ### 2. Use it with your AI / Coding Agent (5-Second MCP Setup)
 

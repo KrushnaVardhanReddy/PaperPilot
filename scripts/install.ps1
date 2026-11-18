@@ -3,25 +3,37 @@
     PaperPilot Flash Installer for Windows.
 
 .DESCRIPTION
-    Detects Windows architecture (x64 / arm64), resolves the target release
-    version (or latest), downloads the Windows release zip from GitHub Releases,
-    verifies the SHA-256 checksum if present, extracts paperpilot.exe to
-    $HOME\.paperpilot\bin, adds the directory to the user PATH if missing, and
-    validates execution with --version.
+    Detects Windows architecture (x64 / arm64), supports component selection
+    (Desktop GUI, CLI, or All-in-One, defaulting to Desktop), resolves the
+    target release version (or latest), downloads the release installer/archive
+    from GitHub Releases, verifies the SHA-256 checksum if present, and installs
+    the selected PaperPilot components.
 
 .EXAMPLE
     irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
 
 .EXAMPLE
-    $env:PAPERPILOT_VERSION="0.7.0"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+    .\scripts\install.ps1 -Component Desktop
+    .\scripts\install.ps1 -Component CLI -Version 0.7.0
+    .\scripts\install.ps1 -Component All -DryRun
 
 .EXAMPLE
-    .\scripts\install.ps1 -Version 0.7.0
-    .\scripts\install.ps1 v0.7.0
+    $env:PAPERPILOT_VERSION="0.7.0"; $env:PAPERPILOT_COMPONENT="CLI"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
 #>
 param(
     [Parameter(Position = 0)]
     [string]$Version = "",
+
+    [ValidateSet("", "Desktop", "CLI", "All")]
+    [string]$Component = "",
+
+    [switch]$Desktop,
+
+    [switch]$Cli,
+
+    [switch]$All,
+
+    [switch]$NonInteractive,
 
     [switch]$DryRun,
 
@@ -36,17 +48,25 @@ PaperPilot Flash Installer (Windows PowerShell)
 
 Usage:
   irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
-  .\scripts\install.ps1 [-Version <VERSION>] [-DryRun] [-Help]
+  .\scripts\install.ps1 [-Component <Desktop|CLI|All>] [-Version <VERSION>] [-DryRun] [-Help]
+
+Component Options:
+  -Component Desktop    Install PaperPilot Desktop GUI App (.exe / .msi) [Default]
+  -Component CLI        Install standalone paperpilot.exe CLI binary only
+  -Component All        Install Desktop App + CLI + MCP Server
+  -Desktop / -Cli / -All  Switch aliases for -Component
 
 Pin a specific version:
   $env:PAPERPILOT_VERSION="0.7.0"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
-  .\scripts\install.ps1 -Version 0.7.0
+  .\scripts\install.ps1 -Component All -Version 0.7.0
   .\scripts\install.ps1 v0.7.0
 
 Environment Variables:
-  PAPERPILOT_VERSION / VERSION  Version or tag to install (overridden by -Version)
-  PAPERPILOT_INSTALL_DIR        Override install directory (default: $HOME\.paperpilot\bin)
-  DRY_RUN=1                     Simulate installation without downloading or modifying files
+  PAPERPILOT_COMPONENT / COMPONENT  Component to install: Desktop, CLI, or All
+  PAPERPILOT_VERSION / VERSION      Version or tag to install (overridden by -Version)
+  PAPERPILOT_INSTALL_DIR            Override CLI install directory (default: $HOME\.paperpilot\bin)
+  PAPERPILOT_NONINTERACTIVE=1       Skip interactive component prompt
+  DRY_RUN=1                         Simulate installation without downloading or modifying files
 '@
     exit 0
 }
@@ -115,10 +135,293 @@ function Normalize-ReleaseTag {
     return "v$Clean"
 }
 
+function Normalize-ComponentName {
+    param([string]$Raw)
+    switch ($Raw.Trim().ToLowerInvariant()) {
+        "desktop" { return "Desktop" }
+        "gui"     { return "Desktop" }
+        "cli"     { return "CLI" }
+        "all"     { return "All" }
+        "suite"   { return "All" }
+        default   { throw "Invalid component '$Raw'. Expected Desktop, CLI, or All." }
+    }
+}
+
+function Test-InteractiveTerminal {
+    if ($NonInteractive.IsPresent) {
+        return $false
+    }
+    if ($env:PAPERPILOT_NONINTERACTIVE -and $env:PAPERPILOT_NONINTERACTIVE -ne "0") {
+        return $false
+    }
+    if ($env:NONINTERACTIVE -and $env:NONINTERACTIVE -ne "0") {
+        return $false
+    }
+    if ($env:CI) {
+        return $false
+    }
+    if (-not [Environment]::UserInteractive) {
+        return $false
+    }
+    try {
+        if ([Environment]::GetCommandLineArgs() -match '^-NonI') {
+            return $false
+        }
+        if ([Console]::IsInputRedirected -or [Console]::IsOutputRedirected) {
+            return $false
+        }
+        return $null -ne $Host.UI.RawUI
+    } catch {
+        return $false
+    }
+}
+
+function Resolve-SelectedComponent {
+    $Chosen = ""
+    if ($Desktop.IsPresent) {
+        $Chosen = "Desktop"
+    }
+    if ($Cli.IsPresent) {
+        if ($Chosen -and $Chosen -ne "CLI") {
+            throw "Conflicting component switches specified ('$Chosen' and 'CLI')."
+        }
+        $Chosen = "CLI"
+    }
+    if ($All.IsPresent) {
+        if ($Chosen -and $Chosen -ne "All") {
+            throw "Conflicting component switches specified ('$Chosen' and 'All')."
+        }
+        $Chosen = "All"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Component)) {
+        $Norm = Normalize-ComponentName -Raw $Component
+        if ($Chosen -and $Chosen -ne $Norm) {
+            throw "Conflicting component parameters specified ('$Chosen' and '$Norm')."
+        }
+        $Chosen = $Norm
+    }
+    if ([string]::IsNullOrWhiteSpace($Chosen)) {
+        $EnvComp = if (-not [string]::IsNullOrWhiteSpace($env:PAPERPILOT_COMPONENT)) {
+            $env:PAPERPILOT_COMPONENT
+        } else {
+            $env:COMPONENT
+        }
+        if (-not [string]::IsNullOrWhiteSpace($EnvComp)) {
+            $Chosen = Normalize-ComponentName -Raw $EnvComp
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Chosen)) {
+        return $Chosen
+    }
+
+    if (Test-InteractiveTerminal) {
+        Write-Host "Select PaperPilot components to install:"
+        Write-Host "  1) Desktop App (Visual GUI workspace + PDF Viewer) [Default]"
+        Write-Host "  2) CLI only (Headless terminal & scripting engine)"
+        Write-Host "  3) All-in-One (CLI + Desktop App + MCP Server)"
+        while ($true) {
+            $Choice = Read-Host "Choice [1/2/3] (default: 1)"
+            if ($null -eq $Choice) {
+                $Choice = "1"
+            }
+            $Choice = $Choice.Trim()
+            switch ($Choice) {
+                ""  { return "Desktop" }
+                "1" { return "Desktop" }
+                "2" { return "CLI" }
+                "3" { return "All" }
+                default {
+                    Write-Host "Invalid choice '$Choice'. Please enter 1, 2, or 3." -ForegroundColor Yellow
+                }
+            }
+        }
+    }
+
+    Write-Host "Non-interactive environment detected; defaulting to Desktop App."
+    return "Desktop"
+}
+
+function Invoke-DownloadVerifiedAsset {
+    param(
+        [string[]]$Candidates,
+        [string]$BaseUrl,
+        [string]$TempDir,
+        [bool]$Optional = $false
+    )
+
+    $SelectedAsset = $null
+    $SelectedUrl = $null
+    $SelectedPath = $null
+
+    foreach ($Candidate in $Candidates) {
+        $CandidateUrl = "$BaseUrl/$Candidate"
+        $CandidatePath = Join-Path $TempDir $Candidate
+        Write-Host "Downloading $Candidate..."
+        try {
+            Invoke-WebRequest -Uri $CandidateUrl -OutFile $CandidatePath -UseBasicParsing -ErrorAction Stop
+            $SelectedAsset = $Candidate
+            $SelectedUrl = $CandidateUrl
+            $SelectedPath = $CandidatePath
+            break
+        } catch {
+            if (Test-Path $CandidatePath) {
+                Remove-Item -Force $CandidatePath -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
+    if (-not $SelectedPath) {
+        if ($Optional) {
+            return $null
+        }
+        throw "Failed to download a precompiled Windows release asset from $BaseUrl/"
+    }
+
+    $ChecksumUrl = "$SelectedUrl.sha256"
+    $ChecksumPath = Join-Path $TempDir "$SelectedAsset.sha256"
+    Write-Host "Checking SHA-256 checksum..."
+    try {
+        Invoke-WebRequest -Uri $ChecksumUrl -OutFile $ChecksumPath -UseBasicParsing -ErrorAction Stop
+        if (Test-Path $ChecksumPath) {
+            $ExpectedLine = Get-Content -Path $ChecksumPath -ErrorAction Stop | Select-Object -First 1
+            if (-not [string]::IsNullOrWhiteSpace($ExpectedLine)) {
+                $ExpectedSum = $ExpectedLine.Trim().Split()[0].ToLowerInvariant()
+                $ActualSum = (Get-FileHash -Path $SelectedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+                if ($ExpectedSum -ne $ActualSum) {
+                    throw "Checksum verification failed! Expected: $ExpectedSum, Actual: $ActualSum"
+                }
+                Write-Host "Checksum verified."
+            }
+        }
+    } catch {
+        if ($_.Exception.Message -like "Checksum verification failed!*") {
+            throw
+        }
+        Write-Host "Warning: Checksum file not found at $ChecksumUrl; skipping checksum verification."
+    }
+
+    return [PSCustomObject]@{
+        AssetName = $SelectedAsset
+        Url       = $SelectedUrl
+        FilePath  = $SelectedPath
+    }
+}
+
+function Add-ToUserPath {
+    param([string]$Directory)
+
+    $NormalizedDir = $Directory.TrimEnd('\')
+    $CurrentUserPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+    $UserEntries = @()
+    if (-not [string]::IsNullOrWhiteSpace($CurrentUserPath)) {
+        $UserEntries = $CurrentUserPath -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    }
+    $InUserPath = $UserEntries | Where-Object { $_.TrimEnd('\').Equals($NormalizedDir, [System.StringComparison]::OrdinalIgnoreCase) }
+    if (-not $InUserPath) {
+        Write-Host "Adding $Directory to User PATH..."
+        $NewUserPath = ($UserEntries + $Directory) -join ';'
+        [System.Environment]::SetEnvironmentVariable("Path", $NewUserPath, "User")
+    }
+
+    $SessionEntries = ($env:Path -split ';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    $InSessionPath = $SessionEntries | Where-Object { $_.TrimEnd('\').Equals($NormalizedDir, [System.StringComparison]::OrdinalIgnoreCase) }
+    if (-not $InSessionPath) {
+        $env:Path = ($SessionEntries + $Directory) -join ';'
+    }
+}
+
+function Install-DesktopApp {
+    param(
+        [string[]]$Candidates,
+        [string]$BaseUrl,
+        [string]$TempDir
+    )
+
+    $Asset = Invoke-DownloadVerifiedAsset -Candidates $Candidates -BaseUrl $BaseUrl -TempDir $TempDir
+    if ($Asset.AssetName.EndsWith(".msi", [System.StringComparison]::OrdinalIgnoreCase)) {
+        Write-Host "Running Windows Installer ($($Asset.AssetName))..."
+        $MsiArgs = @("/i", "`"$($Asset.FilePath)`"", "/passive")
+        $Proc = Start-Process -FilePath "msiexec.exe" -ArgumentList $MsiArgs -Wait -PassThru
+        if ($Proc.ExitCode -ne 0 -and $Proc.ExitCode -ne 3010) {
+            throw "MSI installer failed with exit code $($Proc.ExitCode)."
+        }
+    } else {
+        Write-Host "Running PaperPilot Desktop Setup ($($Asset.AssetName))..."
+        $Proc = Start-Process -FilePath $Asset.FilePath -ArgumentList "/S" -Wait -PassThru
+        if ($Proc.ExitCode -ne 0) {
+            throw "Desktop installer failed with exit code $($Proc.ExitCode)."
+        }
+    }
+
+    Write-Host "PaperPilot Desktop App installation completed."
+}
+
+function Install-ArchiveBinary {
+    param(
+        [string[]]$Candidates,
+        [string[]]$BinaryNames,
+        [string]$DestName,
+        [string]$BaseUrl,
+        [string]$TempDir,
+        [string]$InstallDir,
+        [bool]$Optional = $false
+    )
+
+    $FoundExe = $null
+    $CachedExtract = Join-Path $TempDir "extract_paperpilot.exe"
+    if (Test-Path $CachedExtract) {
+        $FoundExe = Get-ChildItem -Path $CachedExtract -Recurse -File |
+            Where-Object { $BinaryNames -contains $_.Name } |
+            Select-Object -First 1
+    }
+
+    if (-not $FoundExe) {
+        $Asset = Invoke-DownloadVerifiedAsset -Candidates $Candidates -BaseUrl $BaseUrl -TempDir $TempDir -Optional $Optional
+        if (-not $Asset) {
+            Write-Host "Warning: Could not download $DestName archive from $BaseUrl/; skipping."
+            return $false
+        }
+
+        $ExtractDir = Join-Path $TempDir "extract_$DestName"
+        New-Item -ItemType Directory -Force -Path $ExtractDir | Out-Null
+        Write-Host "Extracting $($Asset.AssetName)..."
+        Expand-Archive -Path $Asset.FilePath -DestinationPath $ExtractDir -Force
+
+        $FoundExe = Get-ChildItem -Path $ExtractDir -Recurse -File |
+            Where-Object { $BinaryNames -contains $_.Name } |
+            Select-Object -First 1
+
+        if (-not $FoundExe) {
+            if ($Optional) {
+                Write-Host "Warning: Could not find $DestName inside $($Asset.AssetName); skipping."
+                return $false
+            }
+            throw "Could not find $DestName inside downloaded archive ($($Asset.AssetName))."
+        }
+    }
+
+    New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+    $DestExe = Join-Path $InstallDir $DestName
+    Copy-Item -Path $FoundExe.FullName -Destination $DestExe -Force
+    Add-ToUserPath -Directory $InstallDir
+
+    Write-Host "Validating $DestName installation..."
+    $VersionOutput = & $DestExe --version
+    if ($LASTEXITCODE -ne 0) {
+        throw "Verification failed: '$DestExe --version' exited with code $LASTEXITCODE"
+    }
+    Write-Host "Verified: $VersionOutput"
+    return $true
+}
+
 Write-Host "Detecting Windows architecture..."
 $Arch = Resolve-WindowsArch
 $RustTarget = "$Arch-pc-windows-msvc"
 Write-Host "Detected architecture: $Arch ($RustTarget)"
+
+$SelectedComponent = Resolve-SelectedComponent
+Write-Host "Selected component: $SelectedComponent"
 
 $RawVersion = $Version
 if ([string]::IsNullOrWhiteSpace($RawVersion)) {
@@ -147,22 +450,48 @@ if ([string]::IsNullOrWhiteSpace($ResolvedVersion)) {
     }
 }
 
+$CleanVersion = $ResolvedVersion.TrimStart('v', 'V')
 Write-Host "Installing PaperPilot version: $ResolvedVersion"
 
-$Candidates = @()
+$DesktopCandidates = @()
 if ($Arch -eq "aarch64") {
-    $Candidates += @(
+    $DesktopCandidates += @(
+        "PaperPilot_${CleanVersion}_arm64-setup.exe",
+        "PaperPilot_${CleanVersion}_arm64_en-US.msi",
+        "PaperPilot_${CleanVersion}_arm64.msi"
+    )
+}
+$DesktopCandidates += @(
+    "PaperPilot_${CleanVersion}_x64-setup.exe",
+    "PaperPilot_${CleanVersion}_x64_en-US.msi",
+    "PaperPilot_${CleanVersion}_x64.msi"
+)
+
+$CliCandidates = @()
+if ($Arch -eq "aarch64") {
+    $CliCandidates += @(
         "paperpilot-cli-windows-latest-aarch64-pc-windows-msvc.zip",
         "paperpilot-windows-latest-aarch64-pc-windows-msvc.zip",
         "paperpilot-aarch64-pc-windows-msvc.zip",
         "paperpilot-all-windows-latest-aarch64-pc-windows-msvc.zip"
     )
 }
-# x86_64 candidates (primary for x64, and emulation fallback for Windows ARM64)
-$Candidates += @(
+$CliCandidates += @(
     "paperpilot-cli-windows-latest-x86_64-pc-windows-msvc.zip",
     "paperpilot-windows-latest-x86_64-pc-windows-msvc.zip",
     "paperpilot-x86_64-pc-windows-msvc.zip",
+    "paperpilot-all-windows-latest-x86_64-pc-windows-msvc.zip"
+)
+
+$McpCandidates = @()
+if ($Arch -eq "aarch64") {
+    $McpCandidates += @(
+        "paperpilot-mcp-windows-latest-aarch64-pc-windows-msvc.zip",
+        "paperpilot-all-windows-latest-aarch64-pc-windows-msvc.zip"
+    )
+}
+$McpCandidates += @(
+    "paperpilot-mcp-windows-latest-x86_64-pc-windows-msvc.zip",
     "paperpilot-all-windows-latest-x86_64-pc-windows-msvc.zip"
 )
 
@@ -173,18 +502,34 @@ $InstallDir = if (-not [string]::IsNullOrWhiteSpace($env:PAPERPILOT_INSTALL_DIR)
     Join-Path $UserHome ".paperpilot\bin"
 }
 
-$PrimaryUrl = "$GithubDl/$ResolvedVersion/$($Candidates[0])"
-$PrimaryChecksumUrl = "$PrimaryUrl.sha256"
+$BaseDownloadUrl = "$GithubDl/$ResolvedVersion"
+$PrimaryDesktopUrl = "$BaseDownloadUrl/$($DesktopCandidates[0])"
+$PrimaryCliUrl = "$BaseDownloadUrl/$($CliCandidates[0])"
+$PrimaryMcpUrl = "$BaseDownloadUrl/$($McpCandidates[0])"
 
 $IsDryRun = $DryRun.IsPresent -or ($env:DRY_RUN -and $env:DRY_RUN -ne "0")
 if ($IsDryRun) {
     Write-Host "DRY_RUN mode enabled."
+    Write-Host "  Component:    $SelectedComponent"
     Write-Host "  Target:       $RustTarget"
     Write-Host "  Version:      $ResolvedVersion"
-    Write-Host "  Primary URL:  $PrimaryUrl"
-    Write-Host "  Checksum URL: $PrimaryChecksumUrl"
-    Write-Host "  Install path: $(Join-Path $InstallDir 'paperpilot.exe')"
-    Write-Host "  Verification: $(Join-Path $InstallDir 'paperpilot.exe') --version"
+    if ($SelectedComponent -eq "Desktop" -or $SelectedComponent -eq "All") {
+        Write-Host "  Desktop URL:      $PrimaryDesktopUrl"
+        Write-Host "  Desktop Checksum: $PrimaryDesktopUrl.sha256"
+        Write-Host "  Desktop action:   Execute Windows setup installer silently"
+    }
+    if ($SelectedComponent -eq "CLI" -or $SelectedComponent -eq "All") {
+        Write-Host "  CLI URL:          $PrimaryCliUrl"
+        Write-Host "  CLI Checksum:     $PrimaryCliUrl.sha256"
+        Write-Host "  CLI path:         $(Join-Path $InstallDir 'paperpilot.exe')"
+        Write-Host "  CLI verification: $(Join-Path $InstallDir 'paperpilot.exe') --version"
+    }
+    if ($SelectedComponent -eq "All") {
+        Write-Host "  MCP URL:          $PrimaryMcpUrl"
+        Write-Host "  MCP Checksum:     $PrimaryMcpUrl.sha256"
+        Write-Host "  MCP path:         $(Join-Path $InstallDir 'paperpilot-mcp.exe')"
+        Write-Host "  MCP verification: $(Join-Path $InstallDir 'paperpilot-mcp.exe') --version"
+    }
     exit 0
 }
 
@@ -195,100 +540,47 @@ $PreviousProgressPreference = $ProgressPreference
 $ProgressPreference = "SilentlyContinue"
 
 try {
-    $SelectedAsset = $null
-    $SelectedUrl = $null
-    $ZipPath = $null
+    $CliInstalled = $false
+    $McpInstalled = $false
 
-    foreach ($Candidate in $Candidates) {
-        $CandidateUrl = "$GithubDl/$ResolvedVersion/$Candidate"
-        $CandidatePath = Join-Path $TempDir $Candidate
-        Write-Host "Downloading $Candidate..."
-        try {
-            Invoke-WebRequest -Uri $CandidateUrl -OutFile $CandidatePath -UseBasicParsing -ErrorAction Stop
-            $SelectedAsset = $Candidate
-            $SelectedUrl = $CandidateUrl
-            $ZipPath = $CandidatePath
-            break
-        } catch {
-            if (Test-Path $CandidatePath) {
-                Remove-Item -Force $CandidatePath -ErrorAction SilentlyContinue
-            }
-        }
+    if ($SelectedComponent -eq "Desktop" -or $SelectedComponent -eq "All") {
+        Install-DesktopApp -Candidates $DesktopCandidates -BaseUrl $BaseDownloadUrl -TempDir $TempDir
     }
 
-    if (-not $ZipPath) {
-        Write-Error "Failed to download a precompiled Windows release archive from $GithubDl/$ResolvedVersion/"
-        exit 1
+    if ($SelectedComponent -eq "CLI" -or $SelectedComponent -eq "All") {
+        $CliInstalled = Install-ArchiveBinary `
+            -Candidates $CliCandidates `
+            -BinaryNames @("paperpilot.exe", "paperpilot-cli.exe") `
+            -DestName "paperpilot.exe" `
+            -BaseUrl $BaseDownloadUrl `
+            -TempDir $TempDir `
+            -InstallDir $InstallDir `
+            -Optional $false
     }
 
-    $ChecksumUrl = "$SelectedUrl.sha256"
-    $ChecksumPath = Join-Path $TempDir "$SelectedAsset.sha256"
-    Write-Host "Checking SHA-256 checksum..."
-    try {
-        Invoke-WebRequest -Uri $ChecksumUrl -OutFile $ChecksumPath -UseBasicParsing -ErrorAction Stop
-        if (Test-Path $ChecksumPath) {
-            $ExpectedLine = Get-Content -Path $ChecksumPath -ErrorAction Stop | Select-Object -First 1
-            if (-not [string]::IsNullOrWhiteSpace($ExpectedLine)) {
-                $ExpectedSum = $ExpectedLine.Trim().Split()[0].ToLowerInvariant()
-                $ActualSum = (Get-FileHash -Path $ZipPath -Algorithm SHA256).Hash.ToLowerInvariant()
-                if ($ExpectedSum -ne $ActualSum) {
-                    Write-Error "Checksum verification failed! Expected: $ExpectedSum, Actual: $ActualSum"
-                    exit 1
-                }
-                Write-Host "Checksum verified."
-            }
-        }
-    } catch {
-        Write-Host "Warning: Checksum file not found at $ChecksumUrl; skipping checksum verification."
+    if ($SelectedComponent -eq "All") {
+        $McpInstalled = Install-ArchiveBinary `
+            -Candidates $McpCandidates `
+            -BinaryNames @("paperpilot-mcp.exe") `
+            -DestName "paperpilot-mcp.exe" `
+            -BaseUrl $BaseDownloadUrl `
+            -TempDir $TempDir `
+            -InstallDir $InstallDir `
+            -Optional $true
     }
 
-    $ExtractDir = Join-Path $TempDir "extract"
-    New-Item -ItemType Directory -Force -Path $ExtractDir | Out-Null
-    Write-Host "Extracting $SelectedAsset..."
-    Expand-Archive -Path $ZipPath -DestinationPath $ExtractDir -Force
-
-    $FoundExe = Get-ChildItem -Path $ExtractDir -Recurse -File |
-        Where-Object { $_.Name -eq "paperpilot.exe" -or $_.Name -eq "paperpilot-cli.exe" } |
-        Select-Object -First 1
-
-    if (-not $FoundExe) {
-        Write-Error "Could not find paperpilot.exe inside downloaded archive ($SelectedAsset)."
-        exit 1
+    Write-Host ""
+    Write-Host "PaperPilot $ResolvedVersion ($SelectedComponent) installation complete!"
+    if ($SelectedComponent -eq "Desktop" -or $SelectedComponent -eq "All") {
+        Write-Host "  Desktop App: Launch PaperPilot from the Windows Start Menu."
     }
-
-    New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-    $DestExe = Join-Path $InstallDir "paperpilot.exe"
-    Copy-Item -Path $FoundExe.FullName -Destination $DestExe -Force
-
-    # Ensure install directory is in User PATH
-    $NormalizedInstallDir = $InstallDir.TrimEnd('\')
-    $CurrentUserPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
-    $UserEntries = @()
-    if (-not [string]::IsNullOrWhiteSpace($CurrentUserPath)) {
-        $UserEntries = $CurrentUserPath -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    if ($CliInstalled) {
+        Write-Host "  CLI Binary:  $(Join-Path $InstallDir 'paperpilot.exe')"
+        Write-Host "  Run 'paperpilot --help' (restart your terminal if 'paperpilot' is not yet recognized in older shells)."
     }
-    $InUserPath = $UserEntries | Where-Object { $_.TrimEnd('\').Equals($NormalizedInstallDir, [System.StringComparison]::OrdinalIgnoreCase) }
-    if (-not $InUserPath) {
-        Write-Host "Adding $InstallDir to User PATH..."
-        $NewUserPath = ($UserEntries + $InstallDir) -join ';'
-        [System.Environment]::SetEnvironmentVariable("Path", $NewUserPath, "User")
+    if ($McpInstalled) {
+        Write-Host "  MCP Server:  $(Join-Path $InstallDir 'paperpilot-mcp.exe')"
     }
-
-    $SessionEntries = ($env:Path -split ';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    $InSessionPath = $SessionEntries | Where-Object { $_.TrimEnd('\').Equals($NormalizedInstallDir, [System.StringComparison]::OrdinalIgnoreCase) }
-    if (-not $InSessionPath) {
-        $env:Path = ($SessionEntries + $InstallDir) -join ';'
-    }
-
-    Write-Host "Validating installation..."
-    $VersionOutput = & $DestExe --version
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Verification failed: '$DestExe --version' exited with code $LASTEXITCODE"
-        exit 1
-    }
-    Write-Host "Verified: $VersionOutput"
-    Write-Host "PaperPilot $ResolvedVersion has been successfully installed to $DestExe"
-    Write-Host "You can run 'paperpilot --help' (restart your terminal if 'paperpilot' is not yet recognized in older shells)."
 } finally {
     $ProgressPreference = $PreviousProgressPreference
     if (Test-Path $TempDir) {
