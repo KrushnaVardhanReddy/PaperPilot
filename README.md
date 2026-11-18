@@ -32,22 +32,13 @@ No Chromium, no C++ runtime, no cloud calls.
 
 ---
 
-## Self-Healing System Diagnostics
-Verify your environment, gateway port, temp storage, and OCR models with one command:
-```bash
-paperpilot doctor
-# PaperPilot System Diagnostics (v0.7.0)
-# ==================================================
-# Status:    Healthy
-# [✓] Temp Directory: /tmp (writable & ephemeral cleanup verified)
-# [✓] Gateway Port: 7823 available
-# [✓] OCR Models: models/ocr/ppocrv4 (det.onnx, rec.onnx found)
-# [✓] Disk Space: > 5 GB available
-```
+## Stop Doing Document Drudgery by Hand
 
-**Open-WebUI integration (source builds):** use the local gateway as a
-PDF-only Tika-compatible extraction server. See the
-[Open-WebUI setup guide](docs/integrations/open_webui.md).
+> **Bureaucratic forms, discovery bundles, and compliance PDFs waste hours on repetitive manual work—and one sloppy click in a viewer can leak sensitive client data.**
+
+- **Bureaucratic form fatigue:** Stop hand-typing the same client entities, EINs, addresses, and checkboxes across multi-page tax packets (W-9s), bank onboarding, insurance claims, government filings, and rental applications. Point `paperpilot fill-batch` at a CSV/JSON dataset and generate flattened, verified PDFs in milliseconds.
+- **Litigation & exhibit numbering headaches:** Turn disorganized closing or discovery folders into sequentially stamped `EXH-000001` court exhibits across six configurable anchor corners—ready to re-index in seconds whenever counsel swaps an exhibit order.
+- **False-sense-of-security redactions:** Covering text with black rectangles in standard viewers often leaves selectable SSNs, account numbers, XMP author tags, JavaScript triggers, and embedded attachments intact. PaperPilot permanently erases underlying text glyphs and scrubs hidden document internals strictly offline.
 
 ---
 
@@ -122,6 +113,66 @@ cd apps/desktop && pnpm install && pnpm tauri dev
 ```
 
 Requires Rust 1.75+, Node.js, and pnpm.
+
+---
+
+## Self-Healing System Diagnostics
+Verify your environment, gateway port, temp storage, and OCR models with one command:
+```bash
+paperpilot doctor
+# PaperPilot System Diagnostics (v0.7.0)
+# ==================================================
+# Status:    Healthy
+# [✓] Temp Directory: /tmp (writable & ephemeral cleanup verified)
+# [✓] Gateway Port: 7823 available
+# [✓] OCR Models: models/ocr/ppocrv4 (det.onnx, rec.onnx found)
+# [✓] Disk Space: > 5 GB available
+```
+
+**Open-WebUI integration (source builds):** use the local gateway as a
+PDF-only Tika-compatible extraction server. See the
+[Open-WebUI setup guide](docs/integrations/open_webui.md).
+
+---
+
+## Real-World Use Cases & Visual Showcase
+
+Every workflow below runs offline through the same pure-Rust engine across CLI scripts, `.ppflow` recipes, and MCP coding agents:
+
+| Workflow & Visual Preview | Exact CLI & MCP Commands |
+|---|---|
+| **1. Form Auto-Filling**<br>Batch-fill government, tax, bank, or rental AcroForms from CSV/JSON rows into flattened PDFs in milliseconds with SHA-256 audit receipts—without overwriting existing files. Sample: [`preview.png`](reports/fill-batch-validation/preview.png) · [report](reports/CLI_FILL_BATCH_REPORT.md).<br><br>![Form Auto-Filling](docs/assets/showcase/01_form_autofill.png) | **CLI:** `paperpilot fill-batch --template w9.pdf --data vendors.csv --output-dir ./out --name-template '{row.name}_{index:04}.pdf'`<br>*(single form: `paperpilot pdf-fill-form --input w9.pdf --data values.json --output filled.pdf`)*<br><br>**MCP (`batch_fill`):** `{"template": "w9.pdf", "data": "vendors.csv", "output_dir": "./out", "name_template": "{row.name}_{index:04}.pdf"}` |
+| **2. Permanent Redaction & PII Sanitization**<br>Detect SSNs, credit cards, emails, phones, and IBANs locally; erase underlying text glyphs across pages with blackout overlays; and strip `/Info`, XMP metadata, attachments, and scripts. Live demo: [PII scan GIF](docs/assets/gifs/demo_02_pii_security_scan.gif).<br><br>![Permanent Redaction and PII Sanitization](docs/assets/showcase/02_pii_redaction.png) | **CLI:** `paperpilot pii-scan --input doc.pdf && paperpilot redact --input doc.pdf --pages all --regex '\b\d{3}-\d{2}-\d{4}\b' --overlay-text '[REDACTED]' --output red.pdf && paperpilot sanitize --input red.pdf --output clean.pdf`<br><br>**MCP (`document_pii_scan` → `pdf_redact` → `pdf_sanitize`):** `{"input": "doc.pdf"}` → `{"input": "doc.pdf", "regex": "\\b\\d{3}-\\d{2}-\\d{4}\\b", "overlay_text": "[REDACTED]", "output": "red.pdf"}` → `{"input": "red.pdf", "output": "clean.pdf"}` |
+| **3. Court Bates Stamping & Exhibit Numbering**<br>Apply zero-padded sequential discovery stamps across 6 anchor corners (`bottom-right`, `bottom-left`, `top-right`, `top-left`, `bottom-center`, `top-center`) for litigation packets. See [legal discovery walkthrough](demo/legal_discovery/README.md).<br><br>![Court Bates Stamping and Exhibits](docs/assets/showcase/03_bates_stamping.png) | **CLI:** `paperpilot bates --input exhibits.pdf --prefix 'EXH-' --start 1 --position bottom-right --output exhibits-bates.pdf`<br><br>**MCP (`pdf_bates`):** `{"input": "exhibits.pdf", "prefix": "EXH-", "start_number": 1, "padding": 6, "position": "bottom-right", "output": "exhibits-bates.pdf"}` |
+| **4. Structure-Aware RAG Chunking**<br>Chunk 500+ page technical manuals via memory-mapped zero-copy I/O (`>= 10 MB`), stripping repeated headers/footers, splitting on `#`/`##` headings, and keeping Markdown tables atomic for local LLMs.<br><br>![Structure-Aware RAG Chunking](docs/assets/showcase/04_rag_chunking.png) | **CLI:** `paperpilot pdf-chunk --input manual.pdf --target-tokens 500 --overlap 50 --output chunks.json`<br><br>**MCP (`pdf_chunk`):** `{"input": "manual.pdf", "target_tokens": 500, "overlap_tokens": 50, "strip_boilerplate": true, "break_on_headings": true, "output": "chunks.json"}` |
+| **5. Saddle-Stitch Booklet & N-Up Imposition**<br>Auto-pad page counts to multiples of 4 and reorder duplex sheets (`[N, 1, 2, N-1, ...]`) for saddle-stitch folding, or arrange 2, 4, 9, or 16 pages per sheet with configurable margins and borders.<br><br>![Saddle-Stitch Booklet and N-Up Imposition](docs/assets/showcase/05_booklet_imposition.png) | **CLI:** `paperpilot pdf-booklet --input zine.pdf --output booklet.pdf`<br>*(N-up grid: `paperpilot pdf-nup --input slides.pdf --nup 4 --draw-borders --output handout.pdf`)*<br><br>**MCP (`pdf_booklet` / `pdf_nup`):** `{"input": "zine.pdf", "output": "booklet.pdf"}` / `{"input": "slides.pdf", "nup": 4, "draw_borders": true, "output": "handout.pdf"}` |
+| **6. Multi-Format Archival Conversion**<br>Modernize legacy `.doc`/`.xls`/`.ppt` files to `.docx`/`.xlsx`/`.pptx`, convert Office files to Markdown, render HTML/Markdown/Excel natively in Rust to styled PDFs, stamp `PDF/A` metadata, and verify structural validity + SHA-256 checksums.<br><br>![Multi-Format Archival Conversion](docs/assets/showcase/06_archival_conversion.png) | **CLI:** `paperpilot office modernize --input legacy.doc --output modern.docx` · `paperpilot html-to-pdf --input report.html --output report.pdf && paperpilot pdf-a --input report.pdf --output archival.pdf && paperpilot validate --input archival.pdf` *(also `md-to-pdf`, `convert-excel`, `office to-markdown`, `hash`)*<br><br>**MCP (`office_modernize_legacy`, `pdf_convert_html`, `pdf_to_pdf_a`, `pdf_validate`):** `{"input": "legacy.doc", "output": "modern.docx"}` → `{"input": "report.html", "output": "report.pdf"}` → `{"input": "report.pdf", "output": "archival.pdf"}` → `{"input": "archival.pdf"}` |
+
+> **More live agent recordings:** [`demo_05_mcp_agent_workflow.gif`](docs/assets/gifs/demo_05_mcp_agent_workflow.gif) (multi-step MCP agent execution) · [`demo_06_pipeline_conditional_workflow.gif`](docs/assets/gifs/demo_06_pipeline_conditional_workflow.gif) (declarative `.ppflow` DAG pipeline)
+
+---
+
+## Ecosystem Synergies
+
+Authoring and typesetting engines focus on *generating* source drafts—and deliberately leave legal discovery, permanent PII destruction, signature prep, imposition, and RAG ingestion out of scope. **PaperPilot complements them as the offline lifecycle, security, signing, and post-processing engine:**
+
+```text
+Authoring & Typesetting Engines              PaperPilot (Offline Lifecycle & Security Engine)
+────────────────────────────────────         ─────────────────────────────────────────────────
+• office-oxide-mcp (.docx/.xlsx/.pptx)  ──▶  • office modernize / to-markdown (legacy binary Office)
+• Pandoc (Markdown / HTML / TeX)        ──▶  • html-to-pdf · md-to-pdf · convert-excel (pure Rust)
+• Typst / LaTeX / Browser Exports       ──▶  • pii-scan · redact · sanitize   (zero metadata leaks)
+                                             • bates · pdf-overlay-underlay · signature · pdf-timestamp · hash
+                                             • pdf-booklet · pdf-nup · pdf-a · validate
+                                             • pdf-chunk · workspace-search   (atomic-table RAG)
+```
+
+| Upstream Engine | Upstream Role | PaperPilot Offline Post-Processing Stage |
+|---|---|---|
+| **`office-oxide-mcp` & Legacy Office** | Authoring and programmatic editing of `.docx`, `.xlsx`, and `.pptx` deliverables (shares pure-Rust [`office_oxide`](reports/OFFICE_OXIDE_INTEGRATION_REPORT.md) foundations) | Upgrade legacy binary `.doc`/`.xls`/`.ppt` archives (`office modernize`), extract `.docx`/`.xlsx`/`.pptx` to Markdown (`office to-markdown`), render spreadsheets directly (`convert-excel`), and stamp `pdf-a` + SHA-256 `hash` receipts. |
+| **Pandoc** | Cross-markup document conversion to clean Markdown or standalone HTML | Render Pandoc Markdown/HTML into styled PDFs (`md-to-pdf` / `html-to-pdf`) with zero Chromium or TeX runtime, then scrub (`pii-scan` → `redact` → `sanitize`), sign (`signature` / `pdf_sign`), and archive (`pdf-a`). |
+| **Typst** | High-speed programmable typesetting to clean multi-page PDFs | Prepare Typst outputs for legal, print, or audit release: apply Bates stamps (`bates`), letterheads (`pdf-overlay-underlay`), RFC 3161 timestamps (`pdf-timestamp`), signature placeholders/validation (`pdf-validate-signatures`), or duplex booklets (`pdf-booklet` / `pdf-nup`). |
+| **Local LLM & Vector Stacks** *(Ollama, Open-WebUI, LlamaIndex, LangChain)* | Local embeddings, vector databases, and private agentic Q&A | Serve sub-5ms in-memory `/tika/text` or `/api/v1/*` extraction via `paperpilot serve`, or generate boilerplate-free, table-atomic RAG chunks via `pdf-chunk` / `pdf_chunk`. |
 
 ---
 
