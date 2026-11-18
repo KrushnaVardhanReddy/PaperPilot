@@ -25,34 +25,40 @@
     ],
     "properties": {
       "data": {
-        "description": "Local .csv or .json data path",
+        "description": "Local .csv or .json data file path (mutually exclusive with records).",
         "type": "string"
       },
       "date": {
-        "description": "Optional YYYY-MM-DD UTC date override",
+        "description": "Optional YYYY-MM-DD UTC date override.",
         "type": "string"
       },
       "field_map": {
+        "description": "Optional path or mapping configuration linking source columns to PDF field names.",
         "type": "string"
       },
       "keep_editable": {
         "default": false,
+        "description": "Preserve interactive AcroForm fields instead of flattening them (default false).",
         "type": "boolean"
       },
       "name_template": {
         "default": "{index:04}.pdf",
+        "description": "Filename template for generated PDFs (default '{index:04}.pdf').",
         "type": "string"
       },
       "output_dir": {
+        "description": "Destination directory for generated PDFs and batch receipt.",
         "type": "string"
       },
       "records": {
+        "description": "Inline array of field-value record objects (mutually exclusive with data).",
         "items": {
           "type": "object"
         },
         "type": "array"
       },
       "template": {
+        "description": "Path to the template AcroForm PDF file.",
         "type": "string"
       }
     },
@@ -65,24 +71,36 @@
   "document_pii_scan": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Optional destination .json file path to save the PII scan report.",
         "type": "string"
       },
       "scan_credit_cards": {
+        "default": true,
+        "description": "Detect credit card numbers with Luhn verification (default true).",
         "type": "boolean"
       },
       "scan_emails": {
+        "default": true,
+        "description": "Detect email addresses (default true).",
         "type": "boolean"
       },
       "scan_iban": {
+        "default": true,
+        "description": "Detect International Bank Account Numbers (default true).",
         "type": "boolean"
       },
       "scan_phones": {
+        "default": true,
+        "description": "Detect phone numbers (default true).",
         "type": "boolean"
       },
       "scan_ssn": {
+        "default": true,
+        "description": "Detect U.S. Social Security Number patterns (default true).",
         "type": "boolean"
       }
     },
@@ -94,23 +112,23 @@
   "document_workflow": {
     "properties": {
       "input": {
-        "description": "Path to input PDF file",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "name_template": {
-        "description": "Optional basename template; output is then a directory",
+        "description": "Optional output basename template; when provided, output must be a directory.",
         "type": "string"
       },
       "output": {
-        "description": "Path to output PDF file",
+        "description": "Destination output PDF path (or directory when name_template is set).",
         "type": "string"
       },
       "preset": {
-        "description": "Preset workflow ID (e.g. preset-legal-discovery, preset-clean-scan, preset-redact-protect)",
+        "description": "Preset workflow ID (e.g., 'preset-legal-discovery', 'preset-clean-scan', 'preset-redact-protect'); mutually exclusive with recipe.",
         "type": "string"
       },
       "recipe": {
-        "description": "Path to TOML .ppflow / JSON recipe, raw JSON, or multiline TOML",
+        "description": "Path to TOML .ppflow / JSON recipe, raw JSON, or multiline TOML; mutually exclusive with preset.",
         "type": "string"
       }
     },
@@ -123,15 +141,15 @@
   "excel_to_csv": {
     "properties": {
       "input": {
-        "description": "Path to the input Excel file",
+        "description": "Path to the input Excel workbook (.xlsx or .xls).",
         "type": "string"
       },
       "output": {
-        "description": "Path to save the output CSV file",
+        "description": "Destination path for the exported .csv file.",
         "type": "string"
       },
       "sheet": {
-        "description": "Optional specific sheet name to export",
+        "description": "Optional worksheet name to export.",
         "type": "string"
       }
     },
@@ -144,19 +162,20 @@
   "excel_to_json": {
     "properties": {
       "has_headers": {
-        "description": "Whether the first row contains headers (defaults to true)",
+        "default": true,
+        "description": "Treat first row as object property headers (default true).",
         "type": "boolean"
       },
       "input": {
-        "description": "Path to the input Excel file",
+        "description": "Path to the input Excel workbook (.xlsx or .xls).",
         "type": "string"
       },
       "output": {
-        "description": "Optional destination path to save extracted JSON to disk",
+        "description": "Optional destination .json file path to save extracted JSON.",
         "type": "string"
       },
       "sheet": {
-        "description": "Optional specific sheet name to extract",
+        "description": "Optional worksheet name to extract (defaults to workbook/first sheet rules).",
         "type": "string"
       }
     },
@@ -168,15 +187,11 @@
   "execution_receipt_get": {
     "properties": {
       "directory": {
+        "description": "Directory containing stored execution receipt files.",
         "type": "string"
       },
-      "limit": {
-        "default": 50,
-        "maximum": 1000,
-        "minimum": 1,
-        "type": "integer"
-      },
       "receipt_id": {
+        "description": "Unique receipt identifier to retrieve.",
         "type": "string"
       }
     },
@@ -189,16 +204,15 @@
   "execution_receipt_list": {
     "properties": {
       "directory": {
+        "description": "Directory containing stored execution receipt files.",
         "type": "string"
       },
       "limit": {
         "default": 50,
+        "description": "Maximum number of receipts to return (1-1000, default 50).",
         "maximum": 1000,
         "minimum": 1,
         "type": "integer"
-      },
-      "receipt_id": {
-        "type": "string"
       }
     },
     "required": [
@@ -208,28 +222,12 @@
   },
   "json_to_pdf": {
     "properties": {
-      "custom_css": {
-        "description": "Custom CSS rules to apply",
-        "type": "string"
-      },
       "input": {
-        "description": "Path to input file",
-        "type": "string"
-      },
-      "orientation": {
-        "description": "Page orientation (portrait or landscape)",
+        "description": "Path to the input JSON file matching the JsonDocument schema (document_name and pages).",
         "type": "string"
       },
       "output": {
-        "description": "Path to output PDF file",
-        "type": "string"
-      },
-      "page_size": {
-        "description": "Page size format (e.g. A4, Letter)",
-        "type": "string"
-      },
-      "preset": {
-        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "description": "Destination path for the synthesized .pdf file.",
         "type": "string"
       }
     },
@@ -247,23 +245,28 @@
   "office_extract_text": {
     "properties": {
       "input": {
+        "description": "Path to the input .docx, .xlsx, or .pptx file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the extracted .txt file.",
         "type": "string"
       }
     },
     "required": [
-      "input"
+      "input",
+      "output"
     ],
     "type": "object"
   },
   "office_modernize_legacy": {
     "properties": {
       "input": {
+        "description": "Path to the input legacy .doc, .xls, or .ppt file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the modernized .docx, .xlsx, or .pptx file.",
         "type": "string"
       }
     },
@@ -276,9 +279,11 @@
   "office_to_markdown": {
     "properties": {
       "input": {
+        "description": "Path to the input .docx, .xlsx, or .pptx file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the output .md file.",
         "type": "string"
       }
     },
@@ -291,27 +296,51 @@
   "pdf_annotate": {
     "properties": {
       "annotations": {
-        "description": "A list of annotation objects to apply.",
+        "description": "List of explicit annotation objects ({id, type, page, x, y, w, h, color, content}) or JSON string/file path.",
         "type": "array"
       },
+      "case_sensitive": {
+        "default": false,
+        "description": "Enable case-sensitive search/regex shorthand matching (default false).",
+        "type": "boolean"
+      },
+      "color": {
+        "default": "#FFFF00",
+        "description": "Hex color used with search/regex shorthand (default '#FFFF00').",
+        "type": "string"
+      },
+      "content": {
+        "description": "Optional comment or popup text attached to shorthand annotations.",
+        "type": "string"
+      },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "occurrence": {
+        "default": "all",
+        "description": "Occurrence filter for shorthand rules (default 'all').",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the annotated .pdf file.",
         "type": "string"
       },
       "regex": {
-        "description": "Regex pattern to find and annotate.",
+        "description": "Shorthand regular expression pattern to find and annotate.",
         "type": "string"
       },
       "rules": {
-        "description": "List of pattern/rule-based annotation objects (type, color, search, regex, occurrence).",
+        "description": "List of pattern/rule annotation objects ({type, color, search, regex, occurrence, content}).",
         "type": "array"
       },
       "search": {
-        "description": "Keyword text to find and annotate.",
+        "description": "Shorthand literal keyword to find and annotate.",
+        "type": "string"
+      },
+      "type": {
+        "default": "highlight",
+        "description": "Annotation type used with search/regex shorthand (default 'highlight').",
         "type": "string"
       }
     },
@@ -324,21 +353,34 @@
   "pdf_attachments": {
     "properties": {
       "action": {
+        "default": "list",
+        "description": "Attachment operation: 'list' (default), 'extract', 'add', or 'remove'.",
+        "enum": [
+          "list",
+          "extract",
+          "add",
+          "remove"
+        ],
         "type": "string"
       },
       "description": {
+        "description": "Optional human-readable description stored when action is 'add'.",
         "type": "string"
       },
       "file_data_base64": {
+        "description": "Base64-encoded file bytes required when action is 'add'.",
         "type": "string"
       },
       "file_name": {
+        "description": "Attachment filename required for 'add'/'remove', or filter for 'extract'.",
         "type": "string"
       },
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the JSON listing, extracted file/.zip, or updated .pdf file.",
         "type": "string"
       }
     },
@@ -351,9 +393,11 @@
   "pdf_auto_rotate": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the portrait-normalized .pdf file.",
         "type": "string"
       }
     },
@@ -366,27 +410,31 @@
   "pdf_bates": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the Bates-stamped .pdf file.",
         "type": "string"
       },
       "padding": {
-        "description": "Padding length.",
+        "default": 6,
+        "description": "Minimum zero-padded digit width for the Bates counter (e.g., 6 -> 000001).",
         "type": "integer"
       },
       "position": {
-        "description": "Position (bottom-right, bottom-left, bottom-center, top-right, top-left, top-center). Default: bottom-right.",
+        "default": "bottom-right",
+        "description": "Stamp placement: 'bottom-right' (default), 'bottom-left', 'bottom-center', 'top-right', 'top-left', or 'top-center'.",
         "type": "string"
       },
       "prefix": {
-        "description": "Prefix.",
+        "default": "CONF-",
+        "description": "Text prefix prepended to the padded Bates number (e.g., 'CONF-').",
         "type": "string"
       },
       "start_number": {
-        "description": "Start number.",
+        "default": 1,
+        "description": "Starting integer counter for page 1 (default 1).",
         "type": "integer"
       }
     },
@@ -402,9 +450,11 @@
   "pdf_booklet": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the booklet-ordered .pdf file.",
         "type": "string"
       }
     },
@@ -417,11 +467,11 @@
   "pdf_bookmarks": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination .json file path where extracted bookmarks will be saved.",
         "type": "string"
       }
     },
@@ -434,11 +484,11 @@
   "pdf_burst": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output_dir": {
-        "description": "The directory where individual files will be saved.",
+        "description": "Directory where page_1.pdf, page_2.pdf, ... will be saved.",
         "type": "string"
       }
     },
@@ -450,10 +500,32 @@
   },
   "pdf_change_permissions": {
     "properties": {
+      "allow_copying": {
+        "description": "Whether content/text copying is permitted.",
+        "type": "boolean"
+      },
+      "allow_modifying": {
+        "description": "Whether document modification is permitted.",
+        "type": "boolean"
+      },
+      "allow_printing": {
+        "description": "Whether printing is permitted.",
+        "type": "boolean"
+      },
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the permission-updated .pdf file.",
+        "type": "string"
+      },
+      "owner_password": {
+        "description": "Owner password controlling permission overrides.",
+        "type": "string"
+      },
+      "user_password": {
+        "description": "Optional user password required to open the PDF.",
         "type": "string"
       }
     },
@@ -466,7 +538,11 @@
   "pdf_classify_type": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination .json file path to save the classification report.",
         "type": "string"
       }
     },
@@ -478,9 +554,11 @@
   "pdf_comic_archive": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the generated .cbz or .cbr archive.",
         "type": "string"
       }
     },
@@ -492,28 +570,17 @@
   },
   "pdf_compare": {
     "properties": {
-      "file1": {
-        "type": "string"
-      },
-      "file2": {
-        "type": "string"
-      },
-      "file_a": {
-        "type": "string"
-      },
-      "file_b": {
-        "type": "string"
-      },
       "input_a": {
-        "description": "First input PDF file path.",
+        "description": "Path to the baseline/first PDF file.",
         "type": "string"
       },
       "input_b": {
-        "description": "Second input PDF file path.",
+        "description": "Path to the revised/second PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output diff file path.",
+        "default": "diff_report.json",
+        "description": "Optional destination .json file path for the diff report (default 'diff_report.json').",
         "type": "string"
       }
     },
@@ -526,15 +593,15 @@
   "pdf_compress": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the compressed .pdf file.",
         "type": "string"
       },
       "quality": {
-        "description": "Compression quality preset (low, medium, high) or integer 1-100",
+        "description": "Optional compression preset ('low', 'medium', 'high') or numeric string '1'-'100'.",
         "type": "string"
       }
     },
@@ -547,27 +614,27 @@
   "pdf_convert_excel": {
     "properties": {
       "custom_css": {
-        "description": "Custom CSS rules to apply",
+        "description": "Optional custom CSS rules injected into the rendered document.",
         "type": "string"
       },
       "input": {
-        "description": "Path to input file",
+        "description": "Path to the input spreadsheet (.xlsx, .xls, or .csv) file.",
         "type": "string"
       },
       "orientation": {
-        "description": "Page orientation (portrait or landscape)",
+        "description": "Optional page orientation: 'portrait' or 'landscape'.",
         "type": "string"
       },
       "output": {
-        "description": "Path to output PDF file",
+        "description": "Destination path for the generated .pdf file.",
         "type": "string"
       },
       "page_size": {
-        "description": "Page size format (e.g. A4, Letter)",
+        "description": "Optional target page size (e.g., 'A4', 'Letter').",
         "type": "string"
       },
       "preset": {
-        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "description": "Optional CSS theme preset: 'github', 'elegant', 'minimal', 'branded', or 'compact'.",
         "type": "string"
       }
     },
@@ -580,27 +647,27 @@
   "pdf_convert_html": {
     "properties": {
       "custom_css": {
-        "description": "Custom CSS rules to apply",
+        "description": "Optional custom CSS rules injected into the rendered document.",
         "type": "string"
       },
       "input": {
-        "description": "Path to input file",
+        "description": "Path to the input HTML file.",
         "type": "string"
       },
       "orientation": {
-        "description": "Page orientation (portrait or landscape)",
+        "description": "Optional page orientation: 'portrait' or 'landscape'.",
         "type": "string"
       },
       "output": {
-        "description": "Path to output PDF file",
+        "description": "Destination path for the generated .pdf file.",
         "type": "string"
       },
       "page_size": {
-        "description": "Page size format (e.g. A4, Letter)",
+        "description": "Optional target page size (e.g., 'A4', 'Letter').",
         "type": "string"
       },
       "preset": {
-        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "description": "Optional CSS theme preset: 'github', 'elegant', 'minimal', 'branded', or 'compact'.",
         "type": "string"
       }
     },
@@ -613,27 +680,27 @@
   "pdf_convert_markdown": {
     "properties": {
       "custom_css": {
-        "description": "Custom CSS rules to apply",
+        "description": "Optional custom CSS rules injected into the rendered document.",
         "type": "string"
       },
       "input": {
-        "description": "Path to input file",
+        "description": "Path to the input Markdown (.md) file.",
         "type": "string"
       },
       "orientation": {
-        "description": "Page orientation (portrait or landscape)",
+        "description": "Optional page orientation: 'portrait' or 'landscape'.",
         "type": "string"
       },
       "output": {
-        "description": "Path to output PDF file",
+        "description": "Destination path for the generated .pdf file.",
         "type": "string"
       },
       "page_size": {
-        "description": "Page size format (e.g. A4, Letter)",
+        "description": "Optional target page size (e.g., 'A4', 'Letter').",
         "type": "string"
       },
       "preset": {
-        "description": "CSS preset (github, elegant, minimal, branded, compact)",
+        "description": "Optional CSS theme preset: 'github', 'elegant', 'minimal', 'branded', or 'compact'.",
         "type": "string"
       }
     },
@@ -646,39 +713,47 @@
   "pdf_create_form_field": {
     "properties": {
       "field_name": {
-        "description": "Field name.",
+        "description": "Unique AcroForm field identifier.",
         "type": "string"
       },
       "field_type": {
-        "description": "Field type.",
+        "description": "Form widget type (e.g., 'text', 'checkbox').",
         "type": "string"
       },
       "height": {
-        "description": "Height.",
+        "description": "Field box height in PDF points.",
         "type": "number"
       },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "label": {
+        "description": "Optional visible label printed beside the field.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the updated .pdf file.",
         "type": "string"
       },
       "page": {
-        "description": "Page number.",
+        "description": "1-based target page number.",
         "type": "integer"
       },
+      "rect": {
+        "description": "Optional rectangle override as 'llx,lly,urx,ury' or 4-element array.",
+        "type": "string"
+      },
       "width": {
-        "description": "Width.",
+        "description": "Field box width in PDF points.",
         "type": "number"
       },
       "x": {
-        "description": "X coordinate.",
+        "description": "Lower-left X coordinate in PDF points.",
         "type": "number"
       },
       "y": {
-        "description": "Y coordinate.",
+        "description": "Lower-left Y coordinate in PDF points.",
         "type": "number"
       }
     },
@@ -698,15 +773,15 @@
   "pdf_crop": {
     "properties": {
       "box": {
-        "description": "The crop box in format 'left,bottom,right,top' e.g. '0,0,595,842'.",
+        "description": "Crop coordinates in PDF points as 'left,bottom,right,top', e.g., '0,0,595,842'.",
         "type": "string"
       },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "File path for the cropped output.",
+        "description": "Destination path for the cropped .pdf file.",
         "type": "string"
       }
     },
@@ -720,15 +795,15 @@
   "pdf_decrypt": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the encrypted input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the decrypted .pdf file.",
         "type": "string"
       },
       "password": {
-        "description": "The user password.",
+        "description": "Password used to unlock the PDF.",
         "type": "string"
       }
     },
@@ -742,9 +817,11 @@
   "pdf_dedup_streams": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the deduplicated .pdf file.",
         "type": "string"
       }
     },
@@ -757,15 +834,15 @@
   "pdf_delete_pages": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "File path for the modified output.",
+        "description": "Destination path for the modified .pdf file.",
         "type": "string"
       },
       "pages": {
-        "description": "The pages to delete, e.g., '1,3,5-7'.",
+        "description": "1-based pages to remove, e.g., '1,3,5-7'.",
         "type": "string"
       }
     },
@@ -779,15 +856,15 @@
   "pdf_encrypt": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the encrypted .pdf file.",
         "type": "string"
       },
       "password": {
-        "description": "The user password.",
+        "description": "Password required to open the encrypted PDF.",
         "type": "string"
       }
     },
@@ -801,11 +878,11 @@
   "pdf_extract_images": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output_dir": {
-        "description": "The directory where images will be saved.",
+        "description": "Directory where extracted image files will be saved.",
         "type": "string"
       }
     },
@@ -818,15 +895,15 @@
   "pdf_extract_pages": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "File path for the extracted output.",
+        "description": "Destination path for the extracted .pdf file.",
         "type": "string"
       },
       "pages": {
-        "description": "The pages to extract, e.g., '1,3,5-7'.",
+        "description": "1-based pages to keep, e.g., '1,3,5-7'.",
         "type": "string"
       }
     },
@@ -840,12 +917,25 @@
   "pdf_extract_tables": {
     "properties": {
       "format": {
+        "default": "json",
+        "description": "Output serialization format: 'json' (default) or 'csv'.",
+        "enum": [
+          "json",
+          "csv"
+        ],
         "type": "string"
       },
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Optional destination path to save extracted table JSON or CSV.",
+        "type": "string"
+      },
+      "pages": {
+        "default": "all",
+        "description": "Page range to scan for tables, e.g., '1,3-5' or 'all' (default 'all').",
         "type": "string"
       }
     },
@@ -857,15 +947,15 @@
   "pdf_extract_text": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output text file path.",
+        "description": "Destination path for the extracted plain-text (.txt) file.",
         "type": "string"
       },
       "pages": {
-        "description": "Pages to extract text from, e.g., '1,3,5-7' or 'all'.",
+        "description": "Optional page selection, e.g., '1,3,5-7' or 'all'.",
         "type": "string"
       }
     },
@@ -878,15 +968,15 @@
   "pdf_fill_form": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the fillable input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the filled .pdf file.",
         "type": "string"
       },
       "values": {
-        "description": "Values to fill.",
+        "description": "Map of AcroForm field names to string values.",
         "type": "object"
       }
     },
@@ -900,11 +990,11 @@
   "pdf_flatten": {
     "properties": {
       "input": {
-        "description": "Path to the PDF to flatten.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "Path to save the flattened PDF.",
+        "description": "Destination path for the flattened .pdf file.",
         "type": "string"
       }
     },
@@ -917,7 +1007,11 @@
   "pdf_hash": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination .txt file path to write the SHA-256 digest report.",
         "type": "string"
       }
     },
@@ -928,42 +1022,49 @@
   },
   "pdf_header_footer": {
     "properties": {
+      "footer_center": {
+        "description": "Optional footer banner placed at bottom-center (can be combined with header_left).",
+        "type": "string"
+      },
+      "header_left": {
+        "description": "Optional header banner placed at top-left (can be combined with footer_center).",
+        "type": "string"
+      },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the updated .pdf file.",
         "type": "string"
       },
       "position": {
-        "description": "e.g. 'top' or 'bottom'",
+        "default": "header",
+        "description": "Placement when using text: 'header', 'footer', 'top-left', 'bottom-center', 'top', or 'bottom'.",
         "type": "string"
       },
       "text": {
-        "description": "Text to add.",
+        "description": "Single header or footer text string to place at position.",
         "type": "string"
       }
     },
     "required": [
       "input",
-      "output",
-      "text",
-      "position"
+      "output"
     ],
     "type": "object"
   },
   "pdf_images_to_pdf": {
     "properties": {
       "inputs": {
-        "description": "List of image paths.",
+        "description": "Ordered list of input image file paths (.png, .jpg/.jpeg, .webp).",
         "items": {
           "type": "string"
         },
         "type": "array"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the generated .pdf file.",
         "type": "string"
       }
     },
@@ -976,7 +1077,7 @@
   "pdf_info": {
     "properties": {
       "input": {
-        "description": "The path to the input PDF file.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       }
     },
@@ -988,11 +1089,11 @@
   "pdf_linearize": {
     "properties": {
       "input": {
-        "description": "Path to the PDF to linearize.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "Path to save the linearized PDF.",
+        "description": "Destination path for the linearized .pdf file.",
         "type": "string"
       }
     },
@@ -1005,14 +1106,14 @@
   "pdf_merge": {
     "properties": {
       "inputs": {
-        "description": "Array of file paths to merge.",
+        "description": "Ordered list of input PDF file paths to concatenate.",
         "items": {
           "type": "string"
         },
         "type": "array"
       },
       "output": {
-        "description": "File path for the merged output.",
+        "description": "Destination path for the merged .pdf file.",
         "type": "string"
       }
     },
@@ -1025,24 +1126,35 @@
   "pdf_merge_alternate": {
     "properties": {
       "input_a": {
+        "description": "Path to the first PDF document (e.g., odd/front pages).",
         "type": "string"
       },
       "input_b": {
+        "description": "Path to the second PDF document (e.g., even/back pages).",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the interleaved .pdf file.",
         "type": "string"
       },
       "reverse_a": {
+        "default": false,
+        "description": "Reverse input_a page order before interleaving (default false).",
         "type": "boolean"
       },
       "reverse_b": {
+        "default": false,
+        "description": "Reverse input_b page order before interleaving, common for simplex back scans (default false).",
         "type": "boolean"
       },
       "step": {
+        "default": 1,
+        "description": "Pages taken per turn from input_a (default 1).",
         "type": "integer"
       },
       "step_b": {
+        "default": 1,
+        "description": "Pages taken per turn from input_b (default 1).",
         "type": "integer"
       }
     },
@@ -1056,27 +1168,27 @@
   "pdf_metadata": {
     "properties": {
       "author": {
-        "description": "The new author.",
+        "description": "Optional new PDF author to write.",
         "type": "string"
       },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "keywords": {
-        "description": "The new keywords.",
+        "description": "Optional new PDF keywords to write.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Optional destination .pdf path; when provided, writes updated metadata to disk.",
         "type": "string"
       },
       "subject": {
-        "description": "The new subject.",
+        "description": "Optional new PDF subject to write.",
         "type": "string"
       },
       "title": {
-        "description": "The new title.",
+        "description": "Optional new PDF title to write.",
         "type": "string"
       }
     },
@@ -1087,11 +1199,42 @@
   },
   "pdf_nup": {
     "properties": {
+      "draw_borders": {
+        "default": false,
+        "description": "Draw thin borders around each imposed sub-page (default false).",
+        "type": "boolean"
+      },
       "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "margin_pt": {
+        "default": 18.0,
+        "description": "Outer page margin in PDF points (default 18.0).",
+        "type": "number"
+      },
+      "nup": {
+        "default": 2,
+        "description": "Pages per output sheet, typically 2, 4, 9, or 16 (default 2).",
+        "type": "integer"
+      },
+      "ordering": {
+        "default": "horizontal",
+        "description": "Grid fill order across the sheet (default 'horizontal').",
+        "enum": [
+          "horizontal",
+          "vertical"
+        ],
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the N-up .pdf file.",
         "type": "string"
+      },
+      "spacing_pt": {
+        "default": 10.0,
+        "description": "Spacing between imposed cells in PDF points (default 10.0).",
+        "type": "number"
       }
     },
     "required": [
@@ -1103,11 +1246,11 @@
   "pdf_ocr": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path: '.txt' writes extracted plain text, whereas '.pdf' saves a searchable PDF with an embedded invisible text layer.",
         "type": "string"
       }
     },
@@ -1120,9 +1263,36 @@
   "pdf_overlay_underlay": {
     "properties": {
       "input": {
+        "description": "Path to the target input PDF file.",
         "type": "string"
       },
+      "mode": {
+        "default": "underlay",
+        "description": "Layer placement: 'underlay' (behind content, default) or 'overlay' (in front).",
+        "enum": [
+          "underlay",
+          "overlay"
+        ],
+        "type": "string"
+      },
+      "opacity": {
+        "description": "Template opacity from 0.0 to 1.0.",
+        "type": "number"
+      },
       "output": {
+        "description": "Destination path for the composited .pdf file.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "Optional page range/list to apply template to.",
+        "type": "string"
+      },
+      "template_data": {
+        "description": "Base64-encoded template PDF payload (alternative to template_path).",
+        "type": "string"
+      },
+      "template_path": {
+        "description": "Path to the stationery/template PDF file.",
         "type": "string"
       }
     },
@@ -1135,15 +1305,21 @@
   "pdf_page_numbers": {
     "properties": {
       "format": {
+        "default": "Page {n} of {total}",
+        "description": "Numbering format string supporting {n} and {total} placeholders (default 'Page {n} of {total}').",
         "type": "string"
       },
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the numbered .pdf file.",
         "type": "string"
       },
       "position": {
+        "default": "bottom-right",
+        "description": "Placement position on the page (default 'bottom-right').",
         "type": "string"
       }
     },
@@ -1155,28 +1331,44 @@
   },
   "pdf_posterize": {
     "properties": {
+      "grid": {
+        "description": "Grid dimensions as 'COLSxROWS', e.g., '2x2' (alternative to grid_cols and grid_rows).",
+        "type": "string"
+      },
       "grid_cols": {
-        "type": "number"
+        "description": "Number of tile columns across each source page.",
+        "type": "integer"
       },
       "grid_rows": {
-        "type": "number"
+        "description": "Number of tile rows down each source page.",
+        "type": "integer"
       },
       "include_guides": {
+        "default": true,
+        "description": "Draw crop/cut alignment marks around tiles (default true).",
         "type": "boolean"
       },
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the posterized tiled .pdf file.",
         "type": "string"
       },
       "overlap_pt": {
+        "default": 14.17,
+        "description": "Tile overlap margin in PDF points for trimming and assembly (default 14.17).",
         "type": "number"
       },
       "scale": {
+        "default": 1.0,
+        "description": "Scale factor applied before tiling (default 1.0).",
         "type": "number"
       },
       "target_sheet": {
+        "default": "a4",
+        "description": "Standard target sheet size such as 'a4' or 'letter' (default 'a4').",
         "type": "string"
       }
     },
@@ -1189,9 +1381,11 @@
   "pdf_rag_chunks": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Optional destination path for the JSON chunk array.",
         "type": "string"
       }
     },
@@ -1203,11 +1397,11 @@
   "pdf_read_form": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The optional output JSON file path.",
+        "description": "Optional destination .json file path for extracted field key-value pairs.",
         "type": "string"
       }
     },
@@ -1218,48 +1412,69 @@
   },
   "pdf_redact": {
     "properties": {
+      "case_sensitive": {
+        "default": false,
+        "description": "Enable case-sensitive text/regex matching (default false).",
+        "type": "boolean"
+      },
       "height": {
-        "description": "Height.",
+        "description": "Redaction box height in points (default 100).",
         "type": "number"
       },
       "input": {
-        "description": "Path to the PDF to redact.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "occurrence": {
-        "description": "Occurrence filter: 'all', 'first', 'last', or indices.",
+        "default": "all",
+        "description": "Occurrence filter: 'all' (default), 'first', 'last', or comma-separated 1-based indices.",
         "type": "string"
       },
       "output": {
-        "description": "Path to save the redacted PDF.",
+        "description": "Destination path for the redacted .pdf file.",
         "type": "string"
       },
       "overlay_text": {
-        "description": "Optional overlay text (e.g. '[REDACTED]').",
+        "description": "Optional replacement label printed on blackout boxes (e.g., '[REDACTED]').",
         "type": "string"
       },
       "page": {
-        "description": "Page number to redact (1-based).",
+        "description": "1-based page number when redacting a rectangular box (default 1).",
         "type": "integer"
       },
+      "patterns": {
+        "description": "List of literal strings to match and redact.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
       "query": {
-        "description": "Search keyword or pattern to redact permanently.",
+        "description": "Literal keyword or phrase to redact permanently.",
+        "type": "string"
+      },
+      "rect": {
+        "description": "Alternative box as 'x,y,width,height' or 4-element number array.",
         "type": "string"
       },
       "regex": {
-        "description": "Regular expression to match and redact.",
+        "description": "Regular expression pattern to match and redact.",
         "type": "string"
       },
+      "rules": {
+        "description": "Structured array of RedactRule objects for multi-rule redaction.",
+        "type": "array"
+      },
       "width": {
-        "description": "Width.",
+        "description": "Redaction box width in points (default 100).",
         "type": "number"
       },
       "x": {
-        "description": "X coordinate.",
+        "description": "Lower-left X coordinate of redaction box in points.",
         "type": "number"
       },
       "y": {
-        "description": "Y coordinate.",
+        "description": "Lower-left Y coordinate of redaction box in points.",
         "type": "number"
       }
     },
@@ -1272,13 +1487,19 @@
   "pdf_remove_blank": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the cleaned .pdf file.",
         "type": "string"
       },
       "sensitivity": {
-        "type": "number"
+        "default": 95,
+        "description": "Blank-page detection sensitivity threshold (0-100, default 95).",
+        "maximum": 100,
+        "minimum": 0,
+        "type": "integer"
       }
     },
     "required": [
@@ -1290,9 +1511,11 @@
   "pdf_remove_signatures": {
     "properties": {
       "input": {
+        "description": "Path to the signed input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the unsigned .pdf file.",
         "type": "string"
       }
     },
@@ -1304,17 +1527,34 @@
   },
   "pdf_render": {
     "properties": {
+      "dpi": {
+        "default": 150.0,
+        "description": "Output raster resolution in dots per inch (default 150.0).",
+        "type": "number"
+      },
       "format": {
-        "description": "Output image format: png, jpeg/jpg, webp. Optional, defaults to inferring from output path or png.",
+        "description": "Optional image format ('png', 'jpeg'/'jpg', or 'webp'); inferred from output extension or defaults to 'png'.",
+        "enum": [
+          "png",
+          "jpeg",
+          "jpg",
+          "webp"
+        ],
         "type": "string"
       },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the rendered image file (.png, .jpg/.jpeg, or .webp).",
         "type": "string"
+      },
+      "page": {
+        "default": 1,
+        "description": "1-based page number to rasterize (default 1).",
+        "minimum": 1,
+        "type": "integer"
       }
     },
     "required": [
@@ -1326,15 +1566,15 @@
   "pdf_reorder_pages": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "order": {
-        "description": "The new 1-based page order, e.g., '3,2,1'.",
+        "description": "Comma-separated 1-based target page order, e.g., '3,2,1'.",
         "type": "string"
       },
       "output": {
-        "description": "File path for the reordered output.",
+        "description": "Destination path for the reordered .pdf file.",
         "type": "string"
       }
     },
@@ -1348,11 +1588,11 @@
   "pdf_repair": {
     "properties": {
       "input": {
-        "description": "Path to the PDF to repair.",
+        "description": "Path to the corrupted or malformed input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "Path to save the repaired PDF.",
+        "description": "Destination path for the repaired .pdf file.",
         "type": "string"
       }
     },
@@ -1365,19 +1605,19 @@
   "pdf_rotate": {
     "properties": {
       "angle": {
-        "description": "The angle to rotate by, typically 90, 180, or 270.",
+        "description": "Clockwise rotation angle in degrees, typically 90, 180, or 270.",
         "type": "number"
       },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "File path for the rotated output.",
+        "description": "Destination path for the rotated .pdf file.",
         "type": "string"
       },
       "pages": {
-        "description": "The pages to rotate, either 'all' or specific pages like '1,3'.",
+        "description": "Pages to rotate: 'all' or 1-based page list like '1,3'.",
         "type": "string"
       }
     },
@@ -1392,18 +1632,26 @@
   "pdf_sanitize": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the sanitized .pdf file.",
         "type": "string"
       },
       "remove_attachments": {
+        "default": true,
+        "description": "Remove embedded file attachments and portfolio entries (default true).",
         "type": "boolean"
       },
       "remove_metadata": {
+        "default": true,
+        "description": "Strip PDF Info and XMP metadata streams (default true).",
         "type": "boolean"
       },
       "remove_scripts": {
+        "default": true,
+        "description": "Remove embedded JavaScript and trigger actions (default true).",
         "type": "boolean"
       }
     },
@@ -1416,9 +1664,21 @@
   "pdf_scale_pages": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the scaled .pdf file.",
+        "type": "string"
+      },
+      "scale_factor": {
+        "default": 1.0,
+        "description": "Proportional scale multiplier applied to page dimensions (default 1.0).",
+        "type": "number"
+      },
+      "target_size": {
+        "default": "A4",
+        "description": "Target page size name such as 'A4' or 'Letter' (default 'A4').",
         "type": "string"
       }
     },
@@ -1431,11 +1691,15 @@
   "pdf_search": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file (or top-level folder of PDFs).",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination JSON file path to save matching pages.",
         "type": "string"
       },
       "query": {
-        "description": "The text to search for.",
+        "description": "Case-insensitive literal text string to search for.",
         "type": "string"
       }
     },
@@ -1448,11 +1712,11 @@
   "pdf_sign": {
     "properties": {
       "input": {
-        "description": "Path to the PDF to sign.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "Path to save the signed PDF.",
+        "description": "Destination path for the updated .pdf file.",
         "type": "string"
       }
     },
@@ -1464,12 +1728,21 @@
   },
   "pdf_split": {
     "properties": {
+      "every": {
+        "description": "Optional fixed number of pages per output split file.",
+        "minimum": 1,
+        "type": "integer"
+      },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output_dir": {
-        "description": "The directory where split pages will be saved.",
+        "description": "Directory where split PDF files (split_1.pdf, ...) will be written.",
+        "type": "string"
+      },
+      "ranges": {
+        "description": "Optional cut specification, e.g., '1-3,4-6' or cut points '3,6' or 'all'.",
         "type": "string"
       }
     },
@@ -1482,9 +1755,11 @@
   "pdf_split_by_outline": {
     "properties": {
       "input": {
+        "description": "Path to the bookmarked input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the .zip archive containing chapter PDFs.",
         "type": "string"
       }
     },
@@ -1496,11 +1771,25 @@
   },
   "pdf_split_scanned_book": {
     "properties": {
+      "gutter_overlap": {
+        "description": "Optional center gutter overlap margin in PDF points.",
+        "type": "number"
+      },
       "input": {
+        "description": "Path to the input PDF containing double-page scans.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the split single-page .pdf file.",
         "type": "string"
+      },
+      "reading_direction": {
+        "description": "Reading order of halves: 'ltr' (left-then-right) or 'rtl' (right-then-left).",
+        "type": "string"
+      },
+      "split_horizontal": {
+        "description": "Split top/bottom horizontally instead of left/right vertically.",
+        "type": "boolean"
       }
     },
     "required": [
@@ -1511,11 +1800,45 @@
   },
   "pdf_stamp": {
     "properties": {
-      "input": {
+      "height": {
+        "description": "Target stamp height in PDF points.",
+        "type": "number"
+      },
+      "image_data": {
+        "description": "Base64 or data-URI encoded image payload (alternative to image_path).",
         "type": "string"
       },
-      "output": {
+      "image_path": {
+        "description": "Path to the PNG/JPEG image file to stamp.",
         "type": "string"
+      },
+      "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "opacity": {
+        "description": "Stamp opacity between 0.0 and 1.0.",
+        "type": "number"
+      },
+      "output": {
+        "description": "Destination path for the stamped .pdf file.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "Optional 1-based page list/ranges (e.g., '1,3-5' or 'all').",
+        "type": "string"
+      },
+      "width": {
+        "description": "Target stamp width in PDF points.",
+        "type": "number"
+      },
+      "x": {
+        "description": "Lower-left X coordinate in PDF points.",
+        "type": "number"
+      },
+      "y": {
+        "description": "Lower-left Y coordinate in PDF points.",
+        "type": "number"
       }
     },
     "required": [
@@ -1528,6 +1851,7 @@
     "properties": {
       "direction": {
         "default": "vertical",
+        "description": "Stitching axis: 'vertical' (default) or 'horizontal'.",
         "enum": [
           "vertical",
           "horizontal"
@@ -1535,17 +1859,21 @@
         "type": "string"
       },
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "margin_pt": {
         "default": 0.0,
+        "description": "Outer canvas margin in PDF points (default 0.0).",
         "type": "number"
       },
       "output": {
+        "description": "Destination path for the continuous single-page .pdf file.",
         "type": "string"
       },
       "spacing_pt": {
         "default": 0.0,
+        "description": "Gap between stitched pages in PDF points (default 0.0).",
         "type": "number"
       }
     },
@@ -1558,9 +1886,11 @@
   "pdf_timestamp": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the timestamped .pdf file.",
         "type": "string"
       }
     },
@@ -1573,11 +1903,11 @@
   "pdf_to_docx": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output file path.",
+        "description": "Destination path for the output .docx file.",
         "type": "string"
       }
     },
@@ -1590,9 +1920,11 @@
   "pdf_to_epub": {
     "properties": {
       "input": {
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the generated .epub eBook file.",
         "type": "string"
       }
     },
@@ -1605,11 +1937,11 @@
   "pdf_to_html": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output HTML file path.",
+        "description": "Destination path for the output .html file.",
         "type": "string"
       }
     },
@@ -1622,11 +1954,11 @@
   "pdf_to_json": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output JSON file path.",
+        "description": "Destination path for the output .json file.",
         "type": "string"
       }
     },
@@ -1639,11 +1971,11 @@
   "pdf_to_markdown": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output Markdown file path.",
+        "description": "Destination path for the output .md file.",
         "type": "string"
       }
     },
@@ -1656,11 +1988,11 @@
   "pdf_to_pdf_a": {
     "properties": {
       "input": {
-        "description": "Path to the PDF to convert to PDF/A.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "Path to save the PDF/A file.",
+        "description": "Destination path for the PDF/A-formatted .pdf file.",
         "type": "string"
       }
     },
@@ -1673,11 +2005,11 @@
   "pdf_to_pptx": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output file path.",
+        "description": "Destination path for the output .pptx file.",
         "type": "string"
       }
     },
@@ -1690,11 +2022,11 @@
   "pdf_to_xlsx": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "output": {
-        "description": "The output file path.",
+        "description": "Destination path for the output .xlsx file.",
         "type": "string"
       }
     },
@@ -1707,7 +2039,11 @@
   "pdf_validate": {
     "properties": {
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination .json file path to write the validation report.",
         "type": "string"
       }
     },
@@ -1719,13 +2055,16 @@
   "pdf_validate_signatures": {
     "properties": {
       "baseline": {
-        "description": "Capture and report pre-sign incremental update tamper forensics / baseline integrity",
+        "default": false,
+        "description": "Capture and report pre-sign incremental update tamper forensics and baseline integrity.",
         "type": "boolean"
       },
       "input": {
+        "description": "Path to the signed input PDF file.",
         "type": "string"
       },
       "output": {
+        "description": "Destination path for the JSON signature validation report.",
         "type": "string"
       }
     },
@@ -1738,31 +2077,33 @@
   "pdf_watermark": {
     "properties": {
       "angle": {
-        "description": "Angle of the watermark (default 45).",
+        "default": 45,
+        "description": "Rotation angle in degrees (default 45).",
         "type": "number"
       },
       "color": {
-        "description": "Color of the watermark (e.g. 'gray', 'red').",
+        "description": "Watermark color name or hex code (e.g., 'gray', 'red').",
         "type": "string"
       },
       "font_size": {
-        "description": "Font size.",
+        "description": "Optional font size in points.",
         "type": "number"
       },
       "input": {
-        "description": "The input PDF file path.",
+        "description": "Path to the input PDF file.",
         "type": "string"
       },
       "opacity": {
-        "description": "Opacity of the watermark (0 to 1, default 0.2).",
+        "default": 0.2,
+        "description": "Watermark opacity from 0.0 to 1.0 (default 0.2).",
         "type": "number"
       },
       "output": {
-        "description": "The output PDF file path.",
+        "description": "Destination path for the watermarked .pdf file.",
         "type": "string"
       },
       "text": {
-        "description": "The watermark text to apply.",
+        "description": "Watermark text to draw on each page.",
         "type": "string"
       }
     },
@@ -1776,19 +2117,19 @@
   "recipe_run": {
     "properties": {
       "input": {
-        "description": "Absolute path to input PDF",
+        "description": "Absolute path to the input PDF file.",
         "type": "string"
       },
       "name_template": {
-        "description": "Optional dynamic output basename; requires explicit output directory",
+        "description": "Optional dynamic output basename template; requires explicit output directory.",
         "type": "string"
       },
       "output": {
-        "description": "Output file, or output directory with name_template",
+        "description": "Optional output PDF file path (or directory when name_template is provided).",
         "type": "string"
       },
       "recipe": {
-        "description": "Absolute path to .ppflow TOML recipe file",
+        "description": "Absolute path to a .ppflow TOML recipe file, preset ID, or serialized workflow.",
         "type": "string"
       }
     },
@@ -1800,17 +2141,25 @@
   },
   "semantic_search": {
     "properties": {
+      "dir": {
+        "description": "Optional directory tree to scan recursively for PDFs when input is omitted (default '.').",
+        "type": "string"
+      },
       "input": {
-        "description": "Optional input document",
+        "description": "Optional path to a specific PDF file or directory to search.",
         "type": "string"
       },
       "limit": {
         "default": 5,
-        "description": "Max results (default 5)",
+        "description": "Maximum number of top-ranked chunks to return (default 5).",
         "type": "integer"
       },
+      "output": {
+        "description": "Optional destination JSON file path for ranked search results.",
+        "type": "string"
+      },
       "query": {
-        "description": "Search query",
+        "description": "Natural-language search query to rank relevant PDF chunks against.",
         "type": "string"
       }
     },
@@ -1827,23 +2176,24 @@
   "watcher_start": {
     "properties": {
       "dir": {
-        "description": "Absolute path to the directory to watch",
+        "description": "Absolute path to the directory to watch.",
         "type": "string"
       },
       "name_template": {
-        "description": "Output basename template; input, UTC date, SHA-256 and index tokens",
+        "description": "Output basename template supporting input, UTC date, SHA-256, and index tokens.",
         "type": "string"
       },
       "output_dir": {
-        "description": "Output directory; defaults to a separate processed subfolder",
+        "description": "Output directory; defaults to a separate processed subfolder.",
         "type": "string"
       },
       "recipe": {
-        "description": "Local .ppflow recipe path, preset ID, or serialized workflow",
+        "description": "Local .ppflow recipe path, preset ID, or serialized workflow.",
         "type": "string"
       },
       "settle_delay_ms": {
         "default": 500,
+        "description": "Debounce delay in milliseconds after file arrival (default 500).",
         "maximum": 60000,
         "minimum": 50,
         "type": "integer"
@@ -1858,6 +2208,7 @@
   "watcher_stop": {
     "properties": {
       "watcher_id": {
+        "description": "Unique identifier of the running watcher to stop.",
         "type": "string"
       }
     },
@@ -1869,16 +2220,24 @@
   "workspace_search": {
     "properties": {
       "dir": {
+        "description": "Optional root directory to walk recursively when input is omitted (default '.').",
         "type": "string"
       },
       "formats": {
-        "description": "Comma-separated list of formats (pdf,txt,md,docx,xlsx,csv,json) or 'all'",
+        "default": "all",
+        "description": "Comma-separated extensions (pdf,txt,md,docx,xlsx,csv,json) or 'all' (default 'all').",
         "type": "string"
       },
       "input": {
+        "description": "Optional file or root directory path to search.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination JSON file path for structured match results.",
         "type": "string"
       },
       "query": {
+        "description": "Literal case-insensitive substring to find across files.",
         "type": "string"
       }
     },

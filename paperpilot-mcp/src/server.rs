@@ -72,4635 +72,1367 @@ impl PaperPilotMcpServer {
         }
     }
     pub fn execute_list_tools(&self) -> Result<ListToolsResult, ErrorData> {
-        let mut tools = Vec::new();
+        let mut tools = Vec::with_capacity(92);
 
-        tools.push(Tool::new("batch_fill".to_string(),
-            "Fill a local AcroForm PDF from a CSV/JSON path or inline JSON records; returns per-row results and a persisted receipt. Flattens by default and never overwrites outputs.".to_string(),
-            serde_json::json!({"type":"object", "additionalProperties":false,
-                "required":["template","output_dir"],
-                "oneOf":[{"required":["data"],"not":{"required":["records"]}},{"required":["records"],"not":{"required":["data"]}}],
-                "properties": {
-                    "template":{"type":"string"}, "output_dir":{"type":"string"},
-                    "data":{"type":"string","description":"Local .csv or .json data path"},
-                    "records":{"type":"array","items":{"type":"object"}},
-                    "name_template":{"type":"string","default":"{index:04}.pdf"},
-                    "field_map":{"type":"string"}, "keep_editable":{"type":"boolean","default":false},
-                    "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
-                }}).as_object().unwrap().clone()));
-
-        tools.push(Tool::new("cli_fill_batch".to_string(),
-            "Automated batch AcroForm fill engine generating populated PDFs and machine-readable receipts.".to_string(),
-            serde_json::json!({"type":"object", "additionalProperties":false,
-                "required":["template","output_dir"],
-                "oneOf":[{"required":["data"],"not":{"required":["records"]}},{"required":["records"],"not":{"required":["data"]}}],
-                "properties": {
-                    "template":{"type":"string"}, "output_dir":{"type":"string"},
-                    "data":{"type":"string","description":"Local .csv or .json data path"},
-                    "records":{"type":"array","items":{"type":"object"}},
-                    "name_template":{"type":"string","default":"{index:04}.pdf"},
-                    "field_map":{"type":"string"}, "keep_editable":{"type":"boolean","default":false},
-                    "date":{"type":"string","description":"Optional YYYY-MM-DD UTC date override"}
-                }}).as_object().unwrap().clone()));
-
-        let add_styled_tool = |tools: &mut Vec<Tool>, name: &str, desc: &str| {
-            let schema = serde_json::json!({
-                "type": "object",
-                "properties": {
-                    "input": {
-                        "type": "string",
-                        "description": "Path to input file"
-                    },
-                    "output": {
-                        "type": "string",
-                        "description": "Path to output PDF file"
-                    },
-                    "preset": {
-                        "type": "string",
-                        "description": "CSS preset (github, elegant, minimal, branded, compact)"
-                    },
-                    "custom_css": {
-                        "type": "string",
-                        "description": "Custom CSS rules to apply"
-                    },
-                    "page_size": {
-                        "type": "string",
-                        "description": "Page size format (e.g. A4, Letter)"
-                    },
-                    "orientation": {
-                        "type": "string",
-                        "description": "Page orientation (portrait or landscape)"
-                    }
-                },
-                "required": ["input", "output"]
-            });
-
-            let tool = Tool::new(
+        let add_tool = |tools: &mut Vec<Tool>,
+                        name: &str,
+                        description: &str,
+                        schema: serde_json::Value| {
+            tools.push(Tool::new(
                 name.to_string(),
-                desc.to_string(),
-                schema.as_object().unwrap().clone(),
-            );
-            tools.push(tool);
+                description.to_string(),
+                schema
+                    .as_object()
+                    .expect("tool schema must be an object")
+                    .clone(),
+            ));
         };
 
-        add_styled_tool(&mut tools, "pdf_convert_html", "Convert HTML to styled PDF");
-        add_styled_tool(&mut tools, "html_to_pdf", "Convert HTML to styled PDF");
+        let add_io_tool = |tools: &mut Vec<Tool>,
+                           name: &str,
+                           description: &str,
+                           input_desc: &str,
+                           output_desc: &str| {
+            add_tool(
+                tools,
+                name,
+                description,
+                serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "input": { "type": "string", "description": input_desc },
+                        "output": { "type": "string", "description": output_desc }
+                    },
+                    "required": ["input", "output"]
+                }),
+            );
+        };
+
+        let add_styled_tool = |tools: &mut Vec<Tool>,
+                               name: &str,
+                               description: &str,
+                               input_desc: &str| {
+            add_tool(
+                tools,
+                name,
+                description,
+                serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "input": { "type": "string", "description": input_desc },
+                        "output": { "type": "string", "description": "Destination path for the generated .pdf file." },
+                        "preset": { "type": "string", "description": "Optional CSS theme preset: 'github', 'elegant', 'minimal', 'branded', or 'compact'." },
+                        "custom_css": { "type": "string", "description": "Optional custom CSS rules injected into the rendered document." },
+                        "page_size": { "type": "string", "description": "Optional target page size (e.g., 'A4', 'Letter')." },
+                        "orientation": { "type": "string", "description": "Optional page orientation: 'portrait' or 'landscape'." }
+                    },
+                    "required": ["input", "output"]
+                }),
+            );
+        };
+
+        add_tool(
+            &mut tools,
+            "batch_fill",
+            "Fill one AcroForm PDF template across many records and write one PDF per row plus a receipt. When to use: bulk-populating an interactive PDF form from a CSV/JSON file or inline JSON rows while flattening outputs by default without overwriting existing files. Difference from related tools: unlike pdf_fill_form (fills a single form file once with one values map), batch_fill processes multiple records into output_dir and writes an execution receipt; do not use for adding new form fields (use pdf_create_form_field). Key parameters: template, output_dir, plus exactly one of data (CSV/JSON path) or records (inline JSON array); optional name_template, field_map, keep_editable, date. [Input: PDF template + CSV/JSON or records | Output: Multiple PDFs + JSON receipt]",
+            serde_json::json!({
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["template", "output_dir"],
+                "oneOf": [
+                    { "required": ["data"], "not": { "required": ["records"] } },
+                    { "required": ["records"], "not": { "required": ["data"] } }
+                ],
+                "properties": {
+                    "template": { "type": "string", "description": "Path to the template AcroForm PDF file." },
+                    "output_dir": { "type": "string", "description": "Destination directory for generated PDFs and batch receipt." },
+                    "data": { "type": "string", "description": "Local .csv or .json data file path (mutually exclusive with records)." },
+                    "records": { "type": "array", "items": { "type": "object" }, "description": "Inline array of field-value record objects (mutually exclusive with data)." },
+                    "name_template": { "type": "string", "default": "{index:04}.pdf", "description": "Filename template for generated PDFs (default '{index:04}.pdf')." },
+                    "field_map": { "type": "string", "description": "Optional path or mapping configuration linking source columns to PDF field names." },
+                    "keep_editable": { "type": "boolean", "default": false, "description": "Preserve interactive AcroForm fields instead of flattening them (default false)." },
+                    "date": { "type": "string", "description": "Optional YYYY-MM-DD UTC date override." }
+                }
+            }),
+        );
+
         add_styled_tool(
             &mut tools,
-            "json_to_pdf",
-            "Synthesizes a publication-ready PDF document from structured JSON text and embedded images",
+            "pdf_convert_html",
+            "Convert an HTML file into a styled PDF document. When to use: rendering local HTML markup into a print-ready PDF with optional CSS presets and page layout settings. Difference from related tools: unlike pdf_to_html (PDF to HTML) or pdf_convert_markdown (Markdown to PDF), this tool accepts HTML input; do not use for JSON documents (use json_to_pdf). Key parameters: input, output; optional preset, custom_css, page_size, orientation. [Input: HTML (.html) | Output: PDF (.pdf)]",
+            "Path to the input HTML file.",
         );
-        tools.push(Tool::new(
-            "watcher_start".to_string(),
-            "Start a headless hot folder watcher daemon on a local directory. When a PDF is dropped into the watched directory it automatically runs the specified recipe.".to_string(),
+
+        add_io_tool(
+            &mut tools,
+            "json_to_pdf",
+            "Synthesize a PDF document from structured JSON pages, text, and optional images. When to use: turning structured JSON conforming to the document_name/pages schema (including output from pdf_to_json) back into a PDF. Difference from related tools: unlike pdf_convert_html or pdf_convert_markdown (ignore CSS/presets here), json_to_pdf renders structured page objects directly; do not use for Excel spreadsheets (use excel_to_json or pdf_convert_excel). Key parameters: input (.json file path), output (.pdf file path). [Input: JSON (.json) | Output: PDF (.pdf)]",
+            "Path to the input JSON file matching the JsonDocument schema (document_name and pages).",
+            "Destination path for the synthesized .pdf file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "watcher_start",
+            "Start a background hot-folder watcher daemon on a local directory. When to use: continuously monitoring a folder so newly dropped PDFs automatically trigger a .ppflow recipe or preset workflow. Difference from related tools: unlike recipe_run or document_workflow (one-shot execution), watcher_start stays running in the background; do not use to inspect past runs (use execution_receipt_list). Key parameters: dir, recipe; optional output_dir, name_template, settle_delay_ms (default 500). [Input: Directory path + recipe | Output: JSON watcher status]",
             serde_json::json!({
                 "type": "object",
                 "required": ["dir", "recipe"],
                 "properties": {
-                  "dir": { "type": "string", "description": "Absolute path to the directory to watch" },
-                  "recipe": { "type": "string", "description": "Local .ppflow recipe path, preset ID, or serialized workflow" },
-                  "output_dir": { "type": "string", "description": "Output directory; defaults to a separate processed subfolder" },
-                  "name_template": { "type": "string", "description": "Output basename template; input, UTC date, SHA-256 and index tokens" },
-                  "settle_delay_ms": { "type": "integer", "default": 500, "minimum": 50, "maximum": 60000 }
+                    "dir": { "type": "string", "description": "Absolute path to the directory to watch." },
+                    "recipe": { "type": "string", "description": "Local .ppflow recipe path, preset ID, or serialized workflow." },
+                    "output_dir": { "type": "string", "description": "Output directory; defaults to a separate processed subfolder." },
+                    "name_template": { "type": "string", "description": "Output basename template supporting input, UTC date, SHA-256, and index tokens." },
+                    "settle_delay_ms": { "type": "integer", "default": 500, "minimum": 50, "maximum": 60000, "description": "Debounce delay in milliseconds after file arrival (default 500)." }
                 }
-            }).as_object().unwrap().clone(),
-        ));
-        tools.push(Tool::new(
-            "watcher_stop".to_string(),
-            "Stop a running hot folder watcher by its ID.".to_string(),
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "watcher_stop",
+            "Stop a running background hot-folder watcher daemon by its ID. When to use: tearing down an active folder watcher previously created by watcher_start. Difference from related tools: stops a specific watcher daemon; use watcher_list first if you need to discover active watcher IDs. Key parameters: watcher_id. [Input: watcher_id | Output: JSON status]",
             serde_json::json!({
                 "type": "object",
                 "required": ["watcher_id"],
                 "properties": {
-                  "watcher_id": { "type": "string" }
+                    "watcher_id": { "type": "string", "description": "Unique identifier of the running watcher to stop." }
                 }
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        ));
-        tools.push(Tool::new(
-            "watcher_list".to_string(),
-            "List all currently active hot folder watchers with their status and statistics."
-                .to_string(),
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "watcher_list",
+            "List all currently active hot-folder watcher daemons with status and processing counters. When to use: discovering active watcher_id values or checking how many PDFs succeeded or failed in background watchers. Difference from related tools: reports live background daemons only; use execution_receipt_list for durable historical run receipts on disk. Key parameters: none. [Input: None | Output: JSON watchers array]",
             serde_json::json!({
                 "type": "object",
                 "required": [],
                 "properties": {}
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        ));
-        for name in ["execution_receipt_list", "execution_receipt_get"] {
-            tools.push(Tool::new(name, "Query durable local workflow, batch or watcher execution receipts; no PDF contents or recipe parameters are stored", serde_json::json!({"type":"object","properties":{"directory":{"type":"string"},"receipt_id":{"type":"string"},"limit":{"type":"integer","minimum":1,"maximum":1000,"default":50}},"required":if name.ends_with("_get") {vec!["directory","receipt_id"]} else {vec!["directory"]}}).as_object().unwrap().clone()));
-        }
-        tools.push(Tool::new(
-            "recipe_run".to_string(),
-            "Execute a .ppflow recipe against a local PDF file immediately (one-shot, no daemon).".to_string(),
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "execution_receipt_list",
+            "List durable local execution receipts recorded by workflow, batch, or watcher runs in a directory. When to use: browsing recent run IDs, statuses, and timestamps without reading any PDF contents or recipe parameters. Difference from related tools: returns summarized receipt listings (use execution_receipt_get to fetch full details for one specific receipt_id); do not use to check live watcher threads (use watcher_list). Key parameters: directory; optional limit (1-1000, default 50). [Input: Directory path | Output: JSON receipt summaries]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "directory": { "type": "string", "description": "Directory containing stored execution receipt files." },
+                    "limit": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 50, "description": "Maximum number of receipts to return (1-1000, default 50)." }
+                },
+                "required": ["directory"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "execution_receipt_get",
+            "Retrieve a single durable execution receipt by receipt_id from a local directory. When to use: inspecting step outcomes and metadata for one known execution receipt. Difference from related tools: fetches one full receipt by ID (use execution_receipt_list first to discover receipt IDs); no PDF contents or recipe secrets are stored. Key parameters: directory, receipt_id. [Input: Directory path + receipt_id | Output: JSON receipt object]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "directory": { "type": "string", "description": "Directory containing stored execution receipt files." },
+                    "receipt_id": { "type": "string", "description": "Unique receipt identifier to retrieve." }
+                },
+                "required": ["directory", "receipt_id"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "recipe_run",
+            "Execute a .ppflow recipe or preset workflow once against a local PDF file without starting a daemon. When to use: running a saved .ppflow TOML recipe (or preset/serialized workflow) immediately on a single PDF with receipt generation. Difference from related tools: unlike watcher_start (persistent background folder watcher) or document_workflow (requires explicit output path and accepts preset or recipe XOR), recipe_run defaults output to '<input>_processed.pdf' unless name_template is set. Key parameters: input, recipe; optional output, name_template. [Input: PDF + recipe path/preset | Output: Processed PDF + JSON receipt]",
             serde_json::json!({
                 "type": "object",
                 "required": ["input", "recipe"],
                 "properties": {
-                  "input": { "type": "string", "description": "Absolute path to input PDF" },
-                  "recipe": { "type": "string", "description": "Absolute path to .ppflow TOML recipe file" },
-                  "output": { "type": "string", "description": "Output file, or output directory with name_template" },
-                  "name_template": { "type": "string", "description": "Optional dynamic output basename; requires explicit output directory" }
+                    "input": { "type": "string", "description": "Absolute path to the input PDF file." },
+                    "recipe": { "type": "string", "description": "Absolute path to a .ppflow TOML recipe file, preset ID, or serialized workflow." },
+                    "output": { "type": "string", "description": "Optional output PDF file path (or directory when name_template is provided)." },
+                    "name_template": { "type": "string", "description": "Optional dynamic output basename template; requires explicit output directory." }
                 }
-            }).as_object().unwrap().clone(),
-        ));
+            }),
+        );
 
         add_styled_tool(
             &mut tools,
             "pdf_convert_markdown",
-            "Convert Markdown to styled PDF",
+            "Convert a Markdown file into a styled PDF document. When to use: rendering local .md documentation or reports into paginated PDFs with CSS theme presets. Difference from related tools: converts Markdown TO PDF (opposite of pdf_to_markdown which converts PDF to Markdown, and office_to_markdown which converts Office docs to Markdown); do not use for HTML inputs (use pdf_convert_html). Key parameters: input, output; optional preset, custom_css, page_size, orientation. [Input: Markdown (.md) | Output: PDF (.pdf)]",
+            "Path to the input Markdown (.md) file.",
         );
-        add_styled_tool(
-            &mut tools,
-            "md_to_pdf",
-            "Convert Markdown to styled PDF",
-        );
+
         add_styled_tool(
             &mut tools,
             "pdf_convert_excel",
-            "Convert Excel/CSV to styled PDF via semantic HTML",
+            "Convert an Excel spreadsheet or CSV file into a styled PDF via HTML rendering. When to use: producing formatted human-readable PDF reports from .xlsx, .xls, or .csv tables. Difference from related tools: outputs a visual .pdf document (use excel_to_json or excel_to_csv for machine-readable data extraction, and pdf_to_xlsx for PDF to Excel conversion). Key parameters: input, output; optional preset, custom_css, page_size, orientation. [Input: Spreadsheet (.xlsx, .xls, .csv) | Output: PDF (.pdf)]",
+            "Path to the input spreadsheet (.xlsx, .xls, or .csv) file.",
         );
 
-        // Tool: pdf_remove_blank
-        let mut schema_rb = serde_json::Map::new();
-        schema_rb.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_rb = serde_json::Map::new();
-        let mut prop_in_rb = serde_json::Map::new();
-        prop_in_rb.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_rb.insert("input".to_string(), serde_json::Value::Object(prop_in_rb));
-        let mut prop_out_rb = serde_json::Map::new();
-        prop_out_rb.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_rb.insert("output".to_string(), serde_json::Value::Object(prop_out_rb));
-        let mut prop_sens = serde_json::Map::new();
-        prop_sens.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        props_rb.insert(
-            "sensitivity".to_string(),
-            serde_json::Value::Object(prop_sens),
-        );
-        schema_rb.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_rb),
-        );
-        schema_rb.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-        let mut tool_rb = Tool::default();
-        tool_rb.name = "pdf_remove_blank".into();
-        tool_rb.description =
-            Some("Removes blank pages from a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_rb.input_schema = std::sync::Arc::new(schema_rb);
-        tools.push(tool_rb);
-
-        // Tool: pdf_page_numbers
-        let mut schema_pn = serde_json::Map::new();
-        schema_pn.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pn = serde_json::Map::new();
-        let mut p1 = serde_json::Map::new();
-        p1.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pn.insert("input".to_string(), serde_json::Value::Object(p1));
-        let mut p2 = serde_json::Map::new();
-        p2.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pn.insert("output".to_string(), serde_json::Value::Object(p2));
-        let mut p3 = serde_json::Map::new();
-        p3.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pn.insert("position".to_string(), serde_json::Value::Object(p3));
-        let mut p4 = serde_json::Map::new();
-        p4.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pn.insert("format".to_string(), serde_json::Value::Object(p4));
-        schema_pn.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pn),
-        );
-        schema_pn.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-        let mut tool_pn = Tool::default();
-        tool_pn.name = "pdf_page_numbers".into();
-        tool_pn.description =
-            Some("Adds page numbers to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_pn.input_schema = std::sync::Arc::new(schema_pn);
-        tools.push(tool_pn);
-
-        // Tool: pdf_merge
-        let mut schema_0 = serde_json::Map::new();
-        schema_0.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_0 = serde_json::Map::new();
-
-        let mut prop_inputs_0 = serde_json::Map::new();
-        prop_inputs_0.insert(
-            "type".to_string(),
-            serde_json::Value::String("array".to_string()),
-        );
-        prop_inputs_0.insert(
-            "description".to_string(),
-            serde_json::Value::String("Array of file paths to merge.".to_string()),
-        );
-
-        let mut items_inputs_0 = serde_json::Map::new();
-        items_inputs_0.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_inputs_0.insert(
-            "items".to_string(),
-            serde_json::Value::Object(items_inputs_0),
-        );
-
-        properties_0.insert(
-            "inputs".to_string(),
-            serde_json::Value::Object(prop_inputs_0),
-        );
-
-        let mut prop_output_0 = serde_json::Map::new();
-        prop_output_0.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_0.insert(
-            "description".to_string(),
-            serde_json::Value::String("File path for the merged output.".to_string()),
-        );
-
-        properties_0.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_0),
-        );
-
-        schema_0.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_0),
-        );
-
-        let required_0: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("inputs".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_0.insert("required".to_string(), serde_json::Value::Array(required_0));
-
-        let mut tool_0 = Tool::default();
-        tool_0.name = "pdf_merge".into();
-        tool_0.description =
-            Some("Merges multiple PDFs into one. [Input: 2+ PDFs | Output: PDF (.pdf)]".into());
-        tool_0.input_schema = Arc::new(schema_0);
-        tools.push(tool_0);
-
-        // Tool: pdf_split
-        let mut schema_1 = serde_json::Map::new();
-        schema_1.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_1 = serde_json::Map::new();
-
-        let mut prop_input_1 = serde_json::Map::new();
-        prop_input_1.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_1.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-
-        properties_1.insert("input".to_string(), serde_json::Value::Object(prop_input_1));
-
-        let mut prop_output_dir_1 = serde_json::Map::new();
-        prop_output_dir_1.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_dir_1.insert(
-            "description".to_string(),
-            serde_json::Value::String("The directory where split pages will be saved.".to_string()),
-        );
-
-        properties_1.insert(
-            "output_dir".to_string(),
-            serde_json::Value::Object(prop_output_dir_1),
-        );
-
-        schema_1.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_1),
-        );
-
-        let required_1: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("output_dir".to_string()),
-        ];
-        schema_1.insert("required".to_string(), serde_json::Value::Array(required_1));
-
-        let mut tool_1 = Tool::default();
-        tool_1.name = "pdf_split".into();
-        tool_1.description = Some("Splits a PDF into multiple single-page PDFs. [Input: PDF (.pdf) | Output: Multiple .PDFs]".into());
-        tool_1.input_schema = Arc::new(schema_1);
-        tools.push(tool_1);
-
-        // Tool: pdf_extract_pages
-        let mut schema_2 = serde_json::Map::new();
-        schema_2.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_2 = serde_json::Map::new();
-
-        let mut prop_input_2 = serde_json::Map::new();
-        prop_input_2.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_2.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-
-        properties_2.insert("input".to_string(), serde_json::Value::Object(prop_input_2));
-
-        let mut prop_pages_2 = serde_json::Map::new();
-        prop_pages_2.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pages_2.insert(
-            "description".to_string(),
-            serde_json::Value::String("The pages to extract, e.g., '1,3,5-7'.".to_string()),
-        );
-
-        properties_2.insert("pages".to_string(), serde_json::Value::Object(prop_pages_2));
-
-        let mut prop_output_2 = serde_json::Map::new();
-        prop_output_2.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_2.insert(
-            "description".to_string(),
-            serde_json::Value::String("File path for the extracted output.".to_string()),
-        );
-
-        properties_2.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_2),
-        );
-
-        schema_2.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_2),
-        );
-
-        let required_2: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("pages".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_2.insert("required".to_string(), serde_json::Value::Array(required_2));
-
-        let mut tool_2 = Tool::default();
-        tool_2.name = "pdf_extract_pages".into();
-        tool_2.description = Some(
-            "Extracts specific pages into a new PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
-                .into(),
-        );
-        tool_2.input_schema = Arc::new(schema_2);
-        tools.push(tool_2);
-
-        // Tool: pdf_delete_pages
-        let mut schema_3 = serde_json::Map::new();
-        schema_3.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_3 = serde_json::Map::new();
-
-        let mut prop_input_3 = serde_json::Map::new();
-        prop_input_3.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_3.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-
-        properties_3.insert("input".to_string(), serde_json::Value::Object(prop_input_3));
-
-        let mut prop_pages_3 = serde_json::Map::new();
-        prop_pages_3.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pages_3.insert(
-            "description".to_string(),
-            serde_json::Value::String("The pages to delete, e.g., '1,3,5-7'.".to_string()),
-        );
-
-        properties_3.insert("pages".to_string(), serde_json::Value::Object(prop_pages_3));
-
-        let mut prop_output_3 = serde_json::Map::new();
-        prop_output_3.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_3.insert(
-            "description".to_string(),
-            serde_json::Value::String("File path for the modified output.".to_string()),
-        );
-
-        properties_3.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_3),
-        );
-
-        schema_3.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_3),
-        );
-
-        let required_3: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("pages".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_3.insert("required".to_string(), serde_json::Value::Array(required_3));
-
-        let mut tool_3 = Tool::default();
-        tool_3.name = "pdf_delete_pages".into();
-        tool_3.description =
-            Some("Deletes specific pages. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_3.input_schema = Arc::new(schema_3);
-        tools.push(tool_3);
-
-        // Tool: pdf_reorder_pages
-        let mut schema_4 = serde_json::Map::new();
-        schema_4.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_4 = serde_json::Map::new();
-
-        let mut prop_input_4 = serde_json::Map::new();
-        prop_input_4.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_4.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-
-        properties_4.insert("input".to_string(), serde_json::Value::Object(prop_input_4));
-
-        let mut prop_order_4 = serde_json::Map::new();
-        prop_order_4.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_order_4.insert(
-            "description".to_string(),
-            serde_json::Value::String("The new 1-based page order, e.g., '3,2,1'.".to_string()),
-        );
-
-        properties_4.insert("order".to_string(), serde_json::Value::Object(prop_order_4));
-
-        let mut prop_output_4 = serde_json::Map::new();
-        prop_output_4.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_4.insert(
-            "description".to_string(),
-            serde_json::Value::String("File path for the reordered output.".to_string()),
-        );
-
-        properties_4.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_4),
-        );
-
-        schema_4.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_4),
-        );
-
-        let required_4: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("order".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_4.insert("required".to_string(), serde_json::Value::Array(required_4));
-
-        let mut tool_4 = Tool::default();
-        tool_4.name = "pdf_reorder_pages".into();
-        tool_4.description =
-            Some("Reorders pages. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_4.input_schema = Arc::new(schema_4);
-        tools.push(tool_4);
-
-        // Tool: pdf_rotate
-        let mut schema_5 = serde_json::Map::new();
-        schema_5.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_5 = serde_json::Map::new();
-
-        let mut prop_input_5 = serde_json::Map::new();
-        prop_input_5.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_5.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-
-        properties_5.insert("input".to_string(), serde_json::Value::Object(prop_input_5));
-
-        let mut prop_pages_5 = serde_json::Map::new();
-        prop_pages_5.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pages_5.insert(
-            "description".to_string(),
-            serde_json::Value::String(
-                "The pages to rotate, either 'all' or specific pages like '1,3'.".to_string(),
-            ),
-        );
-
-        properties_5.insert("pages".to_string(), serde_json::Value::Object(prop_pages_5));
-
-        let mut prop_angle_5 = serde_json::Map::new();
-        prop_angle_5.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_angle_5.insert(
-            "description".to_string(),
-            serde_json::Value::String(
-                "The angle to rotate by, typically 90, 180, or 270.".to_string(),
-            ),
-        );
-
-        properties_5.insert("angle".to_string(), serde_json::Value::Object(prop_angle_5));
-
-        let mut prop_output_5 = serde_json::Map::new();
-        prop_output_5.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_5.insert(
-            "description".to_string(),
-            serde_json::Value::String("File path for the rotated output.".to_string()),
-        );
-
-        properties_5.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_5),
-        );
-
-        schema_5.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_5),
-        );
-
-        let required_5: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("pages".to_string()),
-            serde_json::Value::String("angle".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_5.insert("required".to_string(), serde_json::Value::Array(required_5));
-
-        let mut tool_5 = Tool::default();
-        tool_5.name = "pdf_rotate".into();
-        tool_5.description =
-            Some("Rotates pages in a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_5.input_schema = Arc::new(schema_5);
-        tools.push(tool_5);
-
-        // Tool: pdf_crop
-        let mut schema_6 = serde_json::Map::new();
-        schema_6.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_6 = serde_json::Map::new();
-
-        let mut prop_input_6 = serde_json::Map::new();
-        prop_input_6.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_6.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-
-        properties_6.insert("input".to_string(), serde_json::Value::Object(prop_input_6));
-
-        let mut prop_box_6 = serde_json::Map::new();
-        prop_box_6.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_box_6.insert(
-            "description".to_string(),
-            serde_json::Value::String(
-                "The crop box in format 'left,bottom,right,top' e.g. '0,0,595,842'.".to_string(),
-            ),
-        );
-
-        properties_6.insert("box".to_string(), serde_json::Value::Object(prop_box_6));
-
-        let mut prop_output_6 = serde_json::Map::new();
-        prop_output_6.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_6.insert(
-            "description".to_string(),
-            serde_json::Value::String("File path for the cropped output.".to_string()),
-        );
-
-        properties_6.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_6),
-        );
-
-        schema_6.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_6),
-        );
-
-        let required_6: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("box".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_6.insert("required".to_string(), serde_json::Value::Array(required_6));
-
-        let mut tool_6 = Tool::default();
-        tool_6.name = "pdf_crop".into();
-        tool_6.description = Some(
-            "Crops pages to specific dimensions. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_6.input_schema = Arc::new(schema_6);
-        tools.push(tool_6);
-
-        // Tool: pdf_burst
-        let mut schema_7 = serde_json::Map::new();
-        schema_7.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut properties_7 = serde_json::Map::new();
-
-        let mut prop_input_7 = serde_json::Map::new();
-        prop_input_7.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_7.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-
-        properties_7.insert("input".to_string(), serde_json::Value::Object(prop_input_7));
-
-        let mut prop_output_dir_7 = serde_json::Map::new();
-        prop_output_dir_7.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_dir_7.insert(
-            "description".to_string(),
-            serde_json::Value::String(
-                "The directory where individual files will be saved.".to_string(),
-            ),
-        );
-
-        properties_7.insert(
-            "output_dir".to_string(),
-            serde_json::Value::Object(prop_output_dir_7),
-        );
-
-        schema_7.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(properties_7),
-        );
-
-        let required_7: Vec<serde_json::Value> = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("output_dir".to_string()),
-        ];
-        schema_7.insert("required".to_string(), serde_json::Value::Array(required_7));
-
-        let mut tool_7 = Tool::default();
-        tool_7.name = "pdf_burst".into();
-        tool_7.description =
-            Some("Bursts a PDF into individual files, returning the path of each.".into());
-        tool_7.input_schema = Arc::new(schema_7);
-        tools.push(tool_7);
-
-        // Tool: pdf_compress
-        let mut schema_compress = serde_json::Map::new();
-        schema_compress.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_compress = serde_json::Map::new();
-        let mut prop_input_c = serde_json::Map::new();
-        prop_input_c.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_c.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_compress.insert("input".to_string(), serde_json::Value::Object(prop_input_c));
-        let mut prop_output_c = serde_json::Map::new();
-        prop_output_c.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_c.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        prop_compress.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_c),
-        );
-
-        let mut prop_quality = serde_json::Map::new();
-        prop_quality.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_quality.insert(
-            "description".to_string(),
-            serde_json::Value::String(
-                "Compression quality preset (low, medium, high) or integer 1-100".to_string(),
-            ),
-        );
-        prop_compress.insert(
-            "quality".to_string(),
-            serde_json::Value::Object(prop_quality),
-        );
-
-        schema_compress.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_compress),
-        );
-        let req_compress = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_compress.insert(
-            "required".to_string(),
-            serde_json::Value::Array(req_compress),
-        );
-        let mut tool_compress = Tool::default();
-        tool_compress.name = "pdf_compress".into();
-        tool_compress.description = Some(
-            "Compresses a PDF to reduce file size. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_compress.input_schema = std::sync::Arc::new(schema_compress);
-        tools.push(tool_compress);
-
-        // Tool: pdf_extract_text
-        let mut schema_ext_txt = serde_json::Map::new();
-        schema_ext_txt.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_ext_txt = serde_json::Map::new();
-        let mut prop_input_ext = serde_json::Map::new();
-        prop_input_ext.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_ext.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_ext_txt.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_ext),
-        );
-
-        let mut prop_pages_ext = serde_json::Map::new();
-        prop_pages_ext.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pages_ext.insert(
-            "description".to_string(),
-            serde_json::Value::String(
-                "Pages to extract text from, e.g., '1,3,5-7' or 'all'.".to_string(),
-            ),
-        );
-        prop_ext_txt.insert(
-            "pages".to_string(),
-            serde_json::Value::Object(prop_pages_ext),
-        );
-
-        let mut prop_output_ext = serde_json::Map::new();
-        prop_output_ext.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_ext.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output text file path.".to_string()),
-        );
-        prop_ext_txt.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_ext),
-        );
-
-        schema_ext_txt.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_ext_txt),
-        );
-        let req_ext_txt = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_ext_txt.insert(
-            "required".to_string(),
-            serde_json::Value::Array(req_ext_txt),
-        );
-
-        let mut tool_ext_txt = Tool::default();
-        tool_ext_txt.name = "pdf_extract_text".into();
-        tool_ext_txt.description = Some(
-            "Extracts raw text from a PDF. [Input: PDF (.pdf) | Output: Plain Text (.txt)]".into(),
-        );
-        tool_ext_txt.input_schema = std::sync::Arc::new(schema_ext_txt);
-        tools.push(tool_ext_txt);
-
-        let mut tool_rag = Tool::default();
-        tool_rag.name = "pdf_rag_chunks".into();
-        tool_rag.description = Some(
-            "Extract semantic RAG chunks from PDF. [Input: PDF (.pdf) | Output: JSON array]".into(),
-        );
-        let mut schema_rag = serde_json::Map::new();
-        schema_rag.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_rag = serde_json::Map::new();
-        prop_rag.insert("input".to_string(), serde_json::json!({ "type": "string" }));
-        prop_rag.insert(
-            "output".to_string(),
-            serde_json::json!({ "type": "string" }),
-        );
-        schema_rag.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_rag),
-        );
-        schema_rag.insert("required".to_string(), serde_json::json!(["input"]));
-        tool_rag.input_schema = std::sync::Arc::new(schema_rag);
-        tools.push(tool_rag);
-
-        let mut tool_chunk = Tool::default();
-        tool_chunk.name = "pdf_chunk".into();
-        tool_chunk.description = Some(
-            "Structure-aware semantic chunking with dynamic overlap for AI agents and LLM context windows. [Input: PDF (.pdf) | Output: JSON]".into(),
-        );
-        let mut schema_chunk = serde_json::Map::new();
-        schema_chunk.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_chunk = serde_json::Map::new();
-        prop_chunk.insert("input".to_string(), serde_json::json!({ "type": "string", "description": "Path to input PDF file" }));
-        prop_chunk.insert("output".to_string(), serde_json::json!({ "type": "string", "description": "Optional destination path for JSON output" }));
-        prop_chunk.insert("target_tokens".to_string(), serde_json::json!({ "type": "number", "description": "Target tokens per chunk (default: 500, range: 50-4000)" }));
-        prop_chunk.insert("overlap_tokens".to_string(), serde_json::json!({ "type": "number", "description": "Overlap tokens between chunks (default: 50, range: 0-500)" }));
-        prop_chunk.insert("strip_boilerplate".to_string(), serde_json::json!({ "type": "boolean", "description": "Strip repetitive headers/footers across consecutive pages (default: true)" }));
-        prop_chunk.insert("break_on_headings".to_string(), serde_json::json!({ "type": "boolean", "description": "Trigger hard boundary split on # / ## headings (default: true)" }));
-        schema_chunk.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_chunk),
-        );
-        schema_chunk.insert("required".to_string(), serde_json::json!(["input"]));
-        tool_chunk.input_schema = std::sync::Arc::new(schema_chunk);
-        tools.push(tool_chunk);
-
-        let mut tool_o2m = Tool::default();
-        tool_o2m.name = "office_to_markdown".into();
-        tool_o2m.description = Some("Convert Office document to Markdown. [Input: Office (.docx, .xlsx, .pptx) | Output: Markdown (.md)]".into());
-        let mut schema_o2m = serde_json::Map::new();
-        schema_o2m.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_o2m = serde_json::Map::new();
-        prop_o2m.insert("input".to_string(), serde_json::json!({ "type": "string" }));
-        prop_o2m.insert(
-            "output".to_string(),
-            serde_json::json!({ "type": "string" }),
-        );
-        schema_o2m.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_o2m),
-        );
-        schema_o2m.insert(
-            "required".to_string(),
-            serde_json::json!(["input", "output"]),
-        );
-        tool_o2m.input_schema = std::sync::Arc::new(schema_o2m);
-        tools.push(tool_o2m);
-
-        let mut tool_oet = Tool::default();
-        tool_oet.name = "office_extract_text".into();
-        tool_oet.description = Some("Extract text content from Microsoft Office documents. [Input: Office (.docx, .xlsx, .pptx) | Output: Plain Text (.txt)]".into());
-        let mut schema_oet = serde_json::Map::new();
-        schema_oet.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_oet = serde_json::Map::new();
-        prop_oet.insert("input".to_string(), serde_json::json!({ "type": "string" }));
-        prop_oet.insert(
-            "output".to_string(),
-            serde_json::json!({ "type": "string" }),
-        );
-        schema_oet.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_oet),
-        );
-        schema_oet.insert("required".to_string(), serde_json::json!(["input"]));
-        tool_oet.input_schema = std::sync::Arc::new(schema_oet);
-        tools.push(tool_oet);
-
-        let mut tool_oml = Tool::default();
-        tool_oml.name = "office_modernize_legacy".into();
-        tool_oml.description = Some("Modernize legacy Office document. [Input: Legacy Office (.doc, .xls, .ppt) | Output: Modern Office (.docx, .xlsx, .pptx)]".into());
-        let mut schema_oml = serde_json::Map::new();
-        schema_oml.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_oml = serde_json::Map::new();
-        prop_oml.insert("input".to_string(), serde_json::json!({ "type": "string" }));
-        prop_oml.insert(
-            "output".to_string(),
-            serde_json::json!({ "type": "string" }),
-        );
-        schema_oml.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_oml),
-        );
-        schema_oml.insert(
-            "required".to_string(),
-            serde_json::json!(["input", "output"]),
-        );
-        tool_oml.input_schema = std::sync::Arc::new(schema_oml);
-        tools.push(tool_oml);
-
-        // Tool: pdf_extract_images
-        let mut schema_ext_img = serde_json::Map::new();
-        schema_ext_img.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_ext_img = serde_json::Map::new();
-
-        let mut prop_input_img = serde_json::Map::new();
-        prop_input_img.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_img.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_ext_img.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_img),
-        );
-
-        let mut prop_output_dir_img = serde_json::Map::new();
-        prop_output_dir_img.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_dir_img.insert(
-            "description".to_string(),
-            serde_json::Value::String("The directory where images will be saved.".to_string()),
-        );
-        prop_ext_img.insert(
-            "output_dir".to_string(),
-            serde_json::Value::Object(prop_output_dir_img),
-        );
-
-        schema_ext_img.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_ext_img),
-        );
-        let req_ext_img = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("output_dir".to_string()),
-        ];
-        schema_ext_img.insert(
-            "required".to_string(),
-            serde_json::Value::Array(req_ext_img),
-        );
-
-        let mut tool_ext_img = Tool::default();
-        tool_ext_img.name = "pdf_extract_images".into();
-        tool_ext_img.description = Some(
-            "Extract raster images from a PDF. [Input: PDF (.pdf) | Output: PNG/JPEG images]"
-                .into(),
-        );
-        tool_ext_img.input_schema = std::sync::Arc::new(schema_ext_img);
-        tools.push(tool_ext_img);
-
-        let mut schema_ext_tab = serde_json::Map::new();
-        schema_ext_tab.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_ext_tab = serde_json::Map::new();
-
-        let mut p_in = serde_json::Map::new();
-        p_in.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_ext_tab.insert("input".to_string(), serde_json::Value::Object(p_in));
-
-        let mut p_out = serde_json::Map::new();
-        p_out.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_ext_tab.insert("output".to_string(), serde_json::Value::Object(p_out));
-
-        let mut p_f = serde_json::Map::new();
-        p_f.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_ext_tab.insert("format".to_string(), serde_json::Value::Object(p_f));
-
-        schema_ext_tab.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_ext_tab),
-        );
-        schema_ext_tab.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
-        );
-
-        let mut tool_ext_tab = Tool::default();
-        tool_ext_tab.name = "pdf_extract_tables".into();
-        tool_ext_tab.description = Some("Extract tabular data from PDF into JSON or CSV".into());
-        tool_ext_tab.input_schema = std::sync::Arc::new(schema_ext_tab);
-        tools.push(tool_ext_tab);
-
-        // Tool: semantic_search
-        let mut schema_semantic_search = serde_json::Map::new();
-        schema_semantic_search.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_semantic_search = serde_json::Map::new();
-        props_semantic_search.insert(
-            "query".to_string(),
-            serde_json::json!({"type": "string", "description": "Search query"}),
-        );
-        props_semantic_search.insert(
-            "input".to_string(),
-            serde_json::json!({"type": "string", "description": "Optional input document"}),
-        );
-        props_semantic_search.insert(
-            "limit".to_string(),
-            serde_json::json!({"type": "integer", "description": "Max results (default 5)", "default": 5}),
-        );
-        schema_semantic_search.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_semantic_search),
-        );
-        schema_semantic_search.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![serde_json::Value::String("query".to_string())]),
-        );
-        tools.push(Tool::new("semantic_search".to_string(), "Semantic vector or keyword search across document index".to_string(), schema_semantic_search));
-
-        // Tool: workspace_search
-        let mut schema_ws = serde_json::Map::new();
-        schema_ws.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_ws = serde_json::Map::new();
-
-        let mut prop_dir_s = serde_json::Map::new();
-        prop_dir_s.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_ws.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_dir_s.clone()),
-        );
-        prop_ws.insert("dir".to_string(), serde_json::Value::Object(prop_dir_s));
-
-        let mut prop_query_ws = serde_json::Map::new();
-        prop_query_ws.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_ws.insert(
-            "query".to_string(),
-            serde_json::Value::Object(prop_query_ws),
-        );
-
-        let mut prop_formats_ws = serde_json::Map::new();
-        prop_formats_ws.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_formats_ws.insert(
-            "description".to_string(),
-            serde_json::Value::String("Comma-separated list of formats (pdf,txt,md,docx,xlsx,csv,json) or 'all'".to_string()),
-        );
-        prop_ws.insert(
-            "formats".to_string(),
-            serde_json::Value::Object(prop_formats_ws),
-        );
-
-        schema_ws.insert("properties".to_string(), serde_json::Value::Object(prop_ws));
-        let req_ws = vec![serde_json::Value::String("query".to_string())];
-        schema_ws.insert("required".to_string(), serde_json::Value::Array(req_ws));
-
-        let mut tool_ws = Tool::default();
-        tool_ws.name = "workspace_search".into();
-        tool_ws.description =
-            Some("Searches for a text query inside a workspace directory or document.".into());
-        tool_ws.input_schema = std::sync::Arc::new(schema_ws);
-        tools.push(tool_ws);
-
-        // Tool: pdf_search
-        let mut schema_search = serde_json::Map::new();
-        schema_search.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_search = serde_json::Map::new();
-
-        let mut prop_input_s = serde_json::Map::new();
-        prop_input_s.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_s.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_search.insert("input".to_string(), serde_json::Value::Object(prop_input_s));
-
-        let mut prop_query_s = serde_json::Map::new();
-        prop_query_s.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_query_s.insert(
-            "description".to_string(),
-            serde_json::Value::String("The text to search for.".to_string()),
-        );
-        prop_search.insert("query".to_string(), serde_json::Value::Object(prop_query_s));
-
-        schema_search.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_search),
-        );
-        let req_search = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("query".to_string()),
-        ];
-        schema_search.insert("required".to_string(), serde_json::Value::Array(req_search));
-
-        let mut tool_search = Tool::default();
-        tool_search.name = "pdf_search".into();
-        tool_search.description = Some(
-            "Searches for a text query inside a PDF. [Input: PDF (.pdf) | Output: JSON array]"
-                .into(),
-        );
-        tool_search.input_schema = std::sync::Arc::new(schema_search);
-        tools.push(tool_search); // Tool: pdf_watermark
-        let mut schema_wm = serde_json::Map::new();
-        schema_wm.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_wm = serde_json::Map::new();
-
-        let mut prop_input_w = serde_json::Map::new();
-        prop_input_w.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_w.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_wm.insert("input".to_string(), serde_json::Value::Object(prop_input_w));
-
-        let mut prop_text_w = serde_json::Map::new();
-        prop_text_w.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_text_w.insert(
-            "description".to_string(),
-            serde_json::Value::String("The watermark text to apply.".to_string()),
-        );
-        prop_wm.insert("text".to_string(), serde_json::Value::Object(prop_text_w));
-
-        let mut prop_angle_w = serde_json::Map::new();
-        prop_angle_w.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_angle_w.insert(
-            "description".to_string(),
-            serde_json::Value::String("Angle of the watermark (default 45).".to_string()),
-        );
-        prop_wm.insert("angle".to_string(), serde_json::Value::Object(prop_angle_w));
-
-        let mut prop_opacity_w = serde_json::Map::new();
-        prop_opacity_w.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_opacity_w.insert(
-            "description".to_string(),
-            serde_json::Value::String(
-                "Opacity of the watermark (0 to 1, default 0.2).".to_string(),
-            ),
-        );
-        prop_wm.insert(
-            "opacity".to_string(),
-            serde_json::Value::Object(prop_opacity_w),
-        );
-
-        let mut prop_color_w = serde_json::Map::new();
-        prop_color_w.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_color_w.insert(
-            "description".to_string(),
-            serde_json::Value::String("Color of the watermark (e.g. 'gray', 'red').".to_string()),
-        );
-        prop_wm.insert("color".to_string(), serde_json::Value::Object(prop_color_w));
-
-        let mut prop_fontsize_w = serde_json::Map::new();
-        prop_fontsize_w.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_fontsize_w.insert(
-            "description".to_string(),
-            serde_json::Value::String("Font size.".to_string()),
-        );
-        prop_wm.insert(
-            "font_size".to_string(),
-            serde_json::Value::Object(prop_fontsize_w),
-        );
-
-        let mut prop_output_w = serde_json::Map::new();
-        prop_output_w.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_w.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        prop_wm.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_w),
-        );
-
-        schema_wm.insert("properties".to_string(), serde_json::Value::Object(prop_wm));
-        let req_wm = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("text".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_wm.insert("required".to_string(), serde_json::Value::Array(req_wm));
-
-        let mut tool_wm = Tool::default();
-        tool_wm.name = "pdf_watermark".into();
-        tool_wm.description = Some(
-            "Applies a text watermark to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_wm.input_schema = std::sync::Arc::new(schema_wm);
-        tools.push(tool_wm);
-
-        // Tool: pdf_encrypt
-        let mut schema_enc = serde_json::Map::new();
-        schema_enc.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_enc = serde_json::Map::new();
-
-        let mut prop_input_e = serde_json::Map::new();
-        prop_input_e.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_e.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_enc.insert("input".to_string(), serde_json::Value::Object(prop_input_e));
-
-        let mut prop_pass_e = serde_json::Map::new();
-        prop_pass_e.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pass_e.insert(
-            "description".to_string(),
-            serde_json::Value::String("The user password.".to_string()),
-        );
-        prop_enc.insert(
-            "password".to_string(),
-            serde_json::Value::Object(prop_pass_e),
-        );
-
-        let mut prop_output_e = serde_json::Map::new();
-        prop_output_e.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_e.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        prop_enc.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_e),
-        );
-
-        schema_enc.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_enc),
-        );
-        let req_enc = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("password".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_enc.insert("required".to_string(), serde_json::Value::Array(req_enc));
-
-        let mut tool_enc = Tool::default();
-        tool_enc.name = "pdf_encrypt".into();
-        tool_enc.description = Some(
-            "Encrypts a PDF with a user password. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_enc.input_schema = std::sync::Arc::new(schema_enc);
-        tools.push(tool_enc);
-
-        // Tool: pdf_decrypt
-        let mut schema_dec = serde_json::Map::new();
-        schema_dec.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_dec = serde_json::Map::new();
-
-        let mut prop_input_d = serde_json::Map::new();
-        prop_input_d.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_d.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_dec.insert("input".to_string(), serde_json::Value::Object(prop_input_d));
-
-        let mut prop_pass_d = serde_json::Map::new();
-        prop_pass_d.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pass_d.insert(
-            "description".to_string(),
-            serde_json::Value::String("The user password.".to_string()),
-        );
-        prop_dec.insert(
-            "password".to_string(),
-            serde_json::Value::Object(prop_pass_d),
-        );
-
-        let mut prop_output_d = serde_json::Map::new();
-        prop_output_d.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_d.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        prop_dec.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_d),
-        );
-
-        schema_dec.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_dec),
-        );
-        let req_dec = vec![
-            serde_json::Value::String("input".to_string()),
-            serde_json::Value::String("password".to_string()),
-            serde_json::Value::String("output".to_string()),
-        ];
-        schema_dec.insert("required".to_string(), serde_json::Value::Array(req_dec));
-
-        let mut tool_dec = Tool::default();
-        tool_dec.name = "pdf_decrypt".into();
-        tool_dec.description = Some(
-            "Decrypts a PDF using the provided password. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
-                .into(),
-        );
-        tool_dec.input_schema = std::sync::Arc::new(schema_dec);
-        tools.push(tool_dec);
-
-        // Tool: pdf_info
-        let mut schema_info = serde_json::Map::new();
-        schema_info.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_info = serde_json::Map::new();
-        props_info.insert(
-            "input".to_string(),
-            serde_json::json!({"type": "string", "description": "The path to the input PDF file."}),
-        );
-        schema_info.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_info),
-        );
-        schema_info.insert("required".to_string(), serde_json::json!(["input"]));
-        let mut tool_info = Tool::default();
-        tool_info.name = "pdf_info".into();
-        tool_info.description = Some(
-            "Get basic PDF information like page_count. [Input: PDF (.pdf) | Output: JSON object]"
-                .into(),
-        );
-        tool_info.input_schema = std::sync::Arc::new(schema_info);
-        tools.push(tool_info);
-
-        // Tool: pdf_metadata
-        let mut schema_meta = serde_json::Map::new();
-        schema_meta.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut prop_meta = serde_json::Map::new();
-
-        let mut prop_input_m = serde_json::Map::new();
-        prop_input_m.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_m.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_meta.insert("input".to_string(), serde_json::Value::Object(prop_input_m));
-
-        let mut prop_title_m = serde_json::Map::new();
-        prop_title_m.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_title_m.insert(
-            "description".to_string(),
-            serde_json::Value::String("The new title.".to_string()),
-        );
-        prop_meta.insert("title".to_string(), serde_json::Value::Object(prop_title_m));
-
-        let mut prop_author_m = serde_json::Map::new();
-        prop_author_m.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_author_m.insert(
-            "description".to_string(),
-            serde_json::Value::String("The new author.".to_string()),
-        );
-        prop_meta.insert(
-            "author".to_string(),
-            serde_json::Value::Object(prop_author_m),
-        );
-
-        let mut prop_subject_m = serde_json::Map::new();
-        prop_subject_m.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_subject_m.insert(
-            "description".to_string(),
-            serde_json::Value::String("The new subject.".to_string()),
-        );
-        prop_meta.insert(
-            "subject".to_string(),
-            serde_json::Value::Object(prop_subject_m),
-        );
-
-        let mut prop_keywords_m = serde_json::Map::new();
-        prop_keywords_m.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_keywords_m.insert(
-            "description".to_string(),
-            serde_json::Value::String("The new keywords.".to_string()),
-        );
-        prop_meta.insert(
-            "keywords".to_string(),
-            serde_json::Value::Object(prop_keywords_m),
-        );
-
-        let mut prop_output_m = serde_json::Map::new();
-        prop_output_m.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_m.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        prop_meta.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_m),
-        );
-
-        schema_meta.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(prop_meta),
-        );
-        let req_meta = vec![serde_json::Value::String("input".to_string())]; // Output, title, author are optional
-        schema_meta.insert("required".to_string(), serde_json::Value::Array(req_meta));
-
-        let mut tool_meta = Tool::default();
-        tool_meta.name = "pdf_metadata".into();
-        tool_meta.description = Some(
-            "Reads (or writes) metadata to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_meta.input_schema = std::sync::Arc::new(schema_meta);
-        tools.push(tool_meta);
-        let mut tool_docx = Tool::default();
-        tool_docx.name = "pdf_to_docx".into();
-        tool_docx.description =
-            Some("Converts a PDF document to DOCX format by extracting its text.".into());
-        let mut d_props = serde_json::Map::new();
-        d_props.insert(
-            "input".into(),
-            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
-        );
-        d_props.insert(
-            "output".into(),
-            serde_json::json!({ "type": "string", "description": "The output file path." }),
-        );
-        tool_docx.input_schema = std::sync::Arc::new(
-            serde_json::json!({
-                "type": "object",
-                "properties": d_props,
-                "required": ["input", "output"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        );
-        tools.push(tool_docx);
-
-        let mut tool_xlsx = Tool::default();
-        tool_xlsx.name = "pdf_to_xlsx".into();
-        tool_xlsx.description = Some(
-            "Converts a PDF document to XLSX format by using best effort table extraction.".into(),
-        );
-        let mut x_props = serde_json::Map::new();
-        x_props.insert(
-            "input".into(),
-            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
-        );
-        x_props.insert(
-            "output".into(),
-            serde_json::json!({ "type": "string", "description": "The output file path." }),
-        );
-        tool_xlsx.input_schema = std::sync::Arc::new(
-            serde_json::json!({
-                "type": "object",
-                "properties": x_props,
-                "required": ["input", "output"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        );
-        tools.push(tool_xlsx);
-
-        let mut tool_pptx = Tool::default();
-        tool_pptx.name = "pdf_to_pptx".into();
-        tool_pptx.description =
-            Some("Converts a PDF document to PPTX format via best effort slide generation.".into());
-        let mut p_props = serde_json::Map::new();
-        p_props.insert(
-            "input".into(),
-            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
-        );
-        p_props.insert(
-            "output".into(),
-            serde_json::json!({ "type": "string", "description": "The output file path." }),
-        );
-        tool_pptx.input_schema = std::sync::Arc::new(
-            serde_json::json!({
-                "type": "object",
-                "properties": p_props,
-                "required": ["input", "output"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        );
-        tools.push(tool_pptx);
-
-        let mut tool_json = Tool::default();
-        tool_json.name = "pdf_to_json".into();
-        tool_json.description =
-            Some("Converts a PDF document into structured JSON with text, page statistics, and metadata.".into());
-        let mut j_props = serde_json::Map::new();
-        j_props.insert(
-            "input".into(),
-            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
-        );
-        j_props.insert(
-            "output".into(),
-            serde_json::json!({ "type": "string", "description": "The output JSON file path." }),
-        );
-        tool_json.input_schema = std::sync::Arc::new(
-            serde_json::json!({
-                "type": "object",
-                "properties": j_props,
-                "required": ["input", "output"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        );
-        tools.push(tool_json);
-
-        let mut tool_md = Tool::default();
-        tool_md.name = "pdf_to_markdown".into();
-        tool_md.description = Some("Converts a PDF document into Markdown formatted text. [Input: PDF (.pdf) | Output: Markdown (.md)]".into());
-        let mut m_props = serde_json::Map::new();
-        m_props.insert(
-            "input".into(),
-            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
-        );
-        m_props.insert(
-            "output".into(),
-            serde_json::json!({ "type": "string", "description": "The output Markdown file path." }),
-        );
-        tool_md.input_schema = std::sync::Arc::new(
-            serde_json::json!({
-                "type": "object",
-                "properties": m_props,
-                "required": ["input", "output"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        );
-        tools.push(tool_md);
-
-        let mut tool_html = Tool::default();
-        tool_html.name = "pdf_to_html".into();
-        tool_html.description =
-            Some("Converts a PDF document into responsive, styled HTML5 web page.".into());
-        let mut h_props = serde_json::Map::new();
-        h_props.insert(
-            "input".into(),
-            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
-        );
-        h_props.insert(
-            "output".into(),
-            serde_json::json!({ "type": "string", "description": "The output HTML file path." }),
-        );
-        tool_html.input_schema = std::sync::Arc::new(
-            serde_json::json!({
-                "type": "object",
-                "properties": h_props,
-                "required": ["input", "output"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        );
-        tools.push(tool_html);
-
-        let mut tool_class = Tool::default();
-        tool_class.name = "pdf_classify_type".into();
-        tool_class.description =
-            Some("Classifies the PDF document type based on heuristics.".into());
-        let mut c_props = serde_json::Map::new();
-        c_props.insert(
-            "input".into(),
-            serde_json::json!({ "type": "string", "description": "The input PDF file path." }),
-        );
-        tool_class.input_schema = std::sync::Arc::new(
-            serde_json::json!({
-                "type": "object",
-                "properties": c_props,
-                "required": ["input"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        );
-        tools.push(tool_class);
-
-        // Tool: pdf_read_form
-        let mut tool_read_form = rmcp::model::Tool::default();
-        tool_read_form.name = "pdf_read_form".into();
-        tool_read_form.description = Some("Extract AcroForm fields and values from a PDF. [Input: PDF (.pdf) | Output: JSON file (.json) or object]".into());
-        let mut schema_rf = serde_json::Map::new();
-        schema_rf.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_rf = serde_json::Map::new();
-        let mut input_rf = serde_json::Map::new();
-        input_rf.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        input_rf.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_rf.insert("input".to_string(), serde_json::Value::Object(input_rf));
-
-        let mut output_rf = serde_json::Map::new();
-        output_rf.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        output_rf.insert(
-            "description".to_string(),
-            serde_json::Value::String("The optional output JSON file path.".to_string()),
-        );
-        props_rf.insert("output".to_string(), serde_json::Value::Object(output_rf));
-
-        schema_rf.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_rf),
-        );
-        schema_rf.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
-        );
-        tool_read_form.input_schema = std::sync::Arc::new(schema_rf);
-        tools.push(tool_read_form);
-
-        // Tool: pdf_fill_form
-        let mut tool_fill_form = rmcp::model::Tool::default();
-        tool_fill_form.name = "pdf_fill_form".into();
-        tool_fill_form.description =
-            Some("Fill AcroForm fields in a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        let mut schema_ff = serde_json::Map::new();
-        schema_ff.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_ff = serde_json::Map::new();
-
-        let mut input_ff = serde_json::Map::new();
-        input_ff.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        input_ff.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_ff.insert("input".to_string(), serde_json::Value::Object(input_ff));
-
-        let mut values_ff = serde_json::Map::new();
-        values_ff.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        values_ff.insert(
-            "description".to_string(),
-            serde_json::Value::String("Values to fill.".to_string()),
-        );
-        props_ff.insert("values".to_string(), serde_json::Value::Object(values_ff));
-
-        let mut output_ff = serde_json::Map::new();
-        output_ff.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        output_ff.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_ff.insert("output".to_string(), serde_json::Value::Object(output_ff));
-
-        schema_ff.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_ff),
-        );
-        schema_ff.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("values".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-        tool_fill_form.input_schema = std::sync::Arc::new(schema_ff);
-        tools.push(tool_fill_form);
-
-        // Tool: pdf_create_form_field
-        let mut tool_create_form = rmcp::model::Tool::default();
-        tool_create_form.name = "pdf_create_form_field".into();
-        tool_create_form.description =
-            Some("Add a new form field (text or checkbox) to a PDF page.".into());
-        let mut schema_cf = serde_json::Map::new();
-        schema_cf.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_cf = serde_json::Map::new();
-
-        let mut p1 = serde_json::Map::new();
-        p1.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        p1.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_cf.insert("input".to_string(), serde_json::Value::Object(p1));
-        let mut p2 = serde_json::Map::new();
-        p2.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        p2.insert(
-            "description".to_string(),
-            serde_json::Value::String("Field name.".to_string()),
-        );
-        props_cf.insert("field_name".to_string(), serde_json::Value::Object(p2));
-        let mut p3 = serde_json::Map::new();
-        p3.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        p3.insert(
-            "description".to_string(),
-            serde_json::Value::String("Field type.".to_string()),
-        );
-        props_cf.insert("field_type".to_string(), serde_json::Value::Object(p3));
-        let mut p4 = serde_json::Map::new();
-        p4.insert(
-            "type".to_string(),
-            serde_json::Value::String("integer".to_string()),
-        );
-        p4.insert(
-            "description".to_string(),
-            serde_json::Value::String("Page number.".to_string()),
-        );
-        props_cf.insert("page".to_string(), serde_json::Value::Object(p4));
-        let mut p5 = serde_json::Map::new();
-        p5.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        p5.insert(
-            "description".to_string(),
-            serde_json::Value::String("X coordinate.".to_string()),
-        );
-        props_cf.insert("x".to_string(), serde_json::Value::Object(p5));
-        let mut p6 = serde_json::Map::new();
-        p6.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        p6.insert(
-            "description".to_string(),
-            serde_json::Value::String("Y coordinate.".to_string()),
-        );
-        props_cf.insert("y".to_string(), serde_json::Value::Object(p6));
-        let mut p7 = serde_json::Map::new();
-        p7.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        p7.insert(
-            "description".to_string(),
-            serde_json::Value::String("Width.".to_string()),
-        );
-        props_cf.insert("width".to_string(), serde_json::Value::Object(p7));
-        let mut p8 = serde_json::Map::new();
-        p8.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        p8.insert(
-            "description".to_string(),
-            serde_json::Value::String("Height.".to_string()),
-        );
-        props_cf.insert("height".to_string(), serde_json::Value::Object(p8));
-        let mut p9 = serde_json::Map::new();
-        p9.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        p9.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_cf.insert("output".to_string(), serde_json::Value::Object(p9));
-
-        schema_cf.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_cf),
-        );
-        schema_cf.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("field_name".to_string()),
-                serde_json::Value::String("field_type".to_string()),
-                serde_json::Value::String("page".to_string()),
-                serde_json::Value::String("x".to_string()),
-                serde_json::Value::String("y".to_string()),
-                serde_json::Value::String("width".to_string()),
-                serde_json::Value::String("height".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-        tool_create_form.input_schema = std::sync::Arc::new(schema_cf);
-        tools.push(tool_create_form);
-
-        // Tool: pdf_repair
-        let mut schema_repair = serde_json::Map::new();
-        schema_repair.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_repair = serde_json::Map::new();
-
-        let mut prop_input_repair = serde_json::Map::new();
-        prop_input_repair.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_repair.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to the PDF to repair.".to_string()),
-        );
-        props_repair.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_repair),
-        );
-
-        let mut prop_output_repair = serde_json::Map::new();
-        prop_output_repair.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_repair.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to save the repaired PDF.".to_string()),
-        );
-        props_repair.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_repair),
-        );
-
-        schema_repair.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_repair),
-        );
-        schema_repair.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_repair = Tool::default();
-        tool_repair.name = "pdf_repair".into();
-        tool_repair.description = Some(
-            "Repairs a corrupted or malformed PDF by rewriting its cross-reference table.".into(),
-        );
-        tool_repair.input_schema = Arc::new(schema_repair);
-        tools.push(tool_repair);
-
-        // Tool: pdf_linearize
-        let mut schema_linearize = serde_json::Map::new();
-        schema_linearize.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_linearize = serde_json::Map::new();
-
-        let mut prop_input_linearize = serde_json::Map::new();
-        prop_input_linearize.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_linearize.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to the PDF to linearize.".to_string()),
-        );
-        props_linearize.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_linearize),
-        );
-
-        let mut prop_output_linearize = serde_json::Map::new();
-        prop_output_linearize.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_linearize.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to save the linearized PDF.".to_string()),
-        );
-        props_linearize.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_linearize),
-        );
-
-        schema_linearize.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_linearize),
-        );
-        schema_linearize.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_linearize = Tool::default();
-        tool_linearize.name = "pdf_linearize".into();
-        tool_linearize.description = Some(
-            "Linearizes a PDF for fast web view. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_linearize.input_schema = Arc::new(schema_linearize);
-        tools.push(tool_linearize);
-
-        // Tool: pdf_flatten
-        let mut schema_flatten = serde_json::Map::new();
-        schema_flatten.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_flatten = serde_json::Map::new();
-
-        let mut prop_input_flatten = serde_json::Map::new();
-        prop_input_flatten.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_flatten.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to the PDF to flatten.".to_string()),
-        );
-        props_flatten.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_flatten),
-        );
-
-        let mut prop_output_flatten = serde_json::Map::new();
-        prop_output_flatten.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_flatten.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to save the flattened PDF.".to_string()),
-        );
-        props_flatten.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_flatten),
-        );
-
-        schema_flatten.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_flatten),
-        );
-        schema_flatten.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_flatten = Tool::default();
-        tool_flatten.name = "pdf_flatten".into();
-        tool_flatten.description =
-            Some("Flattens a PDF by merging interactive elements into the page content.".into());
-        tool_flatten.input_schema = Arc::new(schema_flatten);
-        tools.push(tool_flatten);
-
-        // Tool: pdf_to_pdf_a
-        let mut schema_to_pdf_a = serde_json::Map::new();
-        schema_to_pdf_a.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_to_pdf_a = serde_json::Map::new();
-
-        let mut prop_input_to_pdf_a = serde_json::Map::new();
-        prop_input_to_pdf_a.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_to_pdf_a.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to the PDF to convert to PDF/A.".to_string()),
-        );
-        props_to_pdf_a.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_to_pdf_a),
-        );
-
-        let mut prop_output_to_pdf_a = serde_json::Map::new();
-        prop_output_to_pdf_a.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_to_pdf_a.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to save the PDF/A file.".to_string()),
-        );
-        props_to_pdf_a.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_to_pdf_a),
-        );
-
-        schema_to_pdf_a.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_to_pdf_a),
-        );
-        schema_to_pdf_a.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_to_pdf_a = Tool::default();
-        tool_to_pdf_a.name = "pdf_to_pdf_a".into();
-        tool_to_pdf_a.description =
-            Some("Converts a PDF to PDF/A format. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_to_pdf_a.input_schema = Arc::new(schema_to_pdf_a);
-        tools.push(tool_to_pdf_a);
-
-        // Tool: pdf_redact
-        let mut schema_redact = serde_json::Map::new();
-        schema_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_redact = serde_json::Map::new();
-
-        let mut prop_input_redact = serde_json::Map::new();
-        prop_input_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_redact.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to the PDF to redact.".to_string()),
-        );
-        props_redact.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_redact),
-        );
-
-        let mut prop_output_redact = serde_json::Map::new();
-        prop_output_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_redact.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to save the redacted PDF.".to_string()),
-        );
-        props_redact.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_redact),
-        );
-
-        let mut prop_page_redact = serde_json::Map::new();
-        prop_page_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("integer".to_string()),
-        );
-        prop_page_redact.insert(
-            "description".to_string(),
-            serde_json::Value::String("Page number to redact (1-based).".to_string()),
-        );
-        props_redact.insert(
-            "page".to_string(),
-            serde_json::Value::Object(prop_page_redact),
-        );
-
-        let mut prop_x_redact = serde_json::Map::new();
-        prop_x_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_x_redact.insert(
-            "description".to_string(),
-            serde_json::Value::String("X coordinate.".to_string()),
-        );
-        props_redact.insert("x".to_string(), serde_json::Value::Object(prop_x_redact));
-
-        let mut prop_y_redact = serde_json::Map::new();
-        prop_y_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_y_redact.insert(
-            "description".to_string(),
-            serde_json::Value::String("Y coordinate.".to_string()),
-        );
-        props_redact.insert("y".to_string(), serde_json::Value::Object(prop_y_redact));
-
-        let mut prop_width_redact = serde_json::Map::new();
-        prop_width_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_width_redact.insert(
-            "description".to_string(),
-            serde_json::Value::String("Width.".to_string()),
-        );
-        props_redact.insert(
-            "width".to_string(),
-            serde_json::Value::Object(prop_width_redact),
-        );
-
-        let mut prop_height_redact = serde_json::Map::new();
-        prop_height_redact.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_height_redact.insert(
-            "description".to_string(),
-            serde_json::Value::String("Height.".to_string()),
-        );
-        props_redact.insert(
-            "height".to_string(),
-            serde_json::Value::Object(prop_height_redact),
-        );
-
-        let mut prop_query_redact = serde_json::Map::new();
-        prop_query_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_query_redact.insert("description".to_string(), serde_json::Value::String("Search keyword or pattern to redact permanently.".to_string()));
-        props_redact.insert("query".to_string(), serde_json::Value::Object(prop_query_redact));
-
-        let mut prop_regex_redact = serde_json::Map::new();
-        prop_regex_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_regex_redact.insert("description".to_string(), serde_json::Value::String("Regular expression to match and redact.".to_string()));
-        props_redact.insert("regex".to_string(), serde_json::Value::Object(prop_regex_redact));
-
-        let mut prop_overlay_redact = serde_json::Map::new();
-        prop_overlay_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_overlay_redact.insert("description".to_string(), serde_json::Value::String("Optional overlay text (e.g. '[REDACTED]').".to_string()));
-        props_redact.insert("overlay_text".to_string(), serde_json::Value::Object(prop_overlay_redact));
-
-        let mut prop_occurrence_redact = serde_json::Map::new();
-        prop_occurrence_redact.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_occurrence_redact.insert("description".to_string(), serde_json::Value::String("Occurrence filter: 'all', 'first', 'last', or indices.".to_string()));
-        props_redact.insert("occurrence".to_string(), serde_json::Value::Object(prop_occurrence_redact));
-
-        schema_redact.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_redact),
-        );
-        schema_redact.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_redact = Tool::default();
-        tool_redact.name = "pdf_redact".into();
-        tool_redact.description = Some(
-            "Permanently redacts sensitive text glyphs, patterns, regexes, or specified bounding areas with blackout boxes and optional overlay text. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
-                .into(),
-        );
-        tool_redact.input_schema = Arc::new(schema_redact);
-        tools.push(tool_redact);
-
-        // Tool: pdf_sanitize
-        let mut schema_sanitize = serde_json::Map::new();
-        schema_sanitize.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_sanitize = serde_json::Map::new();
-
-        let mut prop_input_san = serde_json::Map::new();
-        prop_input_san.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_sanitize.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_san),
-        );
-
-        let mut prop_output_san = serde_json::Map::new();
-        prop_output_san.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_sanitize.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_san),
-        );
-
-        let mut prop_rm_meta = serde_json::Map::new();
-        prop_rm_meta.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_sanitize.insert(
-            "remove_metadata".to_string(),
-            serde_json::Value::Object(prop_rm_meta),
-        );
-
-        let mut prop_rm_att = serde_json::Map::new();
-        prop_rm_att.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_sanitize.insert(
-            "remove_attachments".to_string(),
-            serde_json::Value::Object(prop_rm_att),
-        );
-
-        let mut prop_rm_scr = serde_json::Map::new();
-        prop_rm_scr.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_sanitize.insert(
-            "remove_scripts".to_string(),
-            serde_json::Value::Object(prop_rm_scr),
-        );
-
-        schema_sanitize.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_sanitize),
-        );
-        schema_sanitize.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut schema_pdf_validate_signatures = serde_json::Map::new();
-        schema_pdf_validate_signatures.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_validate_signatures = serde_json::Map::new();
-
-        let mut prop_input_pdf_validate_signatures = serde_json::Map::new();
-        prop_input_pdf_validate_signatures.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_validate_signatures.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_validate_signatures),
-        );
-        let mut prop_baseline = serde_json::Map::new();
-        prop_baseline.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        prop_baseline.insert(
-            "description".to_string(),
-            serde_json::Value::String("Capture and report pre-sign incremental update tamper forensics / baseline integrity".to_string()),
-        );
-        props_pdf_validate_signatures.insert(
-            "baseline".to_string(),
-            serde_json::Value::Object(prop_baseline),
-        );
-
-        let mut prop_output_pdf_validate_signatures = serde_json::Map::new();
-        prop_output_pdf_validate_signatures.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_validate_signatures.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_validate_signatures),
-        );
-
-        schema_pdf_validate_signatures.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_validate_signatures),
-        );
-        schema_pdf_validate_signatures.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_validate_signatures = Tool::default();
-        tool_pdf_validate_signatures.name = "pdf_validate_signatures".into();
-        tool_pdf_validate_signatures.description = Some(
-            "Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity. [Input: .pdf | Output: .json]".into(),
-        );
-        tool_pdf_validate_signatures.input_schema = Arc::new(schema_pdf_validate_signatures);
-        tools.push(tool_pdf_validate_signatures);
-        let mut schema_pdf_booklet = serde_json::Map::new();
-        schema_pdf_booklet.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_booklet = serde_json::Map::new();
-
-        let mut prop_input_pdf_booklet = serde_json::Map::new();
-        prop_input_pdf_booklet.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_booklet.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_booklet),
-        );
-
-        let mut prop_output_pdf_booklet = serde_json::Map::new();
-        prop_output_pdf_booklet.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_booklet.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_booklet),
-        );
-
-        schema_pdf_booklet.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_booklet),
-        );
-        schema_pdf_booklet.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_booklet = Tool::default();
-        tool_pdf_booklet.name = "pdf_booklet".into();
-        tool_pdf_booklet.description = Some(
-            "Booklet Imposition: Reorder and impose pages for 2-sided folding booklet printing. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_booklet.input_schema = Arc::new(schema_pdf_booklet);
-        tools.push(tool_pdf_booklet);
-        let mut schema_pdf_nup = serde_json::Map::new();
-        schema_pdf_nup.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_nup = serde_json::Map::new();
-
-        let mut prop_input_pdf_nup = serde_json::Map::new();
-        prop_input_pdf_nup.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_nup.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_nup),
-        );
-
-        let mut prop_output_pdf_nup = serde_json::Map::new();
-        prop_output_pdf_nup.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_nup.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_nup),
-        );
-
-        schema_pdf_nup.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_nup),
-        );
-        schema_pdf_nup.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_nup = Tool::default();
-        tool_pdf_nup.name = "pdf_nup".into();
-        tool_pdf_nup.description = Some(
-            "N-Up Page Imposition: Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_nup.input_schema = Arc::new(schema_pdf_nup);
-        tools.push(tool_pdf_nup);
-        let mut schema_pdf_scale_pages = serde_json::Map::new();
-        schema_pdf_scale_pages.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_scale_pages = serde_json::Map::new();
-
-        let mut prop_input_pdf_scale_pages = serde_json::Map::new();
-        prop_input_pdf_scale_pages.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_scale_pages.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_scale_pages),
-        );
-
-        let mut prop_output_pdf_scale_pages = serde_json::Map::new();
-        prop_output_pdf_scale_pages.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_scale_pages.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_scale_pages),
-        );
-
-        schema_pdf_scale_pages.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_scale_pages),
-        );
-        schema_pdf_scale_pages.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_scale_pages = Tool::default();
-        tool_pdf_scale_pages.name = "pdf_scale_pages".into();
-        tool_pdf_scale_pages.description = Some(
-            "Scale Page Dimensions: Scale page dimensions between standard formats or percentages. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_scale_pages.input_schema = Arc::new(schema_pdf_scale_pages);
-        tools.push(tool_pdf_scale_pages);
-        let mut schema_pdf_remove_signatures = serde_json::Map::new();
-        schema_pdf_remove_signatures.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_remove_signatures = serde_json::Map::new();
-
-        let mut prop_input_pdf_remove_signatures = serde_json::Map::new();
-        prop_input_pdf_remove_signatures.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_remove_signatures.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_remove_signatures),
-        );
-
-        let mut prop_output_pdf_remove_signatures = serde_json::Map::new();
-        prop_output_pdf_remove_signatures.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_remove_signatures.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_remove_signatures),
-        );
-
-        schema_pdf_remove_signatures.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_remove_signatures),
-        );
-        schema_pdf_remove_signatures.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_remove_signatures = Tool::default();
-        tool_pdf_remove_signatures.name = "pdf_remove_signatures".into();
-        tool_pdf_remove_signatures.description = Some(
-            "Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_remove_signatures.input_schema = Arc::new(schema_pdf_remove_signatures);
-        tools.push(tool_pdf_remove_signatures);
-        let mut schema_pdf_stamp = serde_json::Map::new();
-        schema_pdf_stamp.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_stamp = serde_json::Map::new();
-
-        let mut prop_input_pdf_stamp = serde_json::Map::new();
-        prop_input_pdf_stamp.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_stamp.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_stamp),
-        );
-
-        let mut prop_output_pdf_stamp = serde_json::Map::new();
-        prop_output_pdf_stamp.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_stamp.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_stamp),
-        );
-
-        schema_pdf_stamp.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_stamp),
-        );
-        schema_pdf_stamp.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_stamp = Tool::default();
-        tool_pdf_stamp.name = "pdf_stamp".into();
-        tool_pdf_stamp.description = Some(
-            "Stamp Image & Logo: Place coordinate-exact images, logos, and badges onto PDF pages. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_stamp.input_schema = Arc::new(schema_pdf_stamp);
-        tools.push(tool_pdf_stamp);
-        let mut schema_pdf_overlay_underlay = serde_json::Map::new();
-        schema_pdf_overlay_underlay.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_overlay_underlay = serde_json::Map::new();
-
-        let mut prop_input_pdf_overlay_underlay = serde_json::Map::new();
-        prop_input_pdf_overlay_underlay.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_overlay_underlay.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_overlay_underlay),
-        );
-
-        let mut prop_output_pdf_overlay_underlay = serde_json::Map::new();
-        prop_output_pdf_overlay_underlay.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_overlay_underlay.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_overlay_underlay),
-        );
-
-        schema_pdf_overlay_underlay.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_overlay_underlay),
-        );
-        schema_pdf_overlay_underlay.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_overlay_underlay = Tool::default();
-        tool_pdf_overlay_underlay.name = "pdf_overlay_underlay".into();
-        tool_pdf_overlay_underlay.description = Some(
-            "Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_overlay_underlay.input_schema = Arc::new(schema_pdf_overlay_underlay);
-        tools.push(tool_pdf_overlay_underlay);
-        let mut schema_pdf_auto_rotate = serde_json::Map::new();
-        schema_pdf_auto_rotate.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_auto_rotate = serde_json::Map::new();
-
-        let mut prop_input_pdf_auto_rotate = serde_json::Map::new();
-        prop_input_pdf_auto_rotate.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_auto_rotate.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_auto_rotate),
-        );
-
-        let mut prop_output_pdf_auto_rotate = serde_json::Map::new();
-        prop_output_pdf_auto_rotate.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_auto_rotate.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_auto_rotate),
-        );
-
-        schema_pdf_auto_rotate.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_auto_rotate),
-        );
-        schema_pdf_auto_rotate.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_auto_rotate = Tool::default();
-        tool_pdf_auto_rotate.name = "pdf_auto_rotate".into();
-        tool_pdf_auto_rotate.description = Some(
-            "Auto Upright Orientation: Heuristically detect text baseline and rotation angle to automatically upright pages. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_auto_rotate.input_schema = Arc::new(schema_pdf_auto_rotate);
-        tools.push(tool_pdf_auto_rotate);
-        let mut schema_pdf_stitch_canvas = serde_json::Map::new();
-        schema_pdf_stitch_canvas.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_stitch_canvas = serde_json::Map::new();
-
-        let mut prop_input_pdf_stitch_canvas = serde_json::Map::new();
-        prop_input_pdf_stitch_canvas.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_stitch_canvas.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_stitch_canvas),
-        );
-
-        let mut prop_output_pdf_stitch_canvas = serde_json::Map::new();
-        prop_output_pdf_stitch_canvas.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_stitch_canvas.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_stitch_canvas),
-        );
-
-        let mut prop_direction_pdf_stitch_canvas = serde_json::Map::new();
-        prop_direction_pdf_stitch_canvas.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_direction_pdf_stitch_canvas.insert(
-            "enum".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("vertical".to_string()),
-                serde_json::Value::String("horizontal".to_string()),
-            ]),
-        );
-        prop_direction_pdf_stitch_canvas.insert(
-            "default".to_string(),
-            serde_json::Value::String("vertical".to_string()),
-        );
-        props_pdf_stitch_canvas.insert(
-            "direction".to_string(),
-            serde_json::Value::Object(prop_direction_pdf_stitch_canvas),
-        );
-
-        let mut prop_margin_pdf_stitch_canvas = serde_json::Map::new();
-        prop_margin_pdf_stitch_canvas.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_margin_pdf_stitch_canvas.insert(
-            "default".to_string(),
-            serde_json::Value::Number(serde_json::Number::from_f64(0.0).unwrap()),
-        );
-        props_pdf_stitch_canvas.insert(
-            "margin_pt".to_string(),
-            serde_json::Value::Object(prop_margin_pdf_stitch_canvas),
-        );
-
-        let mut prop_spacing_pdf_stitch_canvas = serde_json::Map::new();
-        prop_spacing_pdf_stitch_canvas.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        prop_spacing_pdf_stitch_canvas.insert(
-            "default".to_string(),
-            serde_json::Value::Number(serde_json::Number::from_f64(0.0).unwrap()),
-        );
-        props_pdf_stitch_canvas.insert(
-            "spacing_pt".to_string(),
-            serde_json::Value::Object(prop_spacing_pdf_stitch_canvas),
-        );
-
-        schema_pdf_stitch_canvas.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_stitch_canvas),
-        );
-        schema_pdf_stitch_canvas.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_stitch_canvas = Tool::default();
-        tool_pdf_stitch_canvas.name = "pdf_stitch_canvas".into();
-        tool_pdf_stitch_canvas.description = Some(
-            "Stitch Continuous Canvas: Combine multiple pages vertically or horizontally into a continuous single-page canvas. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_stitch_canvas.input_schema = Arc::new(schema_pdf_stitch_canvas);
-        tools.push(tool_pdf_stitch_canvas);
-        let mut schema_pdf_attachments = serde_json::Map::new();
-        schema_pdf_attachments.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_attachments = serde_json::Map::new();
-
-        let mut prop_input_pdf_attachments = serde_json::Map::new();
-        prop_input_pdf_attachments.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_attachments.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_attachments),
-        );
-
-        let mut prop_output_pdf_attachments = serde_json::Map::new();
-        prop_output_pdf_attachments.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_attachments.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_attachments),
-        );
-
-        let mut prop_action_pdf_attachments = serde_json::Map::new();
-        prop_action_pdf_attachments.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_attachments.insert(
-            "action".to_string(),
-            serde_json::Value::Object(prop_action_pdf_attachments),
-        );
-
-        let mut prop_file_name_pdf_attachments = serde_json::Map::new();
-        prop_file_name_pdf_attachments.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_attachments.insert(
-            "file_name".to_string(),
-            serde_json::Value::Object(prop_file_name_pdf_attachments),
-        );
-
-        let mut prop_desc_pdf_attachments = serde_json::Map::new();
-        prop_desc_pdf_attachments.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_attachments.insert(
-            "description".to_string(),
-            serde_json::Value::Object(prop_desc_pdf_attachments),
-        );
-
-        let mut prop_b64_pdf_attachments = serde_json::Map::new();
-        prop_b64_pdf_attachments.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_attachments.insert(
-            "file_data_base64".to_string(),
-            serde_json::Value::Object(prop_b64_pdf_attachments),
-        );
-
-        schema_pdf_attachments.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_attachments),
-        );
-        schema_pdf_attachments.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_attachments = Tool::default();
-        tool_pdf_attachments.name = "pdf_attachments".into();
-        tool_pdf_attachments.description = Some(
-            "PDF Portfolio Attachments: Inspect, extract, or embed file attachments into PDF portfolios. [Input: .pdf | Output: .json]".into(),
-        );
-        tool_pdf_attachments.input_schema = Arc::new(schema_pdf_attachments);
-        tools.push(tool_pdf_attachments);
-        let mut schema_pdf_timestamp = serde_json::Map::new();
-        schema_pdf_timestamp.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_timestamp = serde_json::Map::new();
-
-        let mut prop_input_pdf_timestamp = serde_json::Map::new();
-        prop_input_pdf_timestamp.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_timestamp.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_timestamp),
-        );
-
-        let mut prop_output_pdf_timestamp = serde_json::Map::new();
-        prop_output_pdf_timestamp.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_timestamp.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_timestamp),
-        );
-
-        schema_pdf_timestamp.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_timestamp),
-        );
-        schema_pdf_timestamp.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_timestamp = Tool::default();
-        tool_pdf_timestamp.name = "pdf_timestamp".into();
-        tool_pdf_timestamp.description = Some(
-            "Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_timestamp.input_schema = Arc::new(schema_pdf_timestamp);
-        tools.push(tool_pdf_timestamp);
-        let mut schema_pdf_change_permissions = serde_json::Map::new();
-        schema_pdf_change_permissions.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_change_permissions = serde_json::Map::new();
-
-        let mut prop_input_pdf_change_permissions = serde_json::Map::new();
-        prop_input_pdf_change_permissions.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_change_permissions.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_change_permissions),
-        );
-
-        let mut prop_output_pdf_change_permissions = serde_json::Map::new();
-        prop_output_pdf_change_permissions.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_change_permissions.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_change_permissions),
-        );
-
-        schema_pdf_change_permissions.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_change_permissions),
-        );
-        schema_pdf_change_permissions.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_change_permissions = Tool::default();
-        tool_pdf_change_permissions.name = "pdf_change_permissions".into();
-        tool_pdf_change_permissions.description = Some(
-            "Modify PDF Permissions: Configure user and owner permissions for printing, copying, and modification. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_change_permissions.input_schema = Arc::new(schema_pdf_change_permissions);
-        tools.push(tool_pdf_change_permissions);
-        let mut schema_pdf_split_scanned_book = serde_json::Map::new();
-        schema_pdf_split_scanned_book.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_split_scanned_book = serde_json::Map::new();
-
-        let mut prop_input_pdf_split_scanned_book = serde_json::Map::new();
-        prop_input_pdf_split_scanned_book.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_split_scanned_book.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_split_scanned_book),
-        );
-
-        let mut prop_output_pdf_split_scanned_book = serde_json::Map::new();
-        prop_output_pdf_split_scanned_book.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_split_scanned_book.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_split_scanned_book),
-        );
-
-        schema_pdf_split_scanned_book.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_split_scanned_book),
-        );
-        schema_pdf_split_scanned_book.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_split_scanned_book = Tool::default();
-        tool_pdf_split_scanned_book.name = "pdf_split_scanned_book".into();
-        tool_pdf_split_scanned_book.description = Some(
-            "Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_split_scanned_book.input_schema = Arc::new(schema_pdf_split_scanned_book);
-        tools.push(tool_pdf_split_scanned_book);
-        let mut schema_pdf_comic_archive = serde_json::Map::new();
-        schema_pdf_comic_archive.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_comic_archive = serde_json::Map::new();
-
-        let mut prop_input_pdf_comic_archive = serde_json::Map::new();
-        prop_input_pdf_comic_archive.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_comic_archive.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_comic_archive),
-        );
-
-        let mut prop_output_pdf_comic_archive = serde_json::Map::new();
-        prop_output_pdf_comic_archive.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_comic_archive.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_comic_archive),
-        );
-
-        schema_pdf_comic_archive.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_comic_archive),
-        );
-        schema_pdf_comic_archive.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_comic_archive = Tool::default();
-        tool_pdf_comic_archive.name = "pdf_comic_archive".into();
-        tool_pdf_comic_archive.description = Some(
-            "Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR). [Input: .pdf | Output: .cbr]".into(),
-        );
-        tool_pdf_comic_archive.input_schema = Arc::new(schema_pdf_comic_archive);
-        tools.push(tool_pdf_comic_archive);
-        let mut schema_pdf_split_by_outline = serde_json::Map::new();
-        schema_pdf_split_by_outline.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_split_by_outline = serde_json::Map::new();
-
-        let mut prop_input_pdf_split_by_outline = serde_json::Map::new();
-        prop_input_pdf_split_by_outline.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_split_by_outline.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_split_by_outline),
-        );
-
-        let mut prop_output_pdf_split_by_outline = serde_json::Map::new();
-        prop_output_pdf_split_by_outline.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_split_by_outline.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_split_by_outline),
-        );
-
-        schema_pdf_split_by_outline.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_split_by_outline),
-        );
-        schema_pdf_split_by_outline.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_split_by_outline = Tool::default();
-        tool_pdf_split_by_outline.name = "pdf_split_by_outline".into();
-        tool_pdf_split_by_outline.description = Some(
-            "Split PDF by Outline: Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy [Input: .pdf | Output: .zip]".into(),
-        );
-        tool_pdf_split_by_outline.input_schema = Arc::new(schema_pdf_split_by_outline);
-        tools.push(tool_pdf_split_by_outline);
-
-        let mut schema_pdf_merge_alternate = serde_json::Map::new();
-        schema_pdf_merge_alternate.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_merge_alternate = serde_json::Map::new();
-
-        let mut prop_input_a_pdf_merge_alternate = serde_json::Map::new();
-        prop_input_a_pdf_merge_alternate.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_merge_alternate.insert(
-            "input_a".to_string(),
-            serde_json::Value::Object(prop_input_a_pdf_merge_alternate),
-        );
-
-        let mut prop_input_b_pdf_merge_alternate = serde_json::Map::new();
-        prop_input_b_pdf_merge_alternate.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_merge_alternate.insert(
-            "input_b".to_string(),
-            serde_json::Value::Object(prop_input_b_pdf_merge_alternate),
-        );
-
-        let mut prop_output_pdf_merge_alternate = serde_json::Map::new();
-        prop_output_pdf_merge_alternate.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_merge_alternate.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_merge_alternate),
-        );
-
-        let mut prop_step = serde_json::Map::new();
-        prop_step.insert(
-            "type".to_string(),
-            serde_json::Value::String("integer".to_string()),
-        );
-        props_pdf_merge_alternate.insert("step".to_string(), serde_json::Value::Object(prop_step));
-
-        let mut prop_step_b = serde_json::Map::new();
-        prop_step_b.insert(
-            "type".to_string(),
-            serde_json::Value::String("integer".to_string()),
-        );
-        props_pdf_merge_alternate
-            .insert("step_b".to_string(), serde_json::Value::Object(prop_step_b));
-
-        let mut prop_rev_a = serde_json::Map::new();
-        prop_rev_a.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pdf_merge_alternate.insert(
-            "reverse_a".to_string(),
-            serde_json::Value::Object(prop_rev_a),
-        );
-
-        let mut prop_rev_b = serde_json::Map::new();
-        prop_rev_b.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pdf_merge_alternate.insert(
-            "reverse_b".to_string(),
-            serde_json::Value::Object(prop_rev_b),
-        );
-
-        schema_pdf_merge_alternate.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_merge_alternate),
-        );
-        schema_pdf_merge_alternate.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input_a".to_string()),
-                serde_json::Value::String("input_b".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_merge_alternate = Tool::default();
-        tool_pdf_merge_alternate.name = "pdf_merge_alternate".into();
-        tool_pdf_merge_alternate.description = Some(
-            "Alternating PDF Merge: Interleave pages from two PDF documents. [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_merge_alternate.input_schema = Arc::new(schema_pdf_merge_alternate);
-        tools.push(tool_pdf_merge_alternate);
-        let mut schema_pdf_posterize = serde_json::Map::new();
-        schema_pdf_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_posterize = serde_json::Map::new();
-
-        let mut prop_input_pdf_posterize = serde_json::Map::new();
-        prop_input_pdf_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_posterize),
-        );
-
-        let mut prop_output_pdf_posterize = serde_json::Map::new();
-        prop_output_pdf_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_posterize),
-        );
-
-        let mut prop_target_sheet_posterize = serde_json::Map::new();
-        prop_target_sheet_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "target_sheet".to_string(),
-            serde_json::Value::Object(prop_target_sheet_posterize),
-        );
-
-        let mut prop_grid_cols_posterize = serde_json::Map::new();
-        prop_grid_cols_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "grid_cols".to_string(),
-            serde_json::Value::Object(prop_grid_cols_posterize),
-        );
-
-        let mut prop_grid_rows_posterize = serde_json::Map::new();
-        prop_grid_rows_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "grid_rows".to_string(),
-            serde_json::Value::Object(prop_grid_rows_posterize),
-        );
-
-        let mut prop_overlap_pt_posterize = serde_json::Map::new();
-        prop_overlap_pt_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "overlap_pt".to_string(),
-            serde_json::Value::Object(prop_overlap_pt_posterize),
-        );
-
-        let mut prop_scale_posterize = serde_json::Map::new();
-        prop_scale_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("number".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "scale".to_string(),
-            serde_json::Value::Object(prop_scale_posterize),
-        );
-
-        let mut prop_guides_posterize = serde_json::Map::new();
-        prop_guides_posterize.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pdf_posterize.insert(
-            "include_guides".to_string(),
-            serde_json::Value::Object(prop_guides_posterize),
-        );
-
-        schema_pdf_posterize.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_posterize),
-        );
-        schema_pdf_posterize.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_posterize = Tool::default();
-        tool_pdf_posterize.name = "pdf_posterize".into();
-        tool_pdf_posterize.description = Some(
-            "Multi-Sheet Poster Tile Slicer: Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_posterize.input_schema = Arc::new(schema_pdf_posterize);
-        tools.push(tool_pdf_posterize);
-        let mut schema_pdf_dedup_streams = serde_json::Map::new();
-        schema_pdf_dedup_streams.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_dedup_streams = serde_json::Map::new();
-
-        let mut prop_input_pdf_dedup_streams = serde_json::Map::new();
-        prop_input_pdf_dedup_streams.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_dedup_streams.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_dedup_streams),
-        );
-
-        let mut prop_output_pdf_dedup_streams = serde_json::Map::new();
-        prop_output_pdf_dedup_streams.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_dedup_streams.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_dedup_streams),
-        );
-
-        schema_pdf_dedup_streams.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_dedup_streams),
-        );
-        schema_pdf_dedup_streams.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_dedup_streams = Tool::default();
-        tool_pdf_dedup_streams.name = "pdf_dedup_streams".into();
-        tool_pdf_dedup_streams.description = Some(
-            "Lossless Stream Deduplication: Lossless hash-based indirect object stream deduplication & CMYK-safe image compression [Input: .pdf | Output: .pdf]".into(),
-        );
-        tool_pdf_dedup_streams.input_schema = Arc::new(schema_pdf_dedup_streams);
-        tools.push(tool_pdf_dedup_streams);
-        let mut schema_pdf_to_epub = serde_json::Map::new();
-        schema_pdf_to_epub.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_to_epub = serde_json::Map::new();
-
-        let mut prop_input_pdf_to_epub = serde_json::Map::new();
-        prop_input_pdf_to_epub.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_to_epub.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_to_epub),
-        );
-
-        let mut prop_output_pdf_to_epub = serde_json::Map::new();
-        prop_output_pdf_to_epub.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_to_epub.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_to_epub),
-        );
-
-        schema_pdf_to_epub.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_to_epub),
-        );
-        schema_pdf_to_epub.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_to_epub = Tool::default();
-        tool_pdf_to_epub.name = "pdf_to_epub".into();
-        tool_pdf_to_epub.description = Some(
-            "PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks [Input: .PDF | Output: ..EPUB]".into(),
-        );
-        tool_pdf_to_epub.input_schema = Arc::new(schema_pdf_to_epub);
-        tools.push(tool_pdf_to_epub);
-        let mut schema_pdf_extract_patterns = serde_json::Map::new();
-        schema_pdf_extract_patterns.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pdf_extract_patterns = serde_json::Map::new();
-
-        let mut prop_input_pdf_extract_patterns = serde_json::Map::new();
-        prop_input_pdf_extract_patterns.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_extract_patterns.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pdf_extract_patterns),
-        );
-
-        let mut prop_output_pdf_extract_patterns = serde_json::Map::new();
-        prop_output_pdf_extract_patterns.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pdf_extract_patterns.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pdf_extract_patterns),
-        );
-
-        let mut prop_keywords = serde_json::Map::new();
-        prop_keywords.insert("type".to_string(), serde_json::Value::String("array".to_string()));
-        let mut kw_items = serde_json::Map::new();
-        kw_items.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_keywords.insert("items".to_string(), serde_json::Value::Object(kw_items));
-        prop_keywords.insert("description".to_string(), serde_json::Value::String("Array of keywords to search for across all pages".to_string()));
-        props_pdf_extract_patterns.insert("keywords".to_string(), serde_json::Value::Object(prop_keywords));
-
-        let mut prop_patterns = serde_json::Map::new();
-        prop_patterns.insert("type".to_string(), serde_json::Value::String("object".to_string()));
-        let mut pat_additional = serde_json::Map::new();
-        pat_additional.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_patterns.insert("additionalProperties".to_string(), serde_json::Value::Object(pat_additional));
-        prop_patterns.insert("description".to_string(), serde_json::Value::String("Key-value map of pattern label to regex string (e.g. {\"ssn\": \"\\\\d{3}-\\\\d{2}-\\\\d{4}\"})".to_string()));
-        props_pdf_extract_patterns.insert("patterns".to_string(), serde_json::Value::Object(prop_patterns));
-
-        let mut prop_case = serde_json::Map::new();
-        prop_case.insert("type".to_string(), serde_json::Value::String("boolean".to_string()));
-        prop_case.insert("description".to_string(), serde_json::Value::String("Whether matching should be case-sensitive (default: false)".to_string()));
-        props_pdf_extract_patterns.insert("case_sensitive".to_string(), serde_json::Value::Object(prop_case));
-
-        let mut prop_ctx = serde_json::Map::new();
-        prop_ctx.insert("type".to_string(), serde_json::Value::String("integer".to_string()));
-        prop_ctx.insert("description".to_string(), serde_json::Value::String("Context characters around match (default: 30)".to_string()));
-        props_pdf_extract_patterns.insert("context_len".to_string(), serde_json::Value::Object(prop_ctx));
-
-        schema_pdf_extract_patterns.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pdf_extract_patterns),
-        );
-        schema_pdf_extract_patterns.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-            ]),
-        );
-
-        let mut tool_pdf_extract_patterns = Tool::default();
-        tool_pdf_extract_patterns.name = "pdf_extract_patterns".into();
-        tool_pdf_extract_patterns.description = Some(
-            "Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]".into(),
-        );
-        tool_pdf_extract_patterns.input_schema = Arc::new(schema_pdf_extract_patterns);
-        tools.push(tool_pdf_extract_patterns);
-        let mut tool_sanitize = Tool::default();
-        tool_sanitize.name = "pdf_sanitize".into();
-        tool_sanitize.description = Some(
-            "Deeply sanitizes a PDF document by removing metadata, scripts, attachments, and thumbnails. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_sanitize.input_schema = Arc::new(schema_sanitize);
-
-        // Tool: document_pii_scan
-        let mut schema_pii = serde_json::Map::new();
-        schema_pii.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_pii = serde_json::Map::new();
-
-        let mut prop_input_pii = serde_json::Map::new();
-        prop_input_pii.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pii.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_pii),
-        );
-
-        let mut prop_output_pii = serde_json::Map::new();
-        prop_output_pii.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_pii.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_pii),
-        );
-
-        let mut prop_ssn = serde_json::Map::new();
-        prop_ssn.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pii.insert("scan_ssn".to_string(), serde_json::Value::Object(prop_ssn));
-
-        let mut prop_cc = serde_json::Map::new();
-        prop_cc.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pii.insert(
-            "scan_credit_cards".to_string(),
-            serde_json::Value::Object(prop_cc),
-        );
-
-        let mut prop_emails = serde_json::Map::new();
-        prop_emails.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pii.insert(
-            "scan_emails".to_string(),
-            serde_json::Value::Object(prop_emails),
-        );
-
-        let mut prop_phones = serde_json::Map::new();
-        prop_phones.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pii.insert(
-            "scan_phones".to_string(),
-            serde_json::Value::Object(prop_phones),
-        );
-
-        let mut prop_iban = serde_json::Map::new();
-        prop_iban.insert(
-            "type".to_string(),
-            serde_json::Value::String("boolean".to_string()),
-        );
-        props_pii.insert(
-            "scan_iban".to_string(),
-            serde_json::Value::Object(prop_iban),
-        );
-
-        schema_pii.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_pii),
-        );
-        schema_pii.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
-        );
-
-        let mut tool_pii = Tool::default();
-        tool_pii.name = "document_pii_scan".into();
-        tool_pii.description = Some(
-            "Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]"
-                .into(),
-        );
-        tool_pii.input_schema = Arc::new(schema_pii);
-        tools.push(tool_pii);
-        tools.push(tool_sanitize);
-
-        // Tool: pdf_header_footer
-        let mut schema_hf = serde_json::Map::new();
-        schema_hf.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_hf = serde_json::Map::new();
-
-        let mut prop_input_hf = serde_json::Map::new();
-        prop_input_hf.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_hf.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_hf.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_hf),
-        );
-
-        let mut prop_output_hf = serde_json::Map::new();
-        prop_output_hf.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_hf.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_hf.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_hf),
-        );
-
-        let mut prop_text_hf = serde_json::Map::new();
-        prop_text_hf.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_text_hf.insert(
-            "description".to_string(),
-            serde_json::Value::String("Text to add.".to_string()),
-        );
-        props_hf.insert("text".to_string(), serde_json::Value::Object(prop_text_hf));
-
-        let mut prop_pos_hf = serde_json::Map::new();
-        prop_pos_hf.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pos_hf.insert(
-            "description".to_string(),
-            serde_json::Value::String("e.g. 'top' or 'bottom'".to_string()),
-        );
-        props_hf.insert(
-            "position".to_string(),
-            serde_json::Value::Object(prop_pos_hf),
-        );
-
-        schema_hf.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_hf),
-        );
-        schema_hf.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-                serde_json::Value::String("text".to_string()),
-                serde_json::Value::String("position".to_string()),
-            ]),
-        );
-
-        let mut tool_hf = Tool::default();
-        tool_hf.name = "pdf_header_footer".into();
-        tool_hf.description = Some(
-            "Adds a header or footer to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into(),
-        );
-        tool_hf.input_schema = Arc::new(schema_hf);
-        tools.push(tool_hf);
-
-        // Tool: pdf_bates
-        let mut schema_bates = serde_json::Map::new();
-        schema_bates.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_bates = serde_json::Map::new();
-
-        let mut prop_input_bates = serde_json::Map::new();
-        prop_input_bates.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_bates.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_bates.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_bates),
-        );
-
-        let mut prop_output_bates = serde_json::Map::new();
-        prop_output_bates.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_bates.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_bates.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_bates),
-        );
-
-        let mut prop_start_num = serde_json::Map::new();
-        prop_start_num.insert(
-            "type".to_string(),
-            serde_json::Value::String("integer".to_string()),
-        );
-        prop_start_num.insert(
-            "description".to_string(),
-            serde_json::Value::String("Start number.".to_string()),
-        );
-        props_bates.insert(
-            "start_number".to_string(),
-            serde_json::Value::Object(prop_start_num),
-        );
-
-        let mut prop_prefix = serde_json::Map::new();
-        prop_prefix.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_prefix.insert(
-            "description".to_string(),
-            serde_json::Value::String("Prefix.".to_string()),
-        );
-        props_bates.insert("prefix".to_string(), serde_json::Value::Object(prop_prefix));
-
-        let mut prop_padding = serde_json::Map::new();
-        prop_padding.insert(
-            "type".to_string(),
-            serde_json::Value::String("integer".to_string()),
-        );
-        prop_padding.insert(
-            "description".to_string(),
-            serde_json::Value::String("Padding length.".to_string()),
-        );
-        props_bates.insert(
-            "padding".to_string(),
-            serde_json::Value::Object(prop_padding),
-        );
-
-        let mut prop_pos = serde_json::Map::new();
-        prop_pos.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_pos.insert(
-            "description".to_string(),
-            serde_json::Value::String("Position (bottom-right, bottom-left, bottom-center, top-right, top-left, top-center). Default: bottom-right.".to_string()),
-        );
-        props_bates.insert(
-            "position".to_string(),
-            serde_json::Value::Object(prop_pos),
-        );
-
-        schema_bates.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_bates),
-        );
-        schema_bates.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-                serde_json::Value::String("start_number".to_string()),
-                serde_json::Value::String("prefix".to_string()),
-                serde_json::Value::String("padding".to_string()),
-            ]),
-        );
-
-        let mut tool_bates = Tool::default();
-        tool_bates.name = "pdf_bates".into();
-        tool_bates.description =
-            Some("Adds Bates numbering to a PDF. [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_bates.input_schema = Arc::new(schema_bates);
-        tools.push(tool_bates);
-
-        // Tool: pdf_render
-        let mut schema_render = serde_json::Map::new();
-        schema_render.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_render = serde_json::Map::new();
-
-        let mut prop_input_render = serde_json::Map::new();
-        prop_input_render.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_render.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_render.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_render),
-        );
-
-        let mut prop_output_render = serde_json::Map::new();
-        prop_output_render.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_render.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_render.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_render),
-        );
-
-        let mut prop_format_render = serde_json::Map::new();
-        prop_format_render.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_format_render.insert(
-            "description".to_string(),
-            serde_json::Value::String("Output image format: png, jpeg/jpg, webp. Optional, defaults to inferring from output path or png.".to_string()),
-        );
-        props_render.insert(
-            "format".to_string(),
-            serde_json::Value::Object(prop_format_render),
-        );
-
-        schema_render.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_render),
-        );
-        schema_render.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_render = Tool::default();
-        tool_render.name = "pdf_render".into();
-        tool_render.description =
-            Some("Renders a PDF. [Input: PDF (.pdf) | Output: PNG/JPEG/WEBP images]".into());
-        tool_render.input_schema = Arc::new(schema_render);
-        tools.push(tool_render);
-
-        // Tool: pdf_images_to_pdf
-        let mut schema_itp = serde_json::Map::new();
-        schema_itp.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_itp = serde_json::Map::new();
-
-        let mut prop_inputs_itp = serde_json::Map::new();
-        prop_inputs_itp.insert(
-            "type".to_string(),
-            serde_json::Value::String("array".to_string()),
-        );
-        prop_inputs_itp.insert(
-            "description".to_string(),
-            serde_json::Value::String("List of image paths.".to_string()),
-        );
-
-        let mut prop_items_itp = serde_json::Map::new();
-        prop_items_itp.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_inputs_itp.insert(
-            "items".to_string(),
-            serde_json::Value::Object(prop_items_itp),
-        );
-        props_itp.insert(
-            "inputs".to_string(),
-            serde_json::Value::Object(prop_inputs_itp),
-        );
-
-        let mut prop_output_itp = serde_json::Map::new();
-        prop_output_itp.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_itp.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_itp.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_itp),
-        );
-
-        schema_itp.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_itp),
-        );
-        schema_itp.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("inputs".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_itp = Tool::default();
-        tool_itp.name = "pdf_images_to_pdf".into();
-        tool_itp.description = Some(
-            "Converts a list of images to a PDF. [Input: JPG/PNG/WebP images | Output: PDF (.pdf)]"
-                .into(),
-        );
-        tool_itp.input_schema = Arc::new(schema_itp.clone());
-        tools.push(tool_itp);
-
-        let mut tool_single_itp = Tool::default();
-        tool_single_itp.name = "img_to_pdf".into();
-        tool_single_itp.description = Some(
-            "Converts image(s) to a PDF document. [Input: JPG/PNG/WebP images | Output: PDF (.pdf)]"
-                .into(),
-        );
-        tool_single_itp.input_schema = Arc::new(schema_itp);
-        tools.push(tool_single_itp);
-
-        // Tool: pdf_compare
-        let mut schema_compare = serde_json::Map::new();
-        schema_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_compare = serde_json::Map::new();
-
-        let mut prop_input_a_compare = serde_json::Map::new();
-        prop_input_a_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_a_compare.insert(
-            "description".to_string(),
-            serde_json::Value::String("First input PDF file path.".to_string()),
-        );
-        props_compare.insert(
-            "input_a".to_string(),
-            serde_json::Value::Object(prop_input_a_compare),
-        );
-
-        let mut prop_input_b_compare = serde_json::Map::new();
-        prop_input_b_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_b_compare.insert(
-            "description".to_string(),
-            serde_json::Value::String("Second input PDF file path.".to_string()),
-        );
-        props_compare.insert(
-            "input_b".to_string(),
-            serde_json::Value::Object(prop_input_b_compare),
-        );
-
-        let mut prop_file1_compare = serde_json::Map::new();
-        prop_file1_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_compare.insert(
-            "file1".to_string(),
-            serde_json::Value::Object(prop_file1_compare),
-        );
-        let mut prop_file_a_compare = serde_json::Map::new();
-        prop_file_a_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_compare.insert(
-            "file_a".to_string(),
-            serde_json::Value::Object(prop_file_a_compare),
-        );
-
-        let mut prop_file2_compare = serde_json::Map::new();
-        prop_file2_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_compare.insert(
-            "file2".to_string(),
-            serde_json::Value::Object(prop_file2_compare),
-        );
-        let mut prop_file_b_compare = serde_json::Map::new();
-        prop_file_b_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        props_compare.insert(
-            "file_b".to_string(),
-            serde_json::Value::Object(prop_file_b_compare),
-        );
-
-        let mut prop_output_compare = serde_json::Map::new();
-        prop_output_compare.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_compare.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output diff file path.".to_string()),
-        );
-        props_compare.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_compare),
-        );
-
-        schema_compare.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_compare),
-        );
-        schema_compare.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input_a".to_string()),
-                serde_json::Value::String("input_b".to_string()),
-            ]),
-        );
-
-        let mut tool_compare = Tool::default();
-        tool_compare.name = "pdf_compare".into();
-        tool_compare.description =
-            Some("Compares two PDFs. [Input: 2 PDFs | Output: JSON report (.json)]".into());
-        tool_compare.input_schema = Arc::new(schema_compare);
-        tools.push(tool_compare);
-
-        // Tool: pdf_bookmarks
-        let mut schema_bookmarks = serde_json::Map::new();
-        schema_bookmarks.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_bookmarks = serde_json::Map::new();
-
-        let mut prop_input_bookmarks = serde_json::Map::new();
-        prop_input_bookmarks.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_bookmarks.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_bookmarks.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_bookmarks),
-        );
-
-        let mut prop_output_bookmarks = serde_json::Map::new();
-        prop_output_bookmarks.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_bookmarks.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_bookmarks.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_bookmarks),
-        );
-
-        schema_bookmarks.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_bookmarks),
-        );
-        schema_bookmarks.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_bookmarks = Tool::default();
-        tool_bookmarks.name = "pdf_bookmarks".into();
-        tool_bookmarks.description =
-            Some("Handles bookmarks in a PDF. [Input: PDF (.pdf) | Output: JSON array]".into());
-        tool_bookmarks.input_schema = Arc::new(schema_bookmarks);
-        tools.push(tool_bookmarks);
-
-        // Tool: pdf_ocr
-        let mut schema_ocr = serde_json::Map::new();
-        schema_ocr.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_ocr = serde_json::Map::new();
-
-        let mut prop_input_ocr = serde_json::Map::new();
-        prop_input_ocr.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_ocr.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_ocr.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_ocr),
-        );
-
-        let mut prop_output_ocr = serde_json::Map::new();
-        prop_output_ocr.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_ocr.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_ocr.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_ocr),
-        );
-
-        schema_ocr.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_ocr),
-        );
-        schema_ocr.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_ocr = Tool::default();
-        tool_ocr.name = "pdf_ocr".into();
-        tool_ocr.description = Some(
-            "Performs OCR on a PDF. [Input: Scanned PDF / Image | Output: Plain Text (.txt) / PDF]"
-                .into(),
-        );
-        tool_ocr.input_schema = Arc::new(schema_ocr);
-        tools.push(tool_ocr);
-
-        // Tool: pdf_sign
-        let mut schema_sign = serde_json::Map::new();
-        schema_sign.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-
-        let mut props_sign = serde_json::Map::new();
-
-        let mut prop_input_sign = serde_json::Map::new();
-        prop_input_sign.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_sign.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        prop_input_sign.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to the PDF to sign.".to_string()),
-        );
-        props_sign.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_sign),
-        );
-
-        let mut prop_output_sign = serde_json::Map::new();
-        prop_output_sign.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_sign.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        prop_output_sign.insert(
-            "description".to_string(),
-            serde_json::Value::String("Path to save the signed PDF.".to_string()),
-        );
-        props_sign.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_sign),
-        );
-
-        // We'll leave out certificate paths for now since it's a stub,
-        // just input and output are enough.
-
-        schema_sign.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_sign),
-        );
-        schema_sign.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_sign = Tool::default();
-        tool_sign.name = "pdf_sign".into();
-        tool_sign.description = Some("Digitally signs a PDF document (Currently a stub). [Input: PDF (.pdf) | Output: PDF (.pdf)]".into());
-        tool_sign.input_schema = Arc::new(schema_sign);
-        tools.push(tool_sign);
-
-        // Tool: pdf_hash
-        let mut schema_hash = serde_json::Map::new();
-        schema_hash.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_hash = serde_json::Map::new();
-        let mut prop_input_hash = serde_json::Map::new();
-        prop_input_hash.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_hash.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_hash.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_hash),
-        );
-        schema_hash.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_hash),
-        );
-        schema_hash.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
-        );
-        let mut tool_hash = Tool::default();
-        tool_hash.name = "pdf_hash".into();
-        tool_hash.description = Some(
-            "Calculates integrity hash for a PDF. [Input: PDF (.pdf) | Output: Plain Text (.txt)]"
-                .into(),
-        );
-        tool_hash.input_schema = std::sync::Arc::new(schema_hash);
-        tools.push(tool_hash);
-
-        // Tool: pdf_validate
-        let mut schema_val = serde_json::Map::new();
-        schema_val.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_val = serde_json::Map::new();
-        let mut prop_input_val = serde_json::Map::new();
-        prop_input_val.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_val.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_val.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_val),
-        );
-        schema_val.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_val),
-        );
-        schema_val.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![serde_json::Value::String("input".to_string())]),
-        );
-        let mut tool_val = Tool::default();
-        tool_val.name = "pdf_validate".into();
-        tool_val.description = Some(
-            "Validates a PDF document. [Input: PDF (.pdf) | Output: Plain Text (.txt)]".into(),
-        );
-        tool_val.input_schema = std::sync::Arc::new(schema_val);
-        tools.push(tool_val);
-
-        // Tool: pdf_annotate
-        let mut schema_ann = serde_json::Map::new();
-        schema_ann.insert(
-            "type".to_string(),
-            serde_json::Value::String("object".to_string()),
-        );
-        let mut props_ann = serde_json::Map::new();
-        let mut prop_input_ann = serde_json::Map::new();
-        prop_input_ann.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_input_ann.insert(
-            "description".to_string(),
-            serde_json::Value::String("The input PDF file path.".to_string()),
-        );
-        props_ann.insert(
-            "input".to_string(),
-            serde_json::Value::Object(prop_input_ann),
-        );
-
-        let mut prop_output_ann = serde_json::Map::new();
-        prop_output_ann.insert(
-            "type".to_string(),
-            serde_json::Value::String("string".to_string()),
-        );
-        prop_output_ann.insert(
-            "description".to_string(),
-            serde_json::Value::String("The output PDF file path.".to_string()),
-        );
-        props_ann.insert(
-            "output".to_string(),
-            serde_json::Value::Object(prop_output_ann),
-        );
-
-        let mut prop_annotations_ann = serde_json::Map::new();
-        prop_annotations_ann.insert(
-            "type".to_string(),
-            serde_json::Value::String("array".to_string()),
-        );
-        prop_annotations_ann.insert(
-            "description".to_string(),
-            serde_json::Value::String("A list of annotation objects to apply.".to_string()),
-        );
-        props_ann.insert(
-            "annotations".to_string(),
-            serde_json::Value::Object(prop_annotations_ann),
-        );
-
-        let mut prop_rules_ann = serde_json::Map::new();
-        prop_rules_ann.insert("type".to_string(), serde_json::Value::String("array".to_string()));
-        prop_rules_ann.insert("description".to_string(), serde_json::Value::String("List of pattern/rule-based annotation objects (type, color, search, regex, occurrence).".to_string()));
-        props_ann.insert("rules".to_string(), serde_json::Value::Object(prop_rules_ann));
-
-        let mut prop_search_ann = serde_json::Map::new();
-        prop_search_ann.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_search_ann.insert("description".to_string(), serde_json::Value::String("Keyword text to find and annotate.".to_string()));
-        props_ann.insert("search".to_string(), serde_json::Value::Object(prop_search_ann));
-
-        let mut prop_regex_ann = serde_json::Map::new();
-        prop_regex_ann.insert("type".to_string(), serde_json::Value::String("string".to_string()));
-        prop_regex_ann.insert("description".to_string(), serde_json::Value::String("Regex pattern to find and annotate.".to_string()));
-        props_ann.insert("regex".to_string(), serde_json::Value::Object(prop_regex_ann));
-
-        schema_ann.insert(
-            "properties".to_string(),
-            serde_json::Value::Object(props_ann),
-        );
-        schema_ann.insert(
-            "required".to_string(),
-            serde_json::Value::Array(vec![
-                serde_json::Value::String("input".to_string()),
-                serde_json::Value::String("output".to_string()),
-            ]),
-        );
-
-        let mut tool_ann = Tool::default();
-        tool_ann.name = "pdf_annotate".into();
-        tool_ann.description = Some(
-            "Applies annotations to a PDF document. [Input: PDF (.pdf) | Output: PDF (.pdf)]"
-                .into(),
-        );
-        tool_ann.input_schema = std::sync::Arc::new(schema_ann);
-        tools.push(tool_ann);
-
-        tools.push(Tool::new(
-            "excel_to_json".to_string(),
-            "Ingest Excel spreadsheet (.xlsx/.xls) into structured JSON with cell type preservation.".to_string(),
+        add_tool(
+            &mut tools,
+            "pdf_remove_blank",
+            "Detect and remove blank pages from a PDF document. When to use: stripping empty spacer or accidentally scanned blank sheets from PDFs based on content threshold. Difference from related tools: automatically detects blank pages rather than deleting explicit page numbers (use pdf_delete_pages to remove known page numbers). Key parameters: input, output; optional sensitivity (integer 0-100, default 95). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
             serde_json::json!({
                 "type": "object",
                 "properties": {
-                    "input": {
-                        "type": "string",
-                        "description": "Path to the input Excel file"
-                    },
-                    "output": {
-                        "type": "string",
-                        "description": "Optional destination path to save extracted JSON to disk"
-                    },
-                    "sheet": {
-                        "type": "string",
-                        "description": "Optional specific sheet name to extract"
-                    },
-                    "has_headers": {
-                        "type": "boolean",
-                        "description": "Whether the first row contains headers (defaults to true)"
-                    }
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the cleaned .pdf file." },
+                    "sensitivity": { "type": "integer", "default": 95, "minimum": 0, "maximum": 100, "description": "Blank-page detection sensitivity threshold (0-100, default 95)." }
                 },
-                "required": ["input"]
-            }).as_object().unwrap().clone(),
-        ));
+                "required": ["input", "output"]
+            }),
+        );
 
-        tools.push(Tool::new(
-            "excel_to_csv".to_string(),
-            "Export Excel spreadsheet (.xlsx/.xls) sheet to standard RFC 4180 CSV.".to_string(),
+        add_tool(
+            &mut tools,
+            "pdf_page_numbers",
+            "Add formatted page numbers to every page of a PDF document. When to use: stamping sequential 'Page N of Total' indicators at a page corner or margin. Difference from related tools: unlike pdf_bates (sequential Bates legal numbering with prefix/zero-padding) or pdf_header_footer (arbitrary header/footer text banners), this tool specifically renders page-count labels. Key parameters: input, output; optional position (default 'bottom-right'), format (default 'Page {n} of {total}'). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
             serde_json::json!({
                 "type": "object",
                 "properties": {
-                    "input": {
-                        "type": "string",
-                        "description": "Path to the input Excel file"
-                    },
-                    "output": {
-                        "type": "string",
-                        "description": "Path to save the output CSV file"
-                    },
-                    "sheet": {
-                        "type": "string",
-                        "description": "Optional specific sheet name to export"
-                    }
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the numbered .pdf file." },
+                    "position": { "type": "string", "default": "bottom-right", "description": "Placement position on the page (default 'bottom-right')." },
+                    "format": { "type": "string", "default": "Page {n} of {total}", "description": "Numbering format string supporting {n} and {total} placeholders (default 'Page {n} of {total}')." }
                 },
                 "required": ["input", "output"]
-            })
-            .as_object()
-            .unwrap()
-            .clone(),
-        ));
+            }),
+        );
 
-        let schema_lw = serde_json::json!({
-            "type": "object",
-            "properties": {},
-            "required": []
-        });
-        tools.push(Tool::new(
-            "list_workflows".to_string(),
-            "List all available preset document workflows".to_string(),
-            schema_lw.as_object().unwrap().clone(),
-        ));
+        add_tool(
+            &mut tools,
+            "pdf_merge",
+            "Concatenate two or more PDF files sequentially end-to-end into a single PDF. When to use: combining multiple PDF files in list order into one output document. Difference from related tools: appends entire documents in sequence; use pdf_merge_alternate to interleave odd/even pages from two scans, or pdf_stitch_canvas to combine pages onto one continuous canvas. Key parameters: inputs (array of PDF paths), output. [Input: 2+ PDFs (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "inputs": {
+                        "type": "array",
+                        "description": "Ordered list of input PDF file paths to concatenate.",
+                        "items": { "type": "string" }
+                    },
+                    "output": { "type": "string", "description": "Destination path for the merged .pdf file." }
+                },
+                "required": ["inputs", "output"]
+            }),
+        );
 
-        let mut schema_dw = serde_json::json!({
-            "type": "object",
-            "properties": {
-                "input": {
-                    "type": "string",
-                    "description": "Path to input PDF file"
+        add_tool(
+            &mut tools,
+            "pdf_split",
+            "Split a PDF into multiple part PDFs inside a directory using fixed page chunks or range cut points. When to use: breaking a multi-page PDF into grouped files (e.g., every N pages or at explicit page ranges), defaulting to single-page splits when no cut parameters are given. Difference from related tools: unlike pdf_burst (always writes page_N.pdf per single page without grouping), pdf_split_by_outline (splits by bookmarks into a .zip), or pdf_extract_pages (saves one selected subset into one file), pdf_split writes split_1.pdf, split_2.pdf, etc. Key parameters: input, output_dir; optional every, ranges. [Input: PDF (.pdf) | Output: Multiple .pdf files]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output_dir": { "type": "string", "description": "Directory where split PDF files (split_1.pdf, ...) will be written." },
+                    "every": { "type": "integer", "minimum": 1, "description": "Optional fixed number of pages per output split file." },
+                    "ranges": { "type": "string", "description": "Optional cut specification, e.g., '1-3,4-6' or cut points '3,6' or 'all'." }
                 },
-                "output": {
-                    "type": "string",
-                    "description": "Path to output PDF file"
-                },
-                "preset": {
-                    "type": "string",
-                    "description": "Preset workflow ID (e.g. preset-legal-discovery, preset-clean-scan, preset-redact-protect)"
-                },
-                "recipe": {
-                    "type": "string",
-                    "description": "Path to TOML .ppflow / JSON recipe, raw JSON, or multiline TOML"
-                }
-            },
-            "required": ["input", "output"]
-        });
-        schema_dw["properties"]["name_template"] = serde_json::json!({"type":"string","description":"Optional basename template; output is then a directory"});
-        tools.push(Tool::new(
-            "document_workflow".to_string(),
-            "Execute a declarative multi-step document workflow pipeline".to_string(),
-            schema_dw.as_object().unwrap().clone(),
-        ));
+                "required": ["input", "output_dir"]
+            }),
+        );
 
-        tools.push(Tool::new(
-            "cli_ask".to_string(),
-            "AI Document Assistant: Interprets natural language instructions and executes document plans via offline NLP.".to_string(),
+        add_tool(
+            &mut tools,
+            "pdf_extract_pages",
+            "Extract a selected subset of pages into one new PDF document. When to use: keeping only specific 1-based pages or ranges (e.g., '1,3,5-7') from a larger PDF in a single output file. Difference from related tools: outputs a single combined PDF of chosen pages, whereas pdf_split/pdf_burst write multiple files and pdf_delete_pages removes specified pages instead of keeping them. Key parameters: input, pages, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "pages": { "type": "string", "description": "1-based pages to keep, e.g., '1,3,5-7'." },
+                    "output": { "type": "string", "description": "Destination path for the extracted .pdf file." }
+                },
+                "required": ["input", "pages", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_delete_pages",
+            "Delete specified 1-based pages from a PDF document and save the remainder. When to use: removing unwanted pages (e.g., cover sheets or appendices like '1,3,5-7') while keeping everything else. Difference from related tools: subtractive page removal; use pdf_extract_pages to keep specific pages, or pdf_remove_blank to strip empty pages automatically. Key parameters: input, pages, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "pages": { "type": "string", "description": "1-based pages to remove, e.g., '1,3,5-7'." },
+                    "output": { "type": "string", "description": "Destination path for the modified .pdf file." }
+                },
+                "required": ["input", "pages", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_reorder_pages",
+            "Reorder the pages of a PDF into an explicit 1-based sequence. When to use: permuting or reversing pages in an existing PDF according to a chosen index order (e.g., '3,2,1'). Difference from related tools: rearranges pages within one PDF without adding blanks; use pdf_booklet for saddle-stitch booklet ordering or pdf_merge_alternate to interleave two separate PDFs. Key parameters: input, order, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "order": { "type": "string", "description": "Comma-separated 1-based target page order, e.g., '3,2,1'." },
+                    "output": { "type": "string", "description": "Destination path for the reordered .pdf file." }
+                },
+                "required": ["input", "order", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_rotate",
+            "Rotate specified PDF pages by an explicit clockwise angle in degrees. When to use: turning known pages ('all' or '1,3') by 90, 180, or 270 degrees. Difference from related tools: requires an explicit rotation angle; use pdf_auto_rotate when you want automatic MediaBox-based upright portrait normalization. Key parameters: input, pages, angle, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "pages": { "type": "string", "description": "Pages to rotate: 'all' or 1-based page list like '1,3'." },
+                    "angle": { "type": "number", "description": "Clockwise rotation angle in degrees, typically 90, 180, or 270." },
+                    "output": { "type": "string", "description": "Destination path for the rotated .pdf file." }
+                },
+                "required": ["input", "pages", "angle", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_crop",
+            "Crop PDF page boxes to explicit point coordinates. When to use: trimming margins or isolating a rectangular region defined as 'left,bottom,right,top' across pages. Difference from related tools: adjusts page crop bounds without changing content scale; use pdf_scale_pages to resize page dimensions proportionally or pdf_split_scanned_book to split two-up spreads. Key parameters: input, box, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "box": { "type": "string", "description": "Crop coordinates in PDF points as 'left,bottom,right,top', e.g., '0,0,595,842'." },
+                    "output": { "type": "string", "description": "Destination path for the cropped .pdf file." }
+                },
+                "required": ["input", "box", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_burst",
+            "Explode every page of a PDF into individual single-page files (page_1.pdf, page_2.pdf, ...). When to use: unconditionally separating every single page into its own PDF file in output_dir. Difference from related tools: unlike pdf_split (supports every-N or range grouping), pdf_split_by_outline (splits by chapters into a .zip), or pdf_extract_pages (extracts chosen pages into one file), pdf_burst always outputs one PDF per page. Key parameters: input, output_dir. [Input: PDF (.pdf) | Output: Single-page .pdf files]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output_dir": { "type": "string", "description": "Directory where page_1.pdf, page_2.pdf, ... will be saved." }
+                },
+                "required": ["input", "output_dir"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_compress",
+            "Compress a PDF to reduce file size according to a quality preset or numeric level. When to use: shrinking PDF size when recompression/quality tuning is acceptable. Difference from related tools: unlike pdf_dedup_streams (strictly lossless SHA-256 deduplication of identical indirect streams without recompression), pdf_compress optimizes and compresses based on quality. Key parameters: input, output; optional quality ('low', 'medium', 'high', or '1'-'100'). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the compressed .pdf file." },
+                    "quality": { "type": "string", "description": "Optional compression preset ('low', 'medium', 'high') or numeric string '1'-'100'." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_extract_text",
+            "Extract raw plain text from PDF pages in document order. When to use: dumping unstyled page text to a .txt file or reading literal page strings without structural markup. Difference from related tools: unlike pdf_to_markdown (preserves Markdown headings/lists), pdf_to_json (per-page structured JSON objects), pdf_chunk / pdf_rag_chunks (AI-sized RAG segments), pdf_extract_tables (tabular rows/cells), or office_extract_text (.docx/.xlsx/.pptx), pdf_extract_text extracts raw text directly from an existing text layer; do not use on scanned image-only PDFs (use pdf_ocr instead). Key parameters: input, output; optional pages (e.g., '1,3,5-7' or 'all'). [Input: PDF (.pdf) | Output: Plain Text (.txt)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "pages": { "type": "string", "description": "Optional page selection, e.g., '1,3,5-7' or 'all'." },
+                    "output": { "type": "string", "description": "Destination path for the extracted plain-text (.txt) file." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_rag_chunks",
+            "Split a PDF strictly by Markdown '#' headings into un-overlapped heading-level JSON chunks. When to use: zero-configuration extraction of one chunk per Markdown section where each '#' heading defines a complete section and word-count token_count is sufficient. Difference from related tools: unlike pdf_chunk (configurable target_tokens default 500, overlap_tokens default 50, boilerplate stripping, page_start/headings_context metadata), pdf_rag_chunks never enforces a token limit or adds overlap; unlike pdf_to_markdown (single .md file), it outputs a JSON chunk array. Do not use for query-ranked retrieval (use semantic_search). Key parameters: input; optional output (.json path). [Input: PDF (.pdf) | Output: JSON array]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination path for the JSON chunk array." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_chunk",
+            "Chunk a PDF into token-budgeted, overlapping, boilerplate-stripped segments for LLM context windows and RAG pipelines. When to use: preparing a PDF for embedding or LLM ingestion with explicit token budgets, sliding overlap, page tracking, and removal of repeated headers/footers. Difference from related tools: unlike pdf_rag_chunks (splits only on '#' headings with zero overlap and word-count sizing), pdf_chunk enforces target_tokens (50-4000, default 500) and overlap_tokens (0-500, default 50) while tracking headings_context and page_start; unlike semantic_search, it returns all chunks without query scoring. Key parameters: input; optional output, target_tokens, overlap_tokens, strip_boilerplate, break_on_headings. [Input: PDF (.pdf) | Output: JSON object]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination path for JSON output." },
+                    "target_tokens": { "type": "number", "default": 500, "description": "Target tokens per chunk (default: 500, range: 50-4000)." },
+                    "overlap_tokens": { "type": "number", "default": 50, "description": "Overlap tokens between consecutive chunks (default: 50, range: 0-500)." },
+                    "strip_boilerplate": { "type": "boolean", "default": true, "description": "Strip repetitive headers/footers across consecutive pages (default: true)." },
+                    "break_on_headings": { "type": "boolean", "default": true, "description": "Trigger hard boundary splits on # / ## headings (default: true)." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "office_to_markdown",
+            "Convert a modern Microsoft Office file (.docx, .xlsx, .pptx) into formatted Markdown. When to use: converting Word, Excel, or PowerPoint files into structured Markdown headings, paragraphs, and tables. Difference from related tools: unlike office_extract_text (flat plain .txt without formatting) or pdf_to_markdown (PDF input), this accepts Office Open XML formats; do not use on legacy binary .doc/.xls/.ppt files without converting first (use office_modernize_legacy). Key parameters: input, output. [Input: Office (.docx, .xlsx, .pptx) | Output: Markdown (.md)]",
+            "Path to the input .docx, .xlsx, or .pptx file.",
+            "Destination path for the output .md file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "office_extract_text",
+            "Extract unformatted plain text from a modern Microsoft Office file (.docx, .xlsx, .pptx). When to use: dumping raw text content from Office documents to a .txt file without Markdown markup. Difference from related tools: unlike office_to_markdown (preserves Markdown structure) or pdf_extract_text (extracts text from PDFs), office_extract_text outputs flat .txt from Office files; do not use on legacy .doc/.xls/.ppt files (use office_modernize_legacy first) or typed JSON/CSV from Excel (use excel_to_json / excel_to_csv). Key parameters: input, output. [Input: Office (.docx, .xlsx, .pptx) | Output: Plain Text (.txt)]",
+            "Path to the input .docx, .xlsx, or .pptx file.",
+            "Destination path for the extracted .txt file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "office_modernize_legacy",
+            "Upgrade a legacy binary Microsoft Office file (.doc, .xls, .ppt) into a modern Office Open XML file (.docx, .xlsx, .pptx). When to use: converting legacy binary Office formats into modern XML-based files supported by office_extract_text, office_to_markdown, and excel_to_json. Difference from related tools: outputs .docx/.xlsx/.pptx rather than PDF (unlike pdf_convert_excel) or text/Markdown (unlike office_extract_text / office_to_markdown). Key parameters: input, output. [Input: Legacy Office (.doc, .xls, .ppt) | Output: Modern Office (.docx, .xlsx, .pptx)]",
+            "Path to the input legacy .doc, .xls, or .ppt file.",
+            "Destination path for the modernized .docx, .xlsx, or .pptx file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_extract_images",
+            "Extract embedded raster image assets from inside a PDF into a directory. When to use: recovering original embedded photographs, scans, or figures embedded in a PDF file. Difference from related tools: extracts internal embedded image objects rather than rasterizing whole PDF pages into PNG/JPEG/WebP snapshots (use pdf_render for full-page rendering). Key parameters: input, output_dir. [Input: PDF (.pdf) | Output: PNG/JPEG images in output_dir]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output_dir": { "type": "string", "description": "Directory where extracted image files will be saved." }
+                },
+                "required": ["input", "output_dir"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_extract_tables",
+            "Detect and extract structured tabular data (headers and rows) from PDF pages into JSON or CSV. When to use: pulling structured tables out of a PDF for downstream analysis. Difference from related tools: unlike pdf_extract_text (flat unstructured text) or pdf_to_json (full-page text objects), pdf_extract_tables reconstructs table rows and columns; do not use on Excel workbooks (use excel_to_json or excel_to_csv). Key parameters: input; optional output, format ('json' or 'csv', default 'json'), pages (default 'all'). [Input: PDF (.pdf) | Output: JSON or CSV]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination path to save extracted table JSON or CSV." },
+                    "format": { "type": "string", "enum": ["json", "csv"], "default": "json", "description": "Output serialization format: 'json' (default) or 'csv'." },
+                    "pages": { "type": "string", "default": "all", "description": "Page range to scan for tables, e.g., '1,3-5' or 'all' (default 'all')." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "semantic_search",
+            "Search and rank relevant PDF passages using local structure-aware chunking and weighted term, heading, and phrase scoring. When to use: retrieving the top-N most relevant PDF sections for a question or concept across one PDF or a directory tree of PDFs without exact substring requirements. Difference from related tools: unlike pdf_search (exact page-number substring match), workspace_search (literal case-insensitive line/page grep across PDF, TXT, MD, DOCX, XLSX, CSV, JSON), or pdf_extract_patterns (custom keywords + regexes with character windows), semantic_search chunks PDFs locally (300 tokens, 2x heading weight, phrase boost; no external embeddings API) and returns scored passages; do not use for non-PDF files (use workspace_search). Key parameters: query; optional input, dir (default '.'), limit (default 5), output. [Input: PDF file or directory tree + query | Output: Ranked JSON results]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "query": { "type": "string", "description": "Natural-language search query to rank relevant PDF chunks against." },
+                    "input": { "type": "string", "description": "Optional path to a specific PDF file or directory to search." },
+                    "dir": { "type": "string", "description": "Optional directory tree to scan recursively for PDFs when input is omitted (default '.')." },
+                    "limit": { "type": "integer", "default": 5, "description": "Maximum number of top-ranked chunks to return (default 5)." },
+                    "output": { "type": "string", "description": "Optional destination JSON file path for ranked search results." }
+                },
+                "required": ["query"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "workspace_search",
+            "Recursively search for an exact case-insensitive substring across heterogeneous workspace files (PDF, TXT, MD, DOCX, XLSX, CSV, JSON). When to use: finding every file, page, line, or spreadsheet row in a folder tree containing a literal phrase or identifier. Difference from related tools: unlike pdf_search (PDF-only, non-recursive directory scan returning only page numbers), semantic_search (PDF-only ranked relevance chunks), or pdf_extract_patterns (single-PDF multi-regex extraction), workspace_search walks subdirectories across all specified formats with file, location, and snippet details; do not use for ranked semantic scoring (use semantic_search). Key parameters: query; optional input, dir (default '.'), formats ('all' or CSV list), output. [Input: Directory or file + query | Output: JSON match list]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "query": { "type": "string", "description": "Literal case-insensitive substring to find across files." },
+                    "input": { "type": "string", "description": "Optional file or root directory path to search." },
+                    "dir": { "type": "string", "description": "Optional root directory to walk recursively when input is omitted (default '.')." },
+                    "formats": { "type": "string", "default": "all", "description": "Comma-separated extensions (pdf,txt,md,docx,xlsx,csv,json) or 'all' (default 'all')." },
+                    "output": { "type": "string", "description": "Optional destination JSON file path for structured match results." }
+                },
+                "required": ["query"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_search",
+            "Find exact case-insensitive substring matches inside a single PDF (or top-level PDF directory) and return matching 1-based page numbers. When to use: quickly checking which pages in a PDF contain a literal term before reading or extracting those pages. Difference from related tools: unlike semantic_search (returns ranked passage text across recursive PDF trees), workspace_search (recursively searches PDF, TXT, MD, DOCX, XLSX, CSV, JSON with snippets), or pdf_extract_patterns (supports multiple keywords, named regexes, case sensitivity, and match context windows), pdf_search returns matching page numbers for one literal query; do not use for non-PDFs or regex matching. Key parameters: input (PDF path or directory), query; optional output. [Input: PDF (.pdf) or directory | Output: JSON page match list]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file (or top-level folder of PDFs)." },
+                    "query": { "type": "string", "description": "Case-insensitive literal text string to search for." },
+                    "output": { "type": "string", "description": "Optional destination JSON file path to save matching pages." }
+                },
+                "required": ["input", "query"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_watermark",
+            "Apply a rotated translucent text watermark across all pages of a PDF. When to use: stamping text overlays like 'CONFIDENTIAL' or 'DRAFT' across document pages. Difference from related tools: unlike pdf_stamp (places raster image/logo files at explicit coordinates), pdf_overlay_underlay (composites another PDF template as stationery), or pdf_header_footer (adds static edge text), pdf_watermark draws rotated translucent text across pages; do not use for image logos (use pdf_stamp). Key parameters: input, text, output; optional angle (default 45), opacity (default 0.2), color, font_size. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "text": { "type": "string", "description": "Watermark text to draw on each page." },
+                    "output": { "type": "string", "description": "Destination path for the watermarked .pdf file." },
+                    "angle": { "type": "number", "default": 45, "description": "Rotation angle in degrees (default 45)." },
+                    "opacity": { "type": "number", "default": 0.2, "description": "Watermark opacity from 0.0 to 1.0 (default 0.2)." },
+                    "color": { "type": "string", "description": "Watermark color name or hex code (e.g., 'gray', 'red')." },
+                    "font_size": { "type": "number", "description": "Optional font size in points." }
+                },
+                "required": ["input", "text", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_encrypt",
+            "Encrypt a PDF file with a password required to open it. When to use: locking a PDF with an open password prior to distribution or storage. Difference from related tools: unlike pdf_change_permissions (fine-grained print/copy/modify flags with separate owner/user passwords) or pdf_decrypt (removes password protection), pdf_encrypt sets the password symmetrically as both user and owner password. Key parameters: input, password, output. [Input: PDF (.pdf) | Output: Encrypted PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "password": { "type": "string", "description": "Password required to open the encrypted PDF." },
+                    "output": { "type": "string", "description": "Destination path for the encrypted .pdf file." }
+                },
+                "required": ["input", "password", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_decrypt",
+            "Decrypt a password-protected PDF using its password and write an unlocked copy. When to use: removing password protection from a PDF you have credentials for prior to reading or editing. Difference from related tools: reverses pdf_encrypt protection; do not use to modify permission flags directly (use pdf_change_permissions). Key parameters: input, password, output. [Input: Encrypted PDF (.pdf) | Output: Decrypted PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the encrypted input PDF file." },
+                    "password": { "type": "string", "description": "Password used to unlock the PDF." },
+                    "output": { "type": "string", "description": "Destination path for the decrypted .pdf file." }
+                },
+                "required": ["input", "password", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_info",
+            "Inspect read-only structural summary details (such as page_count) for a PDF without modifying it. When to use: checking page count and basic structural metrics before page extraction, splitting, or rendering. Difference from related tools: unlike pdf_metadata (reads/updates Title/Author/Subject/Keywords) or pdf_validate (verifies structural validity), pdf_info returns summary metrics; do not use to check PII or document classification (use document_pii_scan / pdf_classify_type). Key parameters: input. [Input: PDF (.pdf) | Output: JSON object]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_metadata",
+            "Read existing PDF Info dictionary metadata or update title, author, subject, and keywords into a new PDF file. When to use: inspecting document metadata or updating Info dictionary tags when saving to output. Difference from related tools: unlike pdf_info (reports structural metrics like page_count), pdf_metadata reads or writes Title/Author/Subject/Keywords fields; do not use to strip metadata for privacy (use pdf_sanitize). Key parameters: input; optional output (.pdf to write updates), title, author, subject, keywords. [Input: PDF (.pdf) | Output: Metadata summary or PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "title": { "type": "string", "description": "Optional new PDF title to write." },
+                    "author": { "type": "string", "description": "Optional new PDF author to write." },
+                    "subject": { "type": "string", "description": "Optional new PDF subject to write." },
+                    "keywords": { "type": "string", "description": "Optional new PDF keywords to write." },
+                    "output": { "type": "string", "description": "Optional destination .pdf path; when provided, writes updated metadata to disk." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_docx",
+            "Convert a PDF into an editable Microsoft Word (.docx) document by extracting its text into paragraphs. When to use: producing a .docx draft from a PDF for word-processor editing. Difference from related tools: unlike pdf_extract_text (.txt), pdf_to_markdown (.md), or pdf_to_html (.html), this produces an Office Word .docx file; do not use on spreadsheets (use pdf_to_xlsx or pdf_extract_tables). Key parameters: input, output. [Input: PDF (.pdf) | Output: Word (.docx)]",
+            "Path to the input PDF file.",
+            "Destination path for the output .docx file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_xlsx",
+            "Convert tables detected in a PDF into a Microsoft Excel (.xlsx) workbook on a best-effort basis. When to use: exporting PDF tables directly into a spreadsheet workbook for Excel. Difference from related tools: unlike pdf_extract_tables (outputs raw JSON or CSV text), pdf_to_xlsx writes a binary .xlsx workbook; unlike excel_to_json / excel_to_csv (reads .xlsx inputs), this takes a PDF input. Key parameters: input, output. [Input: PDF (.pdf) | Output: Excel (.xlsx)]",
+            "Path to the input PDF file.",
+            "Destination path for the output .xlsx file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_pptx",
+            "Convert a PDF into a Microsoft PowerPoint (.pptx) presentation on a best-effort slide-per-page basis. When to use: turning PDF pages or decks into editable .pptx slides. Difference from related tools: unlike pdf_render (exports static raster PNG/JPEG/WebP images), pdf_to_pptx builds a PowerPoint .pptx deck; do not use for Word or Excel output (use pdf_to_docx / pdf_to_xlsx). Key parameters: input, output. [Input: PDF (.pdf) | Output: PowerPoint (.pptx)]",
+            "Path to the input PDF file.",
+            "Destination path for the output .pptx file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_json",
+            "Convert a PDF document into structured page-by-page JSON (document_name, page_number, text, char_count, and image references). When to use: obtaining clean per-page JSON conforming to the JsonDocument schema for inspection or round-trip re-rendering via json_to_pdf. Difference from related tools: unlike pdf_extract_text (flat .txt), pdf_to_markdown (.md prose), pdf_extract_tables (table grids), or pdf_chunk / pdf_rag_chunks (overlapping or heading-split RAG segments), pdf_to_json returns one JSON object per page matching json_to_pdf input. Key parameters: input, output. [Input: PDF (.pdf) | Output: JSON (.json)]",
+            "Path to the input PDF file.",
+            "Destination path for the output .json file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_markdown",
+            "Convert a PDF document into structured Markdown (.md) text preserving headings and prose structure. When to use: turning a readable PDF into Markdown documentation or LLM-ready prose. Difference from related tools: unlike pdf_extract_text (unformatted flat .txt), pdf_to_json (per-page JSON), or pdf_rag_chunks (splits Markdown on '#' headings into JSON chunks), pdf_to_markdown outputs a single .md file; unlike pdf_convert_markdown (Markdown -> PDF) or office_to_markdown (Office -> Markdown), it reads PDF and writes Markdown. Key parameters: input, output. [Input: PDF (.pdf) | Output: Markdown (.md)]",
+            "Path to the input PDF file.",
+            "Destination path for the output .md file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_html",
+            "Convert a PDF document into a responsive, styled HTML5 web page. When to use: publishing PDF content to the web or inspecting styled HTML output. Difference from related tools: unlike pdf_convert_html (renders HTML input into PDF), pdf_to_html converts PDF to HTML; unlike pdf_to_markdown (.md) or pdf_to_epub (.epub), it outputs a standalone .html page. Key parameters: input, output. [Input: PDF (.pdf) | Output: HTML (.html)]",
+            "Path to the input PDF file.",
+            "Destination path for the output .html file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_classify_type",
+            "Classify a PDF document category (such as invoice, contract, receipt, form, or report) using content heuristics. When to use: triaging unknown PDFs before routing them to downstream workflows or recipes. Difference from related tools: unlike pdf_info (reports structural metrics like page_count), pdf_validate (verifies syntax), or document_pii_scan (detects PII entities), pdf_classify_type predicts document category and confidence. Key parameters: input; optional output (.json path). [Input: PDF (.pdf) | Output: JSON classification report]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination .json file path to save the classification report." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_read_form",
+            "Read AcroForm interactive field names and current values from a PDF. When to use: discovering exact form field keys before calling pdf_fill_form or batch_fill. Difference from related tools: read-only inspection of form fields; use pdf_fill_form to populate a single form or pdf_create_form_field to add new form widgets. Key parameters: input; optional output (.json file path). [Input: PDF (.pdf) | Output: JSON object / file (.json)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination .json file path for extracted field key-value pairs." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_fill_form",
+            "Fill AcroForm fields in a single PDF using a JSON field-value map. When to use: populating one fillable PDF form with one set of values. Difference from related tools: unlike batch_fill (iterates CSV/JSON records across one template into output_dir with receipts and optional flattening), pdf_fill_form writes one filled PDF file; do not use to add brand-new form fields (use pdf_create_form_field). Key parameters: input, values (or JSON file path), output. [Input: PDF (.pdf) + values | Output: Filled PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the fillable input PDF file." },
+                    "values": { "type": "object", "description": "Map of AcroForm field names to string values." },
+                    "output": { "type": "string", "description": "Destination path for the filled .pdf file." }
+                },
+                "required": ["input", "values", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_create_form_field",
+            "Add a new interactive AcroForm widget field (such as text or checkbox) at explicit page coordinates on a PDF. When to use: making a static PDF fillable by placing named form inputs. Difference from related tools: creates new form fields from scratch, unlike pdf_fill_form (fills existing fields), pdf_read_form (inspects existing fields), or pdf_annotate (adds markup annotations). Key parameters: input, field_name, field_type, page, x, y, width, height, output; optional rect, label. [Input: PDF (.pdf) | Output: Fillable PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "field_name": { "type": "string", "description": "Unique AcroForm field identifier." },
+                    "field_type": { "type": "string", "description": "Form widget type (e.g., 'text', 'checkbox')." },
+                    "page": { "type": "integer", "description": "1-based target page number." },
+                    "x": { "type": "number", "description": "Lower-left X coordinate in PDF points." },
+                    "y": { "type": "number", "description": "Lower-left Y coordinate in PDF points." },
+                    "width": { "type": "number", "description": "Field box width in PDF points." },
+                    "height": { "type": "number", "description": "Field box height in PDF points." },
+                    "rect": { "type": "string", "description": "Optional rectangle override as 'llx,lly,urx,ury' or 4-element array." },
+                    "label": { "type": "string", "description": "Optional visible label printed beside the field." },
+                    "output": { "type": "string", "description": "Destination path for the updated .pdf file." }
+                },
+                "required": ["input", "field_name", "field_type", "page", "x", "y", "width", "height", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_repair",
+            "Attempt recovery of a corrupted or malformed PDF by rebuilding its cross-reference table and object stream structure. When to use: fixing broken PDFs that fail validation or fail to open cleanly. Difference from related tools: repairs structural PDF errors unlike pdf_validate (read-only health check) or pdf_sanitize (strips metadata/scripts/attachments). Key parameters: input, output. [Input: Malformed PDF (.pdf) | Output: Repaired PDF (.pdf)]",
+            "Path to the corrupted or malformed input PDF file.",
+            "Destination path for the repaired .pdf file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_linearize",
+            "Optimize a PDF for Fast Web View (byte-range progressive streaming over HTTP). When to use: preparing large PDFs for web serving so page 1 loads before the full download finishes. Difference from related tools: reorders objects for streaming rather than shrinking image/stream size (use pdf_compress or pdf_dedup_streams) or archiving (use pdf_to_pdf_a). Key parameters: input, output. [Input: PDF (.pdf) | Output: Linearized PDF (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the linearized .pdf file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_flatten",
+            "Flatten interactive AcroForm fields and annotations permanently into static page content streams. When to use: locking filled form values and markups visually into pages so they cannot be edited later. Difference from related tools: renders general form fields and annotations static, unlike pdf_remove_signatures (strips digital signature locks/fields) or pdf_sanitize (strips hidden attachments/metadata/scripts). Key parameters: input, output. [Input: PDF (.pdf) | Output: Flattened PDF (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the flattened .pdf file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_pdf_a",
+            "Convert a PDF into ISO-oriented PDF/A archival structure for long-term preservation. When to use: preparing compliance or records-management PDFs for long-term archival storage. Difference from related tools: targets PDF/A conformance unlike pdf_linearize (Fast Web View), pdf_compress (size reduction), or pdf_sanitize (privacy stripping). Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF/A (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the PDF/A-formatted .pdf file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_redact",
+            "Permanently remove matching text glyphs, regex matches, or rectangular areas from a PDF and paint opaque blackout boxes with optional overlay text. When to use: irreversibly sanitizing sensitive terms (e.g., SSNs, names, clause text) or page coordinates from a PDF before sharing. Difference from related tools: destroys underlying PDF text/content rather than drawing non-destructive highlights (use pdf_annotate) or only reporting PII locations without modifying the PDF (use document_pii_scan); unlike pdf_sanitize (removes metadata/scripts/attachments), pdf_redact targets visible page text/regions. Key parameters: input, output; provide query, regex, patterns, rules, or page+x+y+width+height (or rect); optional overlay_text, occurrence, case_sensitive. [Input: PDF (.pdf) | Output: Redacted PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the redacted .pdf file." },
+                    "page": { "type": "integer", "description": "1-based page number when redacting a rectangular box (default 1)." },
+                    "x": { "type": "number", "description": "Lower-left X coordinate of redaction box in points." },
+                    "y": { "type": "number", "description": "Lower-left Y coordinate of redaction box in points." },
+                    "width": { "type": "number", "description": "Redaction box width in points (default 100)." },
+                    "height": { "type": "number", "description": "Redaction box height in points (default 100)." },
+                    "rect": { "type": "string", "description": "Alternative box as 'x,y,width,height' or 4-element number array." },
+                    "query": { "type": "string", "description": "Literal keyword or phrase to redact permanently." },
+                    "regex": { "type": "string", "description": "Regular expression pattern to match and redact." },
+                    "patterns": { "type": "array", "items": { "type": "string" }, "description": "List of literal strings to match and redact." },
+                    "rules": { "type": "array", "description": "Structured array of RedactRule objects for multi-rule redaction." },
+                    "case_sensitive": { "type": "boolean", "default": false, "description": "Enable case-sensitive text/regex matching (default false)." },
+                    "overlay_text": { "type": "string", "description": "Optional replacement label printed on blackout boxes (e.g., '[REDACTED]')." },
+                    "occurrence": { "type": "string", "default": "all", "description": "Occurrence filter: 'all' (default), 'first', 'last', or comma-separated 1-based indices." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_validate_signatures",
+            "Inspect digital signature fields, byte ranges, and optional incremental-update tamper forensics on a PDF and write a JSON validation report. When to use: auditing signature presence, coverage, or baseline integrity of a signed PDF. Difference from related tools: unlike pdf_sign (adds a signature placeholder) or pdf_remove_signatures (strips signature fields), pdf_validate_signatures inspects signatures read-only; do not use for file SHA-256 hashing alone (use pdf_hash). Key parameters: input, output (.json path); optional baseline (boolean). [Input: PDF (.pdf) | Output: JSON report (.json)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the signed input PDF file." },
+                    "baseline": { "type": "boolean", "default": false, "description": "Capture and report pre-sign incremental update tamper forensics and baseline integrity." },
+                    "output": { "type": "string", "description": "Destination path for the JSON signature validation report." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_booklet",
+            "Pad page count to a multiple of 4 with blank pages and reorder single pages into saddle-stitch booklet printing sequence ([N, 1, 2, N-1, ...]). When to use: preparing a PDF page stream in saddle-stitch booklet folding order before duplex printing. Difference from related tools: unlike pdf_nup (places 2, 4, 9, or 16 pages onto one grid sheet without saddle-stitch reordering) or pdf_reorder_pages (manual explicit page order), pdf_booklet computes saddle-stitch sequence automatically. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the booklet-ordered .pdf file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_nup",
+            "Impose multiple PDF pages onto each output sheet in an N-up grid layout (2, 4, 9, or 16 pages per sheet). When to use: creating compact handouts, proof sheets, or multi-page grids on fewer pages. Difference from related tools: unlike pdf_booklet (saddle-stitch sequence reordering of single pages) or pdf_stitch_canvas (one continuous long scroll canvas), pdf_nup arranges discrete multi-page sheets; do not use to tile one oversized page onto small sheets (use pdf_posterize). Key parameters: input, output; optional nup (default 2), ordering ('horizontal' or 'vertical'), margin_pt (default 18), spacing_pt (default 10), draw_borders (default false). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the N-up .pdf file." },
+                    "nup": { "type": "integer", "default": 2, "description": "Pages per output sheet, typically 2, 4, 9, or 16 (default 2)." },
+                    "ordering": { "type": "string", "enum": ["horizontal", "vertical"], "default": "horizontal", "description": "Grid fill order across the sheet (default 'horizontal')." },
+                    "margin_pt": { "type": "number", "default": 18.0, "description": "Outer page margin in PDF points (default 18.0)." },
+                    "spacing_pt": { "type": "number", "default": 10.0, "description": "Spacing between imposed cells in PDF points (default 10.0)." },
+                    "draw_borders": { "type": "boolean", "default": false, "description": "Draw thin borders around each imposed sub-page (default false)." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_scale_pages",
+            "Scale PDF pages cleanly to a target standard page size or multiplier factor. When to use: normalizing mixed-size PDFs to 'A4'/'Letter' or shrinking/enlarging page dimensions proportionally. Difference from related tools: scales page size and content uniformly unlike pdf_crop (clips margins without rescaling) or pdf_nup (combines multiple pages per sheet). Key parameters: input, output; optional target_size (default 'A4'), scale_factor (default 1.0). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the scaled .pdf file." },
+                    "target_size": { "type": "string", "default": "A4", "description": "Target page size name such as 'A4' or 'Letter' (default 'A4')." },
+                    "scale_factor": { "type": "number", "default": 1.0, "description": "Proportional scale multiplier applied to page dimensions (default 1.0)." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_remove_signatures",
+            "Remove digital signature dictionaries, cryptographic lock flags, and signature widget annotations from a PDF. When to use: clearing existing digital signatures so a PDF can be edited or re-signed cleanly. Difference from related tools: unlike pdf_validate_signatures (inspects signatures without altering the PDF) or pdf_flatten (flattens general form fields/markups into static content), pdf_remove_signatures strips signature fields specifically. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            "Path to the signed input PDF file.",
+            "Destination path for the unsigned .pdf file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_stamp",
+            "Stamp a raster image, logo, or signature graphic onto PDF pages at explicit coordinates. When to use: placing a PNG/JPEG image or logo overlay at a known position and size on selected pages. Difference from related tools: unlike pdf_watermark (draws rotated translucent text), pdf_overlay_underlay (composites another PDF template page as stationery), or pdf_sign (adds AcroForm signature dictionary metadata), pdf_stamp draws a raster image onto pages. Key parameters: input, output; provide image_path or image_data; optional x, y, width, height, opacity, pages. [Input: PDF (.pdf) + Image | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the stamped .pdf file." },
+                    "image_path": { "type": "string", "description": "Path to the PNG/JPEG image file to stamp." },
+                    "image_data": { "type": "string", "description": "Base64 or data-URI encoded image payload (alternative to image_path)." },
+                    "x": { "type": "number", "description": "Lower-left X coordinate in PDF points." },
+                    "y": { "type": "number", "description": "Lower-left Y coordinate in PDF points." },
+                    "width": { "type": "number", "description": "Target stamp width in PDF points." },
+                    "height": { "type": "number", "description": "Target stamp height in PDF points." },
+                    "opacity": { "type": "number", "description": "Stamp opacity between 0.0 and 1.0." },
+                    "pages": { "type": "string", "description": "Optional 1-based page list/ranges (e.g., '1,3-5' or 'all')." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_overlay_underlay",
+            "Composite another PDF template page (such as letterhead, stationery, or form background) under or over pages of a PDF. When to use: applying corporate stationery behind text ('underlay') or stamping a PDF vector template over content ('overlay'). Difference from related tools: unlike pdf_stamp (places a raster image file at box coordinates) or pdf_watermark (renders rotated plain text strings), pdf_overlay_underlay merges another PDF template page across pages. Key parameters: input, output; optional template_path, template_data, mode ('underlay' or 'overlay', default 'underlay'), pages, opacity. [Input: PDF (.pdf) + Template PDF | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the target input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the composited .pdf file." },
+                    "template_path": { "type": "string", "description": "Path to the stationery/template PDF file." },
+                    "template_data": { "type": "string", "description": "Base64-encoded template PDF payload (alternative to template_path)." },
+                    "mode": { "type": "string", "enum": ["underlay", "overlay"], "default": "underlay", "description": "Layer placement: 'underlay' (behind content, default) or 'overlay' (in front)." },
+                    "pages": { "type": "string", "description": "Optional page range/list to apply template to." },
+                    "opacity": { "type": "number", "description": "Template opacity from 0.0 to 1.0." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_auto_rotate",
+            "Automatically rotate landscape-oriented PDF pages to upright portrait orientation using MediaBox and /Rotate geometry. When to use: normalizing sideways pages whose MediaBox width exceeds height back into portrait orientation without computing angles manually. Difference from related tools: unlike pdf_rotate (applies explicit fixed angle rotation to specified pages), pdf_auto_rotate inspects page MediaBox and /Rotate dimensions to enforce upright portrait geometry (it does not run OCR text baseline analysis). Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the portrait-normalized .pdf file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_invert_colors",
+            "Recolor PDF pages into dark mode, true inverted colors, high contrast, or sepia palette for night reading or accessibility. When to use: transforming white-background PDFs into eye-friendly dark mode, sepia, or high-contrast output. Difference from related tools: modifies PDF page color streams directly rather than rendering static images (use pdf_render) or compressing streams (use pdf_compress). Key parameters: input, output; optional mode ('dark_mode', 'true_invert', 'high_contrast', 'sepia'; default 'dark_mode'), pages (1-based CSV). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the color-transformed .pdf file." },
+                    "mode": { "type": "string", "enum": ["dark_mode", "true_invert", "high_contrast", "sepia"], "default": "dark_mode", "description": "Color transform preset (default 'dark_mode')." },
+                    "pages": { "type": "string", "description": "Optional comma-separated 1-based page numbers (e.g., '1,3,5'); defaults to all pages." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_stitch_canvas",
+            "Stitch multiple PDF pages end-to-end vertically or horizontally into a single continuous tall or wide page canvas. When to use: combining multi-page diagrams, receipts, or infographics into one seamless scrollable PDF sheet. Difference from related tools: unlike pdf_nup (lays out multi-page grid sheets) or pdf_merge (appends discrete files as separate pages), pdf_stitch_canvas merges pages onto one unified canvas. Key parameters: input, output; optional direction ('vertical' or 'horizontal', default 'vertical'), margin_pt (default 0), spacing_pt (default 0). [Input: PDF (.pdf) | Output: Single-canvas PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the continuous single-page .pdf file." },
+                    "direction": { "type": "string", "enum": ["vertical", "horizontal"], "default": "vertical", "description": "Stitching axis: 'vertical' (default) or 'horizontal'." },
+                    "margin_pt": { "type": "number", "default": 0.0, "description": "Outer canvas margin in PDF points (default 0.0)." },
+                    "spacing_pt": { "type": "number", "default": 0.0, "description": "Gap between stitched pages in PDF points (default 0.0)." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_attachments",
+            "List, extract, embed, or remove file attachments inside a PDF container/portfolio. When to use: inspecting embedded files inside a PDF, extracting them (raw file or .zip), embedding a base64 payload, or deleting a named attachment. Difference from related tools: manages individual PDF attachments cleanly unlike pdf_sanitize (removes metadata/scripts and strips all attachments unconditionally) or pdf_extract_images (extracts page raster images). Key parameters: input, output; optional action ('list' default, 'extract', 'add', 'remove'), file_name, description, file_data_base64. [Input: PDF (.pdf) | Output: JSON report, extracted file/.zip, or updated PDF]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the JSON listing, extracted file/.zip, or updated .pdf file." },
+                    "action": { "type": "string", "enum": ["list", "extract", "add", "remove"], "default": "list", "description": "Attachment operation: 'list' (default), 'extract', 'add', or 'remove'." },
+                    "file_name": { "type": "string", "description": "Attachment filename required for 'add'/'remove', or filter for 'extract'." },
+                    "description": { "type": "string", "description": "Optional human-readable description stored when action is 'add'." },
+                    "file_data_base64": { "type": "string", "description": "Base64-encoded file bytes required when action is 'add'." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_timestamp",
+            "Append an RFC 3161 TSA verification timestamp marker to a PDF document (with offline fallback if TSA timestamping fails). When to use: recording an archival timestamp marker in a PDF trailer pipeline step. Difference from related tools: unlike pdf_sign (adds AcroForm /SigFlags dictionary) or pdf_validate_signatures (inspects existing signature fields), pdf_timestamp stamps a trailer verification marker; use pdf_hash for a standalone SHA-256 file digest. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the timestamped .pdf file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_change_permissions",
+            "Configure PDF document restriction flags (printing, copying, modifying) with owner and optional user passwords. When to use: restricting downstream printing, text copying, or editing on a distributed PDF while managing owner/user passwords. Difference from related tools: unlike pdf_encrypt (sets a basic symmetric open/owner password without permission granularity) or pdf_decrypt (removes password protection), pdf_change_permissions sets permission flags and separate owner/user passwords. Key parameters: input, output; optional allow_printing, allow_copying, allow_modifying, owner_password, user_password. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the permission-updated .pdf file." },
+                    "allow_printing": { "type": "boolean", "description": "Whether printing is permitted." },
+                    "allow_copying": { "type": "boolean", "description": "Whether content/text copying is permitted." },
+                    "allow_modifying": { "type": "boolean", "description": "Whether document modification is permitted." },
+                    "owner_password": { "type": "string", "description": "Owner password controlling permission overrides." },
+                    "user_password": { "type": "string", "description": "Optional user password required to open the PDF." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_split_scanned_book",
+            "Split scanned two-page book spreads along the center spine or horizontal fold into individual single pages. When to use: separating double-page book scans into properly ordered single pages (LTR or RTL). Difference from related tools: splits each spread down the middle into two pages, unlike pdf_crop (crops one fixed region) or pdf_split (splits across existing page boundaries without halving spreads). Key parameters: input, output; optional reading_direction, gutter_overlap, split_horizontal. [Input: Spread PDF (.pdf) | Output: Single-page PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF containing double-page scans." },
+                    "output": { "type": "string", "description": "Destination path for the split single-page .pdf file." },
+                    "reading_direction": { "type": "string", "description": "Reading order of halves: 'ltr' (left-then-right) or 'rtl' (right-then-left)." },
+                    "gutter_overlap": { "type": "number", "description": "Optional center gutter overlap margin in PDF points." },
+                    "split_horizontal": { "type": "boolean", "description": "Split top/bottom horizontally instead of left/right vertically." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_comic_archive",
+            "Convert a PDF document into a comic book image archive (.cbz / .cbr) by rendering pages as PNGs inside a ZIP archive. When to use: exporting illustrated PDFs, manga, or comics into a CBZ/CBR archive for comic readers. Difference from related tools: bundles all rendered page PNGs into one .cbz/.cbr archive rather than saving loose PNG/JPEG/WebP files (use pdf_render) or reflowable eBooks (use pdf_to_epub). Key parameters: input, output (.cbz or .cbr). [Input: PDF (.pdf) | Output: CBZ/CBR archive]",
+            "Path to the input PDF file.",
+            "Destination path for the generated .cbz or .cbr archive.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_split_by_outline",
+            "Split a multi-chapter PDF into separate PDF files along its /Outlines bookmark hierarchy and bundle them into a .zip archive. When to use: breaking a book or manual into per-chapter PDF files using existing table-of-contents bookmarks. Difference from related tools: splits logically by bookmark headings into a .zip unlike pdf_split (splits by uniform page counts or explicit ranges), pdf_burst (1 file per page), or pdf_bookmarks (exports bookmarks to JSON only). Key parameters: input, output (.zip). [Input: PDF (.pdf) | Output: ZIP archive (.zip)]",
+            "Path to the bookmarked input PDF file.",
+            "Destination path for the .zip archive containing chapter PDFs.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_merge_alternate",
+            "Interleave pages alternately from two PDF documents (useful for merging separately scanned front and back stacks). When to use: combining odd pages (input_a) and even pages (input_b), with optional page-order reversal for duplex ADF stacks. Difference from related tools: unlike pdf_merge (concatenates documents sequentially end-to-end), pdf_merge_alternate interleaves page batches from input_a and input_b using step/step_b and reverse flags. Key parameters: input_a, input_b, output; optional step (default 1), step_b (default 1), reverse_a (default false), reverse_b (default false). [Input: Two PDFs (.pdf) | Output: Interleaved PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input_a": { "type": "string", "description": "Path to the first PDF document (e.g., odd/front pages)." },
+                    "input_b": { "type": "string", "description": "Path to the second PDF document (e.g., even/back pages)." },
+                    "output": { "type": "string", "description": "Destination path for the interleaved .pdf file." },
+                    "step": { "type": "integer", "default": 1, "description": "Pages taken per turn from input_a (default 1)." },
+                    "step_b": { "type": "integer", "default": 1, "description": "Pages taken per turn from input_b (default 1)." },
+                    "reverse_a": { "type": "boolean", "default": false, "description": "Reverse input_a page order before interleaving (default false)." },
+                    "reverse_b": { "type": "boolean", "default": false, "description": "Reverse input_b page order before interleaving, common for simplex back scans (default false)." }
+                },
+                "required": ["input_a", "input_b", "output"]
+            }),
+        );
+        add_tool(
+            &mut tools,
+            "pdf_posterize",
+            "Slice oversized PDF pages into a tiled grid of standard printable sheets with overlap margins and cut guides. When to use: printing large posters, blueprints, or wide diagrams across multiple A4/Letter sheets. Difference from related tools: unlike pdf_nup (shrinks multiple pages onto fewer sheets) or pdf_split_scanned_book (splits two-up book spreads down the spine), pdf_posterize splits single large pages into printable tiles. Key parameters: input, output; optional target_sheet (default 'a4'), grid (e.g., '2x2'), grid_cols, grid_rows, overlap_pt (default 14.17), scale (default 1.0), include_guides (default true). [Input: PDF (.pdf) | Output: Tiled PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the posterized tiled .pdf file." },
+                    "target_sheet": { "type": "string", "default": "a4", "description": "Standard target sheet size such as 'a4' or 'letter' (default 'a4')." },
+                    "grid": { "type": "string", "description": "Grid dimensions as 'COLSxROWS', e.g., '2x2' (alternative to grid_cols and grid_rows)." },
+                    "grid_cols": { "type": "integer", "description": "Number of tile columns across each source page." },
+                    "grid_rows": { "type": "integer", "description": "Number of tile rows down each source page." },
+                    "overlap_pt": { "type": "number", "default": 14.17, "description": "Tile overlap margin in PDF points for trimming and assembly (default 14.17)." },
+                    "scale": { "type": "number", "default": 1.0, "description": "Scale factor applied before tiling (default 1.0)." },
+                    "include_guides": { "type": "boolean", "default": true, "description": "Draw crop/cut alignment marks around tiles (default true)." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_dedup_streams",
+            "Deduplicate identical indirect object streams (fonts, images, content streams) in a PDF using lossless SHA-256 and byte comparison. When to use: shrinking PDFs containing repeated headers, logos, fonts, or templates with zero visual quality loss. Difference from related tools: unlike pdf_compress (applies quality-based recompression), pdf_dedup_streams strictly deduplicates byte-identical streams losslessly; unlike pdf_linearize (optimizes object layout for HTTP streaming), it reduces repeated stream count. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the deduplicated .pdf file.",
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_to_epub",
+            "Convert a fixed-layout PDF document into a reflowable EPUB 3.0 eBook (.epub). When to use: packaging PDFs for e-readers and mobile reading apps that reflow text dynamically. Difference from related tools: produces a reflowable .epub eBook unlike pdf_to_html (.html), pdf_to_markdown (.md), pdf_to_docx (.docx), or pdf_comic_archive (.cbz/.cbr image archive for comics). Key parameters: input, output. [Input: PDF (.pdf) | Output: EPUB (.epub)]",
+            "Path to the input PDF file.",
+            "Destination path for the generated .epub eBook file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_extract_patterns",
+            "Search a PDF for caller-specified keywords and named regular expressions, returning matched strings with page numbers and surrounding character context. When to use: extracting structured custom entities (such as invoice numbers, clauses, dates, or regex patterns) with contextual snippets from one PDF. Difference from related tools: unlike pdf_search (single literal substring returning matching 1-based page numbers), semantic_search (query-ranked chunk scoring across files), workspace_search (recursive literal substring search across Office/text/PDF), or document_pii_scan (built-in SSN/CC/email/phone/IBAN PII scanner), pdf_extract_patterns runs custom keyword lists and regex maps; do not use to permanently blackout matches (use pdf_redact). Key parameters: input; optional output (.json), keywords, patterns, case_sensitive (default false), context_len (default 30). [Input: PDF (.pdf) | Output: JSON match report (.json)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination .json file path to save the pattern match report." },
+                    "keywords": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "List of literal keyword strings to search for across all pages."
+                    },
+                    "patterns": {
+                        "type": "object",
+                        "additionalProperties": { "type": "string" },
+                        "description": "Key-value map of pattern label to regular expression string (e.g., {\"ssn\": \"\\\\d{3}-\\\\d{2}-\\\\d{4}\"})."
+                    },
+                    "case_sensitive": { "type": "boolean", "default": false, "description": "Enable case-sensitive keyword and regex matching (default false)." },
+                    "context_len": { "type": "integer", "default": 30, "description": "Number of surrounding context characters included per match (default 30)." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_sanitize",
+            "Deeply sanitize a PDF document by stripping metadata, JavaScript actions, embedded attachments, thumbnails, and private data. When to use: scrubbing hidden document internals and privacy traces before external distribution. Difference from related tools: unlike pdf_redact (blacks out visible page text or coordinates), pdf_metadata (updates or reads Info dictionary tags), or pdf_attachments (selectively lists/adds/extracts/removes individual files), pdf_sanitize scrubs hidden non-page payloads broadly. Key parameters: input, output; optional remove_metadata (default true), remove_attachments (default true), remove_scripts (default true). [Input: PDF (.pdf) | Output: Sanitized PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the sanitized .pdf file." },
+                    "remove_metadata": { "type": "boolean", "default": true, "description": "Strip PDF Info and XMP metadata streams (default true)." },
+                    "remove_attachments": { "type": "boolean", "default": true, "description": "Remove embedded file attachments and portfolio entries (default true)." },
+                    "remove_scripts": { "type": "boolean", "default": true, "description": "Remove embedded JavaScript and trigger actions (default true)." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "document_pii_scan",
+            "Scan a PDF read-only for personally identifiable information (SSNs, credit cards, emails, phone numbers, IBANs) and return a structured findings report. When to use: auditing a document for regulated PII entities before redaction or release. Difference from related tools: unlike pdf_redact (modifies the PDF to permanently erase matching text/boxes) or pdf_extract_patterns (runs custom caller-supplied keywords and regexes), document_pii_scan uses built-in PII detectors without altering the PDF. Key parameters: input; optional output (.json), scan_ssn, scan_credit_cards, scan_emails, scan_phones, scan_iban (all default true). [Input: PDF (.pdf) | Output: JSON PII report (.json)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination .json file path to save the PII scan report." },
+                    "scan_ssn": { "type": "boolean", "default": true, "description": "Detect U.S. Social Security Number patterns (default true)." },
+                    "scan_credit_cards": { "type": "boolean", "default": true, "description": "Detect credit card numbers with Luhn verification (default true)." },
+                    "scan_emails": { "type": "boolean", "default": true, "description": "Detect email addresses (default true)." },
+                    "scan_phones": { "type": "boolean", "default": true, "description": "Detect phone numbers (default true)." },
+                    "scan_iban": { "type": "boolean", "default": true, "description": "Detect International Bank Account Numbers (default true)." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_header_footer",
+            "Stamp static custom header and/or footer text onto every page of a PDF. When to use: adding repeated document titles, confidentiality classification banners, or author footers across pages. Difference from related tools: unlike pdf_page_numbers (formats dynamic {n} and {total} page counters) or pdf_bates (sequential prefix+zero-padded legal numbering), pdf_header_footer places static banner text along top/bottom margins; unlike pdf_watermark, it does not rotate translucent text across the page center. Key parameters: input, output; provide text + position (default 'Header' at 'header') or header_left / footer_center. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the updated .pdf file." },
+                    "text": { "type": "string", "description": "Single header or footer text string to place at position." },
+                    "position": { "type": "string", "default": "header", "description": "Placement when using text: 'header', 'footer', 'top-left', 'bottom-center', 'top', or 'bottom'." },
+                    "header_left": { "type": "string", "description": "Optional header banner placed at top-left (can be combined with footer_center)." },
+                    "footer_center": { "type": "string", "description": "Optional footer banner placed at bottom-center (can be combined with header_left)." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_bates",
+            "Stamp sequential Bates numbering (such as CONF-000001, CONF-000002) across pages of a PDF for legal and discovery indexing. When to use: applying unique incremental legal/discovery document stamps with prefix and fixed zero-padding. Difference from related tools: unlike pdf_page_numbers ('Page N of Total') or pdf_header_footer (static margin banners), pdf_bates increments a formatted prefix+counter per page. Key parameters: input, output, start_number, prefix, padding; optional position (default 'bottom-right'). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the Bates-stamped .pdf file." },
+                    "start_number": { "type": "integer", "default": 1, "description": "Starting integer counter for page 1 (default 1)." },
+                    "prefix": { "type": "string", "default": "CONF-", "description": "Text prefix prepended to the padded Bates number (e.g., 'CONF-')." },
+                    "padding": { "type": "integer", "default": 6, "description": "Minimum zero-padded digit width for the Bates counter (e.g., 6 -> 000001)." },
+                    "position": { "type": "string", "default": "bottom-right", "description": "Stamp placement: 'bottom-right' (default), 'bottom-left', 'bottom-center', 'top-right', 'top-left', or 'top-center'." }
+                },
+                "required": ["input", "output", "start_number", "prefix", "padding"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_render",
+            "Rasterize a selected PDF page into a PNG, JPEG, or WebP image file at the specified DPI. When to use: generating a page thumbnail, visual inspection snapshot, or high-DPI raster export of one page. Difference from related tools: unlike pdf_extract_images (extracts original embedded bitmap XObjects only), pdf_comic_archive (packages all pages into one .cbz/.cbr archive), or pdf_images_to_pdf (reverse: images to PDF), pdf_render renders full page vector, font, and image content to an image file. Key parameters: input, output; optional page (default 1), dpi (default 150.0), format (png/jpeg/webp). [Input: PDF (.pdf) | Output: Image (.png, .jpg, .webp)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the rendered image file (.png, .jpg/.jpeg, or .webp)." },
+                    "page": { "type": "integer", "minimum": 1, "default": 1, "description": "1-based page number to rasterize (default 1)." },
+                    "dpi": { "type": "number", "default": 150.0, "description": "Output raster resolution in dots per inch (default 150.0)." },
+                    "format": { "type": "string", "enum": ["png", "jpeg", "jpg", "webp"], "description": "Optional image format ('png', 'jpeg'/'jpg', or 'webp'); inferred from output extension or defaults to 'png'." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_images_to_pdf",
+            "Combine one or more raster image files (PNG, JPEG, WebP) sequentially into pages of a single PDF document. When to use: bundling photos, scanned page images, or figures into one PDF. Difference from related tools: converts image files into a PDF (opposite of pdf_render and pdf_extract_images); do not use to combine existing PDF files (use pdf_merge). Key parameters: inputs (array of image paths), output (.pdf path). [Input: Image files | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "inputs": {
+                        "type": "array",
+                        "description": "Ordered list of input image file paths (.png, .jpg/.jpeg, .webp).",
+                        "items": { "type": "string" }
+                    },
+                    "output": { "type": "string", "description": "Destination path for the generated .pdf file." }
+                },
+                "required": ["inputs", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_compare",
+            "Compare two PDF documents and generate a structured JSON diff report indicating whether differences were detected. When to use: verifying revisions or regression-checking changes between two versions of a PDF. Difference from related tools: compares two separate PDFs unlike single-file inspection tools (pdf_info, pdf_validate, pdf_hash). Key parameters: input_a, input_b; optional output (defaults to 'diff_report.json'). [Input: Two PDFs (.pdf) | Output: JSON diff report (.json)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input_a": { "type": "string", "description": "Path to the baseline/first PDF file." },
+                    "input_b": { "type": "string", "description": "Path to the revised/second PDF file." },
+                    "output": { "type": "string", "default": "diff_report.json", "description": "Optional destination .json file path for the diff report (default 'diff_report.json')." }
+                },
+                "required": ["input_a", "input_b"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_bookmarks",
+            "Extract the hierarchical table-of-contents (/Outlines bookmarks) from a PDF to JSON. When to use: reading chapter titles and destination structure from a bookmarked PDF. Difference from related tools: exports bookmarks as JSON without modifying or splitting the PDF, unlike pdf_split_by_outline (splits the PDF into chapter files inside a .zip) or pdf_to_json (exports full page text). Key parameters: input, output (.json file path). [Input: PDF (.pdf) | Output: JSON bookmarks (.json)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination .json file path where extracted bookmarks will be saved." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_ocr",
+            "Run optical character recognition (OCR) on a PDF to extract recognized text or create a searchable PDF with an invisible text layer (requires local OCR model pack). When to use: making scanned image-only PDFs searchable (.pdf output) or transcribing scanned pages into text (.txt output). Difference from related tools: unlike pdf_extract_text (reads only an existing text stream and fails to read scanned bitmaps without OCR), pdf_ocr recognizes bitmap page images and chooses output format by output file extension (.txt vs .pdf). Key parameters: input, output. [Input: Scanned/Image PDF (.pdf) | Output: Searchable PDF (.pdf) or Plain Text (.txt)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path: '.txt' writes extracted plain text, whereas '.pdf' saves a searchable PDF with an embedded invisible text layer." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_io_tool(
+            &mut tools,
+            "pdf_sign",
+            "Add an AcroForm signature placeholder dictionary (/SigFlags = 3) to a PDF without requiring external PKI keys or certificates. When to use: preparing a PDF catalog with signature field indicator flags in offline workflows. Difference from related tools: unlike pdf_stamp (places a visual image signature), pdf_timestamp (writes an archival trailer timestamp), pdf_validate_signatures (inspects existing signatures), or pdf_remove_signatures (strips signatures), pdf_sign writes AcroForm /SigFlags = 3. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            "Path to the input PDF file.",
+            "Destination path for the updated .pdf file.",
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_hash",
+            "Compute the SHA-256 cryptographic file digest and byte size of a PDF document. When to use: generating a tamper-evident checksum or verifying exact file identity on disk. Difference from related tools: hashes raw file bytes unlike pdf_validate (parses PDF structure validity), pdf_validate_signatures (checks digital signatures), or pdf_compare (compares content between two PDFs). Key parameters: input; optional output (.txt summary file). [Input: PDF (.pdf) | Output: JSON SHA-256 digest / optional .txt report]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination .txt file path to write the SHA-256 digest report." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_validate",
+            "Validate a PDF document's internal syntax and object tree integrity read-only, reporting validity status and page count. When to use: verifying whether a PDF opens cleanly without corruption before processing or delivery. Difference from related tools: read-only structure check unlike pdf_repair (repairs corrupted PDFs), pdf_validate_signatures (inspects cryptographic signatures), or pdf_hash (computes SHA-256 digest); do not use to summarize metadata fields (use pdf_metadata). Key parameters: input; optional output (.json report file). [Input: PDF (.pdf) | Output: JSON validation report (.json)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Optional destination .json file path to write the validation report." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_annotate",
+            "Add non-destructive PDF markup annotations (highlights, notes, underlines) using explicit coordinates, annotation rules, or search/regex matching. When to use: highlighting key phrases, attaching reviewer comments, or marking coordinates visually while preserving underlying text. Difference from related tools: unlike pdf_redact (permanently destroys underlying text with black boxes), pdf_stamp (embeds raster images), or pdf_create_form_field (creates fillable input widgets), pdf_annotate adds standard PDF annotation objects. Key parameters: input, output; optional annotations, rules, search, regex, type (default 'highlight'), color (default '#FFFF00'), occurrence (default 'all'), case_sensitive (default false), content. [Input: PDF (.pdf) | Output: Annotated PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination path for the annotated .pdf file." },
+                    "annotations": { "type": "array", "description": "List of explicit annotation objects ({id, type, page, x, y, w, h, color, content}) or JSON string/file path." },
+                    "rules": { "type": "array", "description": "List of pattern/rule annotation objects ({type, color, search, regex, occurrence, content})." },
+                    "search": { "type": "string", "description": "Shorthand literal keyword to find and annotate." },
+                    "regex": { "type": "string", "description": "Shorthand regular expression pattern to find and annotate." },
+                    "type": { "type": "string", "default": "highlight", "description": "Annotation type used with search/regex shorthand (default 'highlight')." },
+                    "color": { "type": "string", "default": "#FFFF00", "description": "Hex color used with search/regex shorthand (default '#FFFF00')." },
+                    "occurrence": { "type": "string", "default": "all", "description": "Occurrence filter for shorthand rules (default 'all')." },
+                    "case_sensitive": { "type": "boolean", "default": false, "description": "Enable case-sensitive search/regex shorthand matching (default false)." },
+                    "content": { "type": "string", "description": "Optional comment or popup text attached to shorthand annotations." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "excel_to_json",
+            "Extract data rows from an Excel workbook (.xlsx/.xls) into structured JSON while preserving cell types. When to use: ingesting spreadsheet data programmatically as typed JSON records. Difference from related tools: unlike excel_to_csv (exports a single sheet to CSV text), pdf_convert_excel (renders spreadsheets to a visual .pdf), or pdf_to_xlsx (creates .xlsx from a PDF), excel_to_json reads Excel inputs into JSON; do not use on legacy binary Office Word/PPT (use office_modernize_legacy). Key parameters: input; optional output (.json path), sheet, has_headers (default true). [Input: Excel (.xlsx, .xls) | Output: JSON data / .json file]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input Excel workbook (.xlsx or .xls)." },
+                    "output": { "type": "string", "description": "Optional destination .json file path to save extracted JSON." },
+                    "sheet": { "type": "string", "description": "Optional worksheet name to extract (defaults to workbook/first sheet rules)." },
+                    "has_headers": { "type": "boolean", "default": true, "description": "Treat first row as object property headers (default true)." }
+                },
+                "required": ["input"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "excel_to_csv",
+            "Export an Excel workbook (.xlsx/.xls) worksheet to standard RFC 4180 CSV format. When to use: converting an Excel sheet into a flat comma-separated .csv file. Difference from related tools: unlike excel_to_json (outputs structured typed JSON), pdf_convert_excel (renders to PDF), or office_extract_text (dumps unformatted text across Office formats), excel_to_csv writes RFC 4180 CSV to output. Key parameters: input, output (.csv); optional sheet. [Input: Excel (.xlsx, .xls) | Output: CSV (.csv)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input Excel workbook (.xlsx or .xls)." },
+                    "output": { "type": "string", "description": "Destination path for the exported .csv file." },
+                    "sheet": { "type": "string", "description": "Optional worksheet name to export." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "list_workflows",
+            "List all built-in preset document workflow IDs and pipeline definitions. When to use: discovering available preset IDs (such as 'preset-legal-discovery', 'preset-clean-scan', 'preset-redact-protect') before calling document_workflow or recipe_run. Difference from related tools: returns static built-in preset workflows only, unlike execution_receipt_list (historical execution logs on disk) or watcher_list (running background folder daemons). Key parameters: none. [Input: None | Output: JSON workflows array]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {},
+                "required": []
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "document_workflow",
+            "Execute a multi-step document workflow pipeline once on a PDF using either a built-in preset ID or a .ppflow/JSON recipe, saving output and receipt. When to use: running a multi-operation PDF pipeline (specified by preset XOR recipe) with an explicit output path or named output directory. Difference from related tools: unlike recipe_run (requires recipe and makes output optional), document_workflow requires output and accepts exactly one of preset or recipe; unlike watcher_start (continuous daemon), it runs synchronously once; call list_workflows first to list presets. Key parameters: input, output; provide preset OR recipe; optional name_template. [Input: PDF (.pdf) + preset/recipe | Output: Processed PDF (.pdf) + JSON receipt]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path to the input PDF file." },
+                    "output": { "type": "string", "description": "Destination output PDF path (or directory when name_template is set)." },
+                    "preset": { "type": "string", "description": "Preset workflow ID (e.g., 'preset-legal-discovery', 'preset-clean-scan', 'preset-redact-protect'); mutually exclusive with recipe." },
+                    "recipe": { "type": "string", "description": "Path to TOML .ppflow / JSON recipe, raw JSON, or multiline TOML; mutually exclusive with preset." },
+                    "name_template": { "type": "string", "description": "Optional output basename template; when provided, output must be a directory." }
+                },
+                "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "cli_ask",
+            "Resolve a natural-language document request into a structured offline ExecutionPlan (intent, input_files, output_file) without mutating PDFs. When to use: parsing free-form user requests into a deterministic PaperPilot operation intent and plan summary offline. Difference from related tools: interprets natural language into a read-only plan (and optionally writes that plan summary to output), unlike document_workflow, recipe_run, or pdf_* tools which execute document transformations directly. Key parameters: prompt; optional input (context PDF path), output (optional plan summary text path), dry_run (default true). [Input: Natural-language prompt | Output: JSON ExecutionPlan]",
             serde_json::json!({
                 "type": "object",
                 "required": ["prompt"],
                 "properties": {
-                    "prompt": { "type": "string", "description": "Natural language query or instruction" },
-                    "input": { "type": "string", "description": "Target input PDF path" },
-                    "output": { "type": "string", "description": "Optional output path" },
-                    "dry_run": { "type": "boolean", "description": "Dry-run only: interpret plan without executing", "default": true }
+                    "prompt": { "type": "string", "description": "Natural-language document instruction or question to resolve offline." },
+                    "input": { "type": "string", "description": "Optional active PDF file path providing context to the resolver." },
+                    "output": { "type": "string", "description": "Optional file path where the interpreted plan summary text will be written." },
+                    "dry_run": { "type": "boolean", "default": true, "description": "Dry-run plan resolution flag (default true)." }
                 }
-            }).as_object().unwrap().clone(),
-        ));
+            }),
+        );
 
         Ok(ListToolsResult {
             tools,
@@ -8769,7 +5501,41 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::new(None).execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 88);
+        assert_eq!(res.tools.len(), 92);
+
+        let names: std::collections::HashSet<&str> =
+            res.tools.iter().map(|t| t.name.as_ref()).collect();
+        assert_eq!(names.len(), 92, "All exposed tool names must be unique");
+
+        for suppressed_alias in ["cli_fill_batch", "html_to_pdf", "md_to_pdf", "img_to_pdf"] {
+            assert!(
+                !names.contains(suppressed_alias),
+                "Duplicate alias '{suppressed_alias}' should be suppressed from tools/list"
+            );
+        }
+
+        for expected in [
+            "batch_fill",
+            "pdf_convert_html",
+            "pdf_convert_markdown",
+            "pdf_images_to_pdf",
+            "pdf_invert_colors",
+            "execution_receipt_list",
+            "execution_receipt_get",
+            "pdf_extract_text",
+            "pdf_to_markdown",
+            "pdf_to_json",
+            "pdf_chunk",
+            "pdf_rag_chunks",
+            "pdf_search",
+            "semantic_search",
+            "workspace_search",
+        ] {
+            assert!(
+                names.contains(expected),
+                "Canonical tool '{expected}' must be present in tools/list"
+            );
+        }
     }
 
     #[test]
@@ -9049,6 +5815,155 @@ mod tests {
         );
         let result = PaperPilotMcpServer::new(None).execute_call_tool(request);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_all_tool_descriptions_and_schemas_meet_spec_167() {
+        let res = PaperPilotMcpServer::new(None).execute_list_tools().unwrap();
+        for tool in &res.tools {
+            let desc = tool
+                .description
+                .as_deref()
+                .expect("Every tool must have a description");
+            for required_section in [
+                "When to use:",
+                "Difference from related tools:",
+                "Key parameters:",
+                "[Input:",
+                "| Output:",
+            ] {
+                assert!(
+                    desc.contains(required_section),
+                    "Tool '{}' description missing '{required_section}': {desc}",
+                    tool.name
+                );
+            }
+            assert!(
+                !desc.contains("Stationary") && !desc.contains("..EPUB"),
+                "Tool '{}' description contains a known typo: {desc}",
+                tool.name
+            );
+
+            let props = tool
+                .input_schema
+                .get("properties")
+                .and_then(|p| p.as_object())
+                .expect("properties must be an object");
+            for (prop_name, prop_schema) in props {
+                let obj = prop_schema.as_object().unwrap_or_else(|| {
+                    panic!(
+                        "Tool '{}' property '{prop_name}' must be an object",
+                        tool.name
+                    )
+                });
+                assert!(
+                    obj.get("description")
+                        .and_then(|d| d.as_str())
+                        .is_some_and(|s| !s.trim().is_empty()),
+                    "Tool '{}' property '{prop_name}' must have a non-empty description",
+                    tool.name
+                );
+                assert!(
+                    obj.get("type").is_some(),
+                    "Tool '{}' property '{prop_name}' must declare a JSON schema type",
+                    tool.name
+                );
+            }
+        }
+
+        let by_name: std::collections::HashMap<&str, &Tool> =
+            res.tools.iter().map(|t| (t.name.as_ref(), t)).collect();
+
+        let json_to_pdf_props = by_name["json_to_pdf"].input_schema["properties"]
+            .as_object()
+            .unwrap();
+        assert_eq!(json_to_pdf_props.len(), 2);
+        assert!(json_to_pdf_props.contains_key("input"));
+        assert!(json_to_pdf_props.contains_key("output"));
+
+        assert_eq!(
+            by_name["office_extract_text"].input_schema["required"],
+            serde_json::json!(["input", "output"])
+        );
+        assert_eq!(
+            by_name["execution_receipt_list"].input_schema["required"],
+            serde_json::json!(["directory"])
+        );
+        assert_eq!(
+            by_name["execution_receipt_get"].input_schema["required"],
+            serde_json::json!(["directory", "receipt_id"])
+        );
+
+        let invert_schema = &by_name["pdf_invert_colors"].input_schema;
+        assert_eq!(invert_schema["required"], serde_json::json!(["input", "output"]));
+        assert_eq!(
+            invert_schema["properties"]["mode"]["enum"],
+            serde_json::json!(["dark_mode", "true_invert", "high_contrast", "sepia"])
+        );
+        assert!(invert_schema["properties"].get("pages").is_some());
+
+        let render_props = &by_name["pdf_render"].input_schema["properties"];
+        assert!(render_props.get("page").is_some());
+        assert!(render_props.get("dpi").is_some());
+        assert!(render_props.get("format").is_some());
+
+        let semantic_props = &by_name["semantic_search"].input_schema["properties"];
+        for key in ["query", "input", "dir", "limit", "output"] {
+            assert!(
+                semantic_props.get(key).is_some(),
+                "semantic_search missing '{key}'"
+            );
+        }
+    }
+
+    #[test]
+    fn test_suppressed_legacy_aliases_still_route_in_call_tool() {
+        let server = PaperPilotMcpServer::new(None);
+        let temp = tempfile::tempdir().unwrap();
+
+        let cases = vec![
+            (
+                "cli_fill_batch",
+                serde_json::json!({
+                    "template": temp.path().join("missing_tpl.pdf"),
+                    "output_dir": temp.path().join("out_batch"),
+                    "records": []
+                }),
+            ),
+            (
+                "html_to_pdf",
+                serde_json::json!({
+                    "input": temp.path().join("missing.html"),
+                    "output": temp.path().join("out_html.pdf")
+                }),
+            ),
+            (
+                "md_to_pdf",
+                serde_json::json!({
+                    "input": temp.path().join("missing.md"),
+                    "output": temp.path().join("out_md.pdf")
+                }),
+            ),
+            (
+                "img_to_pdf",
+                serde_json::json!({
+                    "inputs": [temp.path().join("missing.png")],
+                    "output": temp.path().join("out_img.pdf")
+                }),
+            ),
+        ];
+
+        for (alias, args) in cases {
+            let mut req = CallToolRequestParams::default();
+            req.name = alias.into();
+            req.arguments = args.as_object().cloned();
+            let err = server.execute_call_tool(req).unwrap_err();
+            assert_ne!(
+                err.message.as_ref(),
+                "Unknown tool",
+                "Legacy alias '{alias}' must remain callable in tools/call"
+            );
+        }
     }
 }
 
