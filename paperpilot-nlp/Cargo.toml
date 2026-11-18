@@ -12,7 +12,7 @@ onnx = ["rten-inference"] # Backward-compatible feature alias for existing calle
 serde = { version = "1.0", features = ["derive"] }
 aho-corasick = "1.1.5"
 lazy_static = "1.5.0"
-paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
+paperpilot-core = { path = "../paperpilot-core" }
 regex = "1.13.1"
 thiserror = "2.0.21"
 itertools = "0.15.0"

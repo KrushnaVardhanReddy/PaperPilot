@@ -1,6 +1,6 @@
 [package]
 name = "paperpilot-gateway"
-version = "0.1.0"
+version = "0.7.0"
 edition = "2024"
 
 [[bin]]
@@ -11,10 +11,10 @@ path = "src/main.rs"
 axum = { version = "0.8.9", features = ["multipart"] }
 bytes = "1.12.1"
 futures = "0.3.34"
-paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
-paperpilot-mcp = { version = "0.1.0", path = "../paperpilot-mcp" }
-paperpilot-nlp = { version = "0.1.0", path = "../paperpilot-nlp" }
-paperpilot-pdf = { version = "0.1.0", path = "../paperpilot-pdf" }
+paperpilot-core = { path = "../paperpilot-core" }
+paperpilot-mcp = { path = "../paperpilot-mcp" }
+paperpilot-nlp = { path = "../paperpilot-nlp" }
+paperpilot-pdf = { path = "../paperpilot-pdf" }
 rmcp = "3.5.0"
 serde = "1.0.229"
 serde_json = "1.0.151"

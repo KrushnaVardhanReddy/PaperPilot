@@ -1,14 +1,14 @@
 [package]
 name = "paperpilot-mcp"
-version = "0.1.0"
+version = "0.7.0"
 edition = "2024"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 image = "0.25.6"
 lazy_static = "1.5.1"
-paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
-paperpilot-pdf = { version = "0.1.0", path = "../paperpilot-pdf" }
+paperpilot-core = { path = "../paperpilot-core" }
+paperpilot-pdf = { path = "../paperpilot-pdf" }
 paperpilot-nlp = { path = "../paperpilot-nlp" }
 pdfium-render = "0.9.5"
 rmcp = { version = "3.5.0", features = ["macros", "transport-io"] }

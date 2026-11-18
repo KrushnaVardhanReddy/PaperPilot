@@ -302,6 +302,18 @@ jobs:
         with:
           tool: cargo-zigbuild
 
+      - name: Sync Cargo version with Release Tag
+        shell: bash
+        run: |
+          RAW_VERSION="${{ inputs.version }}"
+          CLEAN_VERSION="${RAW_VERSION#v}"
+          echo "Setting Cargo.toml package versions to ${CLEAN_VERSION}..."
+          for toml in paperpilot-cli/Cargo.toml paperpilot-mcp/Cargo.toml paperpilot-gateway/Cargo.toml paperpilot-core/Cargo.toml paperpilot-pdf/Cargo.toml; do
+            if [ -f "$toml" ]; then
+              sed -i "s/^version = \".*\"/version = \"${CLEAN_VERSION}\"/" "$toml"
+            fi
+          done
+
       - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
         shell: bash
         run: |
