@@ -44,7 +44,55 @@ No Chromium, no C++ runtime, no cloud calls.
 
 ## Quick start
 
-### 1. Use it with your AI / Coding Agent (5-Second MCP Setup)
+### 1. Flash Install PaperPilot (5-Second Setup — No Rust or Node.js Required)
+
+Install PaperPilot with zero toolchain prerequisites. Choose between the **Desktop App** (default), standalone **CLI**, or **All-in-One** (Desktop App + CLI + MCP Server):
+
+**Linux & macOS:**
+```bash
+# Default: installs Desktop App when GUI is available (or CLI on headless Linux servers)
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash
+
+# Explicit component flags:
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --desktop
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --cli
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --all
+```
+
+**Windows (PowerShell):**
+```powershell
+# Default: installs Desktop App (or prompts interactively for Desktop / CLI / All-in-One)
+irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+
+# Select component explicitly via $env:PAPERPILOT_COMPONENT or -Component:
+$env:PAPERPILOT_COMPONENT="All"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+.\scripts\install.ps1 -Component Desktop   # Desktop GUI App (.exe / .msi) [Default]
+.\scripts\install.ps1 -Component CLI       # Standalone paperpilot.exe CLI only
+.\scripts\install.ps1 -Component All       # Desktop App + CLI + MCP Server
+```
+
+When run directly in an interactive terminal without component flags, the installer prompts you to pick **1) Desktop App [Default]**, **2) CLI only**, or **3) All-in-One**.
+
+To pin a specific release version instead of `latest` (leading `v` is normalized automatically) or preview actions with `--dry-run` / `DRY_RUN=1`:
+
+```bash
+# Linux & macOS: pass version as an argument or via VERSION / PAPERPILOT_VERSION
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash -s -- --all 0.7.0
+curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | VERSION=v0.7.0 COMPONENT=cli bash
+DRY_RUN=1 sh scripts/install.sh --desktop
+```
+
+```powershell
+# Windows PowerShell: set $env:PAPERPILOT_VERSION or pass -Version / -DryRun locally
+$env:PAPERPILOT_VERSION="0.7.0"; irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex
+.\scripts\install.ps1 -Component All -Version 0.7.0 -DryRun
+```
+
+> **Install locations & verification:**
+> - **Desktop App:** On Linux, places the verified AppImage at `~/.local/bin/paperpilot-desktop` (or `/usr/local/bin` as `root`) and registers an application icon + launcher at `~/.local/share/applications/paperpilot.desktop`. On macOS, mounts the `.dmg` and installs `PaperPilot.app` to `/Applications`. On Windows, downloads and runs the `.exe` / `.msi` desktop installer.
+> - **CLI & MCP (`--cli` / `--all`):** Linux/macOS installs `paperpilot` (and `paperpilot-mcp` with `--all`) to `~/.local/bin` (or `/usr/local/bin` as `root`), verifies SHA-256 checksums, and validates `--version`. Windows installs `paperpilot.exe` (and `paperpilot-mcp.exe` with `-Component All`) to `$HOME\.paperpilot\bin` and adds it to your User `PATH`.
+
+### 2. Use it with your AI / Coding Agent (5-Second MCP Setup)
 
 No manual build or binary download required! Run instantly via `npx`:
 
@@ -74,7 +122,7 @@ paperpilot-mcp --client-config cursor
 
 Restart Claude and try: *"Merge these two PDFs and compress the result."*
 
-### 2. Use the CLI
+### 3. Use the CLI
 
 ```bash
 # Semantic Chunking for AI Agents & RAG (Spec 159)
@@ -93,12 +141,12 @@ paperpilot search --input in.pdf --query "Invoice" --json
 paperpilot rotate --input in.pdf --pages 1,3-5 --angle 90 --output out.pdf
 ```
 
-### 3. Use it in the browser & extension
+### 4. Use it in the browser & extension
 
 - **Web App**: Go to [usepaperpilot.com](https://usepaperpilot.com) for zero-install client-side WebAssembly tools.
 - **Companion Extension**: Load the Manifest V3 browser extension from [`apps/extension`](apps/extension) for in-tab context menus, right-click PDF actions, and clean web article capture.
 
-### 4. Build from source
+### 5. Build from source
 
 ```bash
 git clone https://github.com/KrushnaVardhanReddy/PaperPilot.git

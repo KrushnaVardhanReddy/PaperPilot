@@ -6041,7 +6041,7 @@ dependencies = [
 
 [[package]]
 name = "paperpilot-cli"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "assert_cmd",
  "base64 0.23.1",
@@ -6074,7 +6074,7 @@ dependencies = [
 
 [[package]]
 name = "paperpilot-core"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "async-trait",
  "httptest",
@@ -6090,7 +6090,7 @@ dependencies = [
 
 [[package]]
 name = "paperpilot-gateway"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "axum 0.8.9",
  "base64 0.23.1",
@@ -6122,7 +6122,7 @@ dependencies = [
 
 [[package]]
 name = "paperpilot-mcp"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "calamine",
@@ -6175,7 +6175,7 @@ dependencies = [
 
 [[package]]
 name = "paperpilot-pdf"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "aho-corasick",
  "base64 0.23.1",

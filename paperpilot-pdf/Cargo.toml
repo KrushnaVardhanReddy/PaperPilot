@@ -1,6 +1,6 @@
 [package]
 name = "paperpilot-pdf"
-version = "0.1.0"
+version = "0.7.0"
 edition = "2024"
 
 [dependencies]
@@ -22,7 +22,7 @@ lopdf = "0.45.0"
 tracing = "0.1.44"
 ocrs = { version = "0.10.4", optional = true }
 office_oxide = { version = "=0.1.9", optional = true }
-paperpilot-core = { version = "0.1.0", path = "../paperpilot-core" }
+paperpilot-core = { path = "../paperpilot-core" }
 pdf_oxide = { version = "0.3.78", default-features = false }
 pulldown-cmark = "0.13.4"
 regex = "1.13.1"
