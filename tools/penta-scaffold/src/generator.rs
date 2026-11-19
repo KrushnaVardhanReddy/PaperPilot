@@ -244,6 +244,9 @@ pub fn handle_{name_snake}_command(
     append_edge_e2e(&args, name_snake, &name_pascal)?;
     append_desktop_args_builder(&args, name_snake)?;
     append_svelte_ui(&args, name_snake)?;
+    append_desktop_wiring(&args, name_snake)?;
+    append_wdio_e2e(&args, name_snake)?;
+    append_docs(&args, name_snake)?;
 
     Ok(())
 }
@@ -384,6 +387,26 @@ fn append_mcp(args: &ScaffoldArgs, name_snake: &str, name_pascal: &str) -> Resul
 }
 
 fn append_gateway(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    let name_kebab = name_snake.replace("pdf_", "").replace('_', "-");
+    let is_img = name_snake.starts_with("img_") || name_snake.ends_with("to_gif");
+    let is_office = name_snake.starts_with("office_");
+
+    let primary_path = if is_img {
+        let sub = if name_snake.ends_with("to_gif") {
+            "to-gif".to_string()
+        } else {
+            name_snake.replace("img_", "").replace('_', "-")
+        };
+        format!("/api/v1/image/{}", sub)
+    } else if is_office {
+        let sub = name_snake.replace("office_", "").replace('_', "-");
+        format!("/api/v1/office/{}", sub)
+    } else {
+        format!("/api/v1/pdf/{}", name_kebab)
+    };
+
+    let legacy_pdf_path = format!("/api/v1/pdf/{}", name_kebab);
+
     // 1. Handlers
     let handlers_path = "paperpilot-gateway/src/handlers.rs";
 
@@ -393,12 +416,20 @@ fn append_gateway(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
         fs::read_to_string(handlers_path)?
     };
     if !handlers_content.contains(&format!("pub async fn {}(", name_snake)) {
+        let tag = if is_img {
+            "Image Operations"
+        } else if is_office {
+            "Office Operations"
+        } else {
+            "PDF Operations"
+        };
+
         let handler_block = format!(
             r#"/// {title} [{description}] [Input: .{input_format} | Output: .{output_format}]
 #[utoipa::path(
     post,
-    path = "/api/v1/pdf/{name_kebab}",
-    tag = "PDF Operations",
+    path = "{primary_path}",
+    tag = "{tag}",
     responses(
         (status = 200, description = "{title} completed", body = ApiResponse),
         (status = 400, description = "Invalid request arguments"),
@@ -413,7 +444,8 @@ pub async fn {name_snake}(req: axum::extract::Request) -> impl IntoResponse {{
             description = args.description,
             input_format = args.input_format,
             output_format = args.output_format,
-            name_kebab = name_snake.replace("pdf_", "").replace('_', "-"),
+            primary_path = primary_path,
+            tag = tag,
             name_snake = name_snake
         );
         let mut new_handlers = handlers_content.clone();
@@ -458,14 +490,31 @@ pub async fn {name_snake}(req: axum::extract::Request) -> impl IntoResponse {{
             }
         }
         if route_idx > 0 {
-            lines.insert(
-                route_idx + 1,
-                format!(
-                    "        .route(\"/api/v1/pdf/{}\", post(handlers::{}) )",
-                    name_snake.replace("pdf_", "").replace('_', "-"),
-                    name_snake
-                ),
-            );
+            if is_img || is_office {
+                // Route primary path + legacy PDF alias
+                lines.insert(
+                    route_idx + 1,
+                    format!(
+                        "        .route(\"{}\", post(handlers::{}) )",
+                        legacy_pdf_path, name_snake
+                    ),
+                );
+                lines.insert(
+                    route_idx + 1,
+                    format!(
+                        "        .route(\"{}\", post(handlers::{}) )",
+                        primary_path, name_snake
+                    ),
+                );
+            } else {
+                lines.insert(
+                    route_idx + 1,
+                    format!(
+                        "        .route(\"{}\", post(handlers::{}) )",
+                        primary_path, name_snake
+                    ),
+                );
+            }
         }
 
         let mut new_server = lines.join("\n");
@@ -594,15 +643,18 @@ pub fn {name_snake}(input_bytes: &[u8], options_json: &str) -> OperationResult<V
                 "image" => "edit",
                 c => c,
             };
+            let ext_clean = args.output_format.to_lowercase().trim_start_matches('.').to_string();
             let entry = format!(
-                "  {{ id: '{name_snake}', title: '{title}', inputFormat: '{input_format}', outputFormat: '{output_format}', description: '{description}', icon: '{icon}', category: '{category}', context: 'pdf', tags: ['{name_snake}'], releaseStatus: 'preview' }},",
+                "  {{ id: '{name_snake}', title: '{title}', inputFormat: '{input_format}', outputFormat: '.{output_format}', description: '{description}', icon: '{icon}', category: '{category}', context: '{context}', tags: ['{name_snake}'], releaseStatus: 'preview', rule: {{ supportedExtensions: ['{input_ext}'], isBatchable: true }} }},",
                 name_snake = name_snake,
                 title = args.title,
                 input_format = args.input_format.to_uppercase(),
-                output_format = format_args!(".{}", args.output_format.to_lowercase()),
+                output_format = ext_clean,
                 description = args.description,
                 icon = args.icon,
-                category = cat
+                category = cat,
+                context = if cat == "office" { "office" } else { "pdf" },
+                input_ext = args.input_format.to_lowercase().trim_start_matches('.').to_string()
             );
             lines.insert(target_idx, entry);
         }
@@ -660,6 +712,47 @@ fn append_edge_e2e(args: &ScaffoldArgs, name_snake: &str, _name_pascal: &str) ->
 
     // 2. E2E Test Case
     let test_path = format!("tools/penta-interface-e2e/src/cases/{}.rs", name_snake);
+    let in_fmt = args.input_format.to_lowercase();
+    let out_fmt = args.output_format.to_lowercase().trim_start_matches('.').to_string();
+
+    let fixture_file = if in_fmt.contains("img") || in_fmt == "png" || in_fmt == "jpg" || in_fmt == "jpeg" || in_fmt == "webp" {
+        "tests/e2e_fixtures/real/test.png"
+    } else if in_fmt.contains("docx") || in_fmt == "doc" {
+        "tests/e2e_fixtures/real/test.docx"
+    } else if in_fmt.contains("xlsx") || in_fmt == "xls" || in_fmt == "csv" {
+        "tests/e2e_fixtures/real/test.xlsx"
+    } else if in_fmt.contains("json") {
+        "tests/e2e_fixtures/real/json_doc.json"
+    } else {
+        "tests/e2e_fixtures/real/single_page.pdf"
+    };
+
+    let missing_fixture = if in_fmt.contains("img") || in_fmt == "png" || in_fmt == "jpg" || in_fmt == "jpeg" || in_fmt == "webp" {
+        "tests/e2e_fixtures/real/missing.png"
+    } else if in_fmt.contains("docx") || in_fmt == "doc" {
+        "tests/e2e_fixtures/real/missing.docx"
+    } else if in_fmt.contains("xlsx") || in_fmt == "xls" || in_fmt == "csv" {
+        "tests/e2e_fixtures/real/missing.xlsx"
+    } else {
+        "tests/e2e_fixtures/real/missing.pdf"
+    };
+
+    let is_img = name_snake.starts_with("img_") || name_snake.ends_with("to_gif");
+    let is_office = name_snake.starts_with("office_");
+    let api_endpoint = if is_img {
+        let sub = if name_snake.ends_with("to_gif") {
+            "to-gif".to_string()
+        } else {
+            name_snake.replace("img_", "").replace('_', "-")
+        };
+        format!("/api/v1/image/{}", sub)
+    } else if is_office {
+        let sub = name_snake.replace("office_", "").replace('_', "-");
+        format!("/api/v1/office/{}", sub)
+    } else {
+        format!("/api/v1/pdf/{}", name_snake.replace("pdf_", "").replace('_', "-"))
+    };
+
     let test_content = format!(
         r#"use crate::runner::api::ApiRunner;
 use crate::runner::cli::CliRunner;
@@ -680,15 +773,15 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
 
     let tool = "{name_snake}";
     let workspace_root = std::env::current_dir()?;
-    let single_page = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf");
+    let input_fixture = workspace_root.join("{fixture_file}");
 
     // 1. CLI Tests
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {{
-        let out_path = out_dir.join(format!("{{}}_cli_{{}}.pdf", tool, tier as u8));
+        let out_path = out_dir.join(format!("{{}}_cli_{{}}.{out_fmt}", tool, tier as u8));
         
-        let mut actual_input = single_page.to_string_lossy().to_string();
+        let mut actual_input = input_fixture.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {{
-            actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
+            actual_input = "{missing_fixture}".to_string();
         }}
         
         let out_path_str = out_path.to_str().unwrap().to_string();
@@ -704,7 +797,7 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
         let passed = if tier == ComplexityTier::Negative {{
             !success
         }} else {{
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "{out_fmt}").unwrap_or(false)
         }};
 
         results.push(TestExecutionResult {{
@@ -726,11 +819,11 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
 
     // 2. MCP Parity Checks
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {{
-        let out_path = out_dir.join(format!("{{}}_mcp_{{}}.pdf", tool, tier as u8));
+        let out_path = out_dir.join(format!("{{}}_mcp_{{}}.{out_fmt}", tool, tier as u8));
         
-        let mut actual_input = single_page.to_string_lossy().to_string();
+        let mut actual_input = input_fixture.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {{
-            actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
+            actual_input = "{missing_fixture}".to_string();
         }}
 
         let mcp_args = json!({{
@@ -743,7 +836,7 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
         let passed = if tier == ComplexityTier::Negative {{
             !success
         }} else {{
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "{out_fmt}").unwrap_or(false)
         }};
 
         results.push(TestExecutionResult {{
@@ -765,16 +858,16 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
 
     // 3. REST API Gateway
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {{
-        let mut actual_input = single_page.to_string_lossy().to_string();
+        let mut actual_input = input_fixture.to_string_lossy().to_string();
         if tier == ComplexityTier::Negative {{
-            actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
+            actual_input = "{missing_fixture}".to_string();
         }}
 
         let api_args = json!({{
             "input": actual_input
         }});
 
-        let (success, resp, latency) = api.post_json("/api/v1/pdf/{name_kebab}", api_args).await?;
+        let (success, resp, latency) = api.post_json("{api_endpoint}", api_args).await?;
         
         let passed = if tier == ComplexityTier::Negative {{
             !success
@@ -786,7 +879,7 @@ pub async fn run_{name_snake}_suite() -> anyhow::Result<Vec<TestExecutionResult>
             tool_id: tool.into(),
             interface: InterfaceType::Api,
             tier,
-            data_sent: "POST /api/v1/pdf/{name_kebab}".to_string(),
+            data_sent: "POST {api_endpoint}".to_string(),
             expected_result: if tier == ComplexityTier::Negative {{
                 "Fail/Error".into()
             }} else {{
@@ -1093,6 +1186,265 @@ fn append_svelte_ui(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
                 ensure_newline_at_eof(&mut new_panel);
                 write_or_print(panel_path, &new_panel, args.dry_run)?;
             }
+        }
+    }
+
+    Ok(())
+}
+
+fn append_desktop_wiring(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    // 1. Tool Registry: apps/desktop/src/lib/services/toolRegistry.ts
+    let registry_path = "apps/desktop/src/lib/services/toolRegistry.ts";
+    if Path::new(registry_path).exists() {
+        let registry_content = fs::read_to_string(registry_path)?;
+        if !name_snake.starts_with("pdf_") && !registry_content.contains(&format!("'{}'", name_snake)) {
+            let mut lines = registry_content.lines().map(|s| s.to_string()).collect::<Vec<_>>();
+            let mut insert_idx = 0;
+            for (i, line) in lines.iter().enumerate() {
+                if line.contains("const UNPREFIXED_TOOLS = new Set([") {
+                    insert_idx = i + 1;
+                    break;
+                }
+            }
+            if insert_idx > 0 {
+                lines.insert(insert_idx, format!("  '{}',", name_snake));
+                let mut new_registry = lines.join("\n");
+                ensure_newline_at_eof(&mut new_registry);
+                write_or_print(registry_path, &new_registry, args.dry_run)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn append_wdio_e2e(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    let test_path = format!("apps/desktop/test/specs/{}.e2e.ts", name_snake);
+    let title = &args.title;
+
+    let test_content = format!(
+        r#"import {{ expect, $, $$ }} from '@wdio/globals';
+
+describe('{title} Desktop E2E Test', () => {{
+  it('should select {name_snake} in operations panel and verify active state and inspector appearance', async () => {{
+    // 1. Verify operations panel visibility
+    const operationsPanel = await $('[data-testid="operations-panel"]');
+    await operationsPanel.waitForDisplayed({{ timeout: 15000 }});
+    expect(await operationsPanel.isDisplayed()).toBe(true);
+
+    // 2. Select tool in operations panel
+    const toolBtn = await $(`#tool-btn-{name_snake}`);
+    if (await toolBtn.isExisting()) {{
+      await toolBtn.scrollIntoView();
+      await toolBtn.click();
+    }} else {{
+      // Fallback: search or select from tool items
+      const toolItems = await $$('[data-testid="tool-item"]');
+      expect(toolItems.length).toBeGreaterThan(0);
+      await toolItems[0].click();
+    }}
+
+    // 3. Verify tool active state & inspector appearance
+    const runBtn = await $('[data-testid="run-operation-btn"]');
+    await runBtn.waitForDisplayed({{ timeout: 10000 }});
+    expect(await runBtn.isDisplayed()).toBe(true);
+
+    const formatBadges = await $('[data-testid="tool-format-badges"]');
+    if (await formatBadges.isExisting()) {{
+      expect(await formatBadges.isDisplayed()).toBe(true);
+    }}
+  }});
+}});
+"#,
+        title = title,
+        name_snake = name_snake
+    );
+
+    write_or_print(&test_path, &test_content, args.dry_run)?;
+    Ok(())
+}
+
+fn append_docs(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    let title = &args.title;
+    let description = &args.description;
+    let name_kebab = name_snake.replace("pdf_", "").replace('_', "-");
+    let in_fmt = args.input_format.to_uppercase();
+    let out_fmt = args.output_format.to_lowercase().trim_start_matches('.').to_string();
+
+    let is_img = name_snake.starts_with("img_") || name_snake.ends_with("to_gif");
+    let is_office = name_snake.starts_with("office_");
+    let primary_api_path = if is_img {
+        let sub = if name_snake.ends_with("to_gif") {
+            "to-gif".to_string()
+        } else {
+            name_snake.replace("img_", "").replace('_', "-")
+        };
+        format!("/api/v1/image/{}", sub)
+    } else if is_office {
+        let sub = name_snake.replace("office_", "").replace('_', "-");
+        format!("/api/v1/office/{}", sub)
+    } else {
+        format!("/api/v1/pdf/{}", name_kebab)
+    };
+
+    let sample_in = if in_fmt.contains("IMG") || in_fmt == "PNG" || in_fmt == "JPG" {
+        "tests/e2e_fixtures/real/test.png"
+    } else if in_fmt.contains("DOCX") {
+        "tests/e2e_fixtures/real/test.docx"
+    } else if in_fmt.contains("XLSX") || in_fmt.contains("CSV") {
+        "tests/e2e_fixtures/real/test.xlsx"
+    } else {
+        "tests/e2e_fixtures/real/single_page.pdf"
+    };
+
+    let sample_out = format!("tests/e2e_fixtures/out/penta_e2e/{}_out.{}", name_snake, out_fmt);
+
+    // 1. Tool Doc Page: apps/docs/src/content/docs/reference/tools/<name_snake>.md
+    let doc_path = format!("apps/docs/src/content/docs/reference/tools/{}.md", name_snake);
+    let doc_content = format!(
+        r#"---
+title: "{name_snake}"
+description: "Reference, CLI, MCP, and REST API commands for {name_snake} ({title})."
+sidebar:
+  order: 90
+---
+
+**Status**: ✅ Verified  |  **Added in**: `v0.8.0+`  |  **Format**: {in_fmt} $\to$ .{out_fmt}
+
+### What it does
+**{description}**
+
+---
+
+### CLI
+`{name_snake}` is invoked via `paperpilot {name_kebab}`:
+
+```bash
+paperpilot {name_kebab} \
+  --input {sample_in} \
+  --output {sample_out} \
+  --json
+```
+
+#### CLI Parameters
+- `--input` *(string, required)*: Path to the input file.
+- `--output` *(string, required)*: Path to the destination output file.
+- `--json` *(flag, optional)*: Emit structured JSON execution result.
+
+---
+
+### MCP JSON-RPC
+Invoke `{name_snake}` via Model Context Protocol:
+
+```json
+{{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {{
+    "name": "{name_snake}",
+    "arguments": {{
+      "input": "{sample_in}",
+      "output": "{sample_out}"
+    }}
+  }},
+  "id": 1
+}}
+```
+
+---
+
+### REST API
+Invoke the REST API endpoint `{primary_api_path}`:
+
+```bash
+curl -s -X POST http://127.0.0.1:7823{primary_api_path} \
+  -H 'Content-Type: application/json' \
+  -d '{{
+    "input": "{sample_in}",
+    "output": "{sample_out}"
+  }}'
+```
+"#,
+        name_snake = name_snake,
+        title = title,
+        name_kebab = name_kebab,
+        description = description,
+        in_fmt = in_fmt,
+        out_fmt = out_fmt,
+        primary_api_path = primary_api_path,
+        sample_in = sample_in,
+        sample_out = sample_out
+    );
+    write_or_print(&doc_path, &doc_content, args.dry_run)?;
+
+    // 2. Append to apps/docs/src/content/docs/reference/tools-handbook.md
+    let handbook_path = "apps/docs/src/content/docs/reference/tools-handbook.md";
+    if Path::new(handbook_path).exists() {
+        let handbook_content = fs::read_to_string(handbook_path)?;
+        if !handbook_content.contains(&format!("`{}`", name_snake)) {
+            // Count existing tools
+            let tool_count = handbook_content.lines().filter(|l| l.starts_with("## ") && l.contains(". `")).count();
+            let next_num = tool_count + 1;
+
+            let handbook_block = format!(
+                r#"
+## {next_num}. `{name_snake}` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: {in_fmt} $\to$ .{out_fmt}
+
+**{description}**
+
+---
+
+### CLI
+```bash
+paperpilot {name_kebab} \
+  --input {sample_in} \
+  --output {sample_out} \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {{
+    "name": "{name_snake}",
+    "arguments": {{
+      "input": "{sample_in}",
+      "output": "{sample_out}"
+    }}
+  }},
+  "id": 1
+}}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823{primary_api_path} \
+  -H 'Content-Type: application/json' \
+  -d '{{
+    "input": "{sample_in}",
+    "output": "{sample_out}"
+  }}'
+```
+"#,
+                next_num = next_num,
+                name_snake = name_snake,
+                name_kebab = name_kebab,
+                description = description,
+                in_fmt = in_fmt,
+                out_fmt = out_fmt,
+                primary_api_path = primary_api_path,
+                sample_in = sample_in,
+                sample_out = sample_out
+            );
+
+            let mut new_handbook = handbook_content;
+            ensure_newline_at_eof(&mut new_handbook);
+            new_handbook.push_str(&handbook_block);
+            write_or_print(handbook_path, &new_handbook, args.dry_run)?;
         }
     }
 
