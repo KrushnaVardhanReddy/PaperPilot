@@ -1536,6 +1536,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   class:dragging={isDragging && !appState.isMobile}
   class:mobile-bottom-sheet={appState.isMobile}
   id="operations-panel"
+  data-testid="operations-panel"
   style={!embedded && !appState.isMobile && !isCollapsed ? `width: ${panelWidth}px; min-width: ${panelWidth}px;` : ''}
 >
   {#if !isCollapsed && !embedded}
@@ -3662,6 +3663,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           class="run-btn"
           class:run-btn--loading={isRunning}
           id="btn-run-operation"
+          data-testid="run-operation-btn"
           disabled={isRunning || !activeTool || (!['md_to_pdf', 'html_to_pdf', 'img_to_pdf', 'pdf_images_to_pdf', 'json_to_pdf', 'pdf_convert_excel', 'convert_excel', 'excel_to_pdf'].includes(activeTool.id) && appState.documents.length === 0) || ((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && !isOcrDownloaded)}
           onclick={handleRunOperation}
         >
@@ -3817,7 +3819,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             <div class="empty-state">No matching tools found</div>
           {:else}
             {#each filteredTools as tool (tool.id + tool.category)}
-              <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
+              <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}" data-testid="tool-item">
                 <span class="tool-card-icon">{tool.icon}</span>
                 <div class="tool-card-info">
                   <div class="tool-card-title-row">
@@ -3864,7 +3866,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
               </span>
               <div class="category-grid">
                 {#each toolsInCat as tool (tool.id + tool.category)}
-                  <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}">
+                  <button class="tool-card" onclick={() => selectTool(tool)} id="tool-btn-{tool.id}" data-testid="tool-item">
                     <span class="tool-card-icon">{tool.icon}</span>
                     <div class="tool-card-info">
                       <div class="tool-card-title-row">

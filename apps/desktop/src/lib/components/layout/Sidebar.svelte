@@ -9,12 +9,13 @@
   ];
 </script>
 
-<aside class="sidebar collapsed" aria-label="Main navigation">
+<aside class="sidebar collapsed" aria-label="Main navigation" data-testid="sidebar">
   <nav class="sidebar-nav" aria-label="Navigation">
     {#each navItems as item (item.id)}
       {#if item.id !== 'api' || appState.developerMode}
         <button
           class="nav-item"
+          data-testid={`nav-${item.id}`}
           class:active={appState.activeTab === item.id}
           onclick={() => {
             if (appState.activeTab === item.id && item.id === 'documents') {
