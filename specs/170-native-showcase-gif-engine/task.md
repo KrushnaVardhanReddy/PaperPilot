@@ -1,27 +1,29 @@
 # Spec 170: Implementation Tasks
 
-- [ ] **1. Core Showcase & Canvas Engine (`paperpilot-core`)**
-  - [ ] 1.1 Verify and configure `image` and `gif` crate dependencies with palette quantization support.
-  - [ ] 1.2 Implement embedded font loading with fallback (`ab_glyph` or bitmap font).
-  - [ ] 1.3 Build `crates/paperpilot-core/src/showcase/canvas.rs` for 1200x675 16:9 split-screen UI layout (terminal + document preview).
-  - [ ] 1.4 Build `crates/paperpilot-core/src/showcase/timeline.rs` for state interpolation (typing, spinner, document transitions).
-  - [ ] 1.5 Build `crates/paperpilot-core/src/showcase/encoder.rs` for in-memory NeuQuant/Bayer palette GIF generation.
+- [x] **0. Penta-Interface Tool Scaffolding**
+  - [x] 0.1 Scaffold `pdf_to_gif` across all 5 interfaces.
+  - [x] 0.2 Scaffold `showcase_gif` across all 5 interfaces.
+  - [x] 0.3 Scaffold `images_to_gif` across all 5 interfaces.
+  - [x] 0.4 Scaffold `img_optimize_for_llm` across all 5 interfaces.
+  - [x] 0.5 Scaffold `img_deskew` across all 5 interfaces.
+  - [x] 0.6 Scaffold `img_convert` across all 5 interfaces.
+  - [x] 0.7 Scaffold `img_crop_to_content` across all 5 interfaces.
+  - [x] 0.8 Scaffold `img_redact` across all 5 interfaces.
 
-- [ ] **2. Document-to-GIF Engine (`pdf-to-gif`)**
-  - [ ] 2.1 Implement `pdf_to_gif` pipeline converting rasterized PDF pages into looping animated GIFs.
-  - [ ] 2.2 Add configurable frame delay and loop controls.
+- [ ] **1. GIF & Document Animation Engine**
+  - [ ] 1.1 Implement `pdf_to_gif_bytes`: rasterize PDF pages via existing render engine and encode into looping animated GIF with frame delay.
+  - [ ] 1.2 Implement `images_to_gif_bytes`: load image byte sequences and encode into single looping animated GIF with NeuQuant palette.
+  - [ ] 1.3 Implement `showcase_gif_bytes`: split-screen canvas drawing (simulated terminal keystrokes + document before/after transition) rendered to palette-quantized GIF.
 
-- [ ] **3. CLI Integration (`paperpilot-cli`)**
-  - [ ] 3.1 Expose `paperpilot showcase-gif` subcommand with `--command`, `--before`, `--after`, `--title`, `--output`.
-  - [ ] 3.2 Expose `paperpilot pdf-to-gif` subcommand with `--input`, `--output`, `--delay`.
-  - [ ] 3.3 Add unit and integration tests verifying sub-100KB GIF generation on test documents.
+- [ ] **2. Image Intelligence & LLM Vision Optimization**
+  - [ ] 2.1 Implement `img_optimize_for_llm_bytes`: smart downscaling with aspect-ratio preservation to meet LLM vision token constraints.
+  - [ ] 2.2 Implement `img_deskew_bytes`: projection profile / Hough angle detection and rotation.
+  - [ ] 2.3 Implement `img_convert_bytes`: format transmutation between PNG, JPEG, WebP, TIFF, AVIF.
+  - [ ] 2.4 Implement `img_crop_to_content_bytes`: edge and contrast detection to auto-crop margins.
+  - [ ] 2.5 Implement `img_redact_bytes`: permanent RGB pixel incinerator over bounding boxes.
 
-- [ ] **4. MCP Tool Registration (`paperpilot-mcp`)**
-  - [ ] 4.1 Expose `generate_showcase_gif` in `crates/paperpilot-mcp/src/server.rs`.
-  - [ ] 4.2 Document input schema parameters with `When to use:` and disambiguation blocks matching Glama Grade A standards.
-  - [ ] 4.3 Update SLM training snapshots (`mcp_tool_schemas.json`).
+- [ ] **3. Verification & CI/CD**
+  - [ ] 3.1 Run tests with `cargo test -j 4` across all 7 new tools.
+  - [ ] 3.2 Verify MCP tool schemas in `paperpilot-mcp` with `sync_tool_schemas.py`.
+  - [ ] 3.3 Update CLI docs and documentation.
 
-- [ ] **5. Verification & Documentation**
-  - [ ] 5.1 Test generated GIF in native image viewer / web browser to verify fluid 12–15 FPS animation.
-  - [ ] 5.2 Verify Cargo build runs clean under `-j 4`.
-  - [ ] 5.3 Update `README.md` and CLI `--help` docs.
