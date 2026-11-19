@@ -1111,7 +1111,7 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             *width,
         ),
         Commands::ImgOptimizeForLlm { input, output } => img_optimize_for_llm::handle_img_optimize_for_llm_command(input, output),
-        Commands::ImgDeskew { input, output } => img_deskew::handle_img_deskew_command(input, output),
+        Commands::ImgDeskew { input, output, angle } => img_deskew::handle_img_deskew_command(input, output, *angle),
         Commands::ImgConvert { input, output } => img_convert::handle_img_convert_command(input, output),
         Commands::ImgCropToContent { input, output } => img_crop_to_content::handle_img_crop_to_content_command(input, output),
         Commands::ImgRedact { input, output } => img_redact::handle_img_redact_command(input, output),

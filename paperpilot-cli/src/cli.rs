@@ -1003,6 +1003,8 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        angle: Option<f32>,
     },
     /// Convert Image Format: Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats
     #[command(name = "img-convert")]

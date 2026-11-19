@@ -187,6 +187,8 @@ export interface OperationContext {
     gifWidth?: number;
     gifMaxPages?: number;
     gifFps?: number;
+    imgDeskewAngle?: number;
+    imgDeskewAutoDetect?: boolean;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -1315,12 +1317,17 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
             };
             break;
-        case 'img_deskew':
+        case 'img_deskew': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_deskewed.${ext}`),
+                angle: context.imgDeskewAngle,
+                auto_detect: context.imgDeskewAutoDetect ?? true
             };
             break;
+        }
         case 'img_convert':
             args = {
                 input: docPath,

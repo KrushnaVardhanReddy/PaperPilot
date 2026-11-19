@@ -4924,14 +4924,24 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "img_deskew" => {
+            "img_deskew" | "pdf_img_deskew" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::img_deskew::ImgDeskewOptions::default();
+                let mut options = paperpilot_pdf::operations::img_deskew::ImgDeskewOptions::default();
+                if let Ok(angle) = get_f64("angle") {
+                    options.angle = Some(angle as f32);
+                    options.auto_detect = Some(false);
+                }
+                if let Ok(auto) = get_bool("auto_detect") {
+                    options.auto_detect = Some(auto);
+                }
+                if let Ok(bg) = get_string("background_color") {
+                    options.background_color = Some(bg);
+                }
                 let result = paperpilot_pdf::operations::img_deskew::img_deskew_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 

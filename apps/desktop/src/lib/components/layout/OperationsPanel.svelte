@@ -256,6 +256,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let gifWidth = $state(800);
   let gifMaxPages = $state<number | undefined>(undefined);
 
+  // Img Deskew parameter states
+  let imgDeskewAutoDetect = $state(true);
+  let imgDeskewAngle = $state(0);
+
   // Alternating Merge & Compare parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -672,6 +676,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'watcher_stop':
         customOutputPath = getOutputPath(`${base}_watcher.json`);
         break;
+      case 'img_deskew': {
+        const ext = (docPath.split('.').pop() || 'png').toLowerCase();
+        customOutputPath = getOutputPath(`${base}_deskewed.${ext || 'png'}`);
+        break;
+      }
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
 
@@ -909,7 +918,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             hasHeaders,
             gifDelay,
             gifWidth,
-            gifMaxPages
+            gifMaxPages,
+            imgDeskewAngle: imgDeskewAutoDetect ? undefined : imgDeskewAngle,
+            imgDeskewAutoDetect
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -1175,7 +1186,9 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           hasHeaders,
           gifDelay,
           gifWidth,
-          gifMaxPages
+          gifMaxPages,
+          imgDeskewAngle: imgDeskewAutoDetect ? undefined : imgDeskewAngle,
+          imgDeskewAutoDetect
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -2955,6 +2968,39 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           </div>
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Generates a side-by-side developer demo GIF comparing terminal keystrokes with before-and-after document transformations.
+          </p>
+        </div>
+      {:else if activeTool.id === 'img_deskew'}
+        <div class="operation-config">
+          <div class="checkbox-field" style="margin-bottom: 12px;">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                bind:checked={imgDeskewAutoDetect}
+              />
+              Auto-Detect Tilt Angle
+            </label>
+          </div>
+
+          {#if !imgDeskewAutoDetect}
+            <label for="imgDeskewManualAngle" class="section-desc">Manual Angle Fine-Tuning: {imgDeskewAngle}°</label>
+            <input
+              id="imgDeskewManualAngle"
+              type="range"
+              min="-45"
+              max="45"
+              step="0.5"
+              bind:value={imgDeskewAngle}
+              class="range-input"
+            />
+            <div class="range-labels">
+              <span>-45° (Clockwise)</span>
+              <span>+45° (Counter-CW)</span>
+            </div>
+          {/if}
+
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Detects text baseline tilt in scanned documents and receipts, automatically straightening the image with bilinear interpolation for optimal OCR.
           </p>
         </div>
       {:else if activeTool.id === 'pdf_to_docx'}

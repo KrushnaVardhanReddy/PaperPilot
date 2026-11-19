@@ -555,7 +555,9 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('img_deskew', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.image'
+            output: '/docs/test_deskewed.pdf',
+            angle: undefined,
+            auto_detect: true
         });
     });
 

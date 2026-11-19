@@ -112,6 +112,15 @@ async fn main() -> Result<()> {
     fixture_mgr.ensure_fixtures()?;
 
     match args.group.as_str() {
+        "img_deskew" => {
+            let res_img_deskew = cases::img_deskew::run_img_deskew_suite().await?;
+            println!("Deskew Document Image finished: {} tests", res_img_deskew.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Deskew Document Image)",
+                &res_img_deskew,
+                "reports/PENTA_INTERFACE_E2E_IMG_DESKEW_REPORT.md",
+            )?;
+        }
         "showcase_gif" => {
             let res_showcase_gif = cases::showcase_gif::run_showcase_gif_suite().await?;
             println!("Generate Showcase GIF finished: {} tests", res_showcase_gif.len());
