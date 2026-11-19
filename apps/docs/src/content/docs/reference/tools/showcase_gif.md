@@ -5,7 +5,7 @@ sidebar:
   order: 64
 ---
 
-**Status**: ✅ Verified  |  **Format**: PDF (`.pdf`) to Showcase Animated GIF (`.gif`)
+**Status**: ✅ Verified  |  **Added in**: `v0.8.0+`  |  **Format**: PDF (`.pdf`) to Showcase Animated GIF (`.gif`)
 
 ### What it does
 **Generates an animated showcase mockup card highlighting document content with elegant transitions.**  

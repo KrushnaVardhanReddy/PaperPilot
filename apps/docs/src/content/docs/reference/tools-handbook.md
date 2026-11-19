@@ -403,7 +403,7 @@ paperpilot workflow history --directory ./out/.paperpilot-receipts --limit 50 --
 N/A
 ```
 
-## 11. `images_to_gif`
+## 11. `images_to_gif` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -458,7 +458,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/images-to-gif \
   }'
 ```
 
-## 12. `img_convert`
+## 12. `img_convert` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -507,7 +507,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-convert \
   }'
 ```
 
-## 13. `img_crop_to_content`
+## 13. `img_crop_to_content` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -556,7 +556,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-crop-to-content \
   }'
 ```
 
-## 14. `img_deskew`
+## 14. `img_deskew` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -599,7 +599,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-deskew \
   }'
 ```
 
-## 15. `img_optimize_for_llm`
+## 15. `img_optimize_for_llm` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -648,7 +648,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-optimize-for-llm \
   }'
 ```
 
-## 16. `img_redact`
+## 16. `img_redact` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3542,7 +3542,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-epub \
   }'
 ```
 
-## 84. `pdf_to_gif`
+## 84. `pdf_to_gif` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -4119,7 +4119,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/search/semantic_search \
   }'
 ```
 
-## 96. `showcase_gif`
+## 96. `showcase_gif` *(Added in v0.8.0+)*
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 

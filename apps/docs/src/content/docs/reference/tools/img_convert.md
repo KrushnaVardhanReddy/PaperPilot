@@ -5,7 +5,7 @@ sidebar:
   order: 70
 ---
 
-**Status**: ✅ Verified  |  **Format**: Image (`PNG`, `JPEG`, `WebP`, `TIFF`, `AVIF`) Transcoding
+**Status**: ✅ Verified  |  **Added in**: `v0.8.0+`  |  **Format**: Image (`PNG`, `JPEG`, `WebP`, `TIFF`, `AVIF`) Transcoding
 
 ### What it does
 **Performs pure-Rust transcoding between image formats without system-level image libraries.**  

@@ -5,7 +5,7 @@ sidebar:
   order: 65
 ---
 
-**Status**: ✅ Verified  |  **Format**: Multiple Images (`.png`, `.jpeg`, `.webp`) to Animated GIF (`.gif`)
+**Status**: ✅ Verified  |  **Added in**: `v0.8.0+`  |  **Format**: Multiple Images (`.png`, `.jpeg`, `.webp`) to Animated GIF (`.gif`)
 
 ### What it does
 **Combines an ordered sequence of images into a single animated looping GIF.**  

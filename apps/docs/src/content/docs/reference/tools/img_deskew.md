@@ -5,7 +5,7 @@ sidebar:
   order: 66
 ---
 
-**Status**: ✅ Verified  |  **Format**: Image (`.png`, `.jpeg`, `.webp`, `.tiff`) to Image
+**Status**: ✅ Verified  |  **Added in**: `v0.8.0+`  |  **Format**: Image (`.png`, `.jpeg`, `.webp`, `.tiff`) to Image
 
 ### What it does
 **Detects text baseline skew angle and straightens tilted document scans.**  

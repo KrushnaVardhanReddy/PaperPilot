@@ -5,7 +5,7 @@ sidebar:
   order: 63
 ---
 
-**Status**: ✅ Verified  |  **Format**: PDF (`.pdf`) to Animated GIF (`.gif`)
+**Status**: ✅ Verified  |  **Added in**: `v0.8.0+`  |  **Format**: PDF (`.pdf`) to Animated GIF (`.gif`)
 
 ### What it does
 **Converts multi-page PDF documents into animated looping GIF flipbooks.**  

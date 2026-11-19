@@ -5,7 +5,7 @@ sidebar:
   order: 69
 ---
 
-**Status**: ✅ Verified  |  **Format**: Image (`.png`, `.jpeg`, `.webp`, `.tiff`) to LLM-Optimized Image
+**Status**: ✅ Verified  |  **Added in**: `v0.8.0+`  |  **Format**: Image (`.png`, `.jpeg`, `.webp`, `.tiff`) to LLM-Optimized Image
 
 ### What it does
 **Downscales and sharpens images for Vision LLM token budget economy and OCR legibility.**  
