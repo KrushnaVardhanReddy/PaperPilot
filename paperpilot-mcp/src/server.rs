@@ -4793,9 +4793,19 @@ impl PaperPilotMcpServer {
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
+                let fps = args.get("fps").and_then(|v| v.as_u64()).map(|v| v as u8);
+                let delay = args.get("delay").and_then(|v| v.as_u64()).map(|v| v as u16);
+                let max_pages = args.get("max_pages").and_then(|v| v.as_u64()).map(|v| v as usize);
+                let width = args.get("width").and_then(|v| v.as_u64()).map(|v| v as u32);
+
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::pdf_to_gif::PdfToGifOptions::default();
+                let options = paperpilot_pdf::operations::pdf_to_gif::PdfToGifOptions {
+                    fps,
+                    delay_centisecs: delay,
+                    max_pages,
+                    width,
+                };
                 let result = paperpilot_pdf::operations::pdf_to_gif::pdf_to_gif_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 

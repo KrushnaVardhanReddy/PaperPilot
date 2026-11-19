@@ -183,6 +183,10 @@ export interface OperationContext {
     watcherOutputDir?: string;
     watcherSettleDelay?: number;
     watcherId?: string;
+    gifDelay?: number;
+    gifWidth?: number;
+    gifMaxPages?: number;
+    gifFps?: number;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -1259,8 +1263,14 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'pdf_to_gif':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.gif`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_preview.gif`),
+                delay: context.gifDelay ?? 100,
+                width: context.gifWidth ?? 800,
+                max_pages: context.gifMaxPages ? Number(context.gifMaxPages) : undefined,
+                fps: context.gifFps
             };
+            if (args.max_pages === undefined) delete args.max_pages;
+            if (args.fps === undefined) delete args.fps;
             break;
         case 'showcase_gif':
             args = {

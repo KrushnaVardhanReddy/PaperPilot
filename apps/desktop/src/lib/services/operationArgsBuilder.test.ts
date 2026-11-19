@@ -499,7 +499,27 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('pdf_to_gif', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.gif'
+            output: '/docs/test_preview.gif',
+            delay: 100,
+            width: 800
+        });
+    });
+
+    it('builds args for pdf_to_gif with custom options', async () => {
+        const args = await buildOperationArgs('pdf_to_gif', {
+            ...defaultContext,
+            gifDelay: 50,
+            gifWidth: 640,
+            gifMaxPages: 5,
+            gifFps: 2
+        });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_preview.gif',
+            delay: 50,
+            width: 640,
+            max_pages: 5,
+            fps: 2
         });
     });
 

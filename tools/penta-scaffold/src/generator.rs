@@ -243,6 +243,7 @@ pub fn handle_{name_snake}_command(
     append_wasm_desktop(&args, name_snake, &name_pascal)?;
     append_edge_e2e(&args, name_snake, &name_pascal)?;
     append_desktop_args_builder(&args, name_snake)?;
+    append_svelte_ui(&args, name_snake)?;
 
     Ok(())
 }
@@ -993,6 +994,100 @@ fn append_desktop_args_builder(args: &ScaffoldArgs, name_snake: &str) -> Result<
                 new_content.push_str(&test_arm);
                 new_content.push_str(&content[pos..]);
                 write_or_print(test_path, &new_content, args.dry_run)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn append_svelte_ui(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    // 1. Web Svelte app: apps/web/src/views/OperationsView.svelte
+    let web_view_path = "apps/web/src/views/OperationsView.svelte";
+    if Path::new(web_view_path).exists() {
+        let content = fs::read_to_string(web_view_path)?;
+        if !content.contains(&format!("id: '{}'", name_snake)) {
+            // Map category to one of 'pages' | 'edit' | 'optimize' | 'security' | 'convert'
+            let category_raw = args.category.to_lowercase();
+            let cat = match category_raw.as_str() {
+                "pages" | "page" => "pages",
+                "edit" | "stationery" => "edit",
+                "optimize" | "compression" => "optimize",
+                "security" => "security",
+                _ => "convert",
+            };
+
+            let entry = format!(
+                "    {{ id: '{name_snake}', title: '{title}', icon: '{icon}', category: '{cat}', releaseStatus: 'preview', description: '{description}' }},",
+                name_snake = name_snake,
+                title = args.title,
+                icon = args.icon,
+                cat = cat,
+                description = args.description
+            );
+
+            // Insert into the tools array under the matching category or before `];`
+            let mut lines = content.lines().map(|s| s.to_string()).collect::<Vec<_>>();
+            let mut insert_idx = 0;
+
+            // Try to find the section matching `category: '{cat}'`
+            let cat_marker = format!("category: '{}'", cat);
+            let mut last_cat_idx = None;
+            let mut tools_closing_idx = None;
+
+            for (i, line) in lines.iter().enumerate() {
+                if line.contains(&cat_marker) {
+                    last_cat_idx = Some(i);
+                }
+                if tools_closing_idx.is_none() && line.trim() == "];" && i > 30 && i < 150 {
+                    tools_closing_idx = Some(i);
+                }
+            }
+
+            if let Some(idx) = last_cat_idx {
+                insert_idx = idx + 1;
+            } else if let Some(idx) = tools_closing_idx {
+                insert_idx = idx;
+            }
+
+            if insert_idx > 0 {
+                lines.insert(insert_idx, entry);
+                let mut new_web = lines.join("\n");
+                ensure_newline_at_eof(&mut new_web);
+                write_or_print(web_view_path, &new_web, args.dry_run)?;
+            }
+        }
+    }
+
+    // 2. Desktop Svelte app: apps/desktop/src/lib/components/layout/OperationsPanel.svelte
+    let panel_path = "apps/desktop/src/lib/components/layout/OperationsPanel.svelte";
+    if Path::new(panel_path).exists() {
+        let content = fs::read_to_string(panel_path)?;
+        if !content.contains(&format!("case '{}':", name_snake)) {
+            let ext = args.output_format.to_lowercase();
+            let entry = format!(
+                "      case '{name_snake}': customOutputPath = getOutputPath(`${{base}}_output.{ext}`); break;",
+                name_snake = name_snake,
+                ext = ext
+            );
+
+            let mut lines = content.lines().map(|s| s.to_string()).collect::<Vec<_>>();
+            let mut default_idx = 0;
+
+            for (i, line) in lines.iter().enumerate() {
+                if line.contains("default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;")
+                    || line.contains("default:              customOutputPath = getOutputPath")
+                {
+                    default_idx = i;
+                    break;
+                }
+            }
+
+            if default_idx > 0 {
+                lines.insert(default_idx, entry);
+                let mut new_panel = lines.join("\n");
+                ensure_newline_at_eof(&mut new_panel);
+                write_or_print(panel_path, &new_panel, args.dry_run)?;
             }
         }
     }

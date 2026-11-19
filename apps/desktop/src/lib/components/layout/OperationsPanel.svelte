@@ -251,6 +251,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let excelSheet = $state('');
   let hasHeaders = $state(true);
 
+  // PDF to GIF parameter states
+  let gifDelay = $state(100);
+  let gifWidth = $state(800);
+  let gifMaxPages = $state<number | undefined>(undefined);
+
   // Alternating Merge & Compare parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -611,6 +616,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'extract_images':
       case 'pdf_extract_images': customOutputPath = getOutputPath(`${base}_images`);       break;
       case 'pdf_comic_archive': customOutputPath = getOutputPath(cbzArchiveName || `${base}_output.cbz`); break;
+      case 'pdf_to_gif':        customOutputPath = getOutputPath(`${base}_preview.gif`); break;
       case 'split_by_outline':
       case 'pdf_split_by_outline': customOutputPath = getOutputPath(`${base}_outline_split.zip`); break;
       case 'pdf_to_epub':     customOutputPath = getOutputPath(`${base}_output.epub`);     break;
@@ -894,7 +900,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             cbzArchiveName,
             pdfaConformance,
             excelSheet: excelSheet.trim() || undefined,
-            hasHeaders
+            hasHeaders,
+            gifDelay,
+            gifWidth,
+            gifMaxPages
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -1157,7 +1166,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           cbzArchiveName,
           pdfaConformance,
           excelSheet: excelSheet.trim() || undefined,
-          hasHeaders
+          hasHeaders,
+          gifDelay,
+          gifWidth,
+          gifMaxPages
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -2822,6 +2834,51 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           </select>
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Rasters vector typography, strokes, and image layers into high-resolution bitmap frames.
+          </p>
+        </div>
+      {:else if activeTool.id === 'pdf_to_gif'}
+        <div class="operation-config">
+          <label for="gifDelay" class="section-desc">Frame Delay: {gifDelay} cs ({gifDelay / 100}s)</label>
+          <input
+            id="gifDelay"
+            type="range"
+            min="10"
+            max="500"
+            step="5"
+            bind:value={gifDelay}
+            class="range-input"
+          />
+          <div class="range-labels">
+            <span>0.1s (Fast)</span>
+            <span>5.0s (Slow)</span>
+          </div>
+
+          <label for="gifWidth" class="section-desc" style="margin-top: 12px;">Frame Width: {gifWidth}px</label>
+          <input
+            id="gifWidth"
+            type="range"
+            min="320"
+            max="1920"
+            step="20"
+            bind:value={gifWidth}
+            class="range-input"
+          />
+          <div class="range-labels">
+            <span>320px (Compact)</span>
+            <span>1920px (Full HD)</span>
+          </div>
+
+          <label for="gifMaxPages" class="section-desc" style="margin-top: 12px;">Max Pages (Optional):</label>
+          <input
+            id="gifMaxPages"
+            type="number"
+            min="1"
+            class="form-input"
+            bind:value={gifMaxPages}
+            placeholder="All pages"
+          />
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Converts multi-page PDF documents into animated looping GIF previews.
           </p>
         </div>
       {:else if activeTool.id === 'pdf_to_docx'}
