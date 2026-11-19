@@ -936,6 +936,14 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, help = "Frames per second (e.g. 1, 2)")]
+        fps: Option<u8>,
+        #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 100 for 1s)")]
+        delay: Option<u16>,
+        #[arg(long, help = "Maximum pages to render into the animation")]
+        max_pages: Option<usize>,
+        #[arg(long, help = "Target width of GIF frames in pixels (default: 800)")]
+        width: Option<u32>,
     },
     /// Generate Showcase GIF: Generate animated showcase demo GIF comparing before and after transformations
     #[command(name = "showcase-gif")]
