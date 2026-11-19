@@ -3,16 +3,16 @@ use paperpilot_core::error::PdfError;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use serde::{Deserialize, Serialize};
 
-/// Options for generating a developer showcase demo GIF.
+/// Options for generating a clean document showcase GIF.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShowcaseGifOptions {
     /// Frames per second. If provided, delay is calculated as `(100 / fps).max(1)`.
     pub fps: Option<u8>,
-    /// Delay between frames in centiseconds (1/100ths of a second). Default is 40 (0.4s).
+    /// Delay between frames in centiseconds (1/100ths of a second). Default is 25 (0.25s).
     pub delay_centisecs: Option<u16>,
-    /// Target frame width in pixels. Default is 1200. Height will scale proportionally (default 675 for 16:9).
+    /// Target canvas width in pixels. Default is 800. Height will scale proportionally (default 16:9).
     pub width: Option<u32>,
-    /// Number of animation frames to render. Default is 10.
+    /// Number of animation frames per transition or scan cycle. Default is 8.
     pub transition_frames: Option<u8>,
 }
 
@@ -21,112 +21,11 @@ impl Default for ShowcaseGifOptions {
         Self {
             fps: Some(4),
             delay_centisecs: Some(25),
-            width: Some(1200),
-            transition_frames: Some(10),
+            width: Some(800),
+            transition_frames: Some(8),
         }
     }
 }
-
-// Minimal embedded 5x7 bitmap font for rendering crisp ASCII UI labels and terminal text
-// Each character is 5 bits wide, 7 rows high.
-const FONT_5X7: [&[u8; 7]; 96] = [
-    &[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // ' ' (32)
-    &[0x04, 0x04, 0x04, 0x04, 0x00, 0x00, 0x04], // '!'
-    &[0x0A, 0x0A, 0x0A, 0x00, 0x00, 0x00, 0x00], // '"'
-    &[0x0A, 0x0A, 0x1F, 0x0A, 0x1F, 0x0A, 0x0A], // '#'
-    &[0x04, 0x0F, 0x14, 0x0E, 0x05, 0x1E, 0x04], // '$'
-    &[0x19, 0x19, 0x02, 0x04, 0x08, 0x13, 0x13], // '%'
-    &[0x08, 0x14, 0x14, 0x08, 0x15, 0x12, 0x0D], // '&'
-    &[0x0C, 0x04, 0x08, 0x00, 0x00, 0x00, 0x00], // '\''
-    &[0x02, 0x04, 0x08, 0x08, 0x08, 0x04, 0x02], // '('
-    &[0x08, 0x04, 0x02, 0x02, 0x02, 0x04, 0x08], // ')'
-    &[0x00, 0x04, 0x15, 0x0E, 0x15, 0x04, 0x00], // '*'
-    &[0x00, 0x04, 0x04, 0x1F, 0x04, 0x04, 0x00], // '+'
-    &[0x00, 0x00, 0x00, 0x00, 0x0C, 0x04, 0x08], // ','
-    &[0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00], // '-'
-    &[0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C], // '.'
-    &[0x01, 0x02, 0x04, 0x08, 0x10, 0x00, 0x00], // '/'
-    &[0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E], // '0'
-    &[0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E], // '1'
-    &[0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F], // '2'
-    &[0x1F, 0x02, 0x04, 0x02, 0x01, 0x11, 0x0E], // '3'
-    &[0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02], // '4'
-    &[0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E], // '5'
-    &[0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E], // '6'
-    &[0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08], // '7'
-    &[0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E], // '8'
-    &[0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C], // '9'
-    &[0x00, 0x0C, 0x0C, 0x00, 0x0C, 0x0C, 0x00], // ':'
-    &[0x00, 0x0C, 0x0C, 0x00, 0x0C, 0x04, 0x08], // ';'
-    &[0x02, 0x04, 0x08, 0x10, 0x08, 0x04, 0x02], // '<'
-    &[0x00, 0x00, 0x1F, 0x00, 0x1F, 0x00, 0x00], // '='
-    &[0x08, 0x04, 0x02, 0x01, 0x02, 0x04, 0x08], // '>'
-    &[0x0E, 0x11, 0x01, 0x02, 0x04, 0x00, 0x04], // '?'
-    &[0x0E, 0x11, 0x01, 0x0D, 0x15, 0x15, 0x0E], // '@'
-    &[0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11], // 'A'
-    &[0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E], // 'B'
-    &[0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E], // 'C'
-    &[0x1C, 0x12, 0x11, 0x11, 0x11, 0x12, 0x1C], // 'D'
-    &[0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F], // 'E'
-    &[0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10], // 'F'
-    &[0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F], // 'G'
-    &[0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11], // 'H'
-    &[0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E], // 'I'
-    &[0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C], // 'J'
-    &[0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11], // 'K'
-    &[0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F], // 'L'
-    &[0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11], // 'M'
-    &[0x11, 0x11, 0x19, 0x15, 0x13, 0x11, 0x11], // 'N'
-    &[0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E], // 'O'
-    &[0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10], // 'P'
-    &[0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D], // 'Q'
-    &[0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11], // 'R'
-    &[0x0E, 0x11, 0x10, 0x0E, 0x01, 0x11, 0x0E], // 'S'
-    &[0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04], // 'T'
-    &[0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E], // 'U'
-    &[0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04], // 'V'
-    &[0x11, 0x11, 0x11, 0x15, 0x15, 0x1B, 0x11], // 'W'
-    &[0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11], // 'X'
-    &[0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04], // 'Y'
-    &[0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F], // 'Z'
-    &[0x0E, 0x08, 0x08, 0x08, 0x08, 0x08, 0x0E], // '['
-    &[0x10, 0x08, 0x04, 0x02, 0x01, 0x00, 0x00], // '\'
-    &[0x0E, 0x02, 0x02, 0x02, 0x02, 0x02, 0x0E], // ']'
-    &[0x04, 0x0A, 0x11, 0x00, 0x00, 0x00, 0x00], // '^'
-    &[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F], // '_'
-    &[0x08, 0x04, 0x02, 0x00, 0x00, 0x00, 0x00], // '`'
-    &[0x00, 0x00, 0x0E, 0x01, 0x0F, 0x11, 0x0F], // 'a'
-    &[0x10, 0x10, 0x16, 0x19, 0x11, 0x11, 0x1E], // 'b'
-    &[0x00, 0x00, 0x0E, 0x11, 0x10, 0x11, 0x0E], // 'c'
-    &[0x01, 0x01, 0x0D, 0x13, 0x11, 0x11, 0x0F], // 'd'
-    &[0x00, 0x00, 0x0E, 0x11, 0x1F, 0x10, 0x0E], // 'e'
-    &[0x06, 0x09, 0x08, 0x1C, 0x08, 0x08, 0x08], // 'f'
-    &[0x00, 0x0F, 0x11, 0x11, 0x0F, 0x01, 0x0E], // 'g'
-    &[0x10, 0x10, 0x16, 0x19, 0x11, 0x11, 0x11], // 'h'
-    &[0x04, 0x00, 0x0C, 0x04, 0x04, 0x04, 0x0E], // 'i'
-    &[0x02, 0x00, 0x06, 0x02, 0x02, 0x12, 0x0C], // 'j'
-    &[0x10, 0x10, 0x12, 0x14, 0x18, 0x14, 0x12], // 'k'
-    &[0x0C, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E], // 'l'
-    &[0x00, 0x00, 0x1A, 0x15, 0x15, 0x11, 0x11], // 'm'
-    &[0x00, 0x00, 0x16, 0x19, 0x11, 0x11, 0x11], // 'n'
-    &[0x00, 0x00, 0x0E, 0x11, 0x11, 0x11, 0x0E], // 'o'
-    &[0x00, 0x00, 0x1E, 0x11, 0x1E, 0x10, 0x10], // 'p'
-    &[0x00, 0x00, 0x0D, 0x13, 0x0F, 0x01, 0x01], // 'q'
-    &[0x00, 0x00, 0x16, 0x19, 0x10, 0x10, 0x10], // 'r'
-    &[0x00, 0x00, 0x0F, 0x10, 0x0E, 0x01, 0x1E], // 's'
-    &[0x08, 0x08, 0x1C, 0x08, 0x08, 0x09, 0x06], // 't'
-    &[0x00, 0x00, 0x11, 0x11, 0x11, 0x13, 0x0D], // 'u'
-    &[0x00, 0x00, 0x11, 0x11, 0x11, 0x0A, 0x04], // 'v'
-    &[0x00, 0x00, 0x11, 0x11, 0x15, 0x15, 0x0A], // 'w'
-    &[0x00, 0x00, 0x11, 0x0A, 0x04, 0x0A, 0x11], // 'x'
-    &[0x00, 0x00, 0x11, 0x11, 0x0F, 0x01, 0x0E], // 'y'
-    &[0x00, 0x00, 0x1F, 0x02, 0x04, 0x08, 0x1F], // 'z'
-    &[0x02, 0x04, 0x04, 0x08, 0x04, 0x04, 0x02], // '{'
-    &[0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04], // '|'
-    &[0x08, 0x04, 0x04, 0x02, 0x04, 0x04, 0x08], // '}'
-    &[0x00, 0x04, 0x02, 0x1F, 0x02, 0x04, 0x00], // '~'
-    &[0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F], // DEL / block
-];
 
 fn fill_rect(
     img: &mut image::RgbaImage,
@@ -145,51 +44,12 @@ fn fill_rect(
     }
 }
 
-fn draw_char_scaled(
-    img: &mut image::RgbaImage,
-    x: u32,
-    y: u32,
-    c: char,
-    scale: u32,
-    color: image::Rgba<u8>,
-) {
-    let code = c as usize;
-    if code < 32 || code > 127 {
-        return;
-    }
-    let glyph = FONT_5X7[code - 32];
-    for (row_idx, &row_bits) in glyph.iter().enumerate() {
-        for col_idx in 0..5 {
-            if (row_bits & (1 << (4 - col_idx))) != 0 {
-                let px = x + col_idx as u32 * scale;
-                let py = y + row_idx as u32 * scale;
-                fill_rect(img, px, py, scale, scale, color);
-            }
-        }
-    }
-}
-
-fn draw_text(
-    img: &mut image::RgbaImage,
-    x: u32,
-    y: u32,
-    text: &str,
-    scale: u32,
-    color: image::Rgba<u8>,
-) {
-    let mut cur_x = x;
-    let char_w = 6 * scale; // 5 + 1 spacing
-    for c in text.chars() {
-        if c == '\n' {
-            continue;
-        }
-        draw_char_scaled(img, cur_x, y, c, scale, color);
-        cur_x += char_w;
-    }
-}
-
-/// Render first page of PDF into an RgbaImage
-fn render_first_page(input_bytes: &[u8], target_width: u32) -> Result<image::RgbaImage, PdfError> {
+/// Render all pages of a PDF up to max_pages into RgbaImages
+fn render_document_pages(
+    input_bytes: &[u8],
+    max_pages: usize,
+    target_width: u32,
+) -> Result<Vec<image::RgbaImage>, PdfError> {
     let pdf = hayro_syntax::Pdf::new(input_bytes.to_vec())
         .map_err(|e| PdfError::ParseError(format!("Failed to parse PDF: {:?}", e)))?;
 
@@ -198,52 +58,176 @@ fn render_first_page(input_bytes: &[u8], target_width: u32) -> Result<image::Rgb
         return Err(PdfError::ParseError("PDF contains no pages".to_string()));
     }
 
-    let page = pages.get(0).ok_or_else(|| PdfError::ParseError("Failed to get first page".to_string()))?;
-    let (base_w, _base_h) = page.render_dimensions();
-    let scale = if base_w > 0.0 {
-        (target_width as f32 / base_w).max(0.01)
-    } else {
-        1.0
-    };
-
     let cache = hayro::RenderCache::new();
     let render_settings = hayro::RenderSettings::default();
-    let mut pixmap_settings = hayro::PixmapSettings::default();
-    pixmap_settings.x_scale = scale;
-    pixmap_settings.y_scale = scale;
 
-    let pixmap = hayro::render(
-        page,
-        &cache,
-        &Default::default(),
-        &render_settings,
-        &pixmap_settings,
-    );
+    let count = pages.len().min(max_pages);
+    let mut rendered_pages = Vec::with_capacity(count);
 
-    let pw = pixmap.width() as u32;
-    let ph = pixmap.height() as u32;
-    if pw == 0 || ph == 0 {
-        return Err(PdfError::ParseError("Rendered pixmap has empty dimensions".to_string()));
+    for i in 0..count {
+        let page = pages
+            .get(i)
+            .ok_or_else(|| PdfError::ParseError(format!("Failed to get page {}", i + 1)))?;
+
+        let (base_w, _base_h) = page.render_dimensions();
+        let scale = if base_w > 0.0 {
+            (target_width as f32 / base_w).max(0.01)
+        } else {
+            1.0
+        };
+
+        let mut pixmap_settings = hayro::PixmapSettings::default();
+        pixmap_settings.x_scale = scale;
+        pixmap_settings.y_scale = scale;
+
+        let pixmap = hayro::render(
+            page,
+            &cache,
+            &Default::default(),
+            &render_settings,
+            &pixmap_settings,
+        );
+
+        let pw = pixmap.width() as u32;
+        let ph = pixmap.height() as u32;
+        if pw == 0 || ph == 0 {
+            continue;
+        }
+
+        let raw_data: &[u8] = bytemuck::cast_slice(pixmap.data());
+        let rgba_raw = image::RgbaImage::from_raw(pw, ph, raw_data.to_vec()).ok_or_else(|| {
+            PdfError::ParseError("Failed to construct RgbaImage from rendered pixmap".to_string())
+        })?;
+
+        // Composite over crisp white background
+        let mut blended = image::RgbaImage::new(pw, ph);
+        for (x, y, pixel) in rgba_raw.enumerate_pixels() {
+            let alpha = pixel[3] as f32 / 255.0;
+            let r = ((pixel[0] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
+            let g = ((pixel[1] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
+            let b = ((pixel[2] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
+            blended.put_pixel(x, y, image::Rgba([r, g, b, 255]));
+        }
+
+        rendered_pages.push(blended);
     }
 
-    let raw_data: &[u8] = bytemuck::cast_slice(pixmap.data());
-    let rgba_raw = image::RgbaImage::from_raw(pw, ph, raw_data.to_vec())
-        .ok_or_else(|| PdfError::ParseError("Failed to construct RgbaImage from rendered pixmap".to_string()))?;
-
-    // Composite over clean white background
-    let mut blended = image::RgbaImage::new(pw, ph);
-    for (x, y, pixel) in rgba_raw.enumerate_pixels() {
-        let alpha = pixel[3] as f32 / 255.0;
-        let r = ((pixel[0] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
-        let g = ((pixel[1] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
-        let b = ((pixel[2] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
-        blended.put_pixel(x, y, image::Rgba([r, g, b, 255]));
+    if rendered_pages.is_empty() {
+        return Err(PdfError::ParseError(
+            "Failed to render any pages from PDF".to_string(),
+        ));
     }
 
-    Ok(blended)
+    Ok(rendered_pages)
 }
 
-/// Generate a developer demo showcase GIF (split-screen terminal + document transformation loop).
+/// Helper to draw a sleek modern background canvas with subtle radial/vignette gradient
+fn create_background_canvas(width: u32, height: u32) -> image::RgbaImage {
+    let mut canvas = image::RgbaImage::new(width, height);
+    let center_x = width as f32 / 2.0;
+    let center_y = height as f32 / 2.0;
+    let max_dist = ((center_x * center_x) + (center_y * center_y)).sqrt().max(1.0);
+
+    // Modern neutral slate backdrop: center [246, 248, 252] fading to [226, 232, 240]
+    for y in 0..height {
+        for x in 0..width {
+            let dx = x as f32 - center_x;
+            let dy = y as f32 - center_y;
+            let dist = ((dx * dx) + (dy * dy)).sqrt();
+            let factor = (dist / max_dist).clamp(0.0, 1.0);
+
+            let r = (246.0 * (1.0 - factor) + 226.0 * factor).round() as u8;
+            let g = (248.0 * (1.0 - factor) + 232.0 * factor).round() as u8;
+            let b = (252.0 * (1.0 - factor) + 240.0 * factor).round() as u8;
+
+            canvas.put_pixel(x, y, image::Rgba([r, g, b, 255]));
+        }
+    }
+
+    canvas
+}
+
+/// Helper to render multi-layer soft drop shadow under the document sheet
+fn render_page_shadow(
+    canvas: &mut image::RgbaImage,
+    doc_x: u32,
+    doc_y: u32,
+    doc_w: u32,
+    doc_h: u32,
+) {
+    // Progressive soft shadow layers
+    let shadow_layers = [
+        (4, 4, 18, 28, 38, 25),
+        (8, 8, 20, 30, 42, 20),
+        (14, 14, 25, 35, 48, 15),
+    ];
+
+    for (ox, oy, sr, sg, sb, alpha) in shadow_layers {
+        let sx = doc_x + ox;
+        let sy = doc_y + oy;
+        let max_x = (sx + doc_w).min(canvas.width());
+        let max_y = (sy + doc_h).min(canvas.height());
+        let shadow_alpha = alpha as f32 / 255.0;
+
+        for py in sy..max_y {
+            for px in sx..max_x {
+                let current = canvas.get_pixel(px, py);
+                let r = ((current[0] as f32 * (1.0 - shadow_alpha)) + (sr as f32 * shadow_alpha)).round() as u8;
+                let g = ((current[1] as f32 * (1.0 - shadow_alpha)) + (sg as f32 * shadow_alpha)).round() as u8;
+                let b = ((current[2] as f32 * (1.0 - shadow_alpha)) + (sb as f32 * shadow_alpha)).round() as u8;
+                canvas.put_pixel(px, py, image::Rgba([r, g, b, 255]));
+            }
+        }
+    }
+}
+
+/// Draw a crisp, subtle border around the document sheet
+fn render_page_border(
+    canvas: &mut image::RgbaImage,
+    doc_x: u32,
+    doc_y: u32,
+    doc_w: u32,
+    doc_h: u32,
+) {
+    let border_color = image::Rgba([203, 213, 225, 255]); // Subtle slate border
+    // Top & bottom
+    fill_rect(canvas, doc_x, doc_y, doc_w, 1, border_color);
+    if doc_h > 1 {
+        fill_rect(canvas, doc_x, doc_y + doc_h - 1, doc_w, 1, border_color);
+    }
+    // Left & right
+    fill_rect(canvas, doc_x, doc_y, 1, doc_h, border_color);
+    if doc_w > 1 {
+        fill_rect(canvas, doc_x + doc_w - 1, doc_y, 1, doc_h, border_color);
+    }
+}
+
+/// Alpha blend two images of identical dimensions: out = (1 - alpha) * img_a + alpha * img_b
+fn blend_images(
+    img_a: &image::RgbaImage,
+    img_b: &image::RgbaImage,
+    alpha: f32,
+) -> image::RgbaImage {
+    let alpha = alpha.clamp(0.0, 1.0);
+    let inv_alpha = 1.0 - alpha;
+    let (w, h) = (img_a.width(), img_a.height());
+    let mut blended = image::RgbaImage::new(w, h);
+
+    for y in 0..h {
+        for x in 0..w {
+            let pa = img_a.get_pixel(x, y);
+            let pb = img_b.get_pixel(x, y);
+            let r = ((pa[0] as f32 * inv_alpha) + (pb[0] as f32 * alpha)).round() as u8;
+            let g = ((pa[1] as f32 * inv_alpha) + (pb[1] as f32 * alpha)).round() as u8;
+            let b = ((pa[2] as f32 * inv_alpha) + (pb[2] as f32 * alpha)).round() as u8;
+            blended.put_pixel(x, y, image::Rgba([r, g, b, 255]));
+        }
+    }
+
+    blended
+}
+
+/// Generate a document-first showcase GIF without mock terminals or developer jargon.
 pub fn showcase_gif_bytes(
     input_bytes: &[u8],
     options: &ShowcaseGifOptions,
@@ -252,10 +236,10 @@ pub fn showcase_gif_bytes(
         return Err(PdfError::ParseError("Input PDF bytes cannot be empty".to_string()));
     }
 
-    let total_width = options.width.unwrap_or(1200).max(400);
-    let total_height = ((total_width as f32 * 9.0) / 16.0).round() as u32; // 16:9 standard showcase canvas
+    let total_width = options.width.unwrap_or(800).max(400);
+    let total_height = ((total_width as f32 * 9.0) / 16.0).round() as u32; // 16:9 canvas
 
-    let total_frames = options.transition_frames.unwrap_or(10).clamp(4, 30) as usize;
+    let transition_frames = options.transition_frames.unwrap_or(8).clamp(4, 30) as usize;
 
     let delay_centisecs = if let Some(fps) = options.fps {
         if fps > 0 {
@@ -267,152 +251,128 @@ pub fn showcase_gif_bytes(
         options.delay_centisecs.unwrap_or(25).max(1)
     };
 
-    // Render original page preview
-    let rendered_page = render_first_page(input_bytes, 480)?;
+    // Render pages from input PDF (limit to at most 8 pages for multi-page loop)
+    let max_render_w = total_width.saturating_sub(100).max(200);
+    let pages = render_document_pages(input_bytes, 8, max_render_w)?;
 
-    // Prepare animated frames
-    let mut frames: Vec<image::RgbaImage> = Vec::with_capacity(total_frames);
+    let base_bg = create_background_canvas(total_width, total_height);
 
-    let bg_color = image::Rgba([15, 18, 25, 255]); // Sleek dark slate
-    let window_bar_color = image::Rgba([28, 33, 44, 255]);
-    let term_bg_color = image::Rgba([18, 21, 30, 255]);
-    let doc_panel_bg = image::Rgba([24, 29, 39, 255]);
-    let border_color = image::Rgba([45, 55, 75, 255]);
+    // Available viewport for document inside canvas
+    let max_doc_w = (total_width as f32 * 0.82).round() as u32;
+    let max_doc_h = (total_height as f32 * 0.84).round() as u32;
 
-    let dot_red = image::Rgba([255, 95, 87, 255]);
-    let dot_yellow = image::Rgba([254, 188, 46, 255]);
-    let dot_green = image::Rgba([40, 201, 64, 255]);
+    let mut frames: Vec<image::RgbaImage> = Vec::new();
 
-    let text_white = image::Rgba([240, 243, 248, 255]);
-    let text_cyan = image::Rgba([56, 189, 248, 255]);
-    let text_green = image::Rgba([74, 222, 128, 255]);
-    let text_dim = image::Rgba([148, 163, 184, 255]);
-    let text_accent = image::Rgba([192, 132, 252, 255]);
+    if pages.len() == 1 {
+        // --- Single Page Showcase: Elegant Scan & Inspection Highlight ---
+        let page = &pages[0];
+        let pw = page.width() as f32;
+        let ph = page.height() as f32;
 
-    let spinners = ['|', '/', '-', '\\'];
-    let full_command = "paperpilot optimize --input doc.pdf --llm-token-budget 768";
-
-    // Layout coordinates
-    let header_h = 60;
-    let main_y = header_h + 10;
-    let main_h = total_height.saturating_sub(main_y + 20);
-    let col_w = (total_width.saturating_sub(60)) / 2;
-
-    let term_x = 20;
-    let doc_x = term_x + col_w + 20;
-
-    for frame_idx in 0..total_frames {
-        let mut canvas = image::RgbaImage::new(total_width, total_height);
-        fill_rect(&mut canvas, 0, 0, total_width, total_height, bg_color);
-
-        // Header Title Bar
-        fill_rect(&mut canvas, 20, 15, 220, 32, image::Rgba([30, 41, 59, 255]));
-        fill_rect(&mut canvas, 20, 15, 220, 2, image::Rgba([59, 130, 246, 255]));
-        draw_text(&mut canvas, 32, 24, "PAPERPILOT ENGINE", 2, text_cyan);
-        draw_text(&mut canvas, 260, 24, "NATIVE ZERO-DEPENDENCY DOCUMENT INTELLIGENCE", 2, text_white);
-
-        // --- Left Panel: Terminal ---
-        // Header
-        fill_rect(&mut canvas, term_x, main_y, col_w, 36, window_bar_color);
-        fill_rect(&mut canvas, term_x, main_y + 36, col_w, 1, border_color);
-        // Window dots
-        fill_rect(&mut canvas, term_x + 12, main_y + 12, 12, 12, dot_red);
-        fill_rect(&mut canvas, term_x + 30, main_y + 12, 12, 12, dot_yellow);
-        fill_rect(&mut canvas, term_x + 48, main_y + 12, 12, 12, dot_green);
-        draw_text(&mut canvas, term_x + 72, main_y + 14, "bash - paperpilot", 1, text_dim);
-
-        // Terminal body
-        fill_rect(&mut canvas, term_x, main_y + 37, col_w, main_h - 37, term_bg_color);
-
-        // Simulated typing & execution states
-        let type_progress = ((frame_idx + 1) as f32 / (total_frames as f32 * 0.55)).min(1.0);
-        let chars_to_show = ((full_command.len() as f32) * type_progress).round() as usize;
-        let typed_str = &full_command[0..chars_to_show];
-
-        draw_text(&mut canvas, term_x + 16, main_y + 55, "$", 2, text_accent);
-        draw_text(&mut canvas, term_x + 35, main_y + 55, typed_str, 2, text_white);
-
-        if frame_idx < total_frames / 2 {
-            // Typing cursor
-            if frame_idx % 2 == 0 {
-                let cursor_x = term_x + 35 + (chars_to_show as u32 * 12);
-                fill_rect(&mut canvas, cursor_x, main_y + 55, 10, 16, text_cyan);
-            }
-        } else {
-            // Execution spinner / progress
-            let spin_char = spinners[frame_idx % spinners.len()];
-            let spin_str = format!("{} Processing document layers...", spin_char);
-            draw_text(&mut canvas, term_x + 16, main_y + 85, &spin_str, 2, text_cyan);
-
-            draw_text(&mut canvas, term_x + 16, main_y + 120, "[OK] AST stream parsed (hayro-syntax)", 1, text_green);
-            draw_text(&mut canvas, term_x + 16, main_y + 140, "[OK] NeuQuant 256-color palette quantized", 1, text_green);
-            draw_text(&mut canvas, term_x + 16, main_y + 160, "[OK] Zero external subprocess dependencies", 1, text_green);
-
-            if frame_idx >= (total_frames * 3 / 4) {
-                draw_text(&mut canvas, term_x + 16, main_y + 190, "Finished in 42ms (Peak RAM: 18MB)", 2, text_green);
-                draw_text(&mut canvas, term_x + 16, main_y + 225, "$ _", 2, text_dim);
-            }
-        }
-
-        // --- Right Panel: Document Transformation ---
-        // Header
-        fill_rect(&mut canvas, doc_x, main_y, col_w, 36, window_bar_color);
-        fill_rect(&mut canvas, doc_x, main_y + 36, col_w, 1, border_color);
-        fill_rect(&mut canvas, doc_x + 12, main_y + 12, 12, 12, dot_red);
-        fill_rect(&mut canvas, doc_x + 30, main_y + 12, 12, 12, dot_yellow);
-        fill_rect(&mut canvas, doc_x + 48, main_y + 12, 12, 12, dot_green);
-
-        let status_label = if frame_idx < total_frames / 2 {
-            "State: BEFORE (Raw Source Input)"
-        } else {
-            "State: AFTER (Optimized Vector Transformation)"
-        };
-        draw_text(&mut canvas, doc_x + 72, main_y + 14, status_label, 1, text_dim);
-
-        // Document background
-        fill_rect(&mut canvas, doc_x, main_y + 37, col_w, main_h - 37, doc_panel_bg);
-
-        // Blit and transform page preview onto right panel
-        let page_area_w = col_w.saturating_sub(40).max(100);
-        let page_area_h = main_h.saturating_sub(60).max(100);
-
-        // Calculate aspect fit
-        let rw = rendered_page.width() as f32;
-        let rh = rendered_page.height() as f32;
-        let scale = (page_area_w as f32 / rw).min(page_area_h as f32 / rh).min(1.0);
-        let target_pw = (rw * scale).round() as u32;
-        let target_ph = (rh * scale).round() as u32;
+        let scale = (max_doc_w as f32 / pw).min(max_doc_h as f32 / ph).min(1.0);
+        let target_pw = (pw * scale).round() as u32;
+        let target_ph = (ph * scale).round() as u32;
 
         let resized_page = image::imageops::resize(
-            &rendered_page,
+            page,
             target_pw,
             target_ph,
-            FilterType::Triangle,
+            FilterType::Lanczos3,
         );
 
-        let doc_render_x = doc_x + (col_w.saturating_sub(target_pw)) / 2;
-        let doc_render_y = main_y + 45 + (page_area_h.saturating_sub(target_ph)) / 2;
+        let doc_x = (total_width.saturating_sub(target_pw)) / 2;
+        let doc_y = (total_height.saturating_sub(target_ph)) / 2;
 
-        // Shadow under document sheet
-        fill_rect(&mut canvas, doc_render_x + 6, doc_render_y + 6, target_pw, target_ph, image::Rgba([10, 12, 16, 200]));
+        // Render sweep animation frames
+        let total_scan_frames = transition_frames * 2;
+        for frame_idx in 0..total_scan_frames {
+            let mut canvas = base_bg.clone();
 
-        // Render page
-        image::imageops::overlay(&mut canvas, &resized_page, doc_render_x as i64, doc_render_y as i64);
+            // Soft drop shadow
+            render_page_shadow(&mut canvas, doc_x, doc_y, target_pw, target_ph);
 
-        // In second half, simulate before/after transformation (e.g. scanning pulse line or badge)
-        if frame_idx >= total_frames / 2 {
-            let scan_progress = (frame_idx - total_frames / 2) as f32 / (total_frames / 2) as f32;
-            let scan_y = doc_render_y + (target_ph as f32 * scan_progress) as u32;
+            // Document sheet
+            image::imageops::overlay(&mut canvas, &resized_page, doc_x as i64, doc_y as i64);
 
-            // Scanning laser line
-            fill_rect(&mut canvas, doc_render_x, scan_y, target_pw, 3, image::Rgba([56, 189, 248, 220]));
+            // Border
+            render_page_border(&mut canvas, doc_x, doc_y, target_pw, target_ph);
 
-            // Verified Badge
-            fill_rect(&mut canvas, doc_render_x + 10, doc_render_y + 10, 130, 24, image::Rgba([16, 185, 129, 230]));
-            draw_text(&mut canvas, doc_render_x + 18, doc_render_y + 15, "PROCESSED", 1, text_white);
+            // Calculate scan bar position (continuous loop)
+            let progress = frame_idx as f32 / total_scan_frames as f32;
+            let scan_center_y = doc_y as f32 + (target_ph as f32 * progress);
+
+            // Draw modern soft accent gradient scan beam across document
+            let beam_height = 14.0f32;
+            let start_y = (scan_center_y - beam_height).max(doc_y as f32) as u32;
+            let end_y = (scan_center_y + beam_height).min((doc_y + target_ph) as f32) as u32;
+
+            for py in start_y..end_y {
+                let dist = (py as f32 - scan_center_y).abs();
+                let factor = (1.0 - (dist / beam_height)).clamp(0.0, 1.0);
+                let beam_alpha = (0.28 * factor).clamp(0.0, 1.0);
+
+                // Sleek indigo / sky-blue beam highlight: [59, 130, 246]
+                for px in doc_x..(doc_x + target_pw) {
+                    let cur = canvas.get_pixel(px, py);
+                    let r = ((cur[0] as f32 * (1.0 - beam_alpha)) + (59.0 * beam_alpha)).round() as u8;
+                    let g = ((cur[1] as f32 * (1.0 - beam_alpha)) + (130.0 * beam_alpha)).round() as u8;
+                    let b = ((cur[2] as f32 * (1.0 - beam_alpha)) + (246.0 * beam_alpha)).round() as u8;
+                    canvas.put_pixel(px, py, image::Rgba([r, g, b, 255]));
+                }
+            }
+
+            // Crisp accent highlight line right at scan_center_y
+            let center_py = scan_center_y.round() as u32;
+            if center_py >= doc_y && center_py < doc_y + target_ph {
+                let line_color = image::Rgba([99, 102, 241, 230]); // Indigo accent
+                fill_rect(&mut canvas, doc_x, center_py, target_pw, 2, line_color);
+            }
+
+            frames.push(canvas);
         }
+    } else {
+        // --- Multi-Page Showcase: Smooth Page-Turn / Cross-Dissolve Loop ---
+        let pw = pages[0].width() as f32;
+        let ph = pages[0].height() as f32;
+        let scale = (max_doc_w as f32 / pw).min(max_doc_h as f32 / ph).min(1.0);
+        let target_pw = (pw * scale).round() as u32;
+        let target_ph = (ph * scale).round() as u32;
 
-        frames.push(canvas);
+        let resized_pages: Vec<image::RgbaImage> = pages
+            .iter()
+            .map(|p| image::imageops::resize(p, target_pw, target_ph, FilterType::Lanczos3))
+            .collect();
+
+        let doc_x = (total_width.saturating_sub(target_pw)) / 2;
+        let doc_y = (total_height.saturating_sub(target_ph)) / 2;
+
+        let num_pages = resized_pages.len();
+        for page_idx in 0..num_pages {
+            let next_page_idx = (page_idx + 1) % num_pages;
+            let current_page = &resized_pages[page_idx];
+            let next_page = &resized_pages[next_page_idx];
+
+            // 1. Static hold frame for current page (2 steps hold)
+            for _ in 0..2 {
+                let mut canvas = base_bg.clone();
+                render_page_shadow(&mut canvas, doc_x, doc_y, target_pw, target_ph);
+                image::imageops::overlay(&mut canvas, current_page, doc_x as i64, doc_y as i64);
+                render_page_border(&mut canvas, doc_x, doc_y, target_pw, target_ph);
+                frames.push(canvas);
+            }
+
+            // 2. Smooth cross-dissolve transition frames into next page
+            for t_step in 1..transition_frames {
+                let alpha = t_step as f32 / transition_frames as f32;
+                let blended_page = blend_images(current_page, next_page, alpha);
+
+                let mut canvas = base_bg.clone();
+                render_page_shadow(&mut canvas, doc_x, doc_y, target_pw, target_ph);
+                image::imageops::overlay(&mut canvas, &blended_page, doc_x as i64, doc_y as i64);
+                render_page_border(&mut canvas, doc_x, doc_y, target_pw, target_ph);
+                frames.push(canvas);
+            }
+        }
     }
 
     if frames.is_empty() {
@@ -492,7 +452,7 @@ mod tests {
     use lopdf::dictionary;
     use lopdf::Document;
 
-    fn create_sample_pdf(title: &str) -> Vec<u8> {
+    fn create_sample_pdf(title: &str, pages_count: usize) -> Vec<u8> {
         let mut doc = Document::with_version("1.5");
         let pages_id = doc.new_object_id();
 
@@ -508,38 +468,44 @@ mod tests {
             },
         });
 
-        let content = lopdf::content::Content {
-            operations: vec![
-                lopdf::content::Operation::new("BT", vec![]),
-                lopdf::content::Operation::new("Tf", vec!["F1".into(), 16.into()]),
-                lopdf::content::Operation::new("Td", vec![50.into(), 100.into()]),
-                lopdf::content::Operation::new(
-                    "Tj",
-                    vec![lopdf::Object::string_literal(title)],
-                ),
-                lopdf::content::Operation::new("ET", vec![]),
-            ],
-        };
+        let mut page_ids = Vec::new();
 
-        let content_id = doc.add_object(lopdf::Stream::new(
-            lopdf::Dictionary::new(),
-            content.encode().unwrap(),
-        ));
+        for i in 0..pages_count {
+            let page_text = format!("{} - Page {}", title, i + 1);
+            let content = lopdf::content::Content {
+                operations: vec![
+                    lopdf::content::Operation::new("BT", vec![]),
+                    lopdf::content::Operation::new("Tf", vec!["F1".into(), 16.into()]),
+                    lopdf::content::Operation::new("Td", vec![50.into(), 100.into()]),
+                    lopdf::content::Operation::new(
+                        "Tj",
+                        vec![lopdf::Object::string_literal(page_text)],
+                    ),
+                    lopdf::content::Operation::new("ET", vec![]),
+                ],
+            };
 
-        let page_id = doc.add_object(dictionary! {
-            "Type" => "Page",
-            "Parent" => pages_id,
-            "Contents" => content_id,
-            "Resources" => resources_id,
-            "MediaBox" => vec![0.into(), 0.into(), 400.into(), 300.into()],
-        });
+            let content_id = doc.add_object(lopdf::Stream::new(
+                lopdf::Dictionary::new(),
+                content.encode().unwrap(),
+            ));
+
+            let page_id = doc.add_object(dictionary! {
+                "Type" => "Page",
+                "Parent" => pages_id,
+                "Contents" => content_id,
+                "Resources" => resources_id,
+                "MediaBox" => vec![0.into(), 0.into(), 400.into(), 300.into()],
+            });
+            page_ids.push(page_id.into());
+        }
 
         doc.set_object(
             pages_id,
             dictionary! {
                 "Type" => "Pages",
-                "Kids" => vec![page_id.into()],
-                "Count" => 1,
+                "Kids" => page_ids,
+                "Count" => pages_count as i64,
             },
         );
 
@@ -564,8 +530,8 @@ mod tests {
     }
 
     #[test]
-    fn test_showcase_gif_generation_success() {
-        let pdf_bytes = create_sample_pdf("Sample Invoice Before Transformation");
+    fn test_showcase_gif_single_page() {
+        let pdf_bytes = create_sample_pdf("Clean Single Document", 1);
         let options = ShowcaseGifOptions {
             fps: Some(5),
             delay_centisecs: None,
@@ -578,5 +544,20 @@ mod tests {
         assert!(gif_bytes.len() > 6);
         assert_eq!(&gif_bytes[0..6], b"GIF89a");
     }
-}
 
+    #[test]
+    fn test_showcase_gif_multi_page() {
+        let pdf_bytes = create_sample_pdf("Clean Multi Page Document", 3);
+        let options = ShowcaseGifOptions {
+            fps: Some(4),
+            delay_centisecs: None,
+            width: Some(600),
+            transition_frames: Some(4),
+        };
+
+        let gif_bytes = showcase_gif_bytes(&pdf_bytes, &options).expect("multi-page showcase GIF generation failed");
+
+        assert!(gif_bytes.len() > 6);
+        assert_eq!(&gif_bytes[0..6], b"GIF89a");
+    }
+}
