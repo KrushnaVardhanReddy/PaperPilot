@@ -358,6 +358,13 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/img-deskew", post(handlers::img_deskew) )
         .route("/api/v1/pdf/img-optimize-for-llm", post(handlers::img_optimize_for_llm) )
         .route("/api/v1/pdf/images-to-gif", post(handlers::images_to_gif) )
+        // Clean semantic /api/v1/image/... routes
+        .route("/api/v1/image/deskew", post(handlers::img_deskew))
+        .route("/api/v1/image/crop-to-content", post(handlers::img_crop_to_content))
+        .route("/api/v1/image/redact", post(handlers::img_redact))
+        .route("/api/v1/image/optimize-for-llm", post(handlers::img_optimize_for_llm))
+        .route("/api/v1/image/convert", post(handlers::img_convert))
+        .route("/api/v1/image/to-gif", post(handlers::images_to_gif))
         .route("/api/v1/pdf/showcase-gif", post(handlers::showcase_gif) )
         .route("/api/v1/pdf/to-gif", post(handlers::pdf_to_gif) )
         .route("/api/v1/pdf/extract-patterns", post(handlers::pdf_extract_patterns) )
@@ -421,6 +428,18 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
             post(handlers::excel_to_json),
         )
         .route("/api/v1/office/excel-to-csv", post(handlers::excel_to_csv))
+        .route(
+            "/api/v1/office/word-to-markdown",
+            post(handlers::office_to_markdown),
+        )
+        .route(
+            "/api/v1/office/to-markdown",
+            post(handlers::office_to_markdown),
+        )
+        .route(
+            "/api/v1/office/extract-text",
+            post(handlers::office_extract_text),
+        )
         .route(
             "/api/v1/pdf/office-to-markdown",
             post(handlers::office_to_markdown),

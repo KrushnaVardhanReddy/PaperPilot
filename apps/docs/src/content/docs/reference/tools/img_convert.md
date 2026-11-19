@@ -72,10 +72,10 @@ When integrating via Model Context Protocol (MCP), invoke the tool `img_convert`
 ---
 
 ### REST API
-Invoke the REST API endpoint `/api/v1/pdf/img-convert`:
+Invoke the primary REST API endpoint `/api/v1/image/convert` (or legacy `/api/v1/pdf/img-convert` for backward compatibility):
 
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-convert \
+curl -s -X POST http://127.0.0.1:7823/api/v1/image/convert \
   -H 'Content-Type: application/json' \
   -d '{
     "input": "tests/e2e_fixtures/real/document.png",
@@ -84,6 +84,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-convert \
     "quality": 90
   }'
 ```
+
+> **Note**: `/api/v1/pdf/img-convert` remains fully supported as a backward-compatible alias.
 
 #### Response Example
 ```json

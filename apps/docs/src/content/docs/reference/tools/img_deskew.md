@@ -68,16 +68,18 @@ When integrating via Model Context Protocol (MCP), invoke the tool `img_deskew`:
 ---
 
 ### REST API
-Invoke the REST API endpoint `/api/v1/pdf/img-deskew`:
+Invoke the primary REST API endpoint `/api/v1/image/deskew` (or legacy `/api/v1/pdf/img-deskew` for backward compatibility):
 
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-deskew \
+curl -s -X POST http://127.0.0.1:7823/api/v1/image/deskew \
   -H 'Content-Type: application/json' \
   -d '{
     "input": "tests/e2e_fixtures/real/tilted_scan.png",
     "output": "tests/e2e_fixtures/out/penta_e2e/deskewed.png"
   }'
 ```
+
+> **Note**: `/api/v1/pdf/img-deskew` remains fully supported as a backward-compatible alias.
 
 #### Response Example
 ```json

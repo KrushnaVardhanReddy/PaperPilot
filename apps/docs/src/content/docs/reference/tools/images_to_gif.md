@@ -69,10 +69,10 @@ When integrating via Model Context Protocol (MCP), invoke the tool `images_to_gi
 ---
 
 ### REST API
-Invoke the REST API endpoint `/api/v1/pdf/images-to-gif`:
+Invoke the primary REST API endpoint `/api/v1/image/to-gif` (or legacy `/api/v1/pdf/images-to-gif` for backward compatibility):
 
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/images-to-gif \
+curl -s -X POST http://127.0.0.1:7823/api/v1/image/to-gif \
   -H 'Content-Type: application/json' \
   -d '{
     "images": [
@@ -84,6 +84,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/images-to-gif \
     "width": 800
   }'
 ```
+
+> **Note**: `/api/v1/pdf/images-to-gif` remains fully supported as a backward-compatible alias.
 
 #### Response Example
 ```json

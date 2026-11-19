@@ -77,10 +77,10 @@ When integrating via Model Context Protocol (MCP), invoke the tool `img_redact`:
 ---
 
 ### REST API
-Invoke the REST API endpoint `/api/v1/pdf/img-redact`:
+Invoke the primary REST API endpoint `/api/v1/image/redact` (or legacy `/api/v1/pdf/img-redact` for backward compatibility):
 
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-redact \
+curl -s -X POST http://127.0.0.1:7823/api/v1/image/redact \
   -H 'Content-Type: application/json' \
   -d '{
     "input": "tests/e2e_fixtures/real/license.png",
@@ -89,6 +89,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-redact \
     "color": "#000000"
   }'
 ```
+
+> **Note**: `/api/v1/pdf/img-redact` remains fully supported as a backward-compatible alias.
 
 #### Response Example
 ```json

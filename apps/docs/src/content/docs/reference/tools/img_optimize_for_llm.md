@@ -64,10 +64,10 @@ When integrating via Model Context Protocol (MCP), invoke the tool `img_optimize
 ---
 
 ### REST API
-Invoke the REST API endpoint `/api/v1/pdf/img-optimize-for-llm`:
+Invoke the primary REST API endpoint `/api/v1/image/optimize-for-llm` (or legacy `/api/v1/pdf/img-optimize-for-llm` for backward compatibility):
 
 ```bash
-curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-optimize-for-llm \
+curl -s -X POST http://127.0.0.1:7823/api/v1/image/optimize-for-llm \
   -H 'Content-Type: application/json' \
   -d '{
     "input": "tests/e2e_fixtures/real/highres_scan.png",
@@ -76,6 +76,8 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-optimize-for-llm \
     "quality": 85
   }'
 ```
+
+> **Note**: `/api/v1/pdf/img-optimize-for-llm` remains fully supported as a backward-compatible alias.
 
 #### Response Example
 ```json
