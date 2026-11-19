@@ -527,7 +527,9 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('showcase_gif', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.gif'
+            output: '/docs/test_showcase.gif',
+            delay: 25,
+            width: 1200
         });
     });
 

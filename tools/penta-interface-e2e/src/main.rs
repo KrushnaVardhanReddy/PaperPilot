@@ -21,6 +21,7 @@ pub fn verify_output_file(path: &Path, expected_ext: &str) -> Result<bool> {
     }
     match expected_ext {
         "pdf" => Ok(content.starts_with(b"%PDF")),
+        "gif" => Ok(content.starts_with(b"GIF87a") || content.starts_with(b"GIF89a")),
         "xlsx" | "docx" | "epub" => Ok(content.starts_with(b"PK")),
         "md" => {
             let s = String::from_utf8_lossy(&content);
@@ -111,6 +112,15 @@ async fn main() -> Result<()> {
     fixture_mgr.ensure_fixtures()?;
 
     match args.group.as_str() {
+        "showcase_gif" => {
+            let res_showcase_gif = cases::showcase_gif::run_showcase_gif_suite().await?;
+            println!("Generate Showcase GIF finished: {} tests", res_showcase_gif.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Generate Showcase GIF)",
+                &res_showcase_gif,
+                "reports/PENTA_INTERFACE_E2E_SHOWCASE_GIF_REPORT.md",
+            )?;
+        }
         "page_ops" | "5.9.4A" => {
             let results = cases::page_ops::run_page_ops_suite().await?;
             println!("Page ops finished: {} tests", results.len());

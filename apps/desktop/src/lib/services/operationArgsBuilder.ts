@@ -1275,8 +1275,12 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
         case 'showcase_gif':
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.gif`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_showcase.gif`),
+                delay: context.gifDelay ?? 25,
+                width: context.gifWidth ?? 1200,
+                fps: context.gifFps
             };
+            if (args.fps === undefined) delete args.fps;
             break;
         case 'images_to_gif':
             args = {

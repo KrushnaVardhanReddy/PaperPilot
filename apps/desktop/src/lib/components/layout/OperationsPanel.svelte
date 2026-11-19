@@ -617,6 +617,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       case 'pdf_extract_images': customOutputPath = getOutputPath(`${base}_images`);       break;
       case 'pdf_comic_archive': customOutputPath = getOutputPath(cbzArchiveName || `${base}_output.cbz`); break;
       case 'pdf_to_gif':        customOutputPath = getOutputPath(`${base}_preview.gif`); break;
+      case 'showcase_gif':      customOutputPath = getOutputPath(`${base}_showcase.gif`); break;
       case 'split_by_outline':
       case 'pdf_split_by_outline': customOutputPath = getOutputPath(`${base}_outline_split.zip`); break;
       case 'pdf_to_epub':     customOutputPath = getOutputPath(`${base}_output.epub`);     break;
@@ -2879,6 +2880,41 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           />
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Converts multi-page PDF documents into animated looping GIF previews.
+          </p>
+        </div>
+      {:else if activeTool.id === 'showcase_gif'}
+        <div class="operation-config">
+          <label for="showcaseDelay" class="section-desc">Frame Delay: {gifDelay} cs ({gifDelay / 100}s)</label>
+          <input
+            id="showcaseDelay"
+            type="range"
+            min="5"
+            max="200"
+            step="5"
+            bind:value={gifDelay}
+            class="range-input"
+          />
+          <div class="range-labels">
+            <span>0.05s (Fast)</span>
+            <span>2.0s (Slow)</span>
+          </div>
+
+          <label for="showcaseWidth" class="section-desc" style="margin-top: 12px;">Canvas Width: {gifWidth}px</label>
+          <input
+            id="showcaseWidth"
+            type="range"
+            min="480"
+            max="1920"
+            step="40"
+            bind:value={gifWidth}
+            class="range-input"
+          />
+          <div class="range-labels">
+            <span>480px (Compact)</span>
+            <span>1920px (Full HD)</span>
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Generates a side-by-side developer demo GIF comparing terminal keystrokes with before-and-after document transformations.
           </p>
         </div>
       {:else if activeTool.id === 'pdf_to_docx'}

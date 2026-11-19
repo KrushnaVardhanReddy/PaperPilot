@@ -26,7 +26,9 @@ const UNPREFIXED_TOOLS = new Set([
   'office_to_markdown',
   'office_extract_text',
   'office_modernize_legacy',
-  'json_to_pdf'
+  'json_to_pdf',
+  'showcase_gif',
+  'images_to_gif'
 ]);
 
 export function resolveToolName(toolId: string): string {
@@ -41,6 +43,7 @@ export function resolveToolName(toolId: string): string {
   // If the tool ID already starts with standard namespace prefixes, keep it as is
   if (
     toolId.startsWith('pdf_') ||
+    toolId.startsWith('img_') ||
     toolId.startsWith('office_') ||
     toolId.startsWith('excel_') ||
     toolId.startsWith('json_')

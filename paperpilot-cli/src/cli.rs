@@ -952,6 +952,14 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, help = "Frames per second (e.g. 4, 10)")]
+        fps: Option<u8>,
+        #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 25 for 0.25s)")]
+        delay: Option<u16>,
+        #[arg(long, help = "Target width of GIF frames in pixels (default: 1200)")]
+        width: Option<u32>,
+        #[arg(long, help = "Number of animation frames to render (default: 10)")]
+        transition_frames: Option<u8>,
     },
     /// Combine Images into Animated GIF: Stitch a sequence of images into a single animated looping GIF
     #[command(name = "images-to-gif")]

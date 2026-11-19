@@ -4820,14 +4820,24 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "showcase_gif" => {
+            "showcase_gif" | "pdf_showcase_gif" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
+                let fps = args.get("fps").and_then(|v| v.as_u64()).map(|v| v as u8);
+                let delay = args.get("delay").and_then(|v| v.as_u64()).map(|v| v as u16);
+                let width = args.get("width").and_then(|v| v.as_u64()).map(|v| v as u32);
+                let transition_frames = args.get("transition_frames").and_then(|v| v.as_u64()).map(|v| v as u8);
+
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::showcase_gif::ShowcaseGifOptions::default();
+                let options = paperpilot_pdf::operations::showcase_gif::ShowcaseGifOptions {
+                    fps,
+                    delay_centisecs: delay,
+                    width,
+                    transition_frames,
+                };
                 let result = paperpilot_pdf::operations::showcase_gif::showcase_gif_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
@@ -4842,7 +4852,7 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "images_to_gif" => {
+            "images_to_gif" | "pdf_images_to_gif" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;

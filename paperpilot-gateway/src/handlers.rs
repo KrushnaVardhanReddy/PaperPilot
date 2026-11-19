@@ -859,6 +859,9 @@ pub async fn handle_tool(
         || tool_name == "watcher_start"
         || tool_name == "watcher_stop"
         || tool_name == "watcher_list"
+        || tool_name == "showcase_gif"
+        || tool_name == "images_to_gif"
+        || tool_name.starts_with("img_")
     {
         tool_name.clone()
     } else {
@@ -1081,6 +1084,19 @@ pub async fn handle_tool(
         if !args.contains_key("watcher_id") {
             args.insert("watcher_id".to_string(), serde_json::Value::String("default".to_string()));
         }
+    }
+
+    if !args.contains_key("output") {
+        let ext = match resolved_name.as_str() {
+            "showcase_gif" | "pdf_to_gif" | "images_to_gif" => "gif",
+            "img_optimize_for_llm" | "img_deskew" | "img_convert" | "img_crop_to_content" | "img_redact" => "png",
+            _ => "pdf",
+        };
+        let fallback_output = std::env::temp_dir().join(format!("{}.{}", uuid::Uuid::new_v4(), ext));
+        args.insert(
+            "output".to_string(),
+            serde_json::Value::String(fallback_output.to_string_lossy().to_string()),
+        );
     }
 
     request.name = resolved_name.clone().into();
