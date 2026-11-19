@@ -1268,6 +1268,42 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.gif`)
             };
             break;
+        case 'images_to_gif':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.gif`)
+            };
+            break;
+        case 'img_optimize_for_llm':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+            };
+            break;
+        case 'img_deskew':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+            };
+            break;
+        case 'img_convert':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+            };
+            break;
+        case 'img_crop_to_content':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+            };
+            break;
+        case 'img_redact':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+            };
+            break;
         default:
             args = {
                 input: docPath,

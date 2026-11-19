@@ -4832,6 +4832,138 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "images_to_gif" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::images_to_gif::ImagesToGifOptions::default();
+                let result = paperpilot_pdf::operations::images_to_gif::images_to_gif_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Combine Images into Animated GIF executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "img_optimize_for_llm" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::img_optimize_for_llm::ImgOptimizeForLlmOptions::default();
+                let result = paperpilot_pdf::operations::img_optimize_for_llm::img_optimize_for_llm_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Optimize Image for Vision LLMs executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "img_deskew" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::img_deskew::ImgDeskewOptions::default();
+                let result = paperpilot_pdf::operations::img_deskew::img_deskew_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Deskew Document Image executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "img_convert" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::img_convert::ImgConvertOptions::default();
+                let result = paperpilot_pdf::operations::img_convert::img_convert_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Convert Image Format executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "img_crop_to_content" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::img_crop_to_content::ImgCropToContentOptions::default();
+                let result = paperpilot_pdf::operations::img_crop_to_content::img_crop_to_content_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Auto-Crop Image to Content executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
+            "img_redact" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::img_redact::ImgRedactOptions::default();
+                let result = paperpilot_pdf::operations::img_redact::img_redact_bytes(&input_bytes, &options)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({ "output_path": output })),
+                    success: true,
+                    message: "Redact Sensitive Image Regions executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "pdf_sanitize" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;

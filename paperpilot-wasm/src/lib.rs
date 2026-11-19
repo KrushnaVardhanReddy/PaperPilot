@@ -518,6 +518,48 @@ impl WasmPdfEngine {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
+
+    #[wasm_bindgen]
+    pub fn images_to_gif(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::images_to_gif(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn img_optimize_for_llm(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::img_optimize_for_llm(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn img_deskew(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::img_deskew(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn img_convert(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::img_convert(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn img_crop_to_content(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::img_crop_to_content(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
+    pub fn img_redact(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::img_redact(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
     pub fn list_tools() -> String {
         serde_json::json!([
             {"id": "merge", "name": "Merge PDFs", "status": "stable"},

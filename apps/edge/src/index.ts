@@ -348,6 +348,42 @@ export default {
            const result = WasmPdfEngine.showcase_gif(new Uint8Array(body), options);
            return new Response(result, { headers: { 'Content-Type': 'application/json' } });
         }
+        if (url.pathname === '/api/v1/images-to-gif') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.images_to_gif(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/img-optimize-for-llm') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.img_optimize_for_llm(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/img-deskew') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.img_deskew(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/img-convert') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.img_convert(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/img-crop-to-content') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.img_crop_to_content(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
+        if (url.pathname === '/api/v1/img-redact') {
+           const body = await request.arrayBuffer();
+           const options = url.searchParams.get('options') || '{}';
+           const result = WasmPdfEngine.img_redact(new Uint8Array(body), options);
+           return new Response(result, { headers: { 'Content-Type': 'application/json' } });
+        }
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message || String(err) }), {
           status: 500,

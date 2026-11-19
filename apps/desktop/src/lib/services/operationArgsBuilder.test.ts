@@ -510,4 +510,52 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_output.gif'
         });
     });
+
+    it('builds args for images_to_gif', async () => {
+        const args = await buildOperationArgs('images_to_gif', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.gif'
+        });
+    });
+
+    it('builds args for img_optimize_for_llm', async () => {
+        const args = await buildOperationArgs('img_optimize_for_llm', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.image'
+        });
+    });
+
+    it('builds args for img_deskew', async () => {
+        const args = await buildOperationArgs('img_deskew', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.image'
+        });
+    });
+
+    it('builds args for img_convert', async () => {
+        const args = await buildOperationArgs('img_convert', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.image'
+        });
+    });
+
+    it('builds args for img_crop_to_content', async () => {
+        const args = await buildOperationArgs('img_crop_to_content', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.image'
+        });
+    });
+
+    it('builds args for img_redact', async () => {
+        const args = await buildOperationArgs('img_redact', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.image'
+        });
+    });
 });

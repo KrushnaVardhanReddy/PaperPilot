@@ -87,6 +87,12 @@ pub mod pdf_extract_patterns;
 pub mod pdf_chunk;
 pub mod pdf_to_gif;
 pub mod showcase_gif;
+pub mod images_to_gif;
+pub mod img_optimize_for_llm;
+pub mod img_deskew;
+pub mod img_convert;
+pub mod img_crop_to_content;
+pub mod img_redact;
 pub use pdf_chunk::{
     chunk_pdf_bytes, chunk_pdf_path, chunk_pdf_source, pdf_chunk_bytes, ChunkOptions, ChunkResult,
     DocumentChunk, PdfChunkOperation,

@@ -37,6 +37,12 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::img_redact,
+        handlers::img_crop_to_content,
+        handlers::img_convert,
+        handlers::img_deskew,
+        handlers::img_optimize_for_llm,
+        handlers::images_to_gif,
         handlers::showcase_gif,
         handlers::pdf_to_gif,
         handlers::pdf_extract_patterns,
@@ -346,6 +352,12 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/img-redact", post(handlers::img_redact) )
+        .route("/api/v1/pdf/img-crop-to-content", post(handlers::img_crop_to_content) )
+        .route("/api/v1/pdf/img-convert", post(handlers::img_convert) )
+        .route("/api/v1/pdf/img-deskew", post(handlers::img_deskew) )
+        .route("/api/v1/pdf/img-optimize-for-llm", post(handlers::img_optimize_for_llm) )
+        .route("/api/v1/pdf/images-to-gif", post(handlers::images_to_gif) )
         .route("/api/v1/pdf/showcase-gif", post(handlers::showcase_gif) )
         .route("/api/v1/pdf/to-gif", post(handlers::pdf_to_gif) )
         .route("/api/v1/pdf/extract-patterns", post(handlers::pdf_extract_patterns) )

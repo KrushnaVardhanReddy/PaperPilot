@@ -945,6 +945,54 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Combine Images into Animated GIF: Stitch a sequence of images into a single animated looping GIF
+    #[command(name = "images-to-gif")]
+    ImagesToGif {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Optimize Image for Vision LLMs: Downscale and optimize images for LLM vision token economy and clarity
+    #[command(name = "img-optimize-for-llm")]
+    ImgOptimizeForLlm {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Deskew Document Image: Detect text angle and straighten tilted scanned document images
+    #[command(name = "img-deskew")]
+    ImgDeskew {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Convert Image Format: Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats
+    #[command(name = "img-convert")]
+    ImgConvert {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Auto-Crop Image to Content: Detect document boundaries and auto-crop background margins from scanned images
+    #[command(name = "img-crop-to-content")]
+    ImgCropToContent {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Redact Sensitive Image Regions: Apply permanent, irreversible pixel-level redaction over sensitive image regions
+    #[command(name = "img-redact")]
+    ImgRedact {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Run {
         /// TOML .ppflow or JSON recipe
