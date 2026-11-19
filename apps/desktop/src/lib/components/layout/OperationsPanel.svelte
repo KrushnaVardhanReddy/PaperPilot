@@ -1627,7 +1627,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool.id === 'merge' || activeTool.id === 'pdf_merge' || ((activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf' || activeTool.id === 'images_to_gif') && applyToAllFiles)}
+      {#if activeTool.id === 'merge' || activeTool.id === 'pdf_merge' || ((activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf') && applyToAllFiles)}
         <div class="operation-config">
           <p class="section-desc">
             {activeTool.id === 'merge' || activeTool.id === 'pdf_merge' ? 'Reorder open documents for merging:' : activeTool.id === 'images_to_gif' ? 'Reorder open images for combining into animated GIF:' : 'Reorder open images for combining into PDF:'}
