@@ -964,10 +964,29 @@ pub enum Commands {
     /// Combine Images into Animated GIF: Stitch a sequence of images into a single animated looping GIF
     #[command(name = "images-to-gif")]
     ImagesToGif {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
+        #[arg(
+            long,
+            value_delimiter = ',',
+            num_args = 1..,
+            help = "Input image file paths (supports multiple values or comma-separated)"
+        )]
+        input: Vec<PathBuf>,
+        #[arg(
+            long = "inputs",
+            alias = "images",
+            value_delimiter = ',',
+            num_args = 1..,
+            help = "Alternative alias for input images"
+        )]
+        inputs: Option<Vec<PathBuf>>,
+        #[arg(long, help = "Output GIF file path")]
         output: PathBuf,
+        #[arg(long, help = "Frames per second")]
+        fps: Option<u8>,
+        #[arg(long, help = "Delay between frames in centiseconds (1/100s)")]
+        delay: Option<u16>,
+        #[arg(long, help = "Target frame width (pixels)")]
+        width: Option<u32>,
     },
     /// Optimize Image for Vision LLMs: Downscale and optimize images for LLM vision token economy and clarity
     #[command(name = "img-optimize-for-llm")]

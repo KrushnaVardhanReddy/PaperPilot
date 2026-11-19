@@ -536,8 +536,10 @@ describe('operationArgsBuilder', () => {
     it('builds args for images_to_gif', async () => {
         const args = await buildOperationArgs('images_to_gif', defaultContext);
         expect(args).toEqual({
-            input: '/docs/test.pdf',
-            output: '/docs/test_output.gif'
+            images: ['/docs/test.pdf'],
+            input: ['/docs/test.pdf'],
+            output: '/docs/test_combined.gif',
+            delay: 25
         });
     });
 

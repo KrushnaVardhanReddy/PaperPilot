@@ -1282,12 +1282,33 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             if (args.fps === undefined) delete args.fps;
             break;
-        case 'images_to_gif':
+        case 'images_to_gif': {
+            const allImages = (context.allDocumentPaths || [])
+                .map((p, i) => p || context.allDocuments?.[i]?.name || '')
+                .filter(p => /\.(png|jpg|jpeg|webp|bmp|gif)$/i.test(p));
+
+            let inputPaths: string[] = [];
+            if (context.applyToAllFiles !== false && allImages.length > 0) {
+                inputPaths = allImages;
+            } else if (docPath && /\.(png|jpg|jpeg|webp|bmp|gif)$/i.test(docPath)) {
+                inputPaths = [docPath];
+            }
+
+            const defaultOutName = inputPaths.length > 1
+                ? 'images_combined.gif'
+                : `${docName.replace(/\.[^.]+$/i, '')}_combined.gif`;
+            const outputPath = customOutputPath || getOutputPath(defaultOutName);
+
             args = {
-                input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.gif`)
+                images: inputPaths.length > 0 ? inputPaths : (docPath ? [docPath] : []),
+                input: inputPaths.length > 0 ? inputPaths : (docPath ? [docPath] : []),
+                output: outputPath,
+                delay: context.gifDelay ?? 25,
+                width: context.gifWidth
             };
+            if (args.width === undefined) delete args.width;
             break;
+        }
         case 'img_optimize_for_llm':
             args = {
                 input: docPath,

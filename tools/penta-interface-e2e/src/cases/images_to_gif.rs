@@ -17,38 +17,49 @@ pub async fn run_images_to_gif_suite() -> anyhow::Result<Vec<TestExecutionResult
 
     let tool = "images_to_gif";
     let workspace_root = std::env::current_dir()?;
-    let single_page = workspace_root.join("tests/e2e_fixtures/real/single_page.pdf");
+    let img1 = workspace_root.join("tests/e2e_fixtures/real/img1.png");
+    let img2 = workspace_root.join("tests/e2e_fixtures/real/img2.png");
+
+    let img1_str = img1.to_string_lossy().to_string();
+    let img2_str = img2.to_string_lossy().to_string();
 
     // 1. CLI Tests
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
-        let out_path = out_dir.join(format!("{}_cli_{}.pdf", tool, tier as u8));
-        
-        let mut actual_input = single_page.to_string_lossy().to_string();
-        if tier == ComplexityTier::Negative {
-            actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
-        }
-        
+        let out_path = out_dir.join(format!("{}_cli_{}.gif", tool, tier as u8));
         let out_path_str = out_path.to_str().unwrap().to_string();
-        let args: Vec<&str> = vec![
-            "images-to-gif",
-            "--input",
-            &actual_input,
-            "--output",
-            &out_path_str,
-        ];
 
-        let (success, out_msg, latency) = CliRunner::run(&args).await?;
+        let (success, out_msg, latency) = if tier == ComplexityTier::Negative {
+            let args: Vec<&str> = vec![
+                "images-to-gif",
+                "--input",
+                "tests/e2e_fixtures/real/missing.png",
+                "--output",
+                &out_path_str,
+            ];
+            CliRunner::run(&args).await?
+        } else {
+            let args: Vec<&str> = vec![
+                "images-to-gif",
+                "--input",
+                &img1_str,
+                &img2_str,
+                "--output",
+                &out_path_str,
+            ];
+            CliRunner::run(&args).await?
+        };
+
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "gif").unwrap_or(false)
         };
 
         results.push(TestExecutionResult {
             tool_id: tool.into(),
             interface: InterfaceType::Cli,
             tier,
-            data_sent: format!("paperpilot images-to-gif --input ... --output {:?}", out_path),
+            data_sent: format!("paperpilot images-to-gif --input {:?} --output {:?}", img1_str, out_path),
             expected_result: if tier == ComplexityTier::Negative {
                 "Fail/Error".into()
             } else {
@@ -63,24 +74,26 @@ pub async fn run_images_to_gif_suite() -> anyhow::Result<Vec<TestExecutionResult
 
     // 2. MCP Parity Checks
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
-        let out_path = out_dir.join(format!("{}_mcp_{}.pdf", tool, tier as u8));
-        
-        let mut actual_input = single_page.to_string_lossy().to_string();
-        if tier == ComplexityTier::Negative {
-            actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
-        }
+        let out_path = out_dir.join(format!("{}_mcp_{}.gif", tool, tier as u8));
 
-        let mcp_args = json!({
-            "input": actual_input,
-            "output": out_path.to_str().unwrap()
-        });
+        let mcp_args = if tier == ComplexityTier::Negative {
+            json!({
+                "images": ["tests/e2e_fixtures/real/missing.png"],
+                "output": out_path.to_str().unwrap()
+            })
+        } else {
+            json!({
+                "images": [&img1_str, &img2_str],
+                "output": out_path.to_str().unwrap()
+            })
+        };
 
         let (success, resp, latency) = McpRunner::call_tool(tool, mcp_args).await?;
-        
+
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {
-            success && crate::verify_output_file(&out_path, "pdf").unwrap_or(false)
+            success && crate::verify_output_file(&out_path, "gif").unwrap_or(false)
         };
 
         results.push(TestExecutionResult {
@@ -102,17 +115,18 @@ pub async fn run_images_to_gif_suite() -> anyhow::Result<Vec<TestExecutionResult
 
     // 3. REST API Gateway
     for tier in [ComplexityTier::Simple, ComplexityTier::Negative] {
-        let mut actual_input = single_page.to_string_lossy().to_string();
-        if tier == ComplexityTier::Negative {
-            actual_input = "tests/e2e_fixtures/real/missing.pdf".to_string();
-        }
-
-        let api_args = json!({
-            "input": actual_input
-        });
+        let api_args = if tier == ComplexityTier::Negative {
+            json!({
+                "input": "tests/e2e_fixtures/real/missing.png"
+            })
+        } else {
+            json!({
+                "images": [&img1_str, &img2_str]
+            })
+        };
 
         let (success, resp, latency) = api.post_json("/api/v1/pdf/images-to-gif", api_args).await?;
-        
+
         let passed = if tier == ComplexityTier::Negative {
             !success
         } else {

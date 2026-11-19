@@ -475,6 +475,11 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           ? getOutputPath('images_combined.pdf')
           : getOutputPath(`${base}_converted.pdf`);
         break;
+      case 'images_to_gif':
+        customOutputPath = applyToAllFiles && appState.documents.length > 1
+          ? getOutputPath('images_combined.gif')
+          : getOutputPath(`${base}_combined.gif`);
+        break;
       case 'json_to_pdf':
         customOutputPath = getOutputPath(`${base}_synthesized.pdf`);
         break;
@@ -718,7 +723,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       appState.toggleDiffView(true);
     }
 
-    const isCombineTool = ['merge', 'pdf_merge', 'img_to_pdf', 'pdf_images_to_pdf'].includes(activeTool.id);
+    const isCombineTool = ['merge', 'pdf_merge', 'img_to_pdf', 'pdf_images_to_pdf', 'images_to_gif'].includes(activeTool.id);
     const isBatchExecution = !isCombineTool && applyToAllFiles && (activeTool.rule?.isBatchable ?? false) && appState.documents.length > 1;
 
     isRunning = true;
@@ -1373,7 +1378,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
       input_b: compareDocB || appState.documentPaths[1] || docPath
     };
 
-    const isImgCombineTool = rawToolId === 'img_to_pdf' || rawToolId === 'pdf_images_to_pdf';
+    const isImgCombineTool = rawToolId === 'img_to_pdf' || rawToolId === 'pdf_images_to_pdf' || rawToolId === 'images_to_gif';
     const resolvedInputs = isImgCombineTool
       ? (applyToAllFiles && appState.documentPaths.length > 0 ? appState.documentPaths : [docPath])
       : (appState.documentPaths.length > 0 ? appState.documentPaths : [docPath]);
@@ -1557,10 +1562,10 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool.id === 'merge' || activeTool.id === 'pdf_merge' || ((activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf') && applyToAllFiles)}
+      {#if activeTool.id === 'merge' || activeTool.id === 'pdf_merge' || ((activeTool.id === 'img_to_pdf' || activeTool.id === 'pdf_images_to_pdf' || activeTool.id === 'images_to_gif') && applyToAllFiles)}
         <div class="operation-config">
           <p class="section-desc">
-            {activeTool.id === 'merge' || activeTool.id === 'pdf_merge' ? 'Reorder open documents for merging:' : 'Reorder open images for combining into PDF:'}
+            {activeTool.id === 'merge' || activeTool.id === 'pdf_merge' ? 'Reorder open documents for merging:' : activeTool.id === 'images_to_gif' ? 'Reorder open images for combining into animated GIF:' : 'Reorder open images for combining into PDF:'}
           </p>
           {#if appState.documents.length === 0}
             <div class="empty-list">No documents added.</div>
@@ -2880,6 +2885,41 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           />
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Converts multi-page PDF documents into animated looping GIF previews.
+          </p>
+        </div>
+      {:else if activeTool.id === 'images_to_gif'}
+        <div class="operation-config">
+          <label for="imgGifDelay" class="section-desc">Frame Delay: {gifDelay} cs ({gifDelay / 100}s)</label>
+          <input
+            id="imgGifDelay"
+            type="range"
+            min="5"
+            max="200"
+            step="5"
+            bind:value={gifDelay}
+            class="range-input"
+          />
+          <div class="range-labels">
+            <span>0.05s (Fast)</span>
+            <span>2.0s (Slow)</span>
+          </div>
+
+          <label for="imgGifWidth" class="section-desc" style="margin-top: 12px;">Frame Width: {gifWidth}px</label>
+          <input
+            id="imgGifWidth"
+            type="range"
+            min="320"
+            max="1920"
+            step="20"
+            bind:value={gifWidth}
+            class="range-input"
+          />
+          <div class="range-labels">
+            <span>320px (Compact)</span>
+            <span>1920px (Full HD)</span>
+          </div>
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Stitches multiple images into a sequence as a looping animated GIF with NeuQuant 256-color quantization.
           </p>
         </div>
       {:else if activeTool.id === 'showcase_gif'}

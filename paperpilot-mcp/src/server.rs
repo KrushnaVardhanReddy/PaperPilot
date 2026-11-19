@@ -4853,14 +4853,42 @@ impl PaperPilotMcpServer {
                 })
             }
             "images_to_gif" | "pdf_images_to_gif" => {
-                let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
-                let input_bytes = std::fs::read(&input)
-                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::images_to_gif::ImagesToGifOptions::default();
-                let result = paperpilot_pdf::operations::images_to_gif::images_to_gif_bytes(&input_bytes, &options)
+                let paths: Vec<String> = if let Ok(arr) = get_string_array("images") {
+                    arr
+                } else if let Ok(arr) = get_string_array("inputs") {
+                    arr
+                } else if let Ok(s) = get_string("input") {
+                    s.split(',').map(|p| p.trim().to_string()).filter(|p| !p.is_empty()).collect()
+                } else {
+                    return Err(rmcp::ErrorData::invalid_params(
+                        "images_to_gif requires 'images', 'inputs', or 'input'".to_string(),
+                        None,
+                    ));
+                };
+
+                if paths.is_empty() {
+                    return Err(rmcp::ErrorData::invalid_params(
+                        "No input images provided".to_string(),
+                        None,
+                    ));
+                }
+
+                let fps = args.get("fps").and_then(|v| v.as_u64()).map(|v| v as u8);
+                let delay = args.get("delay").or_else(|| args.get("delay_centisecs")).and_then(|v| v.as_u64()).map(|v| v as u16);
+                let width = args.get("width").and_then(|v| v.as_u64()).map(|v| v as u32);
+
+                let options = paperpilot_pdf::operations::images_to_gif::ImagesToGifOptions {
+                    fps,
+                    delay_centisecs: delay,
+                    width,
+                    loop_count: Some(0),
+                };
+
+                let path_bufs: Vec<std::path::PathBuf> = paths.iter().map(std::path::PathBuf::from).collect();
+                let result = paperpilot_pdf::operations::images_to_gif::images_to_gif_from_paths(&path_bufs, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
                 std::fs::write(&output, result)
