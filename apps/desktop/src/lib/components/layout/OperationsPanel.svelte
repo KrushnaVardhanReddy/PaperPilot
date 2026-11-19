@@ -260,6 +260,22 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
   let imgDeskewAutoDetect = $state(true);
   let imgDeskewAngle = $state(0);
 
+  // Img Crop to Content parameter states
+  let imgCropThreshold = $state(0.1);
+  let imgCropPadding = $state(10);
+
+  // Img Redact parameter states
+  let imgRedactRects = $state('20,20,100,50');
+  let imgRedactColor = $state('#000000');
+
+  // Img Optimize for LLM parameter states
+  let imgOptimizeMaxDim = $state(1024);
+  let imgOptimizeQuality = $state(85);
+
+  // Img Convert parameter states
+  let imgConvertFormat = $state('png');
+  let imgConvertQuality = $state(90);
+
   // Alternating Merge & Compare parameter states
   let mergeAlternateDocA = $state('');
   let mergeAlternateDocB = $state('');
@@ -681,6 +697,25 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         customOutputPath = getOutputPath(`${base}_deskewed.${ext || 'png'}`);
         break;
       }
+      case 'img_crop_to_content': {
+        const ext = (docPath.split('.').pop() || 'png').toLowerCase();
+        customOutputPath = getOutputPath(`${base}_cropped.${ext || 'png'}`);
+        break;
+      }
+      case 'img_redact': {
+        const ext = (docPath.split('.').pop() || 'png').toLowerCase();
+        customOutputPath = getOutputPath(`${base}_redacted.${ext || 'png'}`);
+        break;
+      }
+      case 'img_optimize_for_llm': {
+        const ext = (docPath.split('.').pop() || 'png').toLowerCase();
+        customOutputPath = getOutputPath(`${base}_llm_optimized.${ext || 'png'}`);
+        break;
+      }
+      case 'img_convert': {
+        customOutputPath = getOutputPath(`${base}_converted.${imgConvertFormat || 'png'}`);
+        break;
+      }
       default:              customOutputPath = getOutputPath(`${base}_output.pdf`);      break;
     }
 
@@ -920,7 +955,15 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
             gifWidth,
             gifMaxPages,
             imgDeskewAngle: imgDeskewAutoDetect ? undefined : imgDeskewAngle,
-            imgDeskewAutoDetect
+            imgDeskewAutoDetect,
+            imgCropThreshold,
+            imgCropPadding,
+            imgRedactRects: imgRedactRects.trim() ? [imgRedactRects.trim()] : undefined,
+            imgRedactColor,
+            imgOptimizeMaxDim,
+            imgOptimizeQuality,
+            imgConvertFormat,
+            imgConvertQuality
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -1188,7 +1231,15 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           gifWidth,
           gifMaxPages,
           imgDeskewAngle: imgDeskewAutoDetect ? undefined : imgDeskewAngle,
-          imgDeskewAutoDetect
+          imgDeskewAutoDetect,
+          imgCropThreshold,
+          imgCropPadding,
+          imgRedactRects: imgRedactRects.trim() ? [imgRedactRects.trim()] : undefined,
+          imgRedactColor,
+          imgOptimizeMaxDim,
+          imgOptimizeQuality,
+          imgConvertFormat,
+          imgConvertQuality
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -3001,6 +3052,122 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
 
           <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
             Detects text baseline tilt in scanned documents and receipts, automatically straightening the image with bilinear interpolation for optimal OCR.
+          </p>
+        </div>
+      {:else if activeTool.id === 'img_crop_to_content'}
+        <div class="operation-config">
+          <label for="imgCropThreshold" class="section-desc">Background Tolerance Threshold: {Math.round(imgCropThreshold * 100)}%</label>
+          <input
+            id="imgCropThreshold"
+            type="range"
+            min="0.01"
+            max="0.5"
+            step="0.01"
+            bind:value={imgCropThreshold}
+            class="range-input"
+          />
+
+          <label for="imgCropPadding" class="section-desc" style="margin-top: 10px;">Margin Padding: {imgCropPadding} px</label>
+          <input
+            id="imgCropPadding"
+            type="number"
+            min="0"
+            max="200"
+            bind:value={imgCropPadding}
+            class="text-input"
+          />
+
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Trims away scanner borders, shadows, and dirty margins automatically based on background luminance and ink density.
+          </p>
+        </div>
+      {:else if activeTool.id === 'img_redact'}
+        <div class="operation-config">
+          <label for="imgRedactRects" class="section-desc">Target Region (x, y, width, height):</label>
+          <input
+            id="imgRedactRects"
+            type="text"
+            placeholder="e.g. 50,100,200,60"
+            bind:value={imgRedactRects}
+            class="text-input"
+          />
+
+          <label for="imgRedactColor" class="section-desc" style="margin-top: 10px;">Redaction Fill Color:</label>
+          <input
+            id="imgRedactColor"
+            type="text"
+            placeholder="#000000 or black"
+            bind:value={imgRedactColor}
+            class="text-input"
+          />
+
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Applies irreversible pixel-level redaction over target regions, permanently wiping all underlying pixel data.
+          </p>
+        </div>
+      {:else if activeTool.id === 'img_optimize_for_llm'}
+        <div class="operation-config">
+          <label for="imgOptimizePreset" class="section-desc">LLM Vision Model Preset / Max Dimension:</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <button
+              type="button"
+              class="tag-pill"
+              class:selected={imgOptimizeMaxDim === 1024}
+              onclick={() => { imgOptimizeMaxDim = 1024; imgOptimizeQuality = 85; }}
+            >
+              Claude / OpenAI (1024px)
+            </button>
+            <button
+              type="button"
+              class="tag-pill"
+              class:selected={imgOptimizeMaxDim === 768}
+              onclick={() => { imgOptimizeMaxDim = 768; imgOptimizeQuality = 80; }}
+            >
+              Gemini Vision (768px)
+            </button>
+          </div>
+
+          <label for="imgOptimizeQuality" class="section-desc" style="margin-top: 8px;">JPEG Quality: {imgOptimizeQuality}%</label>
+          <input
+            id="imgOptimizeQuality"
+            type="range"
+            min="40"
+            max="100"
+            step="1"
+            bind:value={imgOptimizeQuality}
+            class="range-input"
+          />
+
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Resamples and enhances document contrast for vision LLM token efficiency, maximizing OCR text clarity while minimizing token usage.
+          </p>
+        </div>
+      {:else if activeTool.id === 'img_convert'}
+        <div class="operation-config">
+          <label for="imgConvertFormatSelect" class="section-desc">Target Image Format:</label>
+          <select id="imgConvertFormatSelect" bind:value={imgConvertFormat} class="text-input">
+            <option value="png">PNG (Lossless)</option>
+            <option value="jpeg">JPEG (Compressed)</option>
+            <option value="webp">WebP (Modern Web)</option>
+            <option value="tiff">TIFF (Archival / Print)</option>
+            <option value="avif">AVIF (Next-Gen)</option>
+          </select>
+
+          {#if imgConvertFormat === 'jpeg' || imgConvertFormat === 'webp' || imgConvertFormat === 'avif'}
+            <label for="imgConvertQuality" class="section-desc" style="margin-top: 10px;">Quality: {imgConvertQuality}%</label>
+            <input
+              id="imgConvertQuality"
+              type="range"
+              min="1"
+              max="100"
+              step="1"
+              bind:value={imgConvertQuality}
+              class="range-input"
+            />
+          {/if}
+
+          <p class="section-desc" style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;">
+            Pure-Rust image format transcoding between PNG, JPEG, WebP, TIFF, and AVIF with zero external runtime dependencies.
           </p>
         </div>
       {:else if activeTool.id === 'pdf_to_docx'}

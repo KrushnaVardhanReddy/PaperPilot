@@ -547,7 +547,7 @@ describe('operationArgsBuilder', () => {
         const args = await buildOperationArgs('img_optimize_for_llm', defaultContext);
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.image'
+            output: '/docs/test_llm_optimized.pdf'
         });
     });
 
@@ -562,26 +562,58 @@ describe('operationArgsBuilder', () => {
     });
 
     it('builds args for img_convert', async () => {
-        const args = await buildOperationArgs('img_convert', defaultContext);
+        const args = await buildOperationArgs('img_convert', {
+            ...defaultContext,
+            imgConvertFormat: 'webp',
+            imgConvertQuality: 85
+        });
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.image'
+            output: '/docs/test_converted.webp',
+            format: 'webp',
+            quality: 85
         });
     });
 
     it('builds args for img_crop_to_content', async () => {
-        const args = await buildOperationArgs('img_crop_to_content', defaultContext);
+        const args = await buildOperationArgs('img_crop_to_content', {
+            ...defaultContext,
+            imgCropThreshold: 0.15,
+            imgCropPadding: 12
+        });
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.image'
+            output: '/docs/test_cropped.pdf',
+            threshold: 0.15,
+            padding: 12
         });
     });
 
     it('builds args for img_redact', async () => {
-        const args = await buildOperationArgs('img_redact', defaultContext);
+        const args = await buildOperationArgs('img_redact', {
+            ...defaultContext,
+            imgRedactRects: ['10,20,100,50'],
+            imgRedactColor: '#000000'
+        });
         expect(args).toEqual({
             input: '/docs/test.pdf',
-            output: '/docs/test_output.image'
+            output: '/docs/test_redacted.pdf',
+            rect: ['10,20,100,50'],
+            color: '#000000'
+        });
+    });
+
+    it('builds args for img_optimize_for_llm', async () => {
+        const args = await buildOperationArgs('img_optimize_for_llm', {
+            ...defaultContext,
+            imgOptimizeMaxDim: 1024,
+            imgOptimizeQuality: 80
+        });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_llm_optimized.pdf',
+            max_dim: 1024,
+            quality: 80
         });
     });
 });

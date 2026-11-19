@@ -4902,14 +4902,23 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "img_optimize_for_llm" => {
+            "img_optimize_for_llm" | "pdf_img_optimize_for_llm" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::img_optimize_for_llm::ImgOptimizeForLlmOptions::default();
+                let mut options = paperpilot_pdf::operations::img_optimize_for_llm::ImgOptimizeForLlmOptions::default();
+                if let Ok(m) = get_u64("max_dim") {
+                    options.max_dim = Some(m as u32);
+                }
+                if let Ok(q) = get_u64("quality") {
+                    options.quality = Some(q as u8);
+                }
+                if let Ok(enh) = get_bool("enhance_text") {
+                    options.enhance_text = Some(enh);
+                }
                 let result = paperpilot_pdf::operations::img_optimize_for_llm::img_optimize_for_llm_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
@@ -4956,14 +4965,25 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "img_convert" => {
+            "img_convert" | "pdf_img_convert" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::img_convert::ImgConvertOptions::default();
+                let mut options = paperpilot_pdf::operations::img_convert::ImgConvertOptions::default();
+                if let Ok(fmt) = get_string("format") {
+                    options.format = Some(fmt);
+                } else {
+                    options.format = std::path::Path::new(&output)
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .map(|s| s.to_string());
+                }
+                if let Ok(q) = get_u64("quality") {
+                    options.quality = Some(q as u8);
+                }
                 let result = paperpilot_pdf::operations::img_convert::img_convert_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
@@ -4978,14 +4998,20 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "img_crop_to_content" => {
+            "img_crop_to_content" | "pdf_img_crop_to_content" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::img_crop_to_content::ImgCropToContentOptions::default();
+                let mut options = paperpilot_pdf::operations::img_crop_to_content::ImgCropToContentOptions::default();
+                if let Ok(t) = get_f64("threshold") {
+                    options.threshold = Some(t as f32);
+                }
+                if let Ok(p) = get_u64("padding") {
+                    options.padding = Some(p as u32);
+                }
                 let result = paperpilot_pdf::operations::img_crop_to_content::img_crop_to_content_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 
@@ -5000,14 +5026,48 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
-            "img_redact" => {
+            "img_redact" | "pdf_img_redact" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
                 ensure_parent_dir(&output)?;
 
                 let input_bytes = std::fs::read(&input)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
-                let options = paperpilot_pdf::operations::img_redact::ImgRedactOptions::default();
+                let mut options = paperpilot_pdf::operations::img_redact::ImgRedactOptions::default();
+                if let Ok(c) = get_string("color") {
+                    options.color = Some(c);
+                }
+                if let Some(val) = args.get("rect") {
+                    if let Some(arr) = val.as_array() {
+                        for item in arr {
+                            if let Some(s) = item.as_str() {
+                                let parts: Vec<&str> = s.split(|c| c == ',' || c == 'x' || c == ':').map(|p| p.trim()).collect();
+                                if parts.len() == 4 {
+                                    if let (Ok(x), Ok(y), Ok(w), Ok(h)) = (
+                                        parts[0].parse::<u32>(),
+                                        parts[1].parse::<u32>(),
+                                        parts[2].parse::<u32>(),
+                                        parts[3].parse::<u32>(),
+                                    ) {
+                                        options.rects.push(paperpilot_pdf::operations::img_redact::RedactRect { x, y, width: w, height: h });
+                                    }
+                                }
+                            }
+                        }
+                    } else if let Some(s) = val.as_str() {
+                        let parts: Vec<&str> = s.split(|c| c == ',' || c == 'x' || c == ':').map(|p| p.trim()).collect();
+                        if parts.len() == 4 {
+                            if let (Ok(x), Ok(y), Ok(w), Ok(h)) = (
+                                parts[0].parse::<u32>(),
+                                parts[1].parse::<u32>(),
+                                parts[2].parse::<u32>(),
+                                parts[3].parse::<u32>(),
+                            ) {
+                                options.rects.push(paperpilot_pdf::operations::img_redact::RedactRect { x, y, width: w, height: h });
+                            }
+                        }
+                    }
+                }
                 let result = paperpilot_pdf::operations::img_redact::img_redact_bytes(&input_bytes, &options)
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
 

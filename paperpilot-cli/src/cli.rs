@@ -995,6 +995,10 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, help = "Max width or height in pixels")]
+        max_dim: Option<u32>,
+        #[arg(long, help = "Quality (1-100)")]
+        quality: Option<u8>,
     },
     /// Deskew Document Image: Detect text angle and straighten tilted scanned document images
     #[command(name = "img-deskew")]
@@ -1013,6 +1017,10 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, help = "Target format: png, jpeg, webp, tiff, avif")]
+        format: Option<String>,
+        #[arg(long, help = "Compression quality (1-100)")]
+        quality: Option<u8>,
     },
     /// Auto-Crop Image to Content: Detect document boundaries and auto-crop background margins from scanned images
     #[command(name = "img-crop-to-content")]
@@ -1021,6 +1029,10 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, help = "Background difference threshold (0.0-1.0)")]
+        threshold: Option<f32>,
+        #[arg(long, help = "Padding margin in pixels")]
+        padding: Option<u32>,
     },
     /// Redact Sensitive Image Regions: Apply permanent, irreversible pixel-level redaction over sensitive image regions
     #[command(name = "img-redact")]
@@ -1029,6 +1041,10 @@ pub enum Commands {
         input: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long, help = "Redaction rectangle x,y,w,h (can be specified multiple times)")]
+        rect: Option<Vec<String>>,
+        #[arg(long, help = "Fill color: hex (#000000) or name (black, white, red)")]
+        color: Option<String>,
     },
     /// Declarative multi-step document workflow execution
     Run {

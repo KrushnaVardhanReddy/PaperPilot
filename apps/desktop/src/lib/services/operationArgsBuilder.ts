@@ -189,6 +189,14 @@ export interface OperationContext {
     gifFps?: number;
     imgDeskewAngle?: number;
     imgDeskewAutoDetect?: boolean;
+    imgCropThreshold?: number;
+    imgCropPadding?: number;
+    imgRedactRects?: string[];
+    imgRedactColor?: string;
+    imgOptimizeMaxDim?: number;
+    imgOptimizeQuality?: number;
+    imgConvertFormat?: string;
+    imgConvertQuality?: number;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -1311,41 +1319,68 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             if (args.width === undefined) delete args.width;
             break;
         }
-        case 'img_optimize_for_llm':
+        case 'img_optimize_for_llm': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_llm_optimized.${ext || 'png'}`),
+                max_dim: context.imgOptimizeMaxDim,
+                quality: context.imgOptimizeQuality
             };
+            if (args.max_dim === undefined) delete args.max_dim;
+            if (args.quality === undefined) delete args.quality;
             break;
+        }
         case 'img_deskew': {
             const extMatch = docPath.match(/\.([^.]+)$/);
             const ext = extMatch ? extMatch[1] : 'png';
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_deskewed.${ext}`),
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_deskewed.${ext || 'png'}`),
                 angle: context.imgDeskewAngle,
                 auto_detect: context.imgDeskewAutoDetect ?? true
             };
             break;
         }
-        case 'img_convert':
+        case 'img_convert': {
+            const targetFormat = context.imgConvertFormat || 'png';
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_converted.${targetFormat}`),
+                format: context.imgConvertFormat,
+                quality: context.imgConvertQuality
             };
+            if (args.format === undefined) delete args.format;
+            if (args.quality === undefined) delete args.quality;
             break;
-        case 'img_crop_to_content':
+        }
+        case 'img_crop_to_content': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_cropped.${ext || 'png'}`),
+                threshold: context.imgCropThreshold,
+                padding: context.imgCropPadding
             };
+            if (args.threshold === undefined) delete args.threshold;
+            if (args.padding === undefined) delete args.padding;
             break;
-        case 'img_redact':
+        }
+        case 'img_redact': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
             args = {
                 input: docPath,
-                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.image`)
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_redacted.${ext || 'png'}`),
+                rect: context.imgRedactRects,
+                color: context.imgRedactColor
             };
+            if (args.rect === undefined) delete args.rect;
+            if (args.color === undefined) delete args.color;
             break;
+        }
         default:
             args = {
                 input: docPath,

@@ -121,6 +121,42 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_IMG_DESKEW_REPORT.md",
             )?;
         }
+        "img_crop_to_content" => {
+            let res_img_crop_to_content = cases::img_crop_to_content::run_img_crop_to_content_suite().await?;
+            println!("Auto-Crop Image to Content finished: {} tests", res_img_crop_to_content.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Auto-Crop Image to Content)",
+                &res_img_crop_to_content,
+                "reports/PENTA_INTERFACE_E2E_IMG_CROP_TO_CONTENT_REPORT.md",
+            )?;
+        }
+        "img_redact" => {
+            let res_img_redact = cases::img_redact::run_img_redact_suite().await?;
+            println!("Redact Sensitive Image Regions finished: {} tests", res_img_redact.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Redact Sensitive Image Regions)",
+                &res_img_redact,
+                "reports/PENTA_INTERFACE_E2E_IMG_REDACT_REPORT.md",
+            )?;
+        }
+        "img_optimize_for_llm" => {
+            let res_img_optimize_for_llm = cases::img_optimize_for_llm::run_img_optimize_for_llm_suite().await?;
+            println!("Optimize Image for Vision LLMs finished: {} tests", res_img_optimize_for_llm.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Optimize Image for Vision LLMs)",
+                &res_img_optimize_for_llm,
+                "reports/PENTA_INTERFACE_E2E_IMG_OPTIMIZE_FOR_LLM_REPORT.md",
+            )?;
+        }
+        "img_convert" => {
+            let res_img_convert = cases::img_convert::run_img_convert_suite().await?;
+            println!("Convert Image Format finished: {} tests", res_img_convert.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Convert Image Format)",
+                &res_img_convert,
+                "reports/PENTA_INTERFACE_E2E_IMG_CONVERT_REPORT.md",
+            )?;
+        }
         "showcase_gif" => {
             let res_showcase_gif = cases::showcase_gif::run_showcase_gif_suite().await?;
             println!("Generate Showcase GIF finished: {} tests", res_showcase_gif.len());

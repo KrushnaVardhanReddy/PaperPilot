@@ -1110,11 +1110,19 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             *delay,
             *width,
         ),
-        Commands::ImgOptimizeForLlm { input, output } => img_optimize_for_llm::handle_img_optimize_for_llm_command(input, output),
+        Commands::ImgOptimizeForLlm { input, output, max_dim, quality } => {
+            img_optimize_for_llm::handle_img_optimize_for_llm_command(input, output, *max_dim, *quality)
+        }
         Commands::ImgDeskew { input, output, angle } => img_deskew::handle_img_deskew_command(input, output, *angle),
-        Commands::ImgConvert { input, output } => img_convert::handle_img_convert_command(input, output),
-        Commands::ImgCropToContent { input, output } => img_crop_to_content::handle_img_crop_to_content_command(input, output),
-        Commands::ImgRedact { input, output } => img_redact::handle_img_redact_command(input, output),
+        Commands::ImgConvert { input, output, format, quality } => {
+            img_convert::handle_img_convert_command(input, output, format, *quality)
+        }
+        Commands::ImgCropToContent { input, output, threshold, padding } => {
+            img_crop_to_content::handle_img_crop_to_content_command(input, output, *threshold, *padding)
+        }
+        Commands::ImgRedact { input, output, rect, color } => {
+            img_redact::handle_img_redact_command(input, output, rect, color)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
