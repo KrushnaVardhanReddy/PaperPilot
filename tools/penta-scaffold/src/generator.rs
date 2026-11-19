@@ -589,16 +589,20 @@ pub fn {name_snake}(input_bytes: &[u8], options_json: &str) -> OperationResult<V
             }
         }
         if target_idx > 0 {
+            let cat = match args.category.as_str() {
+                "conversion" => "convert",
+                "image" => "edit",
+                c => c,
+            };
             let entry = format!(
-                "  {{ id: '{name_snake}', name: '{title}', inputFormat: '{input_format}', outputFormat: '{output_format}', description: '{description}', icon: '{icon}', category: '{category}', context: '{input_format_lc}', tags: ['{name_snake}'], releaseStatus: 'preview' }},",
+                "  {{ id: '{name_snake}', title: '{title}', inputFormat: '{input_format}', outputFormat: '{output_format}', description: '{description}', icon: '{icon}', category: '{category}', context: 'pdf', tags: ['{name_snake}'], releaseStatus: 'preview' }},",
                 name_snake = name_snake,
                 title = args.title,
                 input_format = args.input_format.to_uppercase(),
-                output_format = format_args!(".{}", args.output_format.to_uppercase()),
+                output_format = format_args!(".{}", args.output_format.to_lowercase()),
                 description = args.description,
                 icon = args.icon,
-                category = args.category,
-                input_format_lc = args.input_format.to_lowercase()
+                category = cat
             );
             lines.insert(target_idx, entry);
         }
