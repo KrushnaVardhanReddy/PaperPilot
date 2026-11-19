@@ -3632,7 +3632,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
         </div>
       {/if}
 
-      {#if activeTool && activeTool.id !== 'search' && !((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1 && activeTool.id !== 'img_to_pdf' && activeTool.id !== 'pdf_images_to_pdf')}
+      {#if activeTool && activeTool.id !== 'search' && !((activeTool.id === 'ocr' || activeTool.id === 'pdf_ocr') && ocrOutputFormat === 'clipboard') && !(applyToAllFiles && activeTool.rule?.isBatchable && appState.documents.length > 1 && !['img_to_pdf', 'pdf_images_to_pdf', 'images_to_gif'].includes(activeTool.id))}
         <div class="operation-config" id="output-path-config">
           <label for="output-path-input" class="section-desc">
             {activeTool.id === 'split' || activeTool.id === 'pdf_split' || activeTool.id === 'burst' || activeTool.id === 'pdf_burst' ? 'Output folder:' : 'Output file:'}

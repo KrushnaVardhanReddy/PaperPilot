@@ -348,4 +348,23 @@ export class AppState {
   }
 }
 
+import { toastState } from './toast.svelte';
+
 export const appState = new AppState();
+
+if (typeof window !== 'undefined') {
+  (window as any).appState = appState;
+  (window as any).toastState = toastState;
+  (window as any).__TEST_LOAD_FILE = (name: string, path: string, contentBase64?: string) => {
+    // Clear any existing toasts so they don't block UI clicks
+    toastState.clear();
+    // Determine mime type from extension
+    const ext = name.split('.').pop()?.toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'application/pdf';
+    const file = new File(['mock content'], name, { type: mime });
+    (file as any)._localPath = path;
+    appState.addDocuments([file]);
+    appState.selectedDocumentIndex = 0;
+  };
+}
+

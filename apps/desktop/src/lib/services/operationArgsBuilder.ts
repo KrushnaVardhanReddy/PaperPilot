@@ -240,7 +240,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         }
-        case 'split': {
+        case 'split':
+        case 'pdf_split': {
             const defaultSplitDir = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
             const targetDir = customOutputPath || defaultSplitDir;
             args = {

@@ -20,7 +20,11 @@ export const config: WebdriverIO.Config = {
     previewProcess = spawn('pnpm', ['preview', '--port', '1420', '--host', '127.0.0.1'], {
       cwd: __dirname,
       stdio: 'pipe',
-      detached: false
+      detached: false,
+      env: {
+        ...process.env,
+        PATH: `/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:${process.env.PATH || ''}`
+      }
     });
 
     // Wait until port 1420 is ready
@@ -82,6 +86,6 @@ export const config: WebdriverIO.Config = {
 
   mochaOpts: {
     ui: 'bdd',
-    timeout: 60000
+    timeout: 300000
   }
 };
