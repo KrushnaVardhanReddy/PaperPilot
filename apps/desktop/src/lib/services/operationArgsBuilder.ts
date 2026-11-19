@@ -1256,6 +1256,18 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         }
+        case 'pdf_to_gif':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.gif`)
+            };
+            break;
+        case 'showcase_gif':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_output.gif`)
+            };
+            break;
         default:
             args = {
                 input: docPath,

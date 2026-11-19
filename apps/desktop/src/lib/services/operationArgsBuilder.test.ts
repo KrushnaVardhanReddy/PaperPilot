@@ -494,4 +494,20 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_watcher.json'
         });
     });
+
+    it('builds args for pdf_to_gif', async () => {
+        const args = await buildOperationArgs('pdf_to_gif', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.gif'
+        });
+    });
+
+    it('builds args for showcase_gif', async () => {
+        const args = await buildOperationArgs('showcase_gif', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_output.gif'
+        });
+    });
 });

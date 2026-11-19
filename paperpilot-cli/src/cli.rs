@@ -929,6 +929,22 @@ pub enum Commands {
         #[arg(long)]
         context_len: Option<usize>,
     },
+    /// Convert PDF to Animated GIF: Convert multi-page PDF documents into animated looping GIF previews
+    #[command(name = "pdf-to-gif")]
+    PdfToGif {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Generate Showcase GIF: Generate animated showcase demo GIF comparing before and after transformations
+    #[command(name = "showcase-gif")]
+    ShowcaseGif {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Declarative multi-step document workflow execution
     Run {
         /// TOML .ppflow or JSON recipe

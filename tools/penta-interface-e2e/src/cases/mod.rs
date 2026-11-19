@@ -30,3 +30,5 @@ pub mod pdf_to_epub;
 pub mod pdf_validate_signatures;
 pub mod table;
 pub mod pdf_extract_patterns;
+pub mod pdf_to_gif;
+pub mod showcase_gif;

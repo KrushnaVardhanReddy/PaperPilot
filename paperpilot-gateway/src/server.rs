@@ -37,6 +37,8 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::showcase_gif,
+        handlers::pdf_to_gif,
         handlers::pdf_extract_patterns,
         handlers::pdf_to_epub,
         handlers::pdf_dedup_streams,
@@ -344,6 +346,8 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/showcase-gif", post(handlers::showcase_gif) )
+        .route("/api/v1/pdf/to-gif", post(handlers::pdf_to_gif) )
         .route("/api/v1/pdf/extract-patterns", post(handlers::pdf_extract_patterns) )
         .route("/api/v1/pdf/to-epub", post(handlers::pdf_to_epub))
         .route(

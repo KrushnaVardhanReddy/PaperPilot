@@ -42,6 +42,8 @@ pub mod validate;
 pub mod workflow;
 pub mod pdf_extract_patterns;
 pub mod pdf_chunk;
+pub mod pdf_to_gif;
+pub mod showcase_gif;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -1064,6 +1066,8 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             *case_sensitive,
             *context_len,
         ),
+        Commands::PdfToGif { input, output } => pdf_to_gif::handle_pdf_to_gif_command(input, output),
+        Commands::ShowcaseGif { input, output } => showcase_gif::handle_showcase_gif_command(input, output),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -1334,6 +1338,16 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "showcase_gif",
+                    "Preview",
+                    "Generate animated showcase demo GIF comparing before and after transformations",
+                ),
+                (
+                    "pdf_to_gif",
+                    "Preview",
+                    "Convert multi-page PDF documents into animated looping GIF previews",
                 ),
                 (
                     "pdf_extract_patterns",

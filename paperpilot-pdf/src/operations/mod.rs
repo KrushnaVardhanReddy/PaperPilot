@@ -85,6 +85,8 @@ pub use pdf_invert_colors::{InvertColorsOptions, InvertMode, invert_pdf_colors};
 pub mod watch;
 pub mod pdf_extract_patterns;
 pub mod pdf_chunk;
+pub mod pdf_to_gif;
+pub mod showcase_gif;
 pub use pdf_chunk::{
     chunk_pdf_bytes, chunk_pdf_path, chunk_pdf_source, pdf_chunk_bytes, ChunkOptions, ChunkResult,
     DocumentChunk, PdfChunkOperation,

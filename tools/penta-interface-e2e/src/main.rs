@@ -493,6 +493,22 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_EXTRACT_PATTERNS_REPORT.md",
             )?;
 
+            let res_pdf_to_gif = cases::pdf_to_gif::run_pdf_to_gif_suite().await?;
+            println!("Convert PDF to Animated GIF finished: {} tests", res_pdf_to_gif.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Convert PDF to Animated GIF)",
+                &res_pdf_to_gif,
+                "reports/PENTA_INTERFACE_E2E_PDF_TO_GIF_REPORT.md",
+            )?;
+
+            let res_showcase_gif = cases::showcase_gif::run_showcase_gif_suite().await?;
+            println!("Generate Showcase GIF finished: {} tests", res_showcase_gif.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Generate Showcase GIF)",
+                &res_showcase_gif,
+                "reports/PENTA_INTERFACE_E2E_SHOWCASE_GIF_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -500,6 +516,8 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_showcase_gif);
+            all.extend(res_pdf_to_gif);
             all.extend(res_pdf_extract_patterns);
             all.extend(res_pdf_to_epub);
             all.extend(res_pdf_dedup_streams);

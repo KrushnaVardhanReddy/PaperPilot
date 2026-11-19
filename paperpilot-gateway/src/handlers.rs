@@ -3540,3 +3540,31 @@ pub async fn doctor() -> impl IntoResponse {
     let report = paperpilot_core::diagnostics::run_diagnostics();
     (StatusCode::OK, Json(report))
 }
+/// Convert PDF to Animated GIF [Convert multi-page PDF documents into animated looping GIF previews] [Input: .pdf | Output: .gif]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/to-gif",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Convert PDF to Animated GIF completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_to_gif(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_gif".to_string()), req).await
+}
+/// Generate Showcase GIF [Generate animated showcase demo GIF comparing before and after transformations] [Input: .pdf | Output: .gif]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/showcase-gif",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Generate Showcase GIF completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn showcase_gif(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("showcase_gif".to_string()), req).await
+}
