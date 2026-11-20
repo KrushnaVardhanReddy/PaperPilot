@@ -308,12 +308,20 @@ jobs:
           RAW_VERSION="${{ inputs.version }}"
           CLEAN_VERSION="${RAW_VERSION#v}"
           echo "Setting Cargo.toml package versions to ${CLEAN_VERSION}..."
-          for toml in paperpilot-cli/Cargo.toml paperpilot-mcp/Cargo.toml paperpilot-gateway/Cargo.toml paperpilot-core/Cargo.toml paperpilot-pdf/Cargo.toml; do
-            if [ -f "$toml" ]; then
-              sed -i "s/^version = \".*\"/version = \"${CLEAN_VERSION}\"/" "$toml"
-            fi
-          done
-          # Synchronize Cargo.lock with the updated package versions so --locked succeeds
+          python3 -c "
+          import os, re
+          version = '${CLEAN_VERSION}'
+          tomls = ['paperpilot-cli/Cargo.toml', 'paperpilot-mcp/Cargo.toml', 'paperpilot-gateway/Cargo.toml', 'paperpilot-core/Cargo.toml', 'paperpilot-pdf/Cargo.toml']
+          for toml in tomls:
+              if os.path.isfile(toml):
+                  with open(toml, 'r') as f:
+                      content = f.read()
+                  new_content = re.sub(r'(?m)^version = \".*\"', f'version = \"{version}\"', content, count=1)
+                  with open(toml, 'w') as f:
+                      f.write(new_content)
+                  print(f'Updated {toml} to version {version}')
+          "
+          # Synchronize Cargo.lock with the updated package versions so cargo builds succeed
           cargo check -p paperpilot-cli -p paperpilot-gateway -p paperpilot-mcp || cargo generate-lockfile
 
       - name: Build Optimized Backend Binaries (CLI, Gateway, MCP)
