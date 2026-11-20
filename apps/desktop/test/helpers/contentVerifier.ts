@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-export function verifyOutputContent(filePath: string, expectedType: 'gif' | 'pdf' | 'png' | 'webp' | 'jpeg' | 'json' | 'text' | 'zip'): void {
+export function verifyOutputContent(filePath: string, expectedType: 'gif' | 'pdf' | 'png' | 'webp' | 'jpeg' | 'json' | 'text' | 'zip' | 'html'): void {
   // 1. Checks fs.existsSync(filePath) is true
   if (!fs.existsSync(filePath)) {
     throw new Error(`File does not exist: ${filePath}`);
@@ -103,6 +103,14 @@ export function verifyOutputContent(filePath: string, expectedType: 'gif' | 'pdf
       const text = buffer.toString('utf-8').trim();
       if (!text || text.length === 0) {
         throw new Error(`Empty text content in file: ${filePath}`);
+      }
+      break;
+    }
+    case 'html': {
+      // valid HTML document containing tags like <html, <!DOCTYPE, or <body
+      const text = buffer.toString('utf-8').toLowerCase();
+      if (!text.includes('<html') && !text.includes('<!doctype html') && !text.includes('<body') && !text.includes('<div')) {
+        throw new Error(`Invalid HTML content in file: ${filePath}`);
       }
       break;
     }
