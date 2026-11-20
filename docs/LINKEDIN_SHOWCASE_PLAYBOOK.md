@@ -1,10 +1,10 @@
-# PaperPilot: 24-Week LinkedIn Content Playbook & Showcase Plan
+# PaperPilot: 26-Week LinkedIn Content Playbook & Showcase Plan
 
-This document outlines a structured, 24-week LinkedIn showcase plan grouping PaperPilot’s 92 tools into real-world, high-converting problem/solution workflows (MCP, Agentic AI, n8n, LangChain, legal, enterprise security).
+This document outlines a structured, 26-week LinkedIn showcase plan grouping PaperPilot’s 100 tools into real-world, high-converting problem/solution workflows (MCP, Agentic AI, n8n, LangChain, legal, enterprise security, computer vision, media synthesis).
 
 ---
 
-## 📅 The 24-Week Workflow Schedule
+## 📅 The 26-Week Workflow Schedule
 
 | Week | Theme | Workflow / Real-World Use Case | Tools Featured | Target Audience & Integrations |
 |:---:|:---|:---|:---|:---|
@@ -31,7 +31,9 @@ This document outlines a structured, 24-week LinkedIn showcase plan grouping Pap
 | **21** | **Multi-Modal AI Ingestion**| Converting PDF Slides to High-Speed Vision Model Inputs | `pdf_to_png`, `pdf_thumbnail` | GPT-4o / Claude Vision Pipelines |
 | **22** | **CLI to Desktop Sync**| One-Command Install: From Terminal Hacker to Native GUI App | Flash Installer (`install.sh`, `install.ps1`) | Linux/macOS/Windows Developers |
 | **23** | **Glama Grade A & OpenSSF 8.2**| What It Takes to Build an Enterprise-Grade MCP Server | Server Schema Validation & Disambiguation | Open-source Contributors & AI Architects |
-| **24** | **The Future of Local-First AI**| Why 2026 Belongs to Local Edge Tools & Private Context | Monorepo Showcase & Full 92-Tool Roundup | Tech Executives & AI Investors |
+| **24** | **The Local-First AI Paradigm**| Why 2026 Belongs to Local Edge Tools & Private Context | Monorepo Showcase & Full 100-Tool Roundup | Tech Executives & AI Investors |
+| **25** | **Edge Computer Vision**| Auto-Deskewing, Content Cropping, Multi-Region Redaction & Token Economy | `img_deskew`, `img_crop_to_content`, `img_redact`, `img_optimize_for_llm` | AI Engineers, CV Developers, OCR Pipelines |
+| **26** | **Animated Media Synthesis**| High-Speed In-Process GIF Synthesis & Pure Rust Format Conversion | `pdf_to_gif`, `images_to_gif`, `showcase_gif`, `img_convert` | Open-Source Maintainers, Developer Advocates, Technical Marketers |
 
 ---
 
@@ -56,6 +58,20 @@ This document outlines a structured, 24-week LinkedIn showcase plan grouping Pap
 * **Real-World Problem:** In finance and legal discovery, parties often receive altered copies of agreements where clauses or decimal points were sneakily changed.
 * **PaperPilot Solution:** Automated diffing (`pdf_compare`) and verification (`pdf_verify`). Highlights every character, font change, and visual artifact between two revisions in sub-seconds.
 * **Visual / Demo Idea:** Terminal side-by-side diff GIF showing a contract where \$10,000 was changed to \$100,000 highlighted in red/green.
+
+---
+
+## 🔍 Detailed Breakdown: Weeks 25 and 26 (Image Intelligence & Media Synthesis)
+
+### Week 25: Deterministic Computer Vision on the Edge
+* **Real-World Problem:** AI teams sending skewed camera photos or uncropped flatbed scans into Multimodal LLMs waste up to 40% of their vision token budgets on empty white margins, while baseline tilts degrade OCR extraction confidence. Moreover, shallow image redaction layers often leave underlying pixels recoverable.
+* **PaperPilot Solution:** A suite of four pure-Rust CV tools: `img_deskew` (auto-projection profile tilt correction in 14ms), `img_crop_to_content` (smart background luminance border trimming), `img_redact` (permanent, irreversible pixel buffer overwriting), and `img_optimize_for_llm` (Lanczos3 downscaling with unsharp contrast filtering for up to 93.5% token savings).
+* **Visual / Demo Idea:** Split-screen showcase GIF: Left = Terminal executing pipeline commands with live metrics; Right = Visual document undergoing tilt correction, border trimming, permanent black box redaction, and crisp LLM optimization.
+
+### Week 26: High-Performance Animated Showcases & Media Synthesis
+* **Real-World Problem:** Generating animated presentation mockups, social preview flipbooks, and cross-format image conversions traditionally requires heavy Docker images burdened with ImageMagick, Python Pillow, or FFmpeg subprocesses—introducing memory bloat, high latency, and CVE vulnerabilities.
+* **PaperPilot Solution:** Zero-dependency, in-process media synthesis in compiled Rust: `pdf_to_gif` (vector PDF to looping animated flipbook), `images_to_gif` (ordered image sequence stitcher with NeuQuant quantization), `showcase_gif` (presentation mockup cards with drop shadows and smooth page transitions), and `img_convert` (pure-Rust transcoding across PNG, JPEG, WebP, TIFF, and AVIF).
+* **Visual / Demo Idea:** Terminal running showcase generation $\rightarrow$ Right canvas displaying animated document presentation mockup with transition scan effects and 10x faster execution benchmark table.
 
 ---
 
