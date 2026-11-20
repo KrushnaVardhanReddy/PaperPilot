@@ -27,6 +27,11 @@ export class AppState {
   // Active Tool selection (used across middle hub, operations panel, toolbar)
   activeTool = $state<any | null>(null);
 
+  // Region selection on canvas (e.g. img_redact, img_crop)
+  // Coordinates in natural image pixel dimensions: { x, y, width, height }
+  activeImageRegion = $state<{ x: number; y: number; width: number; height: number } | null>(null);
+  activeImageRegions = $state<Array<{ x: number; y: number; width: number; height: number }>>([]);
+
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
   showDiffView = $state(false);
@@ -174,6 +179,38 @@ export class AppState {
 
   closeTool() {
     this.activeTool = null;
+    this.activeImageRegion = null;
+    this.activeImageRegions = [];
+  }
+
+  setImageRegion(region: { x: number; y: number; width: number; height: number } | null) {
+    this.activeImageRegion = region;
+    if (region) {
+      if (this.activeImageRegions.length === 0) {
+        this.activeImageRegions = [region];
+      }
+    } else {
+      this.activeImageRegions = [];
+    }
+  }
+
+  addImageRegion(region: { x: number; y: number; width: number; height: number }) {
+    this.activeImageRegions = [...this.activeImageRegions, region];
+    this.activeImageRegion = region;
+  }
+
+  removeImageRegion(index: number) {
+    if (index >= 0 && index < this.activeImageRegions.length) {
+      this.activeImageRegions = this.activeImageRegions.filter((_, i) => i !== index);
+      this.activeImageRegion = this.activeImageRegions.length > 0
+        ? this.activeImageRegions[this.activeImageRegions.length - 1]
+        : null;
+    }
+  }
+
+  clearImageRegion() {
+    this.activeImageRegion = null;
+    this.activeImageRegions = [];
   }
 
   toggleDiffView(show?: boolean) {
@@ -348,4 +385,23 @@ export class AppState {
   }
 }
 
+import { toastState } from './toast.svelte';
+
 export const appState = new AppState();
+
+if (typeof window !== 'undefined') {
+  (window as any).appState = appState;
+  (window as any).toastState = toastState;
+  (window as any).__TEST_LOAD_FILE = (name: string, path: string, contentBase64?: string) => {
+    // Clear any existing toasts so they don't block UI clicks
+    toastState.clear();
+    // Determine mime type from extension
+    const ext = name.split('.').pop()?.toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'application/pdf';
+    const file = new File(['mock content'], name, { type: mime });
+    (file as any)._localPath = path;
+    appState.addDocuments([file]);
+    appState.selectedDocumentIndex = 0;
+  };
+}
+

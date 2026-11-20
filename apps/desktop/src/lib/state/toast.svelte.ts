@@ -30,6 +30,10 @@ export class ToastState {
     this.toasts = this.toasts.filter(t => t.id !== id);
   }
 
+  clear() {
+    this.toasts = [];
+  }
+
   info(message: string, duration?: number) {
     this.add('info', message, duration);
   }

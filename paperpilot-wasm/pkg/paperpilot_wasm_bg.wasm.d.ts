@@ -49,7 +49,13 @@ export const wasmpdfengine_extract_pages: (a: number, b: number, c: number, d: n
 export const wasmpdfengine_extract_text: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_flatten: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_header_footer: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+export const wasmpdfengine_images_to_gif: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_images_to_pdf: (a: number, b: number) => void;
+export const wasmpdfengine_img_convert: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_img_crop_to_content: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_img_deskew: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_img_optimize_for_llm: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_img_redact: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_json_to_pdf: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_list_tools: (a: number) => void;
 export const wasmpdfengine_merge: (a: number, b: number) => void;
@@ -60,6 +66,8 @@ export const wasmpdfengine_pdf_auto_rotate: (a: number, b: number, c: number, d:
 export const wasmpdfengine_pdf_booklet: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_change_permissions: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_comic_archive: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_pdf_dedup_streams: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_pdf_extract_patterns: (a: number, b: number, c: number, d: number, e: number) => void;
 export const rust_zstd_wasm_shim_calloc: (a: number, b: number) => number;
 export const rust_zstd_wasm_shim_free: (a: number) => void;
 export const rust_zstd_wasm_shim_malloc: (a: number) => number;
@@ -68,8 +76,6 @@ export const rust_zstd_wasm_shim_memcpy: (a: number, b: number, c: number) => nu
 export const rust_zstd_wasm_shim_memmove: (a: number, b: number, c: number) => number;
 export const rust_zstd_wasm_shim_memset: (a: number, b: number, c: number) => number;
 export const rust_zstd_wasm_shim_qsort: (a: number, b: number, c: number, d: number) => void;
-export const wasmpdfengine_pdf_dedup_streams: (a: number, b: number, c: number, d: number, e: number) => void;
-export const wasmpdfengine_pdf_extract_patterns: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_hash: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_pdf_info: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_pdf_merge_alternate: (a: number, b: number, c: number, d: number) => void;
@@ -85,6 +91,7 @@ export const wasmpdfengine_pdf_stitch_canvas: (a: number, b: number, c: number, 
 export const wasmpdfengine_pdf_timestamp: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_to_docx: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_pdf_to_epub: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_pdf_to_gif: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_validate_signatures: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pii_scan: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_render_page: (a: number, b: number, c: number, d: number, e: number) => void;
@@ -92,6 +99,7 @@ export const wasmpdfengine_reorder_pages: (a: number, b: number, c: number, d: n
 export const wasmpdfengine_rotate: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
 export const wasmpdfengine_sanitize: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_set_metadata: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => void;
+export const wasmpdfengine_showcase_gif: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_split: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_watermark: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
 export const wasmpdfengine_workflow: (a: number, b: number, c: number, d: number, e: number) => void;

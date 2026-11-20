@@ -21,6 +21,7 @@ pub fn verify_output_file(path: &Path, expected_ext: &str) -> Result<bool> {
     }
     match expected_ext {
         "pdf" => Ok(content.starts_with(b"%PDF")),
+        "gif" => Ok(content.starts_with(b"GIF87a") || content.starts_with(b"GIF89a")),
         "xlsx" | "docx" | "epub" => Ok(content.starts_with(b"PK")),
         "md" => {
             let s = String::from_utf8_lossy(&content);
@@ -111,6 +112,60 @@ async fn main() -> Result<()> {
     fixture_mgr.ensure_fixtures()?;
 
     match args.group.as_str() {
+        "img_deskew" => {
+            let res_img_deskew = cases::img_deskew::run_img_deskew_suite().await?;
+            println!("Deskew Document Image finished: {} tests", res_img_deskew.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Deskew Document Image)",
+                &res_img_deskew,
+                "reports/PENTA_INTERFACE_E2E_IMG_DESKEW_REPORT.md",
+            )?;
+        }
+        "img_crop_to_content" => {
+            let res_img_crop_to_content = cases::img_crop_to_content::run_img_crop_to_content_suite().await?;
+            println!("Auto-Crop Image to Content finished: {} tests", res_img_crop_to_content.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Auto-Crop Image to Content)",
+                &res_img_crop_to_content,
+                "reports/PENTA_INTERFACE_E2E_IMG_CROP_TO_CONTENT_REPORT.md",
+            )?;
+        }
+        "img_redact" => {
+            let res_img_redact = cases::img_redact::run_img_redact_suite().await?;
+            println!("Redact Sensitive Image Regions finished: {} tests", res_img_redact.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Redact Sensitive Image Regions)",
+                &res_img_redact,
+                "reports/PENTA_INTERFACE_E2E_IMG_REDACT_REPORT.md",
+            )?;
+        }
+        "img_optimize_for_llm" => {
+            let res_img_optimize_for_llm = cases::img_optimize_for_llm::run_img_optimize_for_llm_suite().await?;
+            println!("Optimize Image for Vision LLMs finished: {} tests", res_img_optimize_for_llm.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Optimize Image for Vision LLMs)",
+                &res_img_optimize_for_llm,
+                "reports/PENTA_INTERFACE_E2E_IMG_OPTIMIZE_FOR_LLM_REPORT.md",
+            )?;
+        }
+        "img_convert" => {
+            let res_img_convert = cases::img_convert::run_img_convert_suite().await?;
+            println!("Convert Image Format finished: {} tests", res_img_convert.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Convert Image Format)",
+                &res_img_convert,
+                "reports/PENTA_INTERFACE_E2E_IMG_CONVERT_REPORT.md",
+            )?;
+        }
+        "showcase_gif" => {
+            let res_showcase_gif = cases::showcase_gif::run_showcase_gif_suite().await?;
+            println!("Generate Showcase GIF finished: {} tests", res_showcase_gif.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Generate Showcase GIF)",
+                &res_showcase_gif,
+                "reports/PENTA_INTERFACE_E2E_SHOWCASE_GIF_REPORT.md",
+            )?;
+        }
         "page_ops" | "5.9.4A" => {
             let results = cases::page_ops::run_page_ops_suite().await?;
             println!("Page ops finished: {} tests", results.len());
@@ -493,6 +548,70 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_PDF_EXTRACT_PATTERNS_REPORT.md",
             )?;
 
+            let res_pdf_to_gif = cases::pdf_to_gif::run_pdf_to_gif_suite().await?;
+            println!("Convert PDF to Animated GIF finished: {} tests", res_pdf_to_gif.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Convert PDF to Animated GIF)",
+                &res_pdf_to_gif,
+                "reports/PENTA_INTERFACE_E2E_PDF_TO_GIF_REPORT.md",
+            )?;
+
+            let res_showcase_gif = cases::showcase_gif::run_showcase_gif_suite().await?;
+            println!("Generate Showcase GIF finished: {} tests", res_showcase_gif.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Generate Showcase GIF)",
+                &res_showcase_gif,
+                "reports/PENTA_INTERFACE_E2E_SHOWCASE_GIF_REPORT.md",
+            )?;
+
+            let res_images_to_gif = cases::images_to_gif::run_images_to_gif_suite().await?;
+            println!("Combine Images into Animated GIF finished: {} tests", res_images_to_gif.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Combine Images into Animated GIF)",
+                &res_images_to_gif,
+                "reports/PENTA_INTERFACE_E2E_IMAGES_TO_GIF_REPORT.md",
+            )?;
+
+            let res_img_optimize_for_llm = cases::img_optimize_for_llm::run_img_optimize_for_llm_suite().await?;
+            println!("Optimize Image for Vision LLMs finished: {} tests", res_img_optimize_for_llm.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Optimize Image for Vision LLMs)",
+                &res_img_optimize_for_llm,
+                "reports/PENTA_INTERFACE_E2E_IMG_OPTIMIZE_FOR_LLM_REPORT.md",
+            )?;
+
+            let res_img_deskew = cases::img_deskew::run_img_deskew_suite().await?;
+            println!("Deskew Document Image finished: {} tests", res_img_deskew.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Deskew Document Image)",
+                &res_img_deskew,
+                "reports/PENTA_INTERFACE_E2E_IMG_DESKEW_REPORT.md",
+            )?;
+
+            let res_img_convert = cases::img_convert::run_img_convert_suite().await?;
+            println!("Convert Image Format finished: {} tests", res_img_convert.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Convert Image Format)",
+                &res_img_convert,
+                "reports/PENTA_INTERFACE_E2E_IMG_CONVERT_REPORT.md",
+            )?;
+
+            let res_img_crop_to_content = cases::img_crop_to_content::run_img_crop_to_content_suite().await?;
+            println!("Auto-Crop Image to Content finished: {} tests", res_img_crop_to_content.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Auto-Crop Image to Content)",
+                &res_img_crop_to_content,
+                "reports/PENTA_INTERFACE_E2E_IMG_CROP_TO_CONTENT_REPORT.md",
+            )?;
+
+            let res_img_redact = cases::img_redact::run_img_redact_suite().await?;
+            println!("Redact Sensitive Image Regions finished: {} tests", res_img_redact.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Redact Sensitive Image Regions)",
+                &res_img_redact,
+                "reports/PENTA_INTERFACE_E2E_IMG_REDACT_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -500,6 +619,14 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_img_redact);
+            all.extend(res_img_crop_to_content);
+            all.extend(res_img_convert);
+            all.extend(res_img_deskew);
+            all.extend(res_img_optimize_for_llm);
+            all.extend(res_images_to_gif);
+            all.extend(res_showcase_gif);
+            all.extend(res_pdf_to_gif);
             all.extend(res_pdf_extract_patterns);
             all.extend(res_pdf_to_epub);
             all.extend(res_pdf_dedup_streams);

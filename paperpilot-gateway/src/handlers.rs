@@ -859,6 +859,9 @@ pub async fn handle_tool(
         || tool_name == "watcher_start"
         || tool_name == "watcher_stop"
         || tool_name == "watcher_list"
+        || tool_name == "showcase_gif"
+        || tool_name == "images_to_gif"
+        || tool_name.starts_with("img_")
     {
         tool_name.clone()
     } else {
@@ -1081,6 +1084,19 @@ pub async fn handle_tool(
         if !args.contains_key("watcher_id") {
             args.insert("watcher_id".to_string(), serde_json::Value::String("default".to_string()));
         }
+    }
+
+    if !args.contains_key("output") {
+        let ext = match resolved_name.as_str() {
+            "showcase_gif" | "pdf_to_gif" | "images_to_gif" => "gif",
+            "img_optimize_for_llm" | "img_deskew" | "img_convert" | "img_crop_to_content" | "img_redact" => "png",
+            _ => "pdf",
+        };
+        let fallback_output = std::env::temp_dir().join(format!("{}.{}", uuid::Uuid::new_v4(), ext));
+        args.insert(
+            "output".to_string(),
+            serde_json::Value::String(fallback_output.to_string_lossy().to_string()),
+        );
     }
 
     request.name = resolved_name.clone().into();
@@ -3539,4 +3555,116 @@ pub struct DoctorReportSchema {
 pub async fn doctor() -> impl IntoResponse {
     let report = paperpilot_core::diagnostics::run_diagnostics();
     (StatusCode::OK, Json(report))
+}
+/// Convert PDF to Animated GIF [Convert multi-page PDF documents into animated looping GIF previews] [Input: .pdf | Output: .gif]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/to-gif",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Convert PDF to Animated GIF completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_to_gif(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_to_gif".to_string()), req).await
+}
+/// Generate Showcase GIF [Generate animated showcase demo GIF comparing before and after transformations] [Input: .pdf | Output: .gif]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/showcase-gif",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Generate Showcase GIF completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn showcase_gif(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("showcase_gif".to_string()), req).await
+}
+/// Combine Images into Animated GIF [Stitch a sequence of images into a single animated looping GIF] [Input: .png | Output: .gif]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/images-to-gif",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Combine Images into Animated GIF completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn images_to_gif(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("images_to_gif".to_string()), req).await
+}
+/// Optimize Image for Vision LLMs [Downscale and optimize images for LLM vision token economy and clarity] [Input: .image | Output: .image]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/img-optimize-for-llm",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Optimize Image for Vision LLMs completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn img_optimize_for_llm(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("img_optimize_for_llm".to_string()), req).await
+}
+/// Deskew Document Image [Detect text angle and straighten tilted scanned document images] [Input: .image | Output: .image]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/img-deskew",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Deskew Document Image completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn img_deskew(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("img_deskew".to_string()), req).await
+}
+/// Convert Image Format [Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats] [Input: .image | Output: .image]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/img-convert",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Convert Image Format completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn img_convert(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("img_convert".to_string()), req).await
+}
+/// Auto-Crop Image to Content [Detect document boundaries and auto-crop background margins from scanned images] [Input: .image | Output: .image]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/img-crop-to-content",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Auto-Crop Image to Content completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn img_crop_to_content(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("img_crop_to_content".to_string()), req).await
+}
+/// Redact Sensitive Image Regions [Apply permanent, irreversible pixel-level redaction over sensitive image regions] [Input: .image | Output: .image]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/img-redact",
+    tag = "PDF Operations",
+    responses(
+        (status = 200, description = "Redact Sensitive Image Regions completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn img_redact(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("img_redact".to_string()), req).await
 }

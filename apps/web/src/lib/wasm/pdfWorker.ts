@@ -133,6 +133,10 @@ case 'set_metadata':
                 // @ts-ignore
                 result = WasmPdfEngine.pdf_to_docx(payload.file);
                 break;
+            case 'pdf_to_gif':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_to_gif(payload.file, JSON.stringify(payload.options || {}));
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }

@@ -187,7 +187,13 @@ export class WasmPdfEngine {
     static extract_text(input_bytes: Uint8Array): string;
     static flatten(input_bytes: Uint8Array): Uint8Array;
     static header_footer(input_bytes: Uint8Array, header: string, footer: string): Uint8Array;
+    static images_to_gif(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static images_to_pdf(image_buffers: Array<any>): Uint8Array;
+    static img_convert(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static img_crop_to_content(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static img_deskew(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static img_optimize_for_llm(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static img_redact(input_bytes: Uint8Array, options_json: string): Uint8Array;
     /**
      * Convert JSON document into a PDF Uint8Array
      */
@@ -221,6 +227,7 @@ export class WasmPdfEngine {
     static pdf_timestamp(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static pdf_to_docx(input_bytes: Uint8Array): Uint8Array;
     static pdf_to_epub(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_to_gif(input_bytes: Uint8Array, options_json: string): Uint8Array;
     /**
      * List all registered tools and their availability in the WASM engine
      */
@@ -234,6 +241,7 @@ export class WasmPdfEngine {
     static rotate(input_bytes: Uint8Array, angle: number, pages: string): Uint8Array;
     static sanitize(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static set_metadata(input_bytes: Uint8Array, title?: string | null, author?: string | null, subject?: string | null, keywords?: string | null): Uint8Array;
+    static showcase_gif(input_bytes: Uint8Array, options_json: string): Uint8Array;
     /**
      * Split PDF by page ranges (e.g. "1-2, 3-4") returning an Array of Uint8Arrays
      */
@@ -298,7 +306,13 @@ export interface InitOutput {
     readonly wasmpdfengine_extract_text: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_flatten: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_header_footer: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+    readonly wasmpdfengine_images_to_gif: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_images_to_pdf: (a: number, b: number) => void;
+    readonly wasmpdfengine_img_convert: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_img_crop_to_content: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_img_deskew: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_img_optimize_for_llm: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_img_redact: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_json_to_pdf: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_list_tools: (a: number) => void;
     readonly wasmpdfengine_merge: (a: number, b: number) => void;
@@ -309,6 +323,8 @@ export interface InitOutput {
     readonly wasmpdfengine_pdf_booklet: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_change_permissions: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_comic_archive: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_dedup_streams: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_extract_patterns: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly rust_zstd_wasm_shim_calloc: (a: number, b: number) => number;
     readonly rust_zstd_wasm_shim_free: (a: number) => void;
     readonly rust_zstd_wasm_shim_malloc: (a: number) => number;
@@ -317,8 +333,6 @@ export interface InitOutput {
     readonly rust_zstd_wasm_shim_memmove: (a: number, b: number, c: number) => number;
     readonly rust_zstd_wasm_shim_memset: (a: number, b: number, c: number) => number;
     readonly rust_zstd_wasm_shim_qsort: (a: number, b: number, c: number, d: number) => void;
-    readonly wasmpdfengine_pdf_dedup_streams: (a: number, b: number, c: number, d: number, e: number) => void;
-    readonly wasmpdfengine_pdf_extract_patterns: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_hash: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_pdf_info: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_pdf_merge_alternate: (a: number, b: number, c: number, d: number) => void;
@@ -334,6 +348,7 @@ export interface InitOutput {
     readonly wasmpdfengine_pdf_timestamp: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_to_docx: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_pdf_to_epub: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_to_gif: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_validate_signatures: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pii_scan: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_render_page: (a: number, b: number, c: number, d: number, e: number) => void;
@@ -341,6 +356,7 @@ export interface InitOutput {
     readonly wasmpdfengine_rotate: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
     readonly wasmpdfengine_sanitize: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_set_metadata: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => void;
+    readonly wasmpdfengine_showcase_gif: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_split: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_watermark: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
     readonly wasmpdfengine_workflow: (a: number, b: number, c: number, d: number, e: number) => void;

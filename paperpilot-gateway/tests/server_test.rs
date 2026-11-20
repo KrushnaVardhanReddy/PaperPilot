@@ -485,3 +485,48 @@ async fn test_cors_origin_restriction() {
         Some("tauri://localhost")
     );
 }
+
+#[tokio::test]
+async fn test_image_and_office_route_aliases() {
+    let app = build_app().await;
+
+    // Test that the clean semantic /api/v1/image routes and /api/v1/office routes are mounted
+    // and respond with expected status (e.g. 400 Bad Request on empty JSON, not 404 Not Found)
+    let endpoints = vec![
+        "/api/v1/image/deskew",
+        "/api/v1/image/crop-to-content",
+        "/api/v1/image/redact",
+        "/api/v1/image/optimize-for-llm",
+        "/api/v1/image/convert",
+        "/api/v1/image/to-gif",
+        "/api/v1/pdf/img-deskew",
+        "/api/v1/pdf/img-crop-to-content",
+        "/api/v1/pdf/img-redact",
+        "/api/v1/pdf/img-optimize-for-llm",
+        "/api/v1/pdf/img-convert",
+        "/api/v1/pdf/images-to-gif",
+        "/api/v1/office/word-to-markdown",
+        "/api/v1/office/to-markdown",
+        "/api/v1/office/extract-text",
+        "/api/v1/pdf/office-to-markdown",
+        "/api/v1/pdf/office-extract-text",
+    ];
+
+    for endpoint in endpoints {
+        let req = Request::builder()
+            .uri(endpoint)
+            .method("POST")
+            .header("Content-Type", "application/json")
+            .body(Body::from("{}"))
+            .unwrap();
+
+        let resp = app.clone().oneshot(req).await.unwrap();
+        // None of these should 404 (Route not found). They should reach the handler and return 400 / 200 / 500.
+        assert_ne!(
+            resp.status(),
+            StatusCode::NOT_FOUND,
+            "Endpoint {} returned 404 Not Found!",
+            endpoint
+        );
+    }
+}
