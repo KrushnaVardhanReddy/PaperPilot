@@ -30,6 +30,7 @@ export class AppState {
   // Region selection on canvas (e.g. img_redact, img_crop)
   // Coordinates in natural image pixel dimensions: { x, y, width, height }
   activeImageRegion = $state<{ x: number; y: number; width: number; height: number } | null>(null);
+  activeImageRegions = $state<Array<{ x: number; y: number; width: number; height: number }>>([]);
 
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
@@ -179,14 +180,37 @@ export class AppState {
   closeTool() {
     this.activeTool = null;
     this.activeImageRegion = null;
+    this.activeImageRegions = [];
   }
 
   setImageRegion(region: { x: number; y: number; width: number; height: number } | null) {
     this.activeImageRegion = region;
+    if (region) {
+      if (this.activeImageRegions.length === 0) {
+        this.activeImageRegions = [region];
+      }
+    } else {
+      this.activeImageRegions = [];
+    }
+  }
+
+  addImageRegion(region: { x: number; y: number; width: number; height: number }) {
+    this.activeImageRegions = [...this.activeImageRegions, region];
+    this.activeImageRegion = region;
+  }
+
+  removeImageRegion(index: number) {
+    if (index >= 0 && index < this.activeImageRegions.length) {
+      this.activeImageRegions = this.activeImageRegions.filter((_, i) => i !== index);
+      this.activeImageRegion = this.activeImageRegions.length > 0
+        ? this.activeImageRegions[this.activeImageRegions.length - 1]
+        : null;
+    }
   }
 
   clearImageRegion() {
     this.activeImageRegion = null;
+    this.activeImageRegions = [];
   }
 
   toggleDiffView(show?: boolean) {

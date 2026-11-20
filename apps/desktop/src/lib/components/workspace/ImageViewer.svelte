@@ -25,12 +25,18 @@
     appState.activeTool?.id === 'img_crop_to_content'
   );
 
+  let isMultiRegionTool = $derived(appState.activeTool?.id === 'img_redact');
+
   // Sync external appState.activeImageRegion with currentSelection
   $effect(() => {
     if (!appState.activeImageRegion) {
-      currentSelection = null;
+      if (!isSelecting) {
+        currentSelection = null;
+      }
     } else {
-      currentSelection = appState.activeImageRegion;
+      if (!isSelecting) {
+        currentSelection = appState.activeImageRegion;
+      }
     }
   });
 
@@ -102,16 +108,32 @@
     }
 
     if (currentSelection && currentSelection.width > 3 && currentSelection.height > 3) {
-      appState.setImageRegion({ ...currentSelection });
+      if (isMultiRegionTool) {
+        appState.addImageRegion({ ...currentSelection });
+        currentSelection = null;
+      } else {
+        appState.setImageRegion({ ...currentSelection });
+      }
     } else {
-      currentSelection = null;
-      appState.clearImageRegion();
+      if (!isMultiRegionTool) {
+        currentSelection = null;
+        appState.clearImageRegion();
+      } else {
+        currentSelection = null;
+      }
     }
   }
 
   function clearSelection() {
     currentSelection = null;
     appState.clearImageRegion();
+  }
+
+  function removeRegion(index: number, e?: MouseEvent) {
+    if (e) {
+      e.stopPropagation();
+    }
+    appState.removeImageRegion(index);
   }
 
   function zoomIn() {
@@ -243,21 +265,38 @@
       <div class="divider"></div>
 
       {#if isRegionSelectTool}
-        <div class="region-tool-badge" class:has-selection={currentSelection !== null}>
+        <div class="region-tool-badge" class:has-selection={isMultiRegionTool ? appState.activeImageRegions.length > 0 : currentSelection !== null}>
           <span class="region-icon">⛶</span>
-          {#if currentSelection}
-            <span>Region: {currentSelection.x},{currentSelection.y} ({currentSelection.width}×{currentSelection.height}px)</span>
-            <button
-              type="button"
-              class="clear-region-btn"
-              onclick={clearSelection}
-              title="Clear region selection"
-              aria-label="Clear selection"
-            >
-              ✕
-            </button>
+          {#if isMultiRegionTool}
+            {#if appState.activeImageRegions.length > 0}
+              <span>{appState.activeImageRegions.length} {appState.activeImageRegions.length === 1 ? 'Region' : 'Regions'} selected</span>
+              <button
+                type="button"
+                class="clear-region-btn"
+                onclick={clearSelection}
+                title="Clear all region selections"
+                aria-label="Clear all selections"
+              >
+                ✕ Clear All
+              </button>
+            {:else}
+              <span>Drag to add redaction box</span>
+            {/if}
           {:else}
-            <span>Drag image to select region</span>
+            {#if currentSelection}
+              <span>Region: {currentSelection.x},{currentSelection.y} ({currentSelection.width}×{currentSelection.height}px)</span>
+              <button
+                type="button"
+                class="clear-region-btn"
+                onclick={clearSelection}
+                title="Clear region selection"
+                aria-label="Clear selection"
+              >
+                ✕
+              </button>
+            {:else}
+              <span>Drag image to select region</span>
+            {/if}
           {/if}
         </div>
         <div class="divider"></div>
@@ -306,9 +345,43 @@
             onpointercancel={handlePointerUp}
             role="presentation"
           >
+            <!-- Render existing multi-regions (for img_redact or multi-box) -->
+            {#if isMultiRegionTool}
+              {#each appState.activeImageRegions as region, index}
+                <div
+                  class="marquee-box committed-region"
+                  style="
+                    left: {(region.x / naturalWidth) * 100}%;
+                    top: {(region.y / naturalHeight) * 100}%;
+                    width: {(region.width / naturalWidth) * 100}%;
+                    height: {(region.height / naturalHeight) * 100}%;
+                  "
+                >
+                  <div class="marquee-tag">
+                    <span class="region-label">#{index + 1}</span>
+                    <button
+                      type="button"
+                      class="remove-box-btn"
+                      onpointerdown={(e) => e.stopPropagation()}
+                      onclick={(e) => removeRegion(index, e)}
+                      title="Remove this region"
+                      aria-label="Remove region {index + 1}"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div class="marquee-coords">
+                    {region.width} × {region.height} px
+                  </div>
+                </div>
+              {/each}
+            {/if}
+
+            <!-- Render currently dragging selection -->
             {#if currentSelection && (currentSelection.width > 0 || currentSelection.height > 0)}
               <div
                 class="marquee-box"
+                class:active-drag={true}
                 style="
                   left: {(currentSelection.x / naturalWidth) * 100}%;
                   top: {(currentSelection.y / naturalHeight) * 100}%;
@@ -316,6 +389,11 @@
                   height: {(currentSelection.height / naturalHeight) * 100}%;
                 "
               >
+                {#if isMultiRegionTool}
+                  <div class="marquee-tag">
+                    <span class="region-label">#{appState.activeImageRegions.length + 1} (Drawing)</span>
+                  </div>
+                {/if}
                 <!-- Resizing & corner handles -->
                 <div class="marquee-handle top-left"></div>
                 <div class="marquee-handle top-right"></div>
@@ -562,11 +640,55 @@
 
   .marquee-box {
     position: absolute;
-    border: 2px solid #f38ba8;
-    background-color: rgba(243, 139, 168, 0.25);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(243, 139, 168, 0.2);
+    border: 2px solid #ef4444;
+    background-color: rgba(239, 68, 68, 0.28);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(239, 68, 68, 0.25);
     pointer-events: none;
     box-sizing: border-box;
+  }
+
+  .marquee-box.committed-region {
+    border: 2px solid #dc2626;
+    background-color: rgba(220, 38, 38, 0.32);
+    pointer-events: auto;
+  }
+
+  .marquee-tag {
+    position: absolute;
+    top: -24px;
+    left: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fca5a5;
+    white-space: nowrap;
+    z-index: 10;
+  }
+
+  .remove-box-btn {
+    background: transparent;
+    border: none;
+    color: #fca5a5;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    transition: background-color 0.15s, color 0.15s;
+  }
+
+  .remove-box-btn:hover {
+    background-color: rgba(239, 68, 68, 0.4);
+    color: #ffffff;
   }
 
   .marquee-handle {

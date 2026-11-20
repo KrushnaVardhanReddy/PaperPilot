@@ -290,11 +290,17 @@
   let imgRedactRects = $state("20,20,100,50");
   let imgRedactColor = $state("#000000");
 
-  // Keep in sync with canvas bounding box selection
+  // Keep in sync with canvas bounding box selection (supports multi-region)
   $effect(() => {
-    if (appState.activeTool?.id === "img_redact" && appState.activeImageRegion) {
-      const { x, y, width, height } = appState.activeImageRegion;
-      imgRedactRects = `${x},${y},${width},${height}`;
+    if (appState.activeTool?.id === "img_redact") {
+      if (appState.activeImageRegions && appState.activeImageRegions.length > 0) {
+        imgRedactRects = appState.activeImageRegions
+          .map((r) => `${r.x},${r.y},${r.width},${r.height}`)
+          .join("; ");
+      } else if (appState.activeImageRegion) {
+        const { x, y, width, height } = appState.activeImageRegion;
+        imgRedactRects = `${x},${y},${width},${height}`;
+      }
     }
   });
 
@@ -4934,31 +4940,53 @@
           </div>
         {:else if activeTool.id === "img_redact"}
           <div class="operation-config">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <label for="imgRedactRects" class="section-desc"
-                >Target Region (x, y, width, height):</label
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label for="imgRedactRects" class="section-desc" style="margin-bottom: 0;"
+                >Target Redaction Regions (x, y, w, h):</label
               >
-              {#if appState.activeImageRegion}
+              {#if appState.activeImageRegions.length > 0 || appState.activeImageRegion}
                 <button
                   type="button"
                   class="action-btn-sm"
                   style="font-size: 0.72rem; padding: 2px 8px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;"
                   onclick={() => appState.clearImageRegion()}
-                  title="Clear current bounding box selection"
+                  title="Clear all bounding box selections"
                 >
-                  Clear Selection
+                  Clear All ({appState.activeImageRegions.length || 1})
                 </button>
               {/if}
             </div>
+
+            <!-- Region List Pills -->
+            {#if appState.activeImageRegions.length > 0}
+              <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; max-height: 140px; overflow-y: auto; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                {#each appState.activeImageRegions as region, idx}
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 4px; font-size: 0.76rem; font-family: monospace;">
+                    <span style="color: #fca5a5; font-weight: 600;">#{idx + 1}</span>
+                    <span style="color: #e2e8f0;">{region.x}, {region.y}, {region.width}, {region.height}</span>
+                    <button
+                      type="button"
+                      style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 0 4px; font-weight: bold; font-size: 0.85rem;"
+                      onclick={() => appState.removeImageRegion(idx)}
+                      title="Delete region #{idx + 1}"
+                      aria-label="Delete region #{idx + 1}"
+                    >
+                      ×
+                    </button>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+
             <input
               id="imgRedactRects"
               type="text"
-              placeholder="e.g. 50,100,200,60"
+              placeholder="e.g. 50,100,200,60; 300,120,80,40"
               bind:value={imgRedactRects}
               class="text-input"
             />
             <p class="section-desc" style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">
-              💡 <em>Tip: Click and drag directly on the image preview to draw a redaction box!</em>
+              💡 <em>Tip: Click and drag directly on the image preview to draw multiple redaction boxes!</em>
             </p>
 
             <label

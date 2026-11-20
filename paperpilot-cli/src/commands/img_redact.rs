@@ -1,5 +1,4 @@
 use paperpilot_core::error::PdfError;
-use paperpilot_pdf::operations::img_redact::RedactRect;
 use std::path::PathBuf;
 
 pub fn handle_img_redact_command(
@@ -13,17 +12,12 @@ pub fn handle_img_redact_command(
     let mut rects = Vec::new();
     if let Some(r_list) = rect {
         for item in r_list {
-            // Can be comma or whitespace separated: x,y,w,h
-            let parts: Vec<&str> = item.split(|c| c == ',' || c == 'x' || c == ':').map(|s| s.trim()).collect();
-            if parts.len() == 4 {
-                if let (Ok(x), Ok(y), Ok(w), Ok(h)) = (
-                    parts[0].parse::<u32>(),
-                    parts[1].parse::<u32>(),
-                    parts[2].parse::<u32>(),
-                    parts[3].parse::<u32>(),
-                ) {
-                    rects.push(RedactRect { x, y, width: w, height: h });
-                }
+            // Can be single rect "x,y,w,h" or semicolon/newline separated "x1,y1,w1,h1;x2,y2,w2,h2"
+            let parsed = paperpilot_pdf::operations::img_redact::parse_rects_str(item);
+            if !parsed.is_empty() {
+                rects.extend(parsed);
+            } else if let Some(single) = paperpilot_pdf::operations::img_redact::parse_rect_str(item) {
+                rects.push(single);
             }
         }
     }

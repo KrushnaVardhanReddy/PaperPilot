@@ -5037,34 +5037,42 @@ impl PaperPilotMcpServer {
                 if let Ok(c) = get_string("color") {
                     options.color = Some(c);
                 }
-                if let Some(val) = args.get("rect") {
+                let mut rect_val = args.get("rect");
+                if rect_val.is_none() {
+                    rect_val = args.get("rects");
+                }
+                if let Some(val) = rect_val {
                     if let Some(arr) = val.as_array() {
                         for item in arr {
                             if let Some(s) = item.as_str() {
-                                let parts: Vec<&str> = s.split(|c| c == ',' || c == 'x' || c == ':').map(|p| p.trim()).collect();
-                                if parts.len() == 4 {
-                                    if let (Ok(x), Ok(y), Ok(w), Ok(h)) = (
-                                        parts[0].parse::<u32>(),
-                                        parts[1].parse::<u32>(),
-                                        parts[2].parse::<u32>(),
-                                        parts[3].parse::<u32>(),
-                                    ) {
-                                        options.rects.push(paperpilot_pdf::operations::img_redact::RedactRect { x, y, width: w, height: h });
-                                    }
+                                let parsed = paperpilot_pdf::operations::img_redact::parse_rects_str(s);
+                                if !parsed.is_empty() {
+                                    options.rects.extend(parsed);
+                                } else if let Some(single) = paperpilot_pdf::operations::img_redact::parse_rect_str(s) {
+                                    options.rects.push(single);
+                                }
+                            } else if let Some(obj) = item.as_object() {
+                                if let (Some(x), Some(y), Some(w), Some(h)) = (
+                                    obj.get("x").and_then(|v| v.as_u64()),
+                                    obj.get("y").and_then(|v| v.as_u64()),
+                                    obj.get("width").and_then(|v| v.as_u64()).or_else(|| obj.get("w").and_then(|v| v.as_u64())),
+                                    obj.get("height").and_then(|v| v.as_u64()).or_else(|| obj.get("h").and_then(|v| v.as_u64())),
+                                ) {
+                                    options.rects.push(paperpilot_pdf::operations::img_redact::RedactRect {
+                                        x: x as u32,
+                                        y: y as u32,
+                                        width: w as u32,
+                                        height: h as u32,
+                                    });
                                 }
                             }
                         }
                     } else if let Some(s) = val.as_str() {
-                        let parts: Vec<&str> = s.split(|c| c == ',' || c == 'x' || c == ':').map(|p| p.trim()).collect();
-                        if parts.len() == 4 {
-                            if let (Ok(x), Ok(y), Ok(w), Ok(h)) = (
-                                parts[0].parse::<u32>(),
-                                parts[1].parse::<u32>(),
-                                parts[2].parse::<u32>(),
-                                parts[3].parse::<u32>(),
-                            ) {
-                                options.rects.push(paperpilot_pdf::operations::img_redact::RedactRect { x, y, width: w, height: h });
-                            }
+                        let parsed = paperpilot_pdf::operations::img_redact::parse_rects_str(s);
+                        if !parsed.is_empty() {
+                            options.rects.extend(parsed);
+                        } else if let Some(single) = paperpilot_pdf::operations::img_redact::parse_rect_str(s) {
+                            options.rects.push(single);
                         }
                     }
                 }

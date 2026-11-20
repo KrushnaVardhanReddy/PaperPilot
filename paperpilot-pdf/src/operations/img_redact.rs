@@ -3,12 +3,54 @@ use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RedactRect {
     pub x: u32,
     pub y: u32,
     pub width: u32,
     pub height: u32,
+}
+
+impl RedactRect {
+    pub fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
+        Self { x, y, width, height }
+    }
+}
+
+/// Helper to parse a rectangle string in format "x,y,w,h" (delimiters: ',', 'x', ':', or whitespace)
+pub fn parse_rect_str(s: &str) -> Option<RedactRect> {
+    let parts: Vec<&str> = s
+        .split(|c: char| c == ',' || c == 'x' || c == ':' || c.is_whitespace())
+        .filter(|p| !p.trim().is_empty())
+        .collect();
+    if parts.len() == 4 {
+        if let (Ok(x), Ok(y), Ok(w), Ok(h)) = (
+            parts[0].trim().parse::<u32>(),
+            parts[1].trim().parse::<u32>(),
+            parts[2].trim().parse::<u32>(),
+            parts[3].trim().parse::<u32>(),
+        ) {
+            return Some(RedactRect { x, y, width: w, height: h });
+        }
+    }
+    None
+}
+
+/// Helper to parse multiple rectangle definitions from a string.
+/// Supports semicolon/newline separated rectangles, e.g. "x1,y1,w1,h1; x2,y2,w2,h2"
+/// or space/newline separated.
+pub fn parse_rects_str(s: &str) -> Vec<RedactRect> {
+    let mut rects = Vec::new();
+    for segment in s.split(|c: char| c == ';' || c == '\n') {
+        let trimmed = segment.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if let Some(rect) = parse_rect_str(trimmed) {
+            rects.push(rect);
+        }
+    }
+    rects
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -197,6 +239,51 @@ mod tests {
         assert_eq!(p_out[0], 255);
         assert_eq!(p_out[1], 255);
         assert_eq!(p_out[2], 255);
+    }
+
+    #[test]
+    fn test_img_redact_multi_regions() {
+        let width = 120u32;
+        let height = 120u32;
+        let img = image::RgbaImage::from_pixel(width, height, image::Rgba([255, 255, 255, 255]));
+
+        let mut png_bytes = Vec::new();
+        img.write_to(&mut Cursor::new(&mut png_bytes), image::ImageFormat::Png).unwrap();
+
+        let parsed_rects = parse_rects_str("10,10,20,20; 50,50,30,30\n90,90,15,15");
+        assert_eq!(parsed_rects.len(), 3);
+
+        let options = ImgRedactOptions {
+            rects: parsed_rects,
+            color: Some("red".to_string()),
+        };
+
+        let result = img_redact_bytes(&png_bytes, &options).expect("multi-region redaction should succeed");
+        let decoded = image::load_from_memory(&result).unwrap().to_rgba8();
+
+        // Check region 1 (10,10,20,20) is red [255, 0, 0, 255]
+        let r1 = decoded.get_pixel(15, 15);
+        assert_eq!(r1[0], 255);
+        assert_eq!(r1[1], 0);
+        assert_eq!(r1[2], 0);
+
+        // Check region 2 (50,50,30,30) is red
+        let r2 = decoded.get_pixel(60, 60);
+        assert_eq!(r2[0], 255);
+        assert_eq!(r2[1], 0);
+        assert_eq!(r2[2], 0);
+
+        // Check region 3 (90,90,15,15) is red
+        let r3 = decoded.get_pixel(95, 95);
+        assert_eq!(r3[0], 255);
+        assert_eq!(r3[1], 0);
+        assert_eq!(r3[2], 0);
+
+        // Check untouched region (0,0) is white
+        let un = decoded.get_pixel(0, 0);
+        assert_eq!(un[0], 255);
+        assert_eq!(un[1], 255);
+        assert_eq!(un[2], 255);
     }
 
     #[test]
