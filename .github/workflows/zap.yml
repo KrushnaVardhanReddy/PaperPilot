@@ -54,25 +54,15 @@ jobs:
           rules_file_name: '.zap/rules.tsv'
           allow_issue_writing: false
           fail_action: false
+          artifact_name: 'zap_scan'
 
-      - name: Convert ZAP Results to SARIF
-        uses: SvanBoxel/zaproxy-to-ghas@main
+      - name: Archive ZAP Report Artifacts
+        uses: actions/upload-artifact@v4
         if: always()
-        continue-on-error: true
-
-      - name: Check if SARIF Report Exists
-        id: check_sarif
-        if: always()
-        run: |
-          if [ -f "results.sarif" ]; then
-            echo "sarif_exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "sarif_exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Upload ZAP SARIF to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: always() && steps.check_sarif.outputs.sarif_exists == 'true'
         continue-on-error: true
         with:
-          sarif_file: 'results.sarif'
+          name: zap-api-security-reports
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
