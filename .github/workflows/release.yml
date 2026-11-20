@@ -34,7 +34,7 @@ jobs:
     name: Build WASM Package (Web & Edge)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Rust & WASM Target
         uses: dtolnay/rust-toolchain@stable
@@ -65,7 +65,7 @@ jobs:
           cd ..
 
       - name: Upload WASM Package Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-assets-wasm
           path: |
@@ -73,7 +73,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload WASM Dist For Desktop Job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wasm-pkg-dist
           path: paperpilot-wasm/pkg/
@@ -104,10 +104,10 @@ jobs:
             bundles: "app,dmg"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download Prebuilt WASM Package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: wasm-pkg-dist
           path: paperpilot-wasm/pkg
@@ -142,7 +142,7 @@ jobs:
           run_install: false
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -249,7 +249,7 @@ jobs:
           cd ..
 
       - name: Upload Desktop GUI Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-assets-${{ matrix.artifact_name }}
           path: |
@@ -278,7 +278,7 @@ jobs:
             artifact_name: paperpilot-backend-macos-aarch64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -438,7 +438,7 @@ jobs:
           cd ..
 
       - name: Upload Backend Package Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-assets-${{ matrix.artifact_name }}
           path: |
@@ -453,16 +453,16 @@ jobs:
     needs: [build-wasm-package]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download Prebuilt WASM Package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: wasm-pkg-dist
           path: paperpilot-wasm/pkg
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -494,7 +494,7 @@ jobs:
           run_install: false
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -525,7 +525,7 @@ jobs:
           fi
 
       - name: Upload Android APK Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-assets-android
           path: |
@@ -542,10 +542,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download all built artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: release-assets
           merge-multiple: true

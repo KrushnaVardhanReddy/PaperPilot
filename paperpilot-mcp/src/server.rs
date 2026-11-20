@@ -77,7 +77,16 @@ impl PaperPilotMcpServer {
         let add_tool = |tools: &mut Vec<Tool>,
                         name: &str,
                         description: &str,
-                        schema: serde_json::Value| {
+                        mut schema: serde_json::Value| {
+            if let Some(obj) = schema.as_object_mut() {
+                // Spec 167 & Glama TDQS: Root schema objects must enforce additionalProperties: false
+                if !obj.contains_key("additionalProperties") {
+                    obj.insert(
+                        "additionalProperties".to_string(),
+                        serde_json::Value::Bool(false),
+                    );
+                }
+            }
             tools.push(Tool::new(
                 name.to_string(),
                 description.to_string(),
@@ -6143,6 +6152,18 @@ mod tests {
             assert!(
                 !desc.contains("Stationary") && !desc.contains("..EPUB"),
                 "Tool '{}' description contains a known typo: {desc}",
+                tool.name
+            );
+
+            assert_eq!(
+                tool.input_schema.get("additionalProperties"),
+                Some(&serde_json::Value::Bool(false)),
+                "Tool '{}' inputSchema must specify additionalProperties: false for Glama TDQS",
+                tool.name
+            );
+            assert!(
+                tool.input_schema.get("required").and_then(|r| r.as_array()).is_some(),
+                "Tool '{}' inputSchema must explicitly declare a required array",
                 tool.name
             );
 

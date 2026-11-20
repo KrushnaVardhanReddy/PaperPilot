@@ -27,7 +27,7 @@ jobs:
     env:
       PAPERPILOT_MCP_BIN: ${{ github.workspace }}/target/debug/paperpilot-mcp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Python validation dependencies
         run: python3 -m pip install -r tools/slm-training/requirements.txt
       - name: Check training data and local inference validation
