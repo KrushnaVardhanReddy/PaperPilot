@@ -560,6 +560,7 @@ impl WasmPdfEngine {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
+    #[wasm_bindgen]
     pub fn list_tools() -> String {
         serde_json::json!([
             {"id": "merge", "name": "Merge PDFs", "status": "stable"},
@@ -588,7 +589,35 @@ impl WasmPdfEngine {
             {"id": "pdf_info", "name": "PDF Info", "status": "stable"},
             {"id": "ocr", "name": "Neural OCR", "status": "preview"},
             {"id": "json_to_pdf", "name": "JSON to PDF", "status": "preview"},
-            {"id": "pdf_to_docx", "name": "PDF to DOCX", "status": "preview"}
+            {"id": "pdf_to_docx", "name": "PDF to DOCX", "status": "preview"},
+            {"id": "pdf_booklet", "name": "Booklet Imposition", "status": "stable"},
+            {"id": "pdf_nup", "name": "N-Up Multi-Page Layout", "status": "stable"},
+            {"id": "pdf_scale_pages", "name": "Scale PDF Pages", "status": "stable"},
+            {"id": "pdf_auto_rotate", "name": "Auto-Rotate by Orientation", "status": "stable"},
+            {"id": "pdf_stamp", "name": "Graphic Stamp Overlay", "status": "stable"},
+            {"id": "pdf_overlay_underlay", "name": "Overlay & Underlay Merge", "status": "stable"},
+            {"id": "pdf_remove_signatures", "name": "Strip Digital Signatures", "status": "stable"},
+            {"id": "pdf_validate_signatures", "name": "Validate Signatures & Tampering", "status": "stable"},
+            {"id": "pdf_stitch_canvas", "name": "Stitch Canvas", "status": "stable"},
+            {"id": "pdf_attachments", "name": "Manage PDF Attachments", "status": "stable"},
+            {"id": "pdf_timestamp", "name": "Cryptographic Timestamping", "status": "stable"},
+            {"id": "pdf_change_permissions", "name": "Change Security Permissions", "status": "stable"},
+            {"id": "pdf_split_scanned_book", "name": "Split Scanned Book Spreads", "status": "stable"},
+            {"id": "pdf_comic_archive", "name": "Comic Archive Converter (CBZ)", "status": "stable"},
+            {"id": "pdf_split_by_outline", "name": "Split PDF by Outline / TOC", "status": "stable"},
+            {"id": "pdf_merge_alternate", "name": "Alternate Interleave Merge", "status": "stable"},
+            {"id": "pdf_posterize", "name": "Multi-Sheet Posterize Print", "status": "stable"},
+            {"id": "pdf_dedup_streams", "name": "Deduplicate Font & Media Streams", "status": "stable"},
+            {"id": "pdf_to_epub", "name": "PDF to Reflowable EPUB", "status": "stable"},
+            {"id": "pdf_extract_patterns", "name": "Regex & Pattern Extractor", "status": "stable"},
+            {"id": "pdf_to_gif", "name": "Animated PDF to GIF", "status": "stable"},
+            {"id": "showcase_gif", "name": "Generate Showcase GIF", "status": "stable"},
+            {"id": "images_to_gif", "name": "Images to Animated GIF", "status": "stable"},
+            {"id": "img_optimize_for_llm", "name": "Optimize Image for Vision LLM", "status": "stable"},
+            {"id": "img_deskew", "name": "Auto-Deskew Document Image", "status": "stable"},
+            {"id": "img_convert", "name": "Universal Image Format Converter", "status": "stable"},
+            {"id": "img_crop_to_content", "name": "Auto-Crop to Visual Content", "status": "stable"},
+            {"id": "img_redact", "name": "Redact Sensitive Image Regions", "status": "stable"}
         ])
         .to_string()
     }
