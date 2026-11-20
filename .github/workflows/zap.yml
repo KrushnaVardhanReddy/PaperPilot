@@ -52,7 +52,6 @@ jobs:
           target: 'http://172.17.0.1:8080/api-docs/openapi.json'
           format: openapi
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-J results.json'
           allow_issue_writing: false
           fail_action: false
 
