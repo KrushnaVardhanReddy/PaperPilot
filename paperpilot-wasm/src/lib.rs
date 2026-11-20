@@ -520,8 +520,14 @@ impl WasmPdfEngine {
     }
 
     #[wasm_bindgen]
-    pub fn images_to_gif(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
-        let result = operations::images_to_gif(input_bytes, options_json)
+    pub fn images_to_gif(buffers: js_sys::Array, options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let mut rust_buffers = Vec::new();
+        for i in 0..buffers.length() {
+            let item = buffers.get(i);
+            let u8_array = js_sys::Uint8Array::new(&item);
+            rust_buffers.push(u8_array.to_vec());
+        }
+        let result = operations::images_to_gif(rust_buffers, options_json)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(js_sys::Uint8Array::from(&result[..]))
     }

@@ -77,7 +77,32 @@
     { id: 'json_to_pdf', title: 'JSON to PDF', icon: '📜', category: 'convert', releaseStatus: 'preview' },
     { id: 'pdf_to_docx', title: 'PDF to DOCX', icon: '📝', category: 'convert', releaseStatus: 'preview' },
     { id: 'pdf_to_gif', title: 'PDF to Animated GIF', icon: '🎞️', category: 'convert', releaseStatus: 'preview', description: 'Convert multi-page PDF into an animated looping GIF preview' },
-    { id: 'ocr', title: 'OCR PDF', icon: '👁️', category: 'convert', releaseStatus: 'preview' }
+    { id: 'ocr', title: 'OCR PDF', icon: '👁️', category: 'convert', releaseStatus: 'preview' },
+
+    // Additional Core & Preview Operations
+    { id: 'pdf_stitch_canvas', title: 'Stitch Canvas', icon: '🖼️', category: 'pages', releaseStatus: 'preview', description: 'Stitch multi-page PDF into a single continuous vertical or horizontal strip' },
+    { id: 'pdf_split_scanned_book', title: 'Split Scanned Book', icon: '📖', category: 'pages', releaseStatus: 'preview', description: 'Split two-page scanned book spreads down the center gutter into individual pages' },
+    { id: 'pdf_split_by_outline', title: 'Split by Outline', icon: '📑', category: 'pages', releaseStatus: 'preview', description: 'Split document into chapters or sections based on its outline/table of contents' },
+    { id: 'pdf_merge_alternate', title: 'Alternate Merge', icon: '🔀', category: 'pages', releaseStatus: 'preview', description: 'Interleave pages alternately from two documents (e.g. duplex scanner front/back)' },
+    { id: 'pdf_posterize', title: 'Posterize Print', icon: '🪟', category: 'pages', releaseStatus: 'preview', description: 'Tile a large single PDF page across a multi-sheet grid for poster printing' },
+
+    { id: 'pdf_attachments', title: 'Attachments', icon: '📎', category: 'edit', releaseStatus: 'preview', description: 'View, extract, add, or remove embedded PDF file attachments' },
+
+    { id: 'pdf_dedup_streams', title: 'Dedup Streams', icon: '🗜️', category: 'optimize', releaseStatus: 'preview', description: 'Deduplicate identical font, image, and content streams to optimize file size' },
+
+    { id: 'pdf_timestamp', title: 'Cryptographic Timestamp', icon: '⏱️', category: 'security', releaseStatus: 'preview', description: 'Apply cryptographic document timestamping to prove existence at a specific time' },
+    { id: 'pdf_change_permissions', title: 'Permissions', icon: '🛡️', category: 'security', releaseStatus: 'preview', description: 'Configure fine-grained PDF permission flags (printing, copying, annotations)' },
+    { id: 'img_redact', title: 'Redact Image', icon: '⬛', category: 'security', releaseStatus: 'preview', description: 'Burn permanent opaque redaction boxes over sensitive image regions' },
+
+    { id: 'pdf_to_epub', title: 'PDF to EPUB', icon: '📚', category: 'convert', releaseStatus: 'preview', description: 'Convert PDF text and structure into a reflowable EPUB eBook format' },
+    { id: 'pdf_extract_patterns', title: 'Extract Patterns', icon: '🔎', category: 'convert', releaseStatus: 'preview', description: 'Extract structured data, regex patterns (emails, URLs, phones), and keywords' },
+    { id: 'pdf_comic_archive', title: 'Comic Archive (CBZ)', icon: '📙', category: 'convert', releaseStatus: 'preview', description: 'Convert PDF pages into an archived Comic Book ZIP (CBZ) format' },
+    { id: 'showcase_gif', title: 'Showcase GIF', icon: '✨', category: 'convert', releaseStatus: 'preview', description: 'Generate an animated showcase demo GIF with smooth transitions' },
+    { id: 'images_to_gif', title: 'Images to Animated GIF', icon: '🎞️', category: 'convert', releaseStatus: 'preview', description: 'Combine multiple photos or drawings into a looping animated GIF' },
+    { id: 'img_optimize_for_llm', title: 'Optimize for Vision LLM', icon: '🤖', category: 'convert', releaseStatus: 'preview', description: 'Sharpen document text, auto-downscale, and optimize image for Vision LLM input' },
+    { id: 'img_deskew', title: 'Deskew Image', icon: '📐', category: 'convert', releaseStatus: 'preview', description: 'Automatically detect and correct rotational skew in scanned document images' },
+    { id: 'img_convert', title: 'Convert Image', icon: '🔄', category: 'convert', releaseStatus: 'preview', description: 'Convert image formats between PNG, JPEG, WebP, BMP, and TIFF' },
+    { id: 'img_crop_to_content', title: 'Crop to Content', icon: '✂️', category: 'convert', releaseStatus: 'preview', description: 'Automatically trim empty borders and margins around visual content' }
   ];
 
   // Tool specific states (batch array support)
@@ -187,6 +212,69 @@ let metadataFile: File | null = $state(null);
   let gifDelay = $state(100);
   let gifWidth = $state(800);
   let gifMaxPages = $state<number | undefined>(undefined);
+
+  // New tool states
+  let stitchCanvasFile: File | null = $state(null);
+  let stitchDirection = $state('vertical');
+  let stitchSpacing = $state(0);
+
+  let splitScannedBookFile: File | null = $state(null);
+  let scannedBookReadingDirection = $state('ltr');
+
+  let splitByOutlineFile: File | null = $state(null);
+  let splitOutlineMaxDepth = $state(1);
+
+  let mergeAlternatePrimary: File | null = $state(null);
+  let mergeAlternateSecondary: File | null = $state(null);
+
+  let posterizeFile: File | null = $state(null);
+  let posterizeCols = $state(2);
+  let posterizeRows = $state(2);
+
+  let attachmentsFile: File | null = $state(null);
+  let dedupStreamsFile: File | null = $state(null);
+  let timestampFile: File | null = $state(null);
+
+  let changePermissionsFile: File | null = $state(null);
+  let allowPrinting = $state(true);
+  let allowCopying = $state(false);
+  let allowModifying = $state(false);
+
+  let toEpubFile: File | null = $state(null);
+  let epubTitle = $state('');
+  let epubAuthor = $state('');
+
+  let extractPatternsFile: File | null = $state(null);
+  let patternsResult: string | null = $state(null);
+
+  let comicArchiveFile: File | null = $state(null);
+  let comicDpi = $state(150);
+
+  let showcaseGifFile: File | null = $state(null);
+  let showcaseGifFps = $state(4);
+  let showcaseGifWidth = $state(800);
+
+  let imagesToGifFiles: File[] = $state([]);
+  let imagesToGifFps = $state(4);
+  let imagesToGifWidth = $state(800);
+
+  let optimizeLlmFile: File | null = $state(null);
+  let optimizeLlmMaxDim = $state(1024);
+
+  let deskewFile: File | null = $state(null);
+
+  let convertImageFile: File | null = $state(null);
+  let convertImageFormat = $state('webp');
+  let convertImageQuality = $state(90);
+
+  let cropContentFile: File | null = $state(null);
+  let cropPadding = $state(10);
+
+  let redactImageFile: File | null = $state(null);
+  let redactBoxX = $state(50);
+  let redactBoxY = $state(50);
+  let redactBoxW = $state(200);
+  let redactBoxH = $state(100);
 
 
   async function readAsUint8Array(file: File): Promise<Uint8Array> {
@@ -779,6 +867,324 @@ let metadataFile: File | null = $state(null);
     }
   }
 
+
+  function downloadBlob(buffer: Uint8Array, filename: string, mimeType: string = 'application/pdf') {
+    const blob = new Blob([buffer.buffer as ArrayBuffer], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleStitchCanvas() {
+    if (!stitchCanvasFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(stitchCanvasFile);
+      const res = await wasmPdfClient.pdf_stitch_canvas(buffer, { direction: stitchDirection, spacing_pt: Number(stitchSpacing) });
+      downloadBlob(res, `${stitchCanvasFile.name.replace(/\.pdf$/i, '')}_stitched.pdf`);
+    } catch (e) {
+      alert(`Error stitching canvas: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleSplitScannedBook() {
+    if (!splitScannedBookFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(splitScannedBookFile);
+      const res = await wasmPdfClient.pdf_split_scanned_book(buffer, { reading_direction: scannedBookReadingDirection });
+      downloadBlob(res, `${splitScannedBookFile.name.replace(/\.pdf$/i, '')}_split_pages.pdf`);
+    } catch (e) {
+      alert(`Error splitting scanned book: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleSplitByOutline() {
+    if (!splitByOutlineFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(splitByOutlineFile);
+      const res = await wasmPdfClient.pdf_split_by_outline(buffer, { max_depth: Number(splitOutlineMaxDepth), sanitize_names: true });
+      downloadBlob(res, `${splitByOutlineFile.name.replace(/\.pdf$/i, '')}_sections.zip`, 'application/zip');
+    } catch (e) {
+      alert(`Error splitting by outline: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleMergeAlternate() {
+    if (!mergeAlternatePrimary || !mergeAlternateSecondary) return;
+    isProcessing = true;
+    try {
+      const bufA = await readAsUint8Array(mergeAlternatePrimary);
+      const bufB = await readAsUint8Array(mergeAlternateSecondary);
+      const res = await wasmPdfClient.pdf_merge_alternate(bufA, bufB, { step: 1, step_b: 1, reverse_a: false, reverse_b: false });
+      downloadBlob(res, `${mergeAlternatePrimary.name.replace(/\.pdf$/i, '')}_interleaved.pdf`);
+    } catch (e) {
+      alert(`Error interleaving PDFs: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handlePosterize() {
+    if (!posterizeFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(posterizeFile);
+      const res = await wasmPdfClient.pdf_posterize(buffer, { grid_cols: Number(posterizeCols), grid_rows: Number(posterizeRows), include_guides: true });
+      downloadBlob(res, `${posterizeFile.name.replace(/\.pdf$/i, '')}_poster_${posterizeCols}x${posterizeRows}.pdf`);
+    } catch (e) {
+      alert(`Error generating poster: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleAttachments() {
+    if (!attachmentsFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(attachmentsFile);
+      const res = await wasmPdfClient.pdf_attachments(buffer, { action: 'extract' });
+      downloadBlob(res, `${attachmentsFile.name.replace(/\.pdf$/i, '')}_attachments.zip`, 'application/zip');
+    } catch (e) {
+      alert(`Error processing attachments: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleDedupStreams() {
+    if (!dedupStreamsFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(dedupStreamsFile);
+      const res = await wasmPdfClient.pdf_dedup_streams(buffer, {});
+      downloadBlob(res, `${dedupStreamsFile.name.replace(/\.pdf$/i, '')}_deduped.pdf`);
+    } catch (e) {
+      alert(`Error deduplicating streams: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleTimestamp() {
+    if (!timestampFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(timestampFile);
+      const res = await wasmPdfClient.pdf_timestamp(buffer, {});
+      downloadBlob(res, `${timestampFile.name.replace(/\.pdf$/i, '')}_timestamped.pdf`);
+    } catch (e) {
+      alert(`Error applying timestamp: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleChangePermissions() {
+    if (!changePermissionsFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(changePermissionsFile);
+      const res = await wasmPdfClient.pdf_change_permissions(buffer, {
+        allow_printing: allowPrinting,
+        allow_copying: allowCopying,
+        allow_modifying: allowModifying
+      });
+      downloadBlob(res, `${changePermissionsFile.name.replace(/\.pdf$/i, '')}_permissions.pdf`);
+    } catch (e) {
+      alert(`Error modifying permissions: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleToEpub() {
+    if (!toEpubFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(toEpubFile);
+      const res = await wasmPdfClient.pdf_to_epub(buffer, {
+        title: epubTitle || toEpubFile.name.replace(/\.pdf$/i, ''),
+        author: epubAuthor || 'PaperPilot'
+      });
+      downloadBlob(res, `${toEpubFile.name.replace(/\.pdf$/i, '')}.epub`, 'application/epub+zip');
+    } catch (e) {
+      alert(`Error converting to EPUB: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleExtractPatterns() {
+    if (!extractPatternsFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(extractPatternsFile);
+      const res = await wasmPdfClient.pdf_extract_patterns(buffer, {
+        keywords: ['invoice', 'total', 'due', 'amount'],
+        patterns: {
+          email: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}',
+          url: 'https?://[^\\s/$.?#].[^\\s]*'
+        },
+        case_sensitive: false,
+        context_len: 40
+      });
+      const text = new TextDecoder().decode(res);
+      patternsResult = text;
+    } catch (e) {
+      alert(`Error extracting patterns: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleComicArchive() {
+    if (!comicArchiveFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(comicArchiveFile);
+      const res = await wasmPdfClient.pdf_comic_archive(buffer, { dpi: Number(comicDpi) });
+      downloadBlob(res, `${comicArchiveFile.name.replace(/\.pdf$/i, '')}.cbz`, 'application/vnd.comicbook+zip');
+    } catch (e) {
+      alert(`Error converting to CBZ: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleShowcaseGif() {
+    if (!showcaseGifFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(showcaseGifFile);
+      const res = await wasmPdfClient.showcase_gif(buffer, {
+        fps: Number(showcaseGifFps),
+        width: Number(showcaseGifWidth)
+      });
+      downloadBlob(res, `${showcaseGifFile.name.replace(/\.[^.]+$/i, '')}_showcase.gif`, 'image/gif');
+    } catch (e) {
+      alert(`Error generating showcase GIF: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleImagesToGif() {
+    if (imagesToGifFiles.length === 0) return;
+    isProcessing = true;
+    try {
+      const buffers: Uint8Array[] = [];
+      for (const f of imagesToGifFiles) {
+        buffers.push(await readAsUint8Array(f));
+      }
+      const res = await wasmPdfClient.images_to_gif(buffers, {
+        fps: Number(imagesToGifFps),
+        width: Number(imagesToGifWidth)
+      });
+      downloadBlob(res, 'animated_sequence.gif', 'image/gif');
+    } catch (e) {
+      alert(`Error generating GIF from images: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleOptimizeLlm() {
+    if (!optimizeLlmFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(optimizeLlmFile);
+      const res = await wasmPdfClient.img_optimize_for_llm(buffer, {
+        max_dim: Number(optimizeLlmMaxDim),
+        enhance_text: true,
+        quality: 85
+      });
+      downloadBlob(res, `${optimizeLlmFile.name.replace(/\.[^.]+$/i, '')}_llm_opt.jpg`, 'image/jpeg');
+    } catch (e) {
+      alert(`Error optimizing image for LLM: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleDeskew() {
+    if (!deskewFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(deskewFile);
+      const res = await wasmPdfClient.img_deskew(buffer, { auto_detect: true });
+      downloadBlob(res, `${deskewFile.name.replace(/\.[^.]+$/i, '')}_deskewed.png`, 'image/png');
+    } catch (e) {
+      alert(`Error deskewing image: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleConvertImage() {
+    if (!convertImageFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(convertImageFile);
+      const res = await wasmPdfClient.img_convert(buffer, {
+        format: convertImageFormat,
+        quality: Number(convertImageQuality)
+      });
+      const mime = convertImageFormat === 'webp' ? 'image/webp' : convertImageFormat === 'png' ? 'image/png' : 'image/jpeg';
+      downloadBlob(res, `${convertImageFile.name.replace(/\.[^.]+$/i, '')}.${convertImageFormat}`, mime);
+    } catch (e) {
+      alert(`Error converting image: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleCropContent() {
+    if (!cropContentFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(cropContentFile);
+      const res = await wasmPdfClient.img_crop_to_content(buffer, {
+        threshold: 0.1,
+        padding: Number(cropPadding)
+      });
+      downloadBlob(res, `${cropContentFile.name.replace(/\.[^.]+$/i, '')}_cropped.png`, 'image/png');
+    } catch (e) {
+      alert(`Error auto-cropping image: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handleRedactImage() {
+    if (!redactImageFile) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(redactImageFile);
+      const res = await wasmPdfClient.img_redact(buffer, {
+        rects: [{ x: Number(redactBoxX), y: Number(redactBoxY), width: Number(redactBoxW), height: Number(redactBoxH) }],
+        color: '#000000'
+      });
+      downloadBlob(res, `${redactImageFile.name.replace(/\.[^.]+$/i, '')}_redacted.png`, 'image/png');
+    } catch (e) {
+      alert(`Error redacting image: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
 
   // Helpers for merge files
   function removeMergeFile(index: number) {
@@ -1842,6 +2248,462 @@ let metadataFile: File | null = $state(null);
 
             <button class="action-btn" onclick={handlePdfToGif} disabled={isProcessing}>
                 {isProcessing ? 'Processing...' : 'Generate Animated GIF'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_stitch_canvas'}
+      <div class="tool-pane">
+        <h2>Stitch Canvas</h2>
+        <p>Stitch all pages of a PDF into a single continuous vertical or horizontal strip.</p>
+        {#if !stitchCanvasFile}
+            <DropZone ondrop={(files: File[]) => stitchCanvasFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{stitchCanvasFile.name}</span>
+                <button onclick={() => stitchCanvasFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="stitchDir">Direction:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button style="flex: 1; padding: 8px;" class:active={stitchDirection === 'vertical'} onclick={() => stitchDirection = 'vertical'}>Vertical</button>
+                    <button style="flex: 1; padding: 8px;" class:active={stitchDirection === 'horizontal'} onclick={() => stitchDirection = 'horizontal'}>Horizontal</button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="stitchSpacing">Spacing between pages (pt): {stitchSpacing}pt</label>
+                <input id="stitchSpacing" type="number" min="0" max="100" bind:value={stitchSpacing} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+            </div>
+            <button class="action-btn" onclick={handleStitchCanvas} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Stitch Canvas'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_split_scanned_book'}
+      <div class="tool-pane">
+        <h2>Split Scanned Book</h2>
+        <p>Split two-page scanned spreads down the center gutter into individual pages.</p>
+        {#if !splitScannedBookFile}
+            <DropZone ondrop={(files: File[]) => splitScannedBookFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{splitScannedBookFile.name}</span>
+                <button onclick={() => splitScannedBookFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label>Reading Direction:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button style="flex: 1; padding: 8px;" class:active={scannedBookReadingDirection === 'ltr'} onclick={() => scannedBookReadingDirection = 'ltr'}>Left-to-Right (Western)</button>
+                    <button style="flex: 1; padding: 8px;" class:active={scannedBookReadingDirection === 'rtl'} onclick={() => scannedBookReadingDirection = 'rtl'}>Right-to-Left (Manga)</button>
+                </div>
+            </div>
+            <button class="action-btn" onclick={handleSplitScannedBook} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Split Book Pages'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_split_by_outline'}
+      <div class="tool-pane">
+        <h2>Split by Outline</h2>
+        <p>Extract sections or chapters based on document bookmarks and table of contents.</p>
+        {#if !splitByOutlineFile}
+            <DropZone ondrop={(files: File[]) => splitByOutlineFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{splitByOutlineFile.name}</span>
+                <button onclick={() => splitByOutlineFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="splitOutlineDepth">Maximum Heading Depth: {splitOutlineMaxDepth}</label>
+                <input id="splitOutlineDepth" type="range" min="1" max="5" bind:value={splitOutlineMaxDepth} style="width: 100%;" />
+            </div>
+            <button class="action-btn" onclick={handleSplitByOutline} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Split by Outline'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_merge_alternate'}
+      <div class="tool-pane">
+        <h2>Alternate Merge</h2>
+        <p>Interleave two PDFs page-by-page (ideal for duplex scans with separate odd/even files).</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Odd / Front Pages:</label>
+                {#if !mergeAlternatePrimary}
+                    <DropZone ondrop={(files: File[]) => mergeAlternatePrimary = files[0]} multiple={false} />
+                {:else}
+                    <div class="selected-file">
+                        <span class="file-name">{mergeAlternatePrimary.name}</span>
+                        <button onclick={() => mergeAlternatePrimary = null}>✕</button>
+                    </div>
+                {/if}
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Even / Back Pages:</label>
+                {#if !mergeAlternateSecondary}
+                    <DropZone ondrop={(files: File[]) => mergeAlternateSecondary = files[0]} multiple={false} />
+                {:else}
+                    <div class="selected-file">
+                        <span class="file-name">{mergeAlternateSecondary.name}</span>
+                        <button onclick={() => mergeAlternateSecondary = null}>✕</button>
+                    </div>
+                {/if}
+            </div>
+        </div>
+        {#if mergeAlternatePrimary && mergeAlternateSecondary}
+            <button class="action-btn" style="margin-top: 16px;" onclick={handleMergeAlternate} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Interleave PDFs'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_posterize'}
+      <div class="tool-pane">
+        <h2>Posterize Print</h2>
+        <p>Tile and scale a large PDF across a multi-sheet page grid for printing large posters.</p>
+        {#if !posterizeFile}
+            <DropZone ondrop={(files: File[]) => posterizeFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{posterizeFile.name}</span>
+                <button onclick={() => posterizeFile = null}>✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="input-group">
+                    <label for="postCols">Grid Columns: {posterizeCols}</label>
+                    <input id="postCols" type="number" min="1" max="10" bind:value={posterizeCols} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+                </div>
+                <div class="input-group">
+                    <label for="postRows">Grid Rows: {posterizeRows}</label>
+                    <input id="postRows" type="number" min="1" max="10" bind:value={posterizeRows} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+                </div>
+            </div>
+            <button class="action-btn" onclick={handlePosterize} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : `Generate ${posterizeCols}x${posterizeRows} Poster`}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_attachments'}
+      <div class="tool-pane">
+        <h2>Attachments Manager</h2>
+        <p>Inspect and extract embedded files and attachments bundled inside the PDF.</p>
+        {#if !attachmentsFile}
+            <DropZone ondrop={(files: File[]) => attachmentsFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{attachmentsFile.name}</span>
+                <button onclick={() => attachmentsFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleAttachments} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Extract Embedded Attachments'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_dedup_streams'}
+      <div class="tool-pane">
+        <h2>Deduplicate Streams</h2>
+        <p>Identify identical font descriptors, embedded images, and data streams to shrink document size.</p>
+        {#if !dedupStreamsFile}
+            <DropZone ondrop={(files: File[]) => dedupStreamsFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{dedupStreamsFile.name}</span>
+                <button onclick={() => dedupStreamsFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleDedupStreams} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Deduplicate Streams'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_timestamp'}
+      <div class="tool-pane">
+        <h2>Cryptographic Timestamp</h2>
+        <p>Embed an immutable timestamp proof certifying document state and creation time.</p>
+        {#if !timestampFile}
+            <DropZone ondrop={(files: File[]) => timestampFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{timestampFile.name}</span>
+                <button onclick={() => timestampFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleTimestamp} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Apply Cryptographic Timestamp'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_change_permissions'}
+      <div class="tool-pane">
+        <h2>Security & Permissions</h2>
+        <p>Enforce or customize security flags to protect sensitive documents from unauthorized changes.</p>
+        {#if !changePermissionsFile}
+            <DropZone ondrop={(files: File[]) => changePermissionsFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{changePermissionsFile.name}</span>
+                <button onclick={() => changePermissionsFile = null}>✕</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" bind:checked={allowPrinting} /> Allow Printing
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" bind:checked={allowCopying} /> Allow Copying Text/Graphics
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" bind:checked={allowModifying} /> Allow Document Modification
+                </label>
+            </div>
+            <button class="action-btn" onclick={handleChangePermissions} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Apply Permissions'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_to_epub'}
+      <div class="tool-pane">
+        <h2>PDF to Reflowable EPUB</h2>
+        <p>Extract document flow, hierarchy, and text into standard EPUB eBook format.</p>
+        {#if !toEpubFile}
+            <DropZone ondrop={(files: File[]) => toEpubFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{toEpubFile.name}</span>
+                <button onclick={() => toEpubFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="epubTitle">eBook Title:</label>
+                <input id="epubTitle" type="text" placeholder="Title" bind:value={epubTitle} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+            </div>
+            <div class="input-group">
+                <label for="epubAuthor">Author:</label>
+                <input id="epubAuthor" type="text" placeholder="Author" bind:value={epubAuthor} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+            </div>
+            <button class="action-btn" onclick={handleToEpub} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Convert to EPUB'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_extract_patterns'}
+      <div class="tool-pane">
+        <h2>Extract Patterns</h2>
+        <p>Mine structured entities (emails, URLs, phones, keywords) across all pages.</p>
+        {#if !extractPatternsFile}
+            <DropZone ondrop={(files: File[]) => extractPatternsFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{extractPatternsFile.name}</span>
+                <button onclick={() => { extractPatternsFile = null; patternsResult = null; }}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleExtractPatterns} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Scan & Extract Patterns'}
+            </button>
+            {#if patternsResult}
+                <div style="margin-top: 16px; padding: 12px; background: var(--bg-surface); border-radius: var(--border-radius-md); max-height: 250px; overflow-y: auto;">
+                    <pre style="margin: 0; font-family: monospace; font-size: 13px;">{patternsResult}</pre>
+                </div>
+            {/if}
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_comic_archive'}
+      <div class="tool-pane">
+        <h2>Comic Archive (CBZ)</h2>
+        <p>Package visual PDF pages into high-fidelity Comic Book ZIP (CBZ) archives.</p>
+        {#if !comicArchiveFile}
+            <DropZone ondrop={(files: File[]) => comicArchiveFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{comicArchiveFile.name}</span>
+                <button onclick={() => comicArchiveFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="comicDpi">Render Resolution: {comicDpi} DPI</label>
+                <input id="comicDpi" type="range" min="72" max="300" step="10" bind:value={comicDpi} style="width: 100%;" />
+            </div>
+            <button class="action-btn" onclick={handleComicArchive} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Create Comic Archive (.cbz)'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'showcase_gif'}
+      <div class="tool-pane">
+        <h2>Showcase GIF</h2>
+        <p>Generate a smooth animated showcase GIF preview with cross-fade transitions.</p>
+        {#if !showcaseGifFile}
+            <DropZone ondrop={(files: File[]) => showcaseGifFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{showcaseGifFile.name}</span>
+                <button onclick={() => showcaseGifFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="sgFps">Frames Per Second: {showcaseGifFps} FPS</label>
+                <input id="sgFps" type="range" min="1" max="15" bind:value={showcaseGifFps} style="width: 100%;" />
+            </div>
+            <div class="input-group">
+                <label for="sgWidth">Width: {showcaseGifWidth}px</label>
+                <input id="sgWidth" type="range" min="400" max="1200" step="50" bind:value={showcaseGifWidth} style="width: 100%;" />
+            </div>
+            <button class="action-btn" onclick={handleShowcaseGif} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Generate Showcase GIF'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'images_to_gif'}
+      <div class="tool-pane">
+        <h2>Images to Animated GIF</h2>
+        <p>Combine multiple uploaded photos, drawings, or scans into an animated looping GIF.</p>
+        <DropZone ondrop={(files: File[]) => imagesToGifFiles = [...imagesToGifFiles, ...files]} multiple={true} />
+        {#if imagesToGifFiles.length > 0}
+            <div style="margin-top: 12px; max-height: 150px; overflow-y: auto; background: var(--bg-surface); padding: 8px; border-radius: var(--border-radius-sm);">
+                {#each imagesToGifFiles as f, idx}
+                    <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px;">
+                        <span>{idx + 1}. {f.name}</span>
+                        <button onclick={() => imagesToGifFiles = imagesToGifFiles.filter((_, i) => i !== idx)}>✕</button>
+                    </div>
+                {/each}
+            </div>
+            <div class="input-group" style="margin-top: 12px;">
+                <label for="i2gFps">Animation Speed: {imagesToGifFps} FPS</label>
+                <input id="i2gFps" type="range" min="1" max="24" bind:value={imagesToGifFps} style="width: 100%;" />
+            </div>
+            <button class="action-btn" onclick={handleImagesToGif} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : `Assemble GIF (${imagesToGifFiles.length} frames)`}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'img_optimize_for_llm'}
+      <div class="tool-pane">
+        <h2>Optimize Image for Vision LLM</h2>
+        <p>Enhance document contrast and resize for ideal token efficiency in Gemini, Claude, and GPT-4o.</p>
+        {#if !optimizeLlmFile}
+            <DropZone ondrop={(files: File[]) => optimizeLlmFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{optimizeLlmFile.name}</span>
+                <button onclick={() => optimizeLlmFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="optMaxDim">Max Dimension: {optimizeLlmMaxDim}px</label>
+                <input id="optMaxDim" type="range" min="512" max="2048" step="128" bind:value={optimizeLlmMaxDim} style="width: 100%;" />
+            </div>
+            <button class="action-btn" onclick={handleOptimizeLlm} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Optimize for Vision LLM'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'img_deskew'}
+      <div class="tool-pane">
+        <h2>Deskew Document Image</h2>
+        <p>Detect document orientation and automatically correct angular skew from mobile photos and scanners.</p>
+        {#if !deskewFile}
+            <DropZone ondrop={(files: File[]) => deskewFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{deskewFile.name}</span>
+                <button onclick={() => deskewFile = null}>✕</button>
+            </div>
+            <button class="action-btn" onclick={handleDeskew} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Auto-Deskew Image'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'img_convert'}
+      <div class="tool-pane">
+        <h2>Universal Image Converter</h2>
+        <p>Convert document images between WebP, PNG, and JPEG with custom compression quality.</p>
+        {#if !convertImageFile}
+            <DropZone ondrop={(files: File[]) => convertImageFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{convertImageFile.name}</span>
+                <button onclick={() => convertImageFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label>Target Format:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button style="flex: 1; padding: 8px;" class:active={convertImageFormat === 'webp'} onclick={() => convertImageFormat = 'webp'}>WebP</button>
+                    <button style="flex: 1; padding: 8px;" class:active={convertImageFormat === 'png'} onclick={() => convertImageFormat = 'png'}>PNG</button>
+                    <button style="flex: 1; padding: 8px;" class:active={convertImageFormat === 'jpeg'} onclick={() => convertImageFormat = 'jpeg'}>JPEG</button>
+                </div>
+            </div>
+            {#if convertImageFormat !== 'png'}
+                <div class="input-group">
+                    <label for="imgQuality">Quality: {convertImageQuality}%</label>
+                    <input id="imgQuality" type="range" min="10" max="100" bind:value={convertImageQuality} style="width: 100%;" />
+                </div>
+            {/if}
+            <button class="action-btn" onclick={handleConvertImage} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : `Convert to ${convertImageFormat.toUpperCase()}`}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'img_crop_to_content'}
+      <div class="tool-pane">
+        <h2>Auto-Crop to Content</h2>
+        <p>Detect borders and automatically trim redundant margins and backgrounds around document content.</p>
+        {#if !cropContentFile}
+            <DropZone ondrop={(files: File[]) => cropContentFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{cropContentFile.name}</span>
+                <button onclick={() => cropContentFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="cropPad">Border Padding: {cropPadding}px</label>
+                <input id="cropPad" type="range" min="0" max="50" bind:value={cropPadding} style="width: 100%;" />
+            </div>
+            <button class="action-btn" onclick={handleCropContent} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Auto-Crop Borders'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'img_redact'}
+      <div class="tool-pane">
+        <h2>Redact Sensitive Image Regions</h2>
+        <p>Burn permanent opaque black redaction rectangles directly into the image pixel data.</p>
+        {#if !redactImageFile}
+            <DropZone ondrop={(files: File[]) => redactImageFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{redactImageFile.name}</span>
+                <button onclick={() => redactImageFile = null}>✕</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="input-group">
+                    <label for="redX">X: {redactBoxX}px</label>
+                    <input id="redX" type="number" min="0" bind:value={redactBoxX} style="width: 100%; padding: 6px;" />
+                </div>
+                <div class="input-group">
+                    <label for="redY">Y: {redactBoxY}px</label>
+                    <input id="redY" type="number" min="0" bind:value={redactBoxY} style="width: 100%; padding: 6px;" />
+                </div>
+                <div class="input-group">
+                    <label for="redW">Width: {redactBoxW}px</label>
+                    <input id="redW" type="number" min="10" bind:value={redactBoxW} style="width: 100%; padding: 6px;" />
+                </div>
+                <div class="input-group">
+                    <label for="redH">Height: {redactBoxH}px</label>
+                    <input id="redH" type="number" min="10" bind:value={redactBoxH} style="width: 100%; padding: 6px;" />
+                </div>
+            </div>
+            <button class="action-btn" onclick={handleRedactImage} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Burn Permanent Redaction'}
             </button>
         {/if}
       </div>

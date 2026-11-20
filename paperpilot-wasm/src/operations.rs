@@ -2993,10 +2993,11 @@ pub fn showcase_gif(input_bytes: &[u8], options_json: &str) -> OperationResult<V
     paperpilot_pdf::operations::showcase_gif::showcase_gif_bytes(input_bytes, &options)
 }
 
-pub fn images_to_gif(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+pub fn images_to_gif(buffers: Vec<Vec<u8>>, options_json: &str) -> OperationResult<Vec<u8>> {
     let options: paperpilot_pdf::operations::images_to_gif::ImagesToGifOptions = serde_json::from_str(options_json)
         .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
-    paperpilot_pdf::operations::images_to_gif::images_to_gif_bytes(input_bytes, &options)
+    let slice_refs: Vec<&[u8]> = buffers.iter().map(|b| b.as_slice()).collect();
+    paperpilot_pdf::operations::images_to_gif::images_to_gif_bytes_multi(&slice_refs, &options)
 }
 
 pub fn img_optimize_for_llm(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
