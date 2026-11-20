@@ -13,5 +13,13 @@
     "@astrojs/starlight": "^0.28.0",
     "astro": "^4.16.19",
     "typescript": "^5.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "hast-util-select": "6.0.4"
+    }
+  },
+  "overrides": {
+    "hast-util-select": "6.0.4"
   }
 }
