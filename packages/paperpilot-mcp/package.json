@@ -1,6 +1,6 @@
 {
   "name": "@usepaperpilot/mcp",
-  "version": "0.7.0",
+  "version": "0.8.1",
   "description": "Zero-install Model Context Protocol (MCP) server for PaperPilot PDF manipulation & intelligence",
   "main": "bin/paperpilot-mcp.js",
   "bin": {
