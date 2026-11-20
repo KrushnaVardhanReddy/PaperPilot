@@ -6,13 +6,13 @@ const TOOL_NAME_ALIASES: Record<string, string> = {
   html_to_pdf: 'pdf_convert_html',
   img_to_pdf: 'pdf_images_to_pdf',
   cli_fill_batch: 'batch_fill',
-  cli_ask: 'workspace_search',
   document_pii_scan: 'pdf_document_pii_scan',
 };
 
 // Known MCP tool names that don't take a 'pdf_' prefix
 const UNPREFIXED_TOOLS = new Set([
   'batch_fill',
+  'cli_ask',
   'recipe_run',
   'document_workflow',
   'list_workflows',
