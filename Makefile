@@ -238,37 +238,37 @@ test-e2e-real-s3:
 
 # Real desktop WebdriverIO E2E tests (WebKitGTK / Wry desktop application window via tauri-driver)
 test-desktop-e2e:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts
 
 test-desktop-e2e-batch1:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch1.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch1.e2e.ts
 
 test-desktop-e2e-batch2:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch2.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch2.e2e.ts
 
 test-desktop-e2e-batch3:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch3.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch3.e2e.ts
 
 test-desktop-e2e-batch4:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch4.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch4.e2e.ts
 
 test-desktop-e2e-batch5:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch5.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch5.e2e.ts
 
 test-desktop-e2e-batch6:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch6.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch6.e2e.ts
 
 test-desktop-e2e-batch7:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch7.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch7.e2e.ts
 
 test-desktop-e2e-batch8:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch8.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch8.e2e.ts
 
 test-desktop-e2e-batch9:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch9.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch9.e2e.ts
 
 test-desktop-e2e-batch10:
-	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch10.e2e.ts
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && export NO_PROXY="127.0.0.1,localhost,::1" && export no_proxy="127.0.0.1,localhost,::1" && unset HTTP_PROXY http_proxy HTTPS_PROXY https_proxy && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch10.e2e.ts
 
 # Run conformance tests (requires qpdf, verapdf optional)
 .PHONY: test-conformance test-cleanroom-top12 test-cleanroom-all50
