@@ -1,4 +1,4 @@
-.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-e2e-all-90 test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3 gen-corpus-suite-1 gen-corpus-suite-2 gen-corpus-suite-3 gen-corpus test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all test-e2e-real-90 test-e2e-real-s1 test-e2e-real-s2 test-e2e-real-s3 test-desktop-e2e test-desktop-e2e-batch1 test-desktop-e2e-batch2 test-desktop-e2e-batch3 test-desktop-e2e-batch4
+.PHONY: all build build-release build-cli run run-release dist check test test-backend test-frontend test-e2e test-e2e-all-90 test-e2e-suite-1 test-e2e-suite-2 test-e2e-suite-3 gen-corpus-suite-1 gen-corpus-suite-2 gen-corpus-suite-3 gen-corpus test-all test-wasm build-wasm check-wasm lint format clean clean-sweep clean-cache clean-all-cache dev dev-ui test-tri-e2e preview-docs build-docs run-docs build-linux build-windows build-macos dist-linux dist-windows dist-macos docker-build docker-up docker-down docker-logs docker-shell build-android build-android-release run-android install-android install-android-release log-android test-wave1 test-wave2 test-wave3 test-wave4 test-wave5 test-wave6 test-wave7 test-wave8 test-waves test-waves-all test-e2e-real-90 test-e2e-real-s1 test-e2e-real-s2 test-e2e-real-s3 test-desktop-e2e test-desktop-e2e-batch1 test-desktop-e2e-batch2 test-desktop-e2e-batch3 test-desktop-e2e-batch4 test-desktop-e2e-batch5
 
 # Auto-detect Windows and configure Git Bash / tools in PATH for GNU Make
 ifeq ($(OS),Windows_NT)
@@ -251,6 +251,9 @@ test-desktop-e2e-batch3:
 
 test-desktop-e2e-batch4:
 	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch4.e2e.ts
+
+test-desktop-e2e-batch5:
+	export PATH="/tmp/e2e-tools/bin:/home/krushna/.nvm/versions/node/v24.12.0/bin:$$PATH" && cd apps/desktop && xvfb-run --auto-servernum ./node_modules/.bin/wdio run wdio.conf.ts --spec test/specs/batch5.e2e.ts
 
 # Run conformance tests (requires qpdf, verapdf optional)
 .PHONY: test-conformance test-cleanroom-top12 test-cleanroom-all50
