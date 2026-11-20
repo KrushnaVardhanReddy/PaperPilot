@@ -2086,6 +2086,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           <p class="section-desc" style="font-size: 0.85rem; color: #f59e0b; line-height: 1.4; margin-bottom: 8px;">
             ⚠️ Strips cryptographic signature dictionaries, locks, and widget annotations to enable editing.
           </p>
+          <span class="field-hint">Removes /Sig dictionaries and /ByteRange blocks from the document catalog, producing a clean unsigned PDF.</span>
         </div>
       {:else if activeTool.id === 'pdf_stamp' || activeTool.id === 'stamp'}
         <div class="operation-config">
@@ -2704,7 +2705,7 @@ import AuditReportViewer from '../ui/AuditReportViewer.svelte';
           </p>
           <div style="display: flex; flex-direction: column; gap: 6px;">
             <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
-              <input type="checkbox" bind:checked={piiScanSsn} />
+              <input id="piiScanSsn" type="checkbox" bind:checked={piiScanSsn} />
               <span>Scan Social Security Numbers (SSN)</span>
             </label>
             <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
