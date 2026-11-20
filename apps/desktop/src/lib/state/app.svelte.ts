@@ -27,6 +27,10 @@ export class AppState {
   // Active Tool selection (used across middle hub, operations panel, toolbar)
   activeTool = $state<any | null>(null);
 
+  // Region selection on canvas (e.g. img_redact, img_crop)
+  // Coordinates in natural image pixel dimensions: { x, y, width, height }
+  activeImageRegion = $state<{ x: number; y: number; width: number; height: number } | null>(null);
+
   // Tab management for multi-document viewer
   openDocIndices = $state<number[]>([]);
   showDiffView = $state(false);
@@ -174,6 +178,15 @@ export class AppState {
 
   closeTool() {
     this.activeTool = null;
+    this.activeImageRegion = null;
+  }
+
+  setImageRegion(region: { x: number; y: number; width: number; height: number } | null) {
+    this.activeImageRegion = region;
+  }
+
+  clearImageRegion() {
+    this.activeImageRegion = null;
   }
 
   toggleDiffView(show?: boolean) {

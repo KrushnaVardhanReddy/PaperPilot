@@ -290,6 +290,14 @@
   let imgRedactRects = $state("20,20,100,50");
   let imgRedactColor = $state("#000000");
 
+  // Keep in sync with canvas bounding box selection
+  $effect(() => {
+    if (appState.activeTool?.id === "img_redact" && appState.activeImageRegion) {
+      const { x, y, width, height } = appState.activeImageRegion;
+      imgRedactRects = `${x},${y},${width},${height}`;
+    }
+  });
+
   // Img Optimize for LLM parameter states
   let imgOptimizeMaxDim = $state(1024);
   let imgOptimizeQuality = $state(85);
@@ -4926,9 +4934,22 @@
           </div>
         {:else if activeTool.id === "img_redact"}
           <div class="operation-config">
-            <label for="imgRedactRects" class="section-desc"
-              >Target Region (x, y, width, height):</label
-            >
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label for="imgRedactRects" class="section-desc"
+                >Target Region (x, y, width, height):</label
+              >
+              {#if appState.activeImageRegion}
+                <button
+                  type="button"
+                  class="action-btn-sm"
+                  style="font-size: 0.72rem; padding: 2px 8px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;"
+                  onclick={() => appState.clearImageRegion()}
+                  title="Clear current bounding box selection"
+                >
+                  Clear Selection
+                </button>
+              {/if}
+            </div>
             <input
               id="imgRedactRects"
               type="text"
@@ -4936,6 +4957,9 @@
               bind:value={imgRedactRects}
               class="text-input"
             />
+            <p class="section-desc" style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">
+              💡 <em>Tip: Click and drag directly on the image preview to draw a redaction box!</em>
+            </p>
 
             <label
               for="imgRedactColor"
