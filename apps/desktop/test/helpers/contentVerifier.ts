@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-export function verifyOutputContent(filePath: string, expectedType: 'gif' | 'pdf' | 'png' | 'webp' | 'jpeg' | 'json' | 'text'): void {
+export function verifyOutputContent(filePath: string, expectedType: 'gif' | 'pdf' | 'png' | 'webp' | 'jpeg' | 'json' | 'text' | 'zip'): void {
   // 1. Checks fs.existsSync(filePath) is true
   if (!fs.existsSync(filePath)) {
     throw new Error(`File does not exist: ${filePath}`);
@@ -16,6 +16,19 @@ export function verifyOutputContent(filePath: string, expectedType: 'gif' | 'pdf
 
   // 3. Checks magic bytes / contents
   switch (expectedType) {
+    case 'zip': {
+      // PK\x03\x04
+      if (
+        buffer.length < 4 ||
+        buffer[0] !== 0x50 || // 'P'
+        buffer[1] !== 0x4b || // 'K'
+        buffer[2] !== 0x03 ||
+        buffer[3] !== 0x04
+      ) {
+        throw new Error(`Invalid ZIP magic signature 'PK\\x03\\x04' for file: ${filePath}`);
+      }
+      break;
+    }
     case 'gif': {
       // GIF89a or GIF87a (first 6 bytes)
       const header = buffer.subarray(0, 6).toString('ascii');
