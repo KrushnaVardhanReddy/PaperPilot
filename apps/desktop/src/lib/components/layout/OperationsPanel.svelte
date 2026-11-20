@@ -6048,25 +6048,15 @@
                         {:else if tool.rule?.isBatchable}
                           <span class="smart-badge">Batch Action ({appState.documents.length} files)</span>
                         {/if}
-                        {#if appState.documents.length >= 2}
-                          {#if tool.rule?.minDocuments === 2}
-                            <span class="smart-badge">Multi-File Action</span>
-                          {:else if tool.rule?.isBatchable}
-                            <span class="smart-badge"
-                              >Batch Action ({appState.documents.length} files)</span
-                            >
-                          {/if}
-                        {/if}
-                      </div>
-                      {#if tool.inputFormat && tool.outputFormat}
-                        <span class="format-pill">
-                          <span class="fmt-in">{tool.inputFormat}</span>
-                          <span class="fmt-arrow">➔</span>
-                          <span class="fmt-out">{tool.outputFormat}</span>
-                        </span>
                       {/if}
                     </div>
-                    <span class="tool-card-desc">{tool.description}</span>
+                    {#if tool.inputFormat && tool.outputFormat}
+                      <span class="format-pill">
+                        <span class="fmt-in">{tool.inputFormat}</span>
+                        <span class="fmt-arrow">➔</span>
+                        <span class="fmt-out">{tool.outputFormat}</span>
+                      </span>
+                    {/if}
                   </div>
                   <span class="tool-card-desc">{tool.description}</span>
                 </div>
