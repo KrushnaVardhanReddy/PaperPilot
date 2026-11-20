@@ -34,6 +34,26 @@ flatten(file: Uint8Array): Promise<Uint8Array>;
     sanitize(file: Uint8Array, options: any): Promise<Uint8Array>;
     pii_scan(file: Uint8Array, options: any): Promise<string>;
     pdf_to_docx(file: Uint8Array): Promise<Uint8Array>;
+    pdf_to_gif(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    showcase_gif(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    images_to_gif(files: Uint8Array[], options?: any): Promise<Uint8Array>;
+    img_optimize_for_llm(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    img_deskew(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    img_convert(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    img_crop_to_content(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    img_redact(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_stitch_canvas(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_attachments(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_timestamp(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_change_permissions(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_split_scanned_book(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_comic_archive(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_split_by_outline(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_merge_alternate(primary: Uint8Array, secondary: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_posterize(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_dedup_streams(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_to_epub(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_extract_patterns(file: Uint8Array, options?: any): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -201,6 +221,86 @@ set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string
 
     pdf_to_docx(file: Uint8Array): Promise<Uint8Array> {
         return this.sendRequest('pdf_to_docx', { file });
+    }
+
+    pdf_to_gif(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_to_gif', { file, options });
+    }
+
+    showcase_gif(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('showcase_gif', { file, options });
+    }
+
+    images_to_gif(files: Uint8Array[], options?: any): Promise<Uint8Array> {
+        return this.sendRequest('images_to_gif', { files, options });
+    }
+
+    img_optimize_for_llm(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('img_optimize_for_llm', { file, options });
+    }
+
+    img_deskew(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('img_deskew', { file, options });
+    }
+
+    img_convert(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('img_convert', { file, options });
+    }
+
+    img_crop_to_content(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('img_crop_to_content', { file, options });
+    }
+
+    img_redact(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('img_redact', { file, options });
+    }
+
+    pdf_stitch_canvas(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_stitch_canvas', { file, options });
+    }
+
+    pdf_attachments(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_attachments', { file, options });
+    }
+
+    pdf_timestamp(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_timestamp', { file, options });
+    }
+
+    pdf_change_permissions(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_change_permissions', { file, options });
+    }
+
+    pdf_split_scanned_book(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_split_scanned_book', { file, options });
+    }
+
+    pdf_comic_archive(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_comic_archive', { file, options });
+    }
+
+    pdf_split_by_outline(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_split_by_outline', { file, options });
+    }
+
+    pdf_merge_alternate(primary: Uint8Array, secondary: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_merge_alternate', { primary, secondary, options });
+    }
+
+    pdf_posterize(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_posterize', { file, options });
+    }
+
+    pdf_dedup_streams(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_dedup_streams', { file, options });
+    }
+
+    pdf_to_epub(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_to_epub', { file, options });
+    }
+
+    pdf_extract_patterns(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_extract_patterns', { file, options });
     }
 
 }

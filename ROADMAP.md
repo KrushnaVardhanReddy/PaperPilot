@@ -4,8 +4,13 @@
 
 ## Current Status & Milestones Update — November 2026
 
-- **Core Engine & Penta-Interface Parity (Phases 1–5, 8–10, 12)**: ✅ **100% Complete**. All 92 pure-Rust tools are implemented, validated with zero-mock tests across all 5 surfaces (Core Engine, CLI, MCP Server, REST Gateway, WASM Web Studio).
-- **Phase 11 (Browser Companion Extension - Spec 164)**: ✅ **Complete & Packaged**. Manifest V3 companion extension (`apps/extension`) with WebAssembly client engine and local daemon bridge packaged for Chrome Web Store, Microsoft Edge, and submitted to Mozilla Firefox Add-on Developer Hub.
+- **Core Engine & Penta-Interface Parity (Phases 1–5, 8–10, 12)**: ✅ **100% Complete**. All 100 pure-Rust tools are implemented, validated with zero-mock tests across all 5 surfaces (Core Engine, CLI, MCP Server, REST Gateway, Desktop UI).
+- **Spec 170 (Native Image Intelligence & Animated Showcase GIF Engine)**: ✅ **100% Complete**. 8 new pure-Rust tools (`pdf_to_gif`, `showcase_gif`, `images_to_gif`, `img_deskew`, `img_crop_to_content`, `img_redact`, `img_optimize_for_llm`, `img_convert`) with zero external runtime dependencies.
+- **REST Gateway Semantic Route Aliasing**: ✅ **Complete**. Primary semantic routes (`/api/v1/image/*`, `/api/v1/office/*`) active alongside backwards-compatible `/api/v1/pdf/*` legacy aliases.
+- **Phase 0 Real Desktop E2E (@wdio/tauri-service)**: ✅ **Verified**. WebdriverIO suite with `tauri-driver` and WebKitGTK initialized and verified with passing smoke test.
+- **Penta-Scaffold v2**: ✅ **Upgraded**. Single command scaffolds Core, CLI, MCP, WASM, Desktop UI wiring, WDIO Desktop E2E test, Documentation, and OpenAPI spec.
+- **Documentation Milestone**: ✅ **Updated**. 100 tools indexed in Astro / Starlight handbook with `v0.8.0+` badges.
+
 - **Phase 6.0 (Adoption, Distribution & UX Polish - Specs 165, 166)**: 🚀 **In Progress**:
   - **Item 1: `@usepaperpilot/mcp` on npm**: ✅ **Published & Live**. 5-second `npx` runner live on npmjs.com (`@usepaperpilot/mcp@0.7.0`), official Glama MCP server listing verified (Grade B), and submitted to `punkpeye/awesome-mcp-servers`.
   - **Item 2: One-Click Sample PDFs in Web Studio**: ✅ **Live**. Integrated 3-page rich sample document (`sample_document.pdf`) with "✨ Try with Sample PDF" and "👁️ View Sample" directly into Web Studio drop zones.

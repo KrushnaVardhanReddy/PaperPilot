@@ -183,6 +183,20 @@ export interface OperationContext {
     watcherOutputDir?: string;
     watcherSettleDelay?: number;
     watcherId?: string;
+    gifDelay?: number;
+    gifWidth?: number;
+    gifMaxPages?: number;
+    gifFps?: number;
+    imgDeskewAngle?: number;
+    imgDeskewAutoDetect?: boolean;
+    imgCropThreshold?: number;
+    imgCropPadding?: number;
+    imgRedactRects?: string[];
+    imgRedactColor?: string;
+    imgOptimizeMaxDim?: number;
+    imgOptimizeQuality?: number;
+    imgConvertFormat?: string;
+    imgConvertQuality?: number;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -226,7 +240,8 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             break;
         }
-        case 'split': {
+        case 'split':
+        case 'pdf_split': {
             const defaultSplitDir = getOutputPath(`${docName.replace(/\.pdf$/i, '')}_split`);
             const targetDir = customOutputPath || defaultSplitDir;
             args = {
@@ -1254,6 +1269,117 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
                 watcher_id: context.watcherId || 'default',
                 output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_watcher.json`)
             };
+            break;
+        }
+        case 'pdf_to_gif':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_preview.gif`),
+                delay: context.gifDelay ?? 100,
+                width: context.gifWidth ?? 800,
+                max_pages: context.gifMaxPages ? Number(context.gifMaxPages) : undefined,
+                fps: context.gifFps
+            };
+            if (args.max_pages === undefined) delete args.max_pages;
+            if (args.fps === undefined) delete args.fps;
+            break;
+        case 'showcase_gif':
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_showcase.gif`),
+                delay: context.gifDelay ?? 25,
+                width: context.gifWidth ?? 1200,
+                fps: context.gifFps
+            };
+            if (args.fps === undefined) delete args.fps;
+            break;
+        case 'images_to_gif': {
+            const allImages = (context.allDocumentPaths || [])
+                .map((p, i) => p || context.allDocuments?.[i]?.name || '')
+                .filter(p => /\.(png|jpg|jpeg|webp|bmp|gif)$/i.test(p));
+
+            let inputPaths: string[] = [];
+            if (context.applyToAllFiles !== false && allImages.length > 0) {
+                inputPaths = allImages;
+            } else if (docPath && /\.(png|jpg|jpeg|webp|bmp|gif)$/i.test(docPath)) {
+                inputPaths = [docPath];
+            }
+
+            const defaultOutName = inputPaths.length > 1
+                ? 'images_combined.gif'
+                : `${docName.replace(/\.[^.]+$/i, '')}_combined.gif`;
+            const outputPath = customOutputPath || getOutputPath(defaultOutName);
+
+            args = {
+                images: inputPaths.length > 0 ? inputPaths : (docPath ? [docPath] : []),
+                input: inputPaths.length > 0 ? inputPaths : (docPath ? [docPath] : []),
+                output: outputPath,
+                delay: context.gifDelay ?? 25,
+                width: context.gifWidth
+            };
+            if (args.width === undefined) delete args.width;
+            break;
+        }
+        case 'img_optimize_for_llm': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_llm_optimized.${ext || 'png'}`),
+                max_dim: context.imgOptimizeMaxDim,
+                quality: context.imgOptimizeQuality
+            };
+            if (args.max_dim === undefined) delete args.max_dim;
+            if (args.quality === undefined) delete args.quality;
+            break;
+        }
+        case 'img_deskew': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_deskewed.${ext || 'png'}`),
+                angle: context.imgDeskewAngle,
+                auto_detect: context.imgDeskewAutoDetect ?? true
+            };
+            break;
+        }
+        case 'img_convert': {
+            const targetFormat = context.imgConvertFormat || 'png';
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_converted.${targetFormat}`),
+                format: context.imgConvertFormat,
+                quality: context.imgConvertQuality
+            };
+            if (args.format === undefined) delete args.format;
+            if (args.quality === undefined) delete args.quality;
+            break;
+        }
+        case 'img_crop_to_content': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_cropped.${ext || 'png'}`),
+                threshold: context.imgCropThreshold,
+                padding: context.imgCropPadding
+            };
+            if (args.threshold === undefined) delete args.threshold;
+            if (args.padding === undefined) delete args.padding;
+            break;
+        }
+        case 'img_redact': {
+            const extMatch = docPath.match(/\.([^.]+)$/);
+            const ext = extMatch ? extMatch[1] : 'png';
+            args = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_redacted.${ext || 'png'}`),
+                rect: context.imgRedactRects,
+                color: context.imgRedactColor
+            };
+            if (args.rect === undefined) delete args.rect;
+            if (args.color === undefined) delete args.color;
             break;
         }
         default:

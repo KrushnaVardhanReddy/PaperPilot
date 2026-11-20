@@ -8,5 +8,10 @@
   },
   "devDependencies": {
     "playwright": "^1.65.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "hast-util-select": "6.0.4"
+    }
   }
 }

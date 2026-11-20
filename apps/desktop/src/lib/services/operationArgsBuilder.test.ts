@@ -494,4 +494,126 @@ describe('operationArgsBuilder', () => {
             output: '/docs/test_watcher.json'
         });
     });
+
+    it('builds args for pdf_to_gif', async () => {
+        const args = await buildOperationArgs('pdf_to_gif', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_preview.gif',
+            delay: 100,
+            width: 800
+        });
+    });
+
+    it('builds args for pdf_to_gif with custom options', async () => {
+        const args = await buildOperationArgs('pdf_to_gif', {
+            ...defaultContext,
+            gifDelay: 50,
+            gifWidth: 640,
+            gifMaxPages: 5,
+            gifFps: 2
+        });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_preview.gif',
+            delay: 50,
+            width: 640,
+            max_pages: 5,
+            fps: 2
+        });
+    });
+
+    it('builds args for showcase_gif', async () => {
+        const args = await buildOperationArgs('showcase_gif', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_showcase.gif',
+            delay: 25,
+            width: 1200
+        });
+    });
+
+    it('builds args for images_to_gif', async () => {
+        const args = await buildOperationArgs('images_to_gif', defaultContext);
+        expect(args).toEqual({
+            images: ['/docs/test.pdf'],
+            input: ['/docs/test.pdf'],
+            output: '/docs/test_combined.gif',
+            delay: 25
+        });
+    });
+
+    it('builds args for img_optimize_for_llm', async () => {
+        const args = await buildOperationArgs('img_optimize_for_llm', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_llm_optimized.pdf'
+        });
+    });
+
+    it('builds args for img_deskew', async () => {
+        const args = await buildOperationArgs('img_deskew', defaultContext);
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_deskewed.pdf',
+            angle: undefined,
+            auto_detect: true
+        });
+    });
+
+    it('builds args for img_convert', async () => {
+        const args = await buildOperationArgs('img_convert', {
+            ...defaultContext,
+            imgConvertFormat: 'webp',
+            imgConvertQuality: 85
+        });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_converted.webp',
+            format: 'webp',
+            quality: 85
+        });
+    });
+
+    it('builds args for img_crop_to_content', async () => {
+        const args = await buildOperationArgs('img_crop_to_content', {
+            ...defaultContext,
+            imgCropThreshold: 0.15,
+            imgCropPadding: 12
+        });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_cropped.pdf',
+            threshold: 0.15,
+            padding: 12
+        });
+    });
+
+    it('builds args for img_redact', async () => {
+        const args = await buildOperationArgs('img_redact', {
+            ...defaultContext,
+            imgRedactRects: ['10,20,100,50'],
+            imgRedactColor: '#000000'
+        });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_redacted.pdf',
+            rect: ['10,20,100,50'],
+            color: '#000000'
+        });
+    });
+
+    it('builds args for img_optimize_for_llm', async () => {
+        const args = await buildOperationArgs('img_optimize_for_llm', {
+            ...defaultContext,
+            imgOptimizeMaxDim: 1024,
+            imgOptimizeQuality: 80
+        });
+        expect(args).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_llm_optimized.pdf',
+            max_dim: 1024,
+            quality: 80
+        });
+    });
 });

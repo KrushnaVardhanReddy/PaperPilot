@@ -2980,3 +2980,52 @@ pub fn pdf_extract_patterns(input_bytes: &[u8], options_json: &str) -> Operation
         .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
     paperpilot_pdf::operations::pdf_extract_patterns::pdf_extract_patterns_bytes(input_bytes, &options)
 }
+
+pub fn pdf_to_gif(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::pdf_to_gif::PdfToGifOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::pdf_to_gif::pdf_to_gif_bytes(input_bytes, &options)
+}
+
+pub fn showcase_gif(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::showcase_gif::ShowcaseGifOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::showcase_gif::showcase_gif_bytes(input_bytes, &options)
+}
+
+pub fn images_to_gif(buffers: Vec<Vec<u8>>, options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::images_to_gif::ImagesToGifOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    let slice_refs: Vec<&[u8]> = buffers.iter().map(|b| b.as_slice()).collect();
+    paperpilot_pdf::operations::images_to_gif::images_to_gif_bytes_multi(&slice_refs, &options)
+}
+
+pub fn img_optimize_for_llm(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::img_optimize_for_llm::ImgOptimizeForLlmOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::img_optimize_for_llm::img_optimize_for_llm_bytes(input_bytes, &options)
+}
+
+pub fn img_deskew(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::img_deskew::ImgDeskewOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::img_deskew::img_deskew_bytes(input_bytes, &options)
+}
+
+pub fn img_convert(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::img_convert::ImgConvertOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::img_convert::img_convert_bytes(input_bytes, &options)
+}
+
+pub fn img_crop_to_content(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::img_crop_to_content::ImgCropToContentOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::img_crop_to_content::img_crop_to_content_bytes(input_bytes, &options)
+}
+
+pub fn img_redact(input_bytes: &[u8], options_json: &str) -> OperationResult<Vec<u8>> {
+    let options: paperpilot_pdf::operations::img_redact::ImgRedactOptions = serde_json::from_str(options_json)
+        .map_err(|e| PdfError::InvalidInput(format!("Invalid options: {}", e)))?;
+    paperpilot_pdf::operations::img_redact::img_redact_bytes(input_bytes, &options)
+}

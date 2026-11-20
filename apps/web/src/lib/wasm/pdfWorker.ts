@@ -133,6 +133,86 @@ case 'set_metadata':
                 // @ts-ignore
                 result = WasmPdfEngine.pdf_to_docx(payload.file);
                 break;
+            case 'pdf_to_gif':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_to_gif(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'showcase_gif':
+                // @ts-ignore
+                result = WasmPdfEngine.showcase_gif(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'images_to_gif':
+                // @ts-ignore
+                result = WasmPdfEngine.images_to_gif(payload.files, JSON.stringify(payload.options || {}));
+                break;
+            case 'img_optimize_for_llm':
+                // @ts-ignore
+                result = WasmPdfEngine.img_optimize_for_llm(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'img_deskew':
+                // @ts-ignore
+                result = WasmPdfEngine.img_deskew(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'img_convert':
+                // @ts-ignore
+                result = WasmPdfEngine.img_convert(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'img_crop_to_content':
+                // @ts-ignore
+                result = WasmPdfEngine.img_crop_to_content(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'img_redact':
+                // @ts-ignore
+                result = WasmPdfEngine.img_redact(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_stitch_canvas':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_stitch_canvas(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_attachments':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_attachments(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_timestamp':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_timestamp(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_change_permissions':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_change_permissions(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_split_scanned_book':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_split_scanned_book(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_comic_archive':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_comic_archive(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_split_by_outline':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_split_by_outline(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_merge_alternate':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_merge_alternate([payload.primary, payload.secondary], JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_posterize':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_posterize(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_dedup_streams':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_dedup_streams(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_to_epub':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_to_epub(payload.file, JSON.stringify(payload.options || {}));
+                break;
+            case 'pdf_extract_patterns':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_extract_patterns(payload.file, JSON.stringify(payload.options || {}));
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }
