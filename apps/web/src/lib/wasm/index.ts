@@ -34,6 +34,7 @@ flatten(file: Uint8Array): Promise<Uint8Array>;
     sanitize(file: Uint8Array, options: any): Promise<Uint8Array>;
     pii_scan(file: Uint8Array, options: any): Promise<string>;
     pdf_to_docx(file: Uint8Array): Promise<Uint8Array>;
+    pdf_to_gif(file: Uint8Array, options?: any): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -201,6 +202,10 @@ set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string
 
     pdf_to_docx(file: Uint8Array): Promise<Uint8Array> {
         return this.sendRequest('pdf_to_docx', { file });
+    }
+
+    pdf_to_gif(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_to_gif', { file, options });
     }
 
 }

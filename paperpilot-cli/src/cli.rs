@@ -929,6 +929,123 @@ pub enum Commands {
         #[arg(long)]
         context_len: Option<usize>,
     },
+    /// Convert PDF to Animated GIF: Convert multi-page PDF documents into animated looping GIF previews
+    #[command(name = "pdf-to-gif")]
+    PdfToGif {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Frames per second (e.g. 1, 2)")]
+        fps: Option<u8>,
+        #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 100 for 1s)")]
+        delay: Option<u16>,
+        #[arg(long, help = "Maximum pages to render into the animation")]
+        max_pages: Option<usize>,
+        #[arg(long, help = "Target width of GIF frames in pixels (default: 800)")]
+        width: Option<u32>,
+    },
+    /// Generate Showcase GIF: Generate animated showcase demo GIF comparing before and after transformations
+    #[command(name = "showcase-gif")]
+    ShowcaseGif {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Frames per second (e.g. 4, 10)")]
+        fps: Option<u8>,
+        #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 25 for 0.25s)")]
+        delay: Option<u16>,
+        #[arg(long, help = "Target width of GIF frames in pixels (default: 1200)")]
+        width: Option<u32>,
+        #[arg(long, help = "Number of animation frames to render (default: 10)")]
+        transition_frames: Option<u8>,
+    },
+    /// Combine Images into Animated GIF: Stitch a sequence of images into a single animated looping GIF
+    #[command(name = "images-to-gif")]
+    ImagesToGif {
+        #[arg(
+            long,
+            value_delimiter = ',',
+            num_args = 1..,
+            help = "Input image file paths (supports multiple values or comma-separated)"
+        )]
+        input: Vec<PathBuf>,
+        #[arg(
+            long = "inputs",
+            alias = "images",
+            value_delimiter = ',',
+            num_args = 1..,
+            help = "Alternative alias for input images"
+        )]
+        inputs: Option<Vec<PathBuf>>,
+        #[arg(long, help = "Output GIF file path")]
+        output: PathBuf,
+        #[arg(long, help = "Frames per second")]
+        fps: Option<u8>,
+        #[arg(long, help = "Delay between frames in centiseconds (1/100s)")]
+        delay: Option<u16>,
+        #[arg(long, help = "Target frame width (pixels)")]
+        width: Option<u32>,
+    },
+    /// Optimize Image for Vision LLMs: Downscale and optimize images for LLM vision token economy and clarity
+    #[command(name = "img-optimize-for-llm")]
+    ImgOptimizeForLlm {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Max width or height in pixels")]
+        max_dim: Option<u32>,
+        #[arg(long, help = "Quality (1-100)")]
+        quality: Option<u8>,
+    },
+    /// Deskew Document Image: Detect text angle and straighten tilted scanned document images
+    #[command(name = "img-deskew")]
+    ImgDeskew {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        angle: Option<f32>,
+    },
+    /// Convert Image Format: Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats
+    #[command(name = "img-convert")]
+    ImgConvert {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Target format: png, jpeg, webp, tiff, avif")]
+        format: Option<String>,
+        #[arg(long, help = "Compression quality (1-100)")]
+        quality: Option<u8>,
+    },
+    /// Auto-Crop Image to Content: Detect document boundaries and auto-crop background margins from scanned images
+    #[command(name = "img-crop-to-content")]
+    ImgCropToContent {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Background difference threshold (0.0-1.0)")]
+        threshold: Option<f32>,
+        #[arg(long, help = "Padding margin in pixels")]
+        padding: Option<u32>,
+    },
+    /// Redact Sensitive Image Regions: Apply permanent, irreversible pixel-level redaction over sensitive image regions
+    #[command(name = "img-redact")]
+    ImgRedact {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Redaction rectangle x,y,w,h (can be specified multiple times)")]
+        rect: Option<Vec<String>>,
+        #[arg(long, help = "Fill color: hex (#000000) or name (black, white, red)")]
+        color: Option<String>,
+    },
     /// Declarative multi-step document workflow execution
     Run {
         /// TOML .ppflow or JSON recipe

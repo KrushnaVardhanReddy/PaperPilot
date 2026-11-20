@@ -1,11 +1,11 @@
 ---
 title: PaperPilot Tools Handbook
-description: Comprehensive reference for all 92 PaperPilot tools across CLI, MCP, and REST API interfaces.
+description: Comprehensive reference for all 100 PaperPilot tools across CLI, MCP, and REST API interfaces.
 ---
 
-# PaperPilot Tools Handbook (92 Tools)
+# PaperPilot Tools Handbook (100 Tools)
 
-This handbook provides verified execution snippets and parameter references for all **92 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
+This handbook provides verified execution snippets and parameter references for all **100 PaperPilot tools** across the CLI, MCP (AI Agent JSON-RPC), and local REST API interfaces.
 
 ## 1. `batch_fill`
 
@@ -403,7 +403,304 @@ paperpilot workflow history --directory ./out/.paperpilot-receipts --limit 50 --
 N/A
 ```
 
-## 11. `json_to_pdf`
+## 11. `images_to_gif` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Combines an ordered sequence of images into a single animated looping GIF.**  
+Takes a sequence of raster image files (PNG, JPEG, WebP) and stitches them into a looping GIF file with custom frame delays, frame rates, and consistent width scaling. Designed for time-lapse sequences, stop-motion previews, and slide-deck animations.
+
+---
+
+### CLI
+```bash
+paperpilot images-to-gif \
+  --input tests/e2e_fixtures/real/img1.png,tests/e2e_fixtures/real/img2.png \
+  --output tests/e2e_fixtures/out/penta_e2e/slideshow.gif \
+  --fps 4 \
+  --width 800 \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "images_to_gif",
+    "arguments": {
+      "images": [
+        "tests/e2e_fixtures/real/img1.png",
+        "tests/e2e_fixtures/real/img2.png"
+      ],
+      "output": "tests/e2e_fixtures/out/penta_e2e/slideshow.gif",
+      "fps": 4,
+      "width": 800
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/images-to-gif \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "images": [
+      "tests/e2e_fixtures/real/img1.png",
+      "tests/e2e_fixtures/real/img2.png"
+    ],
+    "output": "tests/e2e_fixtures/out/penta_e2e/slideshow.gif",
+    "fps": 4,
+    "width": 800
+  }'
+```
+
+## 12. `img_convert` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Performs pure-Rust transcoding between image formats without system-level image libraries.**  
+Converts images seamlessly between PNG, JPEG, WebP, TIFF, and AVIF formats with configurable compression quality. Operates with zero external dependencies (no libpng, libjpeg, or ImageMagick required) for cross-platform and sandboxed environments.
+
+---
+
+### CLI
+```bash
+paperpilot img-convert \
+  --input tests/e2e_fixtures/real/document.png \
+  --output tests/e2e_fixtures/out/penta_e2e/document.webp \
+  --format webp \
+  --quality 90 \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "img_convert",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/document.png",
+      "output": "tests/e2e_fixtures/out/penta_e2e/document.webp",
+      "format": "webp",
+      "quality": 90
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-convert \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/document.png",
+    "output": "tests/e2e_fixtures/out/penta_e2e/document.webp",
+    "format": "webp",
+    "quality": 90
+  }'
+```
+
+## 13. `img_crop_to_content` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Detects document boundaries and automatically trims scanner bed and background margins.**  
+Samples outer image borders and corner regions to determine background luminance, finds the minimum enclosing bounding box of the document content that deviates by more than a configurable luminance threshold, and crops with an optional protective padding margin.
+
+---
+
+### CLI
+```bash
+paperpilot img-crop-to-content \
+  --input tests/e2e_fixtures/real/scanner_scan.png \
+  --output tests/e2e_fixtures/out/penta_e2e/cropped.png \
+  --threshold 0.1 \
+  --padding 10 \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "img_crop_to_content",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/scanner_scan.png",
+      "output": "tests/e2e_fixtures/out/penta_e2e/cropped.png",
+      "threshold": 0.1,
+      "padding": 10
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-crop-to-content \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/scanner_scan.png",
+    "output": "tests/e2e_fixtures/out/penta_e2e/cropped.png",
+    "threshold": 0.1,
+    "padding": 10
+  }'
+```
+
+## 14. `img_deskew` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Detects text baseline skew angle and straightens tilted document scans.**  
+Applies pure-Rust projection profile analysis to calculate skew angles between -45° and +45°, automatically rotating the canvas and filling exposed borders with a clean background color. Essential for digitizing legacy paperwork, camera photo captures, and preparing scans for high-accuracy OCR.
+
+---
+
+### CLI
+```bash
+paperpilot img-deskew \
+  --input tests/e2e_fixtures/real/tilted_scan.png \
+  --output tests/e2e_fixtures/out/penta_e2e/deskewed.png \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "img_deskew",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/tilted_scan.png",
+      "output": "tests/e2e_fixtures/out/penta_e2e/deskewed.png"
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-deskew \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/tilted_scan.png",
+    "output": "tests/e2e_fixtures/out/penta_e2e/deskewed.png"
+  }'
+```
+
+## 15. `img_optimize_for_llm` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Downscales and sharpens images for Vision LLM token budget economy and OCR legibility.**  
+Scales oversized high-DPI document scans using Lanczos3 interpolation down to target dimension thresholds (e.g., 1024px) to drastically reduce vision token consumption while applying a subtle unsharp high-pass contrast filter that boosts text edge clarity and character recognition accuracy for models like GPT-4o, Claude 3.5 Sonnet, and Gemini 1.5 Pro.
+
+---
+
+### CLI
+```bash
+paperpilot img-optimize-for-llm \
+  --input tests/e2e_fixtures/real/highres_scan.png \
+  --output tests/e2e_fixtures/out/penta_e2e/llm_optimized.png \
+  --max-dim 1024 \
+  --quality 85 \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "img_optimize_for_llm",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/highres_scan.png",
+      "output": "tests/e2e_fixtures/out/penta_e2e/llm_optimized.png",
+      "max_dim": 1024,
+      "quality": 85
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-optimize-for-llm \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/highres_scan.png",
+    "output": "tests/e2e_fixtures/out/penta_e2e/llm_optimized.png",
+    "max_dim": 1024,
+    "quality": 85
+  }'
+```
+
+## 16. `img_redact` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Applies permanent, irreversible pixel-level redaction over sensitive image regions.**  
+Overwrites pixel data within specified rectangular bounding boxes (`x,y,width,height`) with solid color fills (black, white, red, or hex `#RRGGBB`). Unlike visual overlay layers, the original underlying pixel values are completely destroyed and unrecoverable from metadata or hidden alpha channels.
+
+---
+
+### CLI
+```bash
+paperpilot img-redact \
+  --input tests/e2e_fixtures/real/license.png \
+  --output tests/e2e_fixtures/out/penta_e2e/redacted.png \
+  --rect "120,450,300,50" \
+  --color "#000000" \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "img_redact",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/license.png",
+      "output": "tests/e2e_fixtures/out/penta_e2e/redacted.png",
+      "rect": [
+        "120,450,300,50",
+        "320,400,180,60"
+      ],
+      "color": "#000000"
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/img-redact \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/license.png",
+    "output": "tests/e2e_fixtures/out/penta_e2e/redacted.png",
+    "rect": ["120,450,300,50"],
+    "color": "#000000"
+  }'
+```
+
+## 17. `json_to_pdf`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -451,7 +748,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/json_to_pdf \
   }'
 ```
 
-## 12. `office_extract_text`
+## 18. `office_extract_text`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -486,7 +783,7 @@ N/A
 N/A
 ```
 
-## 13. `office_modernize_legacy`
+## 19. `office_modernize_legacy`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -521,7 +818,7 @@ N/A
 N/A
 ```
 
-## 14. `office_to_markdown`
+## 20. `office_to_markdown`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -556,7 +853,7 @@ N/A
 N/A
 ```
 
-## 15. `pdf_annotate`
+## 21. `pdf_annotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -599,7 +896,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_annotate \
   }'
 ```
 
-## 16. `pdf_attachments`
+## 22. `pdf_attachments`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -623,7 +920,7 @@ N/A
 N/A
 ```
 
-## 17. `pdf_auto_rotate`
+## 23. `pdf_auto_rotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -658,7 +955,7 @@ N/A
 N/A
 ```
 
-## 18. `pdf_bates`
+## 24. `pdf_bates`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -712,7 +1009,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_bates \
   }'
 ```
 
-## 19. `pdf_booklet`
+## 25. `pdf_booklet`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -750,7 +1047,7 @@ paperpilot pdf-booklet \
 N/A
 ```
 
-## 20. `pdf_bookmarks`
+## 26. `pdf_bookmarks`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -782,7 +1079,7 @@ N/A
 N/A
 ```
 
-## 21. `pdf_burst`
+## 27. `pdf_burst`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -812,7 +1109,7 @@ paperpilot burst --input tests/e2e_fixtures/real/multi_page.pdf --output tests/e
 curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/burst -H 'Content-Type: application/json' -d '{"input": "tests/e2e_fixtures/real/multi_page.pdf", "output_dir": "tests/e2e_fixtures/out/penta_e2e/burst"}'
 ```
 
-## 22. `pdf_change_permissions`
+## 28. `pdf_change_permissions`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -868,7 +1165,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_change_permissions \
   -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/perm_restricted.pdf", "allow_print": false, "allow_copy": false}'
 ```
 
-## 23. `pdf_chunk`
+## 29. `pdf_chunk`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -924,7 +1221,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/chunk \
   }'
 ```
 
-## 24. `pdf_classify_type`
+## 30. `pdf_classify_type`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -962,7 +1259,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_classify_type \
   }'
 ```
 
-## 25. `pdf_comic_archive`
+## 31. `pdf_comic_archive`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -997,7 +1294,7 @@ N/A
 N/A
 ```
 
-## 26. `pdf_compare`
+## 32. `pdf_compare`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1042,7 +1339,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_compare \
   }'
 ```
 
-## 27. `pdf_compress`
+## 33. `pdf_compress`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1078,7 +1375,7 @@ N/A
 N/A
 ```
 
-## 28. `pdf_convert_excel`
+## 34. `pdf_convert_excel`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1137,7 +1434,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_excel \
   }'
 ```
 
-## 29. `pdf_convert_html`
+## 35. `pdf_convert_html`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1190,7 +1487,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_html \
   }'
 ```
 
-## 30. `pdf_convert_markdown`
+## 36. `pdf_convert_markdown`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1243,7 +1540,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_convert_markdown \
   }'
 ```
 
-## 31. `pdf_create_form_field`
+## 37. `pdf_create_form_field`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1288,7 +1585,7 @@ N/A
 }
 ```
 
-## 32. `pdf_crop`
+## 38. `pdf_crop`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1324,7 +1621,7 @@ N/A
 N/A
 ```
 
-## 33. `pdf_decrypt`
+## 39. `pdf_decrypt`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1371,7 +1668,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_decrypt \
   -d '{"input": "tests/e2e_fixtures/real/encrypted.pdf", "password": "secret123", "output": "tests/e2e_fixtures/out/penta_e2e/decrypted.pdf"}'
 ```
 
-## 34. `pdf_dedup_streams`
+## 40. `pdf_dedup_streams`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1421,7 +1718,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_dedup_streams \
   }'
 ```
 
-## 35. `pdf_delete_pages`
+## 41. `pdf_delete_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1461,7 +1758,7 @@ paperpilot delete-pages \
 N/A
 ```
 
-## 36. `pdf_encrypt`
+## 42. `pdf_encrypt`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1515,7 +1812,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_encrypt \
   -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/encrypted.pdf", "password": "secret123"}'
 ```
 
-## 37. `pdf_extract_images`
+## 43. `pdf_extract_images`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1553,7 +1850,7 @@ paperpilot extract-images \
 N/A
 ```
 
-## 38. `pdf_extract_pages`
+## 44. `pdf_extract_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1593,7 +1890,7 @@ paperpilot extract-pages \
 N/A
 ```
 
-## 39. `pdf_extract_patterns`
+## 45. `pdf_extract_patterns`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1642,7 +1939,7 @@ paperpilot pdf-extract-patterns \
 N/A
 ```
 
-## 40. `pdf_extract_tables`
+## 46. `pdf_extract_tables`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1679,7 +1976,7 @@ N/A
 N/A
 ```
 
-## 41. `pdf_extract_text`
+## 47. `pdf_extract_text`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1718,7 +2015,7 @@ paperpilot extract-text \
 N/A
 ```
 
-## 42. `pdf_fill_form`
+## 48. `pdf_fill_form`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1767,7 +2064,7 @@ N/A
 }
 ```
 
-## 43. `pdf_flatten`
+## 49. `pdf_flatten`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1791,7 +2088,7 @@ N/A
 N/A
 ```
 
-## 44. `pdf_hash`
+## 50. `pdf_hash`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1836,7 +2133,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_hash \
   }'
 ```
 
-## 45. `pdf_header_footer`
+## 51. `pdf_header_footer`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1860,7 +2157,7 @@ N/A
 N/A
 ```
 
-## 46. `pdf_images_to_pdf`
+## 52. `pdf_images_to_pdf`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1901,7 +2198,7 @@ paperpilot images-to-pdf \
 N/A
 ```
 
-## 47. `pdf_invert_colors`
+## 53. `pdf_invert_colors`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1943,7 +2240,7 @@ paperpilot pdf-invert-colors \
 N/A
 ```
 
-## 48. `pdf_linearize`
+## 54. `pdf_linearize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -1999,7 +2296,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_linearize \
   }'
 ```
 
-## 49. `pdf_merge`
+## 55. `pdf_merge`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2040,7 +2337,7 @@ paperpilot merge \
 N/A
 ```
 
-## 50. `pdf_merge_alternate`
+## 56. `pdf_merge_alternate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2087,7 +2384,7 @@ paperpilot pdf-merge-alternate \
 N/A
 ```
 
-## 51. `pdf_metadata`
+## 57. `pdf_metadata`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2118,7 +2415,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/mcp-exec \
 N/A
 ```
 
-## 52. `pdf_nup`
+## 58. `pdf_nup`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2166,7 +2463,7 @@ paperpilot pdf-nup \
 N/A
 ```
 
-## 53. `pdf_ocr`
+## 59. `pdf_ocr`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2201,7 +2498,7 @@ N/A
 N/A
 ```
 
-## 54. `pdf_overlay_underlay`
+## 60. `pdf_overlay_underlay`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2247,7 +2544,7 @@ paperpilot pdf-overlay-underlay \
 N/A
 ```
 
-## 55. `pdf_page_numbers`
+## 61. `pdf_page_numbers`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2292,7 +2589,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_page_numbers \
   }'
 ```
 
-## 56. `pdf_posterize`
+## 62. `pdf_posterize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2340,7 +2637,7 @@ paperpilot pdf-posterize \
 N/A
 ```
 
-## 57. `pdf_rag_chunks`
+## 63. `pdf_rag_chunks`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2378,7 +2675,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_rag_chunks \
   }'
 ```
 
-## 58. `pdf_read_form`
+## 64. `pdf_read_form`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2424,7 +2721,7 @@ N/A
 }
 ```
 
-## 59. `pdf_redact`
+## 65. `pdf_redact`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2456,7 +2753,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_redact \
   }'
 ```
 
-## 60. `pdf_remove_blank`
+## 66. `pdf_remove_blank`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2496,7 +2793,7 @@ paperpilot remove-blank \
 N/A
 ```
 
-## 61. `pdf_remove_signatures`
+## 67. `pdf_remove_signatures`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2534,7 +2831,7 @@ paperpilot pdf-remove-signatures \
 N/A
 ```
 
-## 62. `pdf_render`
+## 68. `pdf_render`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2578,7 +2875,7 @@ paperpilot render \
 N/A
 ```
 
-## 63. `pdf_reorder_pages`
+## 69. `pdf_reorder_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2618,7 +2915,7 @@ paperpilot reorder-pages \
 N/A
 ```
 
-## 64. `pdf_repair`
+## 70. `pdf_repair`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2674,7 +2971,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_repair \
   }'
 ```
 
-## 65. `pdf_rotate`
+## 71. `pdf_rotate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2711,7 +3008,7 @@ N/A
 N/A
 ```
 
-## 66. `pdf_sanitize`
+## 72. `pdf_sanitize`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2777,7 +3074,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_sanitize \
   }'
 ```
 
-## 67. `pdf_scale_pages`
+## 73. `pdf_scale_pages`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2819,7 +3116,7 @@ paperpilot pdf-scale-pages \
 N/A
 ```
 
-## 68. `pdf_search`
+## 74. `pdf_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2860,7 +3157,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_search \
   }'
 ```
 
-## 69. `pdf_sign`
+## 75. `pdf_sign`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2900,7 +3197,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_sign \
   -d '{"input": "tests/e2e_fixtures/real/single_page.pdf", "output": "tests/e2e_fixtures/out/penta_e2e/signed.pdf"}'
 ```
 
-## 70. `pdf_split`
+## 76. `pdf_split`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2936,7 +3233,7 @@ N/A
 N/A
 ```
 
-## 71. `pdf_split_by_outline`
+## 77. `pdf_split_by_outline`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -2974,7 +3271,7 @@ paperpilot pdf-split-by-outline \
 N/A
 ```
 
-## 72. `pdf_split_scanned_book`
+## 78. `pdf_split_scanned_book`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3017,7 +3314,7 @@ paperpilot pdf-split-scanned-book \
 N/A
 ```
 
-## 73. `pdf_stamp`
+## 79. `pdf_stamp`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3069,7 +3366,7 @@ paperpilot pdf-stamp \
 N/A
 ```
 
-## 74. `pdf_stitch_canvas`
+## 80. `pdf_stitch_canvas`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3113,7 +3410,7 @@ paperpilot pdf-stitch-canvas \
 N/A
 ```
 
-## 75. `pdf_timestamp`
+## 81. `pdf_timestamp`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3148,7 +3445,7 @@ N/A
 N/A
 ```
 
-## 76. `pdf_to_docx`
+## 82. `pdf_to_docx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3197,7 +3494,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_docx \
   }'
 ```
 
-## 77. `pdf_to_epub`
+## 83. `pdf_to_epub`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3245,7 +3542,58 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-epub \
   }'
 ```
 
-## 78. `pdf_to_html`
+## 84. `pdf_to_gif` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Converts multi-page PDF documents into animated looping GIF flipbooks.**  
+Renders successive pages of a PDF document and compiles them into a smooth, lightweight animated GIF. Configurable frame rate (`fps`), frame delay (`delay`), target image width, and maximum page count allow creating interactive flipbook previews, thumbnail reels, and social media shareables without external dependencies.
+
+---
+
+### CLI
+```bash
+paperpilot pdf-to-gif \
+  --input tests/e2e_fixtures/real/multi_page.pdf \
+  --output tests/e2e_fixtures/out/penta_e2e/preview.gif \
+  --fps 2 \
+  --width 800 \
+  --max-pages 10 \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "pdf_to_gif",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/multi_page.pdf",
+      "output": "tests/e2e_fixtures/out/penta_e2e/preview.gif",
+      "fps": 2,
+      "width": 800,
+      "max_pages": 5
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/to-gif \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/multi_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/preview.gif",
+    "fps": 2,
+    "width": 800
+  }'
+```
+
+## 85. `pdf_to_html`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3294,7 +3642,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_to_html \
   }'
 ```
 
-## 79. `pdf_to_json`
+## 86. `pdf_to_json`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3343,7 +3691,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_to_json \
   }'
 ```
 
-## 80. `pdf_to_markdown`
+## 87. `pdf_to_markdown`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3392,7 +3740,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_to_markdown \
   }'
 ```
 
-## 81. `pdf_to_pdf_a`
+## 88. `pdf_to_pdf_a`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3440,7 +3788,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_to_pdf_a \
   }'
 ```
 
-## 82. `pdf_to_pptx`
+## 89. `pdf_to_pptx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3489,7 +3837,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_pptx \
   }'
 ```
 
-## 83. `pdf_to_xlsx`
+## 90. `pdf_to_xlsx`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3538,7 +3886,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/tools/pdf_to_xlsx \
   }'
 ```
 
-## 84. `pdf_validate`
+## 91. `pdf_validate`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3592,7 +3940,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_validate \
   }'
 ```
 
-## 85. `pdf_validate_signatures`
+## 92. `pdf_validate_signatures`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3644,7 +3992,7 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/pdf_validate_signatures \
   -d '{"input": "tests/e2e_fixtures/signed_unsigned.pdf", "output": "audit_report.json"}'
 ```
 
-## 86. `pdf_watermark`
+## 93. `pdf_watermark`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3683,7 +4031,7 @@ N/A
 N/A
 ```
 
-## 87. `recipe_run`
+## 94. `recipe_run`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3724,7 +4072,7 @@ paperpilot run \
 N/A
 ```
 
-## 88. `semantic_search`
+## 95. `semantic_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3771,7 +4119,58 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/search/semantic_search \
   }'
 ```
 
-## 89. `watcher_list`
+## 96. `showcase_gif` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
+
+**Generates an animated showcase mockup card highlighting document content with elegant transitions.**  
+Renders PDF document pages into a polished presentation mockup card featuring clean drop shadows, smooth page transitions, and progressive scanning animations. Designed for product marketing, documentation showcases, portfolio highlights, and software demo reels.
+
+---
+
+### CLI
+```bash
+paperpilot showcase-gif \
+  --input tests/e2e_fixtures/real/single_page.pdf \
+  --output tests/e2e_fixtures/out/penta_e2e/showcase.gif \
+  --fps 4 \
+  --width 1200 \
+  --transition-frames 10 \
+  --json
+```
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "showcase_gif",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/single_page.pdf",
+      "output": "tests/e2e_fixtures/out/penta_e2e/showcase.gif",
+      "fps": 4,
+      "width": 1200,
+      "transition_frames": 10
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/showcase-gif \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/showcase.gif",
+    "fps": 4,
+    "width": 1200
+  }'
+```
+
+## 97. `watcher_list`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3804,7 +4203,7 @@ paperpilot watch --directory ./inbox --recipe preset-legal-discovery
 curl -s -X GET http://127.0.0.1:7823/v1/automation/watchers
 ```
 
-## 90. `watcher_start`
+## 98. `watcher_start`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3849,7 +4248,7 @@ curl -s -X POST http://127.0.0.1:7823/v1/automation/watchers \
   }'
 ```
 
-## 91. `watcher_stop`
+## 99. `watcher_stop`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 
@@ -3883,7 +4282,7 @@ N/A
 curl -i -X DELETE http://127.0.0.1:7823/v1/automation/watchers/watcher_c9b8f2d87e1445bfbb5bcf112a912803
 ```
 
-## 92. `workspace_search`
+## 100. `workspace_search`
 
 **Status**: ✅ Verified  |  **Format**: PDF / OpenXML / Data
 

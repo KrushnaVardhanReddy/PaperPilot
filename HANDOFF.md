@@ -2,44 +2,55 @@
  
 > **Single Source of Truth** for resuming work on PaperPilot.  
 > Start any new agent or human session by reading this document.  
-> **Date of Last Update:** November 10, 2026
+> **Date of Last Update:** November 19, 2026
 >
-> **Active Target:** 
-> 1. **90/90 Tools Penta-Interface Complete & 100% Passing**: Waves 1–21 QA complete across CLI, MCP, REST Gateway, Desktop UI, and WASM/Playwright (285/285 tests passing).
-> 2. **Multi-Scanner Security Audit Clean**: Semgrep (0 findings), Cargo Audit (0 criticals), Trivy FS clean.
-> 3. **Next Sprint (Prioritized Backlog)**: Tier 1 Onboarding & Packaging (Specs 160, 161, 162), Tier 2 Scalability & Agent Memory (Specs 159, 163), Tier 3 Browser Extension (Phase 11).
+> **Active Target (Milestone: v0.8.0):** 
+> 1. **100/100 Tools Penta-Interface Complete & 100% Passing**: Waves 1–22 QA complete across CLI, MCP, REST Gateway, Desktop UI, and Penta-Interface E2E suite (100 verified tools).
+> 2. **Spec 170 Native Image Intelligence & Animated Showcase Engine**: 8 new pure-Rust tools added (`pdf_to_gif`, `showcase_gif`, `images_to_gif`, `img_deskew`, `img_crop_to_content`, `img_redact`, `img_optimize_for_llm`, `img_convert`).
+> 3. **REST Gateway Semantic Aliases & Route Namespacing**: Introduced clean `/api/v1/image/*` and `/api/v1/office/*` primary endpoints while maintaining backward-compatible `/api/v1/pdf/*` legacy aliases.
+> 4. **Phase 0 Desktop Real E2E Setup**: WebdriverIO + `@wdio/tauri-service` + `tauri-driver` with native WebKitGTK and `xvfb-run` integration verified with passing smoke tests.
+> 5. **Penta-Scaffold Engine Upgraded**: `penta-scaffold` now scaffolds full Desktop UI wiring, WDIO desktop E2E tests, documentation, and OpenAPI schemas in a single pass.
+> 6. **Active Branch**: `feature/native-showcase-gif-engine` (synced to origin, base `feature/dev`).
 
 ---
 
 ## 🧭 Executive Summary & Current Repository State
 
-- **Integration Branch**: `feature/dev` (clean, fully synchronized with `origin/feature/dev`).
-- **Target Branch Protocol**: Feature branches and reviewed PRs merge into `feature/dev`; never push directly to `main`.
+- **Current Working Branch**: `feature/native-showcase-gif-engine` (clean, synchronized with `origin/feature/native-showcase-gif-engine`).
+- **Base Integration Branch**: `feature/dev`.
 - **System Stability & Audits**:
-  - **90/90 Tools Penta-Interface Parity**: **100% PASS (285/285 tests)** across CLI, MCP, REST Gateway API, Desktop UI, and WASM in `tests/e2e/test_wave5_penta_interface.rs` (including neural OCR engine resolution via `PAPERPILOT_OCR_MODELS_DIR`).
-  - **Security Audits (Session 21)**: Semgrep SAST scan 100% clean (0 blocking findings across 1,641 files); Cargo Audit 1,146 dependencies clean; 49 legacy/deprecated dependencies completely purged from `Cargo.lock`.
-  - **Zero-Mock Real Desktop E2E Automation**: **90/90 Tools 100% Passing Green** (Suite 1: 30/30, Suite 2: 30/30, Suite 3: 31/31).
-  - **Desktop Vitest Suite**: **176 passing unit tests across 25 files** (100% green).
-  - **Cargo Workspace**: `cargo check --workspace --all-targets --all-features -j 4` compiles with 0 errors and 0 warnings.
-  - **Benchmark Baseline**: Standardized in `BenchmarkMatrix.svelte` to conservative, measured `~60–80ms (Native Engine) / <1.2s (Full UI & IPC)`.
-  - **Knowledge Graph (`graphify-rs`)**: Fully synchronized with 5,395 AST nodes, 7,013 edges, and 558 modular communities.
+  - **100/100 Tools Penta-Interface Parity**: **100% PASS** across CLI, MCP, REST Gateway API, Desktop UI, and Core Rust.
+  - **Spec 170 Complete**: Pure-Rust NeuQuant GIF encoding, animated PDF/image sequencer, projection profile baseline deskew, bounding box content crop, token-budgeted LLM vision optimizer, coordinate redact, and image transcoding.
+  - **Real Desktop E2E Automation**: WebdriverIO suite initialized in `apps/desktop/test/specs/smoke.e2e.ts` running against real Linux Tauri v2 / Wry v0.57 (passing in 1.9s).
+  - **Desktop Vitest Suite**: 54/54 tests passing in `operationArgsBuilder.test.ts` across all 100 tools.
+  - **Documentation Suite**: Starlight / Astro documentation updated to 100 tools with `v0.8.0+` badges across all reference pages and `tools-handbook.md`. Build passing cleanly (116 pages indexed, 0 broken links).
+  - **Cargo Workspace**: Compiles cleanly with `-j 4` concurrency limit.
 
 ---
 
 ## 🏆 Recently Merged Milestones
 
-1. **Full 21-Session QA Protocol Complete (PR / Commit `56d2952`, `5b71cc7`)**:
-   - Standardized argument builders, Svelte 5 UI parameter panels, CLI subcommands, MCP tool wrappers, and REST gateway endpoints across all 90 tools.
-   - Cleanroom verification of conversions (`pdf_to_docx`, `pdf_to_xlsx`, `pdf_to_pptx`, `pdf_to_html`, `pdf_to_markdown`, `pdf_to_json`, `office_to_markdown`, `excel_to_json`, `excel_to_csv`).
-   - RAG & Intelligence engines verified (`pdf_extract_patterns`, `pdf_search`, `workspace_search`, `semantic_search`, `pdf_classify_type`, `pdf_rag_chunks`, `document_workflow`, `recipe_run`, `cli_ask`, `watcher_start/stop`).
-   - All scorecards synthesized in `reports/` through `WAVE_21_SESSION_21_MASTER_AUDIT_SCORECARD.md`.
+1. **Spec 170: Native Image Intelligence & Animated Showcase Engine**:
+   - 8 new pure-Rust tools (`pdf_to_gif`, `showcase_gif`, `images_to_gif`, `img_deskew`, `img_crop_to_content`, `img_redact`, `img_optimize_for_llm`, `img_convert`). Zero external runtime dependencies (no Python, ffmpeg, or ImageMagick).
+   - Document-first showcase card generator with dropshadow, scan-sweep line, and multi-page cross-dissolve page-turns.
+   - Text baseline deskew via horizontal projection profile variance optimization (-45° to +45° with 0.1° resolution).
 
-2. **Dependency Tree Security Hardening & Zero-Warning Cleanup (Session 20)**:
-   - Purged obsolete legacy crates (`multipart 0.18.0`, `iron 0.6.1`, `nickel`, `typemap`, `traitobject`, `hyper 0.10.x`).
-   - Resolved all compiler future-incompatibility notices across the entire workspace.
+2. **Semantic REST Gateway Namespacing & Aliases**:
+   - Published clean primary routes: `/api/v1/image/deskew`, `/api/v1/image/crop-to-content`, `/api/v1/image/redact`, `/api/v1/image/optimize-for-llm`, `/api/v1/image/convert`, `/api/v1/image/to-gif`, `/api/v1/office/word-to-markdown`, `/api/v1/office/extract-text`.
+   - Preserved all `/api/v1/pdf/*` routes as active backward-compatible aliases.
 
-3. **Specs 159–163 Synchronized into `feature/dev` (Commit `9743c06`)**:
-   - Merged high-impact Agent DX, Diagnostics, Packaging, Recipes, and Zero-Copy mmap specifications into `specs/`.
+3. **Phase 0 Desktop Real E2E Setup (@wdio/tauri-service)**:
+   - Configured `apps/desktop/wdio.conf.ts` for Linux WebKitGTK and `tauri-driver`.
+   - Wired `data-testid` test hooks into Svelte 5 desktop layout.
+   - Verified initial smoke test passing in 1.9s.
+
+4. **Penta-Scaffold Full-Stack Generator Upgrade**:
+   - Upgraded `tools/penta-scaffold/src/generator.rs` to automatically generate:
+     - Full Desktop UI wiring (`toolList.ts`, `toolRegistry.ts`, `operationArgsBuilder.ts`, `OperationsPanel.svelte`).
+     - WebdriverIO E2E test case in `apps/desktop/test/specs/<tool>.e2e.ts`.
+     - Tool documentation in `apps/docs/src/content/docs/reference/tools/<tool>.md` and `tools-handbook.md`.
+     - Gateway handler with OpenAPI `#[utoipa::path(...)]` annotations and semantic route namespacing.
+
 
 ---
 

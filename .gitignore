@@ -80,3 +80,7 @@ LINKEDIN_POST_V0.7.0.md
 # Extension zip archives for store submissions
 apps/extension-source.zip
 apps/extension/*.zip
+
+# WebdriverIO test output logs
+apps/desktop/logs/
+

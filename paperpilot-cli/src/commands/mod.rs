@@ -42,6 +42,14 @@ pub mod validate;
 pub mod workflow;
 pub mod pdf_extract_patterns;
 pub mod pdf_chunk;
+pub mod pdf_to_gif;
+pub mod showcase_gif;
+pub mod images_to_gif;
+pub mod img_optimize_for_llm;
+pub mod img_deskew;
+pub mod img_convert;
+pub mod img_crop_to_content;
+pub mod img_redact;
 
 use crate::cli::Commands;
 use paperpilot_core::error::OperationResult;
@@ -1064,6 +1072,57 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
             *case_sensitive,
             *context_len,
         ),
+        Commands::PdfToGif {
+            input,
+            output,
+            fps,
+            delay,
+            max_pages,
+            width,
+        } => pdf_to_gif::handle_pdf_to_gif_command(input, output, *fps, *delay, *max_pages, *width),
+        Commands::ShowcaseGif {
+            input,
+            output,
+            fps,
+            delay,
+            width,
+            transition_frames,
+        } => showcase_gif::handle_showcase_gif_command(
+            input,
+            output,
+            *fps,
+            *delay,
+            *width,
+            *transition_frames,
+        ),
+        Commands::ImagesToGif {
+            input,
+            inputs,
+            output,
+            fps,
+            delay,
+            width,
+        } => images_to_gif::handle_images_to_gif_command(
+            input,
+            inputs.as_deref(),
+            output,
+            *fps,
+            *delay,
+            *width,
+        ),
+        Commands::ImgOptimizeForLlm { input, output, max_dim, quality } => {
+            img_optimize_for_llm::handle_img_optimize_for_llm_command(input, output, *max_dim, *quality)
+        }
+        Commands::ImgDeskew { input, output, angle } => img_deskew::handle_img_deskew_command(input, output, *angle),
+        Commands::ImgConvert { input, output, format, quality } => {
+            img_convert::handle_img_convert_command(input, output, format, *quality)
+        }
+        Commands::ImgCropToContent { input, output, threshold, padding } => {
+            img_crop_to_content::handle_img_crop_to_content_command(input, output, *threshold, *padding)
+        }
+        Commands::ImgRedact { input, output, rect, color } => {
+            img_redact::handle_img_redact_command(input, output, rect, color)
+        }
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -1334,6 +1393,46 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "img_redact",
+                    "Preview",
+                    "Apply permanent, irreversible pixel-level redaction over sensitive image regions",
+                ),
+                (
+                    "img_crop_to_content",
+                    "Preview",
+                    "Detect document boundaries and auto-crop background margins from scanned images",
+                ),
+                (
+                    "img_convert",
+                    "Preview",
+                    "Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats",
+                ),
+                (
+                    "img_deskew",
+                    "Preview",
+                    "Detect text angle and straighten tilted scanned document images",
+                ),
+                (
+                    "img_optimize_for_llm",
+                    "Preview",
+                    "Downscale and optimize images for LLM vision token economy and clarity",
+                ),
+                (
+                    "images_to_gif",
+                    "Preview",
+                    "Stitch a sequence of images into a single animated looping GIF",
+                ),
+                (
+                    "showcase_gif",
+                    "Preview",
+                    "Generate animated showcase demo GIF comparing before and after transformations",
+                ),
+                (
+                    "pdf_to_gif",
+                    "Preview",
+                    "Convert multi-page PDF documents into animated looping GIF previews",
                 ),
                 (
                     "pdf_extract_patterns",

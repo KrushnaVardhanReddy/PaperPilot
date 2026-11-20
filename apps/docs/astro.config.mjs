@@ -32,7 +32,7 @@ export default defineConfig({
           items: [
             { label: 'Tools Handbook (All-in-One)', slug: 'reference/tools-handbook' },
             {
-              label: 'All Tools Index (92 Tools)',
+              label: 'All Tools Index (100 Tools)',
               autogenerate: { directory: 'reference/tools' },
             },
           ],

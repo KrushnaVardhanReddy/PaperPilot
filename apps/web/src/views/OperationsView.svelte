@@ -76,6 +76,7 @@
     { id: 'render_page', title: 'Render Page', icon: '🖼️', category: 'convert', releaseStatus: 'preview' },
     { id: 'json_to_pdf', title: 'JSON to PDF', icon: '📜', category: 'convert', releaseStatus: 'preview' },
     { id: 'pdf_to_docx', title: 'PDF to DOCX', icon: '📝', category: 'convert', releaseStatus: 'preview' },
+    { id: 'pdf_to_gif', title: 'PDF to Animated GIF', icon: '🎞️', category: 'convert', releaseStatus: 'preview', description: 'Convert multi-page PDF into an animated looping GIF preview' },
     { id: 'ocr', title: 'OCR PDF', icon: '👁️', category: 'convert', releaseStatus: 'preview' }
   ];
 
@@ -182,6 +183,10 @@ let metadataFile: File | null = $state(null);
   let piiScanFile: File | null = $state(null);
   let piiScanResult: string | null = $state(null);
   let pdfToDocxFile: File | null = $state(null);
+  let pdfToGifFile: File | null = $state(null);
+  let gifDelay = $state(100);
+  let gifWidth = $state(800);
+  let gifMaxPages = $state<number | undefined>(undefined);
 
 
   async function readAsUint8Array(file: File): Promise<Uint8Array> {
@@ -739,6 +744,36 @@ let metadataFile: File | null = $state(null);
       URL.revokeObjectURL(url);
     } catch (e) {
       alert(`Error converting to DOCX: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handlePdfToGif() {
+    if (!pdfToGifFile) return;
+    isProcessing = true;
+    try {
+      const buffer = new Uint8Array(await pdfToGifFile.arrayBuffer());
+      const options: any = {
+        delay_centisecs: Number(gifDelay),
+        width: Number(gifWidth),
+      };
+      if (gifMaxPages && Number(gifMaxPages) > 0) {
+        options.max_pages = Number(gifMaxPages);
+      }
+      const result = await wasmPdfClient.pdf_to_gif(buffer, options);
+      const blob = new Blob([result.buffer as ArrayBuffer], { type: 'image/gif' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const base = pdfToGifFile.name.replace(/\.[^.]+$/i, '');
+      a.download = `${base}_preview.gif`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(`Error converting to GIF: ${e}`);
     } finally {
       isProcessing = false;
     }
@@ -1751,6 +1786,62 @@ let metadataFile: File | null = $state(null);
             </div>
             <button class="action-btn" onclick={handlePdfToDocx} disabled={isProcessing}>
                 {isProcessing ? 'Processing...' : 'Convert to DOCX'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_to_gif'}
+      <div class="tool-pane">
+        <h2>PDF to Animated GIF</h2>
+        <p>Convert multi-page PDF into an animated looping GIF preview.</p>
+        {#if !pdfToGifFile}
+            <DropZone ondrop={(files: File[]) => pdfToGifFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{pdfToGifFile.name}</span>
+                <button onclick={() => pdfToGifFile = null}>✕</button>
+            </div>
+
+            <div class="input-group">
+                <label for="webGifDelay">Frame Delay: {gifDelay} cs ({gifDelay / 100}s)</label>
+                <input
+                    id="webGifDelay"
+                    type="range"
+                    min="10"
+                    max="500"
+                    step="5"
+                    bind:value={gifDelay}
+                    style="width: 100%;"
+                />
+            </div>
+
+            <div class="input-group">
+                <label for="webGifWidth">Frame Width: {gifWidth}px</label>
+                <input
+                    id="webGifWidth"
+                    type="range"
+                    min="320"
+                    max="1920"
+                    step="20"
+                    bind:value={gifWidth}
+                    style="width: 100%;"
+                />
+            </div>
+
+            <div class="input-group">
+                <label for="webGifMaxPages">Max Pages (Optional):</label>
+                <input
+                    id="webGifMaxPages"
+                    type="number"
+                    min="1"
+                    bind:value={gifMaxPages}
+                    placeholder="All pages"
+                    style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);"
+                />
+            </div>
+
+            <button class="action-btn" onclick={handlePdfToGif} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : 'Generate Animated GIF'}
             </button>
         {/if}
       </div>

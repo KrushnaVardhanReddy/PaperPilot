@@ -6,13 +6,13 @@ const TOOL_NAME_ALIASES: Record<string, string> = {
   html_to_pdf: 'pdf_convert_html',
   img_to_pdf: 'pdf_images_to_pdf',
   cli_fill_batch: 'batch_fill',
-  cli_ask: 'workspace_search',
   document_pii_scan: 'pdf_document_pii_scan',
 };
 
 // Known MCP tool names that don't take a 'pdf_' prefix
 const UNPREFIXED_TOOLS = new Set([
   'batch_fill',
+  'cli_ask',
   'recipe_run',
   'document_workflow',
   'list_workflows',
@@ -26,7 +26,9 @@ const UNPREFIXED_TOOLS = new Set([
   'office_to_markdown',
   'office_extract_text',
   'office_modernize_legacy',
-  'json_to_pdf'
+  'json_to_pdf',
+  'showcase_gif',
+  'images_to_gif'
 ]);
 
 export function resolveToolName(toolId: string): string {
@@ -41,6 +43,7 @@ export function resolveToolName(toolId: string): string {
   // If the tool ID already starts with standard namespace prefixes, keep it as is
   if (
     toolId.startsWith('pdf_') ||
+    toolId.startsWith('img_') ||
     toolId.startsWith('office_') ||
     toolId.startsWith('excel_') ||
     toolId.startsWith('json_')
