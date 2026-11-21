@@ -68,12 +68,13 @@
 
   function formatCount(count: number): string {
     if (count >= 1_000_000) {
-      const millions = count / 1_000_000;
-      return `${millions.toFixed(1).replace(/\.0$/, '')}M+`;
+      const millions = Math.floor(count / 100_000) / 10;
+      return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M+`;
     }
     if (count >= 1_000) {
-      const thousands = count / 1_000;
-      return `${thousands.toFixed(1).replace(/\.0$/, '')}K+`;
+      // Use floor so 1,061 stays true to "1K+" (doesn't falsely round up before reaching 1,100)
+      const thousands = Math.floor(count / 100) / 10;
+      return `${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K+`;
     }
     return count.toLocaleString();
   }
