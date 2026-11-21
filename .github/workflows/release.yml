@@ -136,7 +136,7 @@ jobs:
           sudo apt-get -o Acquire::ForceIPv4=true install -y --fix-missing libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev libfuse2
 
       - name: Set up Node.js & pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
           run_install: false
@@ -468,7 +468,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK & NDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools'
 
@@ -488,7 +488,7 @@ jobs:
           key: aarch64-linux-android
 
       - name: Set up Node.js & pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
           run_install: false
@@ -663,7 +663,7 @@ jobs:
           fi
 
       - name: Create / Update GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.version }}
           name: "PaperPilot ${{ inputs.version }}"
