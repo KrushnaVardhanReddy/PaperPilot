@@ -66,6 +66,18 @@
     }
   });
 
+  function formatCount(count: number): string {
+    if (count >= 1_000_000) {
+      const millions = count / 1_000_000;
+      return `${millions.toFixed(1).replace(/\.0$/, '')}M+`;
+    }
+    if (count >= 1_000) {
+      const thousands = count / 1_000;
+      return `${thousands.toFixed(1).replace(/\.0$/, '')}K+`;
+    }
+    return count.toLocaleString();
+  }
+
   const shouldRender = $derived(
     isEnabled && !loading && downloadCount !== null && downloadCount >= minThreshold
   );
@@ -77,7 +89,7 @@
   target="_blank"
   rel="noopener noreferrer"
   class="downloads-badge"
-  title={latestReleaseTag ? `Latest Release: ${latestReleaseTag}` : 'GitHub Releases'}
+  title={downloadCount !== null ? `${downloadCount.toLocaleString()} total downloads${latestReleaseTag ? ` · Latest: ${latestReleaseTag}` : ''}` : 'GitHub Releases'}
 >
   <svg class="dl-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -86,7 +98,7 @@
   </svg>
   <span class="label">Downloads</span>
   <span class="count-pill">
-    {downloadCount?.toLocaleString()}
+    {formatCount(downloadCount!)}
   </span>
 </a>
 {/if}
