@@ -3,6 +3,7 @@
 **PDF tools for your AI agent — and for you. Pure Rust. Runs locally. Files never leave your machine.**
 
 [![CI](https://github.com/KrushnaVardhanReddy/PaperPilot/actions/workflows/rust.yml/badge.svg)](https://github.com/KrushnaVardhanReddy/PaperPilot/actions)
+[![Downloads](https://img.shields.io/github/downloads/KrushnaVardhanReddy/PaperPilot/total?color=2563eb&label=downloads)](https://github.com/KrushnaVardhanReddy/PaperPilot/releases)
 [![Awesome Rust](https://awesome.re/mentioned-badge.svg)](https://github.com/rust-unofficial/awesome-rust#utilities)
 [![npm version](https://img.shields.io/npm/v/@usepaperpilot/mcp.svg?color=cb3837)](https://www.npmjs.com/package/@usepaperpilot/mcp)
 [![Glama MCP Server](https://glama.ai/mcp/servers/KrushnaVardhanReddy/PaperPilot/badges/score.svg)](https://glama.ai/mcp/servers/KrushnaVardhanReddy/PaperPilot)
