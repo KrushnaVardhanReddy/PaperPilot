@@ -181,7 +181,7 @@ def test_refusals_are_attached_to_actual_guardrail_templates():
 
 def test_catalog_excludes_unavailable_or_fixture_dependent_handlers():
     assert set(CONTRACTS) == set(TOOL_SCHEMAS) == set(SINGLE_TOOL_TEMPLATES)
-    assert not {"pdf_reverse", "pdf_invert_colors", "pdf_compare_visual"} & CONTRACTS.keys()
+    assert not {"pdf_reverse", "pdf_compare_visual"} & CONTRACTS.keys()
     for name, schema in TOOL_SCHEMAS.items():
         assert set(schema.get("required", [])) <= schema["properties"].keys(), name
 

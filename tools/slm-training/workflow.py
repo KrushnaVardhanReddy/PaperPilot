@@ -32,9 +32,13 @@ _PDF_TO_PDF = (
     "pdf_dedup_streams", "pdf_fill_form", "pdf_metadata", "pdf_overlay_underlay",
     "pdf_posterize", "pdf_sign", "pdf_split_scanned_book", "pdf_stamp",
     "pdf_timestamp", "pdf_to_pdf_a", "recipe_run", "document_workflow",
+    "pdf_invert_colors",
 )
 CONTRACTS = {name: ArtifactContract() for name in _PDF_TO_PDF}
 CONTRACTS.update({
+    "pdf_chunk": ArtifactContract(output_kind="json", preserves_input=True),
+    "pdf_extract_patterns": ArtifactContract(output_kind="json", preserves_input=True),
+    "cli_ask": ArtifactContract(input_parameters=(), output_kind="json", output_parameter=""),
     "pdf_merge": ArtifactContract(input_parameters=("inputs",)),
     "pdf_merge_alternate": ArtifactContract(input_parameters=("input_a", "input_b")),
     "pdf_split": ArtifactContract(output_kind="directory", output_parameter="output_dir", terminal=True),
