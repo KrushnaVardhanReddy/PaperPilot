@@ -146,6 +146,31 @@ This single command automatically updates:
 When triggering `.github/workflows/release.yml` with tag `v0.8.2`:
 - CI automatically reads the input tag and injects it into Desktop Tauri metadata (`tauri.conf.json`), Flatpak, WinGet, and creates the GitHub release artifacts automatically.
 
+#### 📦 Flathub Packaging & Submission Protocol:
+For every new release (e.g. `v0.8.2`):
+1. **Retrieve the release `.deb` SHA-256 hash**:
+   ```bash
+   curl -sL https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v0.8.2/PaperPilot_0.8.2_amd64.deb.sha256
+   ```
+2. **Update local packaging in PaperPilot**:
+   - `packaging/flatpak/com.usepaperpilot.PaperPilot.yml`:
+     - Update download URL to `.../releases/download/v0.8.2/PaperPilot_0.8.2_amd64.deb`.
+     - Update `sha256` with the exact hash retrieved above.
+   - `packaging/flatpak/com.usepaperpilot.PaperPilot.metainfo.xml`:
+     - Ensure `<project_license>Apache-2.0</project_license>` is preserved.
+     - Add the new `<release version="0.8.2" date="YYYY-MM-DD">` block with summary notes.
+3. **Synchronize the Flathub fork repository**:
+   - The standalone Flathub clone lives at `~/Project/flathub` on branch `add-com.usepaperpilot.PaperPilot`:
+     ```bash
+     cd ~/Project/flathub
+     git pull origin add-com.usepaperpilot.PaperPilot
+     cp ~/Project/PaperPilot/packaging/flatpak/* ~/Project/flathub/
+     git add . && git commit -m "update(paperpilot): bump to v0.8.2" && git push origin add-com.usepaperpilot.PaperPilot
+     ```
+4. **Submitting / Updating the Flathub PR**:
+   - **Initial Submission**: Open PR from `KrushnaVardhanReddy:add-com.usepaperpilot.PaperPilot` targeting `flathub/flathub` on branch **`new-pr`** ([one-click PR link](https://github.com/flathub/flathub/compare/new-pr...KrushnaVardhanReddy:flathub:add-com.usepaperpilot.PaperPilot?expand=1)).
+   - **Subsequent Version Updates**: Once accepted by Flathub, updates are pushed directly to `flathub/com.usepaperpilot.PaperPilot`.
+
 ---
 
 1. **System Resource Constraint (`-j 4` is MANDATORY on local machine):**

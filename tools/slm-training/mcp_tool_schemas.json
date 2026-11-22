@@ -68,6 +68,32 @@
     ],
     "type": "object"
   },
+  "cli_ask": {
+    "additionalProperties": false,
+    "properties": {
+      "dry_run": {
+        "default": true,
+        "description": "Dry-run plan resolution flag (default true).",
+        "type": "boolean"
+      },
+      "input": {
+        "description": "Optional active PDF file path providing context to the resolver.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional file path where the interpreted plan summary text will be written.",
+        "type": "string"
+      },
+      "prompt": {
+        "description": "Natural-language document instruction or question to resolve offline.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "prompt"
+    ],
+    "type": "object"
+  },
   "document_pii_scan": {
     "additionalProperties": false,
     "properties": {
@@ -554,6 +580,43 @@
     ],
     "type": "object"
   },
+  "pdf_chunk": {
+    "additionalProperties": false,
+    "properties": {
+      "break_on_headings": {
+        "default": true,
+        "description": "Trigger hard boundary splits on # / ## headings (default: true).",
+        "type": "boolean"
+      },
+      "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination path for JSON output.",
+        "type": "string"
+      },
+      "overlap_tokens": {
+        "default": 50,
+        "description": "Overlap tokens between consecutive chunks (default: 50, range: 0-500).",
+        "type": "number"
+      },
+      "strip_boilerplate": {
+        "default": true,
+        "description": "Strip repetitive headers/footers across consecutive pages (default: true).",
+        "type": "boolean"
+      },
+      "target_tokens": {
+        "default": 500,
+        "description": "Target tokens per chunk (default: 500, range: 50-4000).",
+        "type": "number"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
   "pdf_classify_type": {
     "additionalProperties": false,
     "properties": {
@@ -948,6 +1011,47 @@
     ],
     "type": "object"
   },
+  "pdf_extract_patterns": {
+    "additionalProperties": false,
+    "properties": {
+      "case_sensitive": {
+        "default": false,
+        "description": "Enable case-sensitive keyword and regex matching (default false).",
+        "type": "boolean"
+      },
+      "context_len": {
+        "default": 30,
+        "description": "Number of surrounding context characters included per match (default 30).",
+        "type": "integer"
+      },
+      "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "keywords": {
+        "description": "List of literal keyword strings to search for across all pages.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "output": {
+        "description": "Optional destination .json file path to save the pattern match report.",
+        "type": "string"
+      },
+      "patterns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Key-value map of pattern label to regular expression string (e.g., {\"ssn\": \"\\\\d{3}-\\\\d{2}-\\\\d{4}\"}).",
+        "type": "object"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
   "pdf_extract_tables": {
     "additionalProperties": false,
     "properties": {
@@ -1125,6 +1229,39 @@
     },
     "required": [
       "input"
+    ],
+    "type": "object"
+  },
+  "pdf_invert_colors": {
+    "additionalProperties": false,
+    "properties": {
+      "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "mode": {
+        "default": "dark_mode",
+        "description": "Color transform preset (default 'dark_mode').",
+        "enum": [
+          "dark_mode",
+          "true_invert",
+          "high_contrast",
+          "sepia"
+        ],
+        "type": "string"
+      },
+      "output": {
+        "description": "Destination path for the color-transformed .pdf file.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "Optional comma-separated 1-based page numbers (e.g., '1,3,5'); defaults to all pages.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
     ],
     "type": "object"
   },

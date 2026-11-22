@@ -39,6 +39,7 @@ def generate_random_param(param_type, param_name):
         "format": "json", "target_sheet": "a4",
         "grid_cols": 2, "grid_rows": 2, "overlap_pt": 15, "scale": 1.0,
         "direction": "vertical", "margin_pt": 0, "spacing_pt": 0,
+        "mode": "dark_mode",
     }
     if param_name in values:
         return values[param_name]

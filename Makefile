@@ -622,5 +622,12 @@ podman-clean-all: podman-clean
 		docker system prune -a -f --volumes 2>/dev/null || true; \
 	fi
 
+# GitHub Release Download Statistics
+stats:
+	@python3 scripts/release_stats.py
+
+
+
+
 
 
