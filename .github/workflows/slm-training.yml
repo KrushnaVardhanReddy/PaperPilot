@@ -1,15 +1,8 @@
 name: SLM Workflow Regression
 
 on:
-  pull_request:
-    paths:
-      - 'tools/slm-training/**'
-      - 'paperpilot-mcp/**'
-      - 'paperpilot-pdf/**'
-      - 'Cargo.lock'
-      - '.github/workflows/slm-training.yml'
   push:
-    branches: [main, feature/dev]
+    branches: [main]
     paths:
       - 'tools/slm-training/**'
       - 'paperpilot-mcp/**'

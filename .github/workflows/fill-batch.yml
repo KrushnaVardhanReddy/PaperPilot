@@ -1,16 +1,8 @@
 name: AcroForm Batch Mail Merge
 
 on:
-  pull_request:
-    paths:
-      - 'paperpilot-cli/**'
-      - 'paperpilot-pdf/src/operations/form*'
-      - 'paperpilot-pdf/src/operations/flatten.rs'
-      - 'paperpilot-pdf/tests/form_fill_regression.rs'
-      - 'Cargo.lock'
-      - '.github/workflows/fill-batch.yml'
   push:
-    branches: [main, feature/dev]
+    branches: [main]
     paths:
       - 'paperpilot-cli/**'
       - 'paperpilot-pdf/src/operations/form*'

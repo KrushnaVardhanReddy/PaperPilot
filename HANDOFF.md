@@ -127,6 +127,27 @@ When resuming a new session, follow these steps:
 
 > ⚠️ **CRITICAL**: PaperPilot is a live open-source product. All development must preserve production stability.
 
+### 📦 Version Bumping & Release PR Protocol (How to prepare next version)
+
+When raising a PR for the next release (e.g. `0.8.2` or `0.9.0`), you **do not** need to edit 15 files manually. Run the automated version bumper:
+```bash
+make bump-version VERSION=0.8.2
+```
+This single command automatically updates:
+1. **Rust Workspace Crates**: `version = "x.y.z"` across `paperpilot-core`, `paperpilot-pdf`, `paperpilot-cli`, `paperpilot-mcp`, `paperpilot-gateway`, `paperpilot-wasm`, `paperpilot-ai`, `paperpilot-nlp`, `paperpilot-storage`.
+2. **NPM MCP Runner**: Updates `packages/paperpilot-mcp/package.json` to the target version.
+3. **Cargo.lock**: Automatically re-synchronizes with `cargo check ... -j 4`.
+
+#### Optional/Public-Facing Docs Checklist for major/minor releases:
+- If new tools were introduced: Add the new tool slug to `V08_TOOLS` in `apps/docs/src/components/VersionSelectHeader.astro` and verify `apps/docs/astro.config.mjs` sidebar.
+- Add the new version option to the `<select id="doc-version-select">` dropdown in `VersionSelectHeader.astro`.
+
+#### How Release Tagging Works:
+When triggering `.github/workflows/release.yml` with tag `v0.8.2`:
+- CI automatically reads the input tag and injects it into Desktop Tauri metadata (`tauri.conf.json`), Flatpak, WinGet, and creates the GitHub release artifacts automatically.
+
+---
+
 1. **System Resource Constraint (`-j 4` is MANDATORY on local machine):**
    - **ALWAYS** pass `-j 4` for all local `cargo test`, `cargo build`, or `cargo check` commands (e.g. `cargo test -p paperpilot-pdf -j 4`).
    - Unbounded cargo compilations will exhaust memory and freeze the host machine / log off the system.
