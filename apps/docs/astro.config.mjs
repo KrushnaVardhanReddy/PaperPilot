@@ -56,7 +56,10 @@ export default defineConfig({
         },
         {
           label: 'Architecture & Performance',
-          autogenerate: { directory: 'architecture' },
+          items: [
+            { label: 'Architecture Overview', slug: 'architecture/zero-copy-streaming' },
+            { label: 'System & Interface Benchmarks', slug: 'architecture/benchmarks' },
+          ],
         },
       ],
       customCss: [],
