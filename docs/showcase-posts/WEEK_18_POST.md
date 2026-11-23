@@ -53,6 +53,14 @@ slice_path = resp.json()["output_path"] # Ready for immediate RAG embedding
 
 Deliver targeted, high-precision document slices to your AI models while slashing token costs.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #RAG #TokenOptimization #AIArchitect #DataPipelines #RustLang #OpenSource #PaperPilot #MCP #CostReduction

@@ -11,12 +11,12 @@
 
 Sharing sensitive executive compensation, merger drafts, or financial audits via email? Slapping a basic password on a PDF doesn't protect you if the cipher is obsolete. 🔐
 
-Many legacy tools still generate PDF encryption using deprecated 40-bit or 128-bit RC4 algorithms that modern GPU clusters can crack in seconds. Worse, they leave permissions completely unconfigured. 🛑
+Legacy tools often generate PDF encryption using weak 40-bit/128-bit RC4 ciphers that modern GPUs crack in seconds, leaving permissions unconfigured. 🛑
 
-PaperPilot enforces revision 6 **AES-256 cipher encryption** with fine-grained cryptographic permission locking:
-- Distinguishes between Owner Passwords (full administrative control) and User Passwords (read-only access).
-- Cryptographically restricts content copying, printing, annotation changes, and assembly.
-- Zero-knowledge & 100% client-side: Encryption keys are derived in local memory. 0 bytes leave your machine.
+PaperPilot enforces revision 6 **AES-256 cipher encryption** with fine-grained cryptographic locking:
+- Separates Owner (admin) and User (read-only) passwords.
+- Restricts copying, printing, annotations, and assembly.
+- 100% client-side: Keys are derived in local memory. 0 bytes leave your machine.
 
 Same task, your choice of interface:
 
@@ -54,6 +54,14 @@ resp = requests.post("http://localhost:8080/api/v1/encrypt", json={
 
 Lock confidential enterprise documents with military-grade encryption without sending keys to cloud SaaS providers.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #CyberSecurity #ZeroKnowledge #Encryption #FinTech #Privacy #InfoSec #RustLang #OpenSource #PaperPilot #MCP

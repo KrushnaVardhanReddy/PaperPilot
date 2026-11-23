@@ -54,6 +54,14 @@ markdown_context = resp.json()["markdown"] # Ready for model prompt
 
 Feed structured, token-efficient Markdown to your models without cloud conversion APIs.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #RAG #GenerativeAI #DocxToMarkdown #LLM #KnowledgeManagement #RustLang #OpenSource #PaperPilot #MCP

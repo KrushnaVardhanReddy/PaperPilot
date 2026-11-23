@@ -57,7 +57,14 @@ chunks = resp.json()["chunks"] # 0 orphan rows, 100% grounded retrieval
 
 Garbage in, garbage out. High-performance RAG starts with structure-aware document parsing.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
-📦 Try it: `paperpilot pdf-to-markdown -i spec.pdf -o spec.md`
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #RAG #GenerativeAI #VectorDatabase #AI #MachineLearning #LlamaIndex #LangChain #DataEngineering #Rust #OpenSource

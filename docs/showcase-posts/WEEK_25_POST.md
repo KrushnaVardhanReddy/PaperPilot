@@ -55,6 +55,14 @@ resp = requests.post("http://localhost:8080/api/v1/cv/prep", json={
 
 Clean, straighten, and optimize visual document scans locally before sending them to vision models.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #ComputerVision #EdgeAI #Multimodal #ImageProcessing #RustLang #OpenSource #PaperPilot #MCP #DocumentScanning

@@ -55,6 +55,14 @@ overlay_url = resp.json()["diff_image_path"] # Ready for human QA
 
 Catch rogue visual shifts, moved architectural features, and layout changes before approving high-stakes revisions.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #LegalTech #VisualDiff #QualityAssurance #Architecture #Engineering #RustLang #ComputerVision #OpenSource #PaperPilot #MCP

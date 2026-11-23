@@ -53,6 +53,14 @@ images = resp.json()["extracted_files"] # Ready for multimodal model ingest
 
 Harvest pristine, high-resolution scientific diagrams and figures without manual screenshotting.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #MachineLearning #Research #AcademicTwitter #BioTech #DataExtraction #RustLang #OpenSource #PaperPilot #MCP

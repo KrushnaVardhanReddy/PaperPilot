@@ -13,7 +13,7 @@ Someone sends you a revised 40-page contract. They claim they only *"fixed a typ
 
 Can you spot the rogue zero that turned a \$10,000 monthly retainer into \$100,000 before your team signs? 🔍🚨
 
-Manual review takes hours and is prone to human fatigue. Naive pixel diff tools trigger hundreds of false positives on font kerning while missing subtle text substitutions deep in the PDF byte stream.
+Manual review is slow and error-prone. Naive pixel diffs trigger endless false positives on kerning while missing subtle text substitutions in the PDF byte stream.
 
 And if the document was digitally signed? Modifying even one invisible character silently invalidates its legal seal.
 
@@ -55,8 +55,16 @@ if resp.json()["tamper_detected"]:
     raise SecurityException("Unauthorized contract modification detected!")
 ```
 
-Never rely on honor-system redlines when millions of dollars are on the line. Diff the AST and verify the signature locally.
+Never rely on honor-system redlines. Diff the AST and verify signatures locally.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #LegalTech #Compliance #DocumentSecurity #CyberSecurity #Audit #FinTech #OpenSource #RustLang #ContractManagement #PaperPilot #MCP

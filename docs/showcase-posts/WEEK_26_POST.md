@@ -56,6 +56,14 @@ gif_size = resp.json()["file_size_kb"] # Crisp, sub-250KB asset
 
 Create stunning, pixel-perfect animated technical showcases directly from your terminal or AI agents.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #DeveloperMarketing #OpenSource #DevRel #TechnicalWriting #RustLang #GIF #PaperPilot #MCP #MediaSynthesis

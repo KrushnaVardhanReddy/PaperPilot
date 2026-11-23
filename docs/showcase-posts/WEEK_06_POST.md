@@ -11,9 +11,9 @@
 
 Are your automated financial workflows storing bloated, unencrypted PDFs across cloud storage buckets? 💸
 
-Every uncompressed 10MB invoice that hits your inbox quietly inflates your S3 storage tiers and egress budgets—while exposing plaintext vendor and tax data. 🔓
+Uncompressed 10MB invoices quietly inflate S3 storage and egress budgets—while exposing plaintext vendor and tax data. 🔓
 
-Here is how to automate invoice extraction, 85% compression, and military-grade AES-256 encryption in a single workflow. ⚡
+Here is how to automate invoice extraction, 85% compression, and AES-256 encryption in one workflow. ⚡
 
 By integrating PaperPilot's native tools into self-hosted **n8n**, backend services, or desktop apps:
 1. **Deterministic AcroForm Extraction (`pdf_extract_form`)**: Parses line items and totals into structured JSON in 12ms.
@@ -23,7 +23,7 @@ By integrating PaperPilot's native tools into self-hosted **n8n**, backend servi
 Same task, your choice of interface:
 
 🖥️ **Desktop GUI (Batch Invoice Processing Dock)**
-Drag monthly invoices into PaperPilot Desktop -> Toggle "Extract JSON", "Lossless Compress", and "AES-256 Lock" -> Process 50 invoices in 400ms with visual audit logs.
+Drag monthly invoices into PaperPilot Desktop -> Toggle "Extract JSON", "Lossless Compress", and "AES-256 Lock" -> Process 50 invoices in 400ms.
 
 🤖 **AI Agent / MCP (Claude & Windsurf Agent)**
 ```json
@@ -52,8 +52,16 @@ resp = requests.post("http://localhost:8080/api/v1/extract-form", json={
 data = resp.json()["data"] # Sub-5ms response inside n8n HTTP Request node
 ```
 
-Document automation shouldn't force you to choose between speed, storage costs, and enterprise data security.
+Document automation shouldn't force compromises on speed, storage, or security.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #n8n #Automation #FinOps #Invoicing #CloudStorage #CyberSecurity #ERP #OpenSource #DevOps #PaperPilot #WorkflowAutomation #MCP

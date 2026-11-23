@@ -11,7 +11,7 @@
 
 You don't need an 800-billion-parameter cloud LLM to automate document processing. 📉
 
-Piping sensitive internal financials, payroll, and proprietary IP to remote frontier models is an unnecessary security risk—and a massive cloud bill. 🛑
+Piping internal financials and payroll to remote frontier models creates major security risks and high cloud bills. 🛑
 
 What if a **0.5B parameter model** running on a standard laptop CPU could orchestrate your document workflows in under 85ms? ⚡
 
@@ -53,8 +53,16 @@ resp = requests.post("http://localhost:8080/api/v1/agent/execute", json={
 }) # Finished in 82ms locally on CPU
 ```
 
-The future of enterprise document intelligence isn't giant centralized API endpoints. It's purpose-trained Edge SLMs paired with deterministic native tool runtimes.
+Enterprise document intelligence doesn't need giant APIs—just purpose-trained Edge SLMs with deterministic native runtimes.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #EdgeAI #SLM #LocalAI #MachineLearning #AirGapped #EnterpriseAI #OpenSource #RustLang #Qwen #PaperPilot #PrivacyFirst #MCP

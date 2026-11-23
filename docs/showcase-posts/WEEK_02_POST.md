@@ -13,7 +13,7 @@ Claude Desktop is great at reading text. But ask it to Bates stamp 50 trial exhi
 
 Unless you wire it directly to local tools via MCP. ⚡
 
-Commercial e-discovery tools charge thousands per seat for basic tasks: applying sequential Bates numbering (`CONF-000001` .. `CONF-000045`), splitting deposition files, and organizing court exhibits.
+Commercial e-discovery tools charge thousands per seat for simple Bates numbering (`CONF-000001` .. `CONF-000045`) and exhibit splitting.
 
 With PaperPilot's Model Context Protocol (MCP) server, Claude gains 92 deterministic native tools running locally on your hardware. Zero bytes leave localhost.
 
@@ -58,7 +58,14 @@ Why MCP + Rust is the future of desktop agents:
 - Microsecond latency: Faster than Claude can stream its next token.
 - Air-gapped compliance: Works 100% offline for healthcare, defense, and legal counsel.
 
-⭐ Try it on GitHub: https://github.com/usepaperpilot/paperpilot
-Run locally: `npx @usepaperpilot/mcp` or `paperpilot serve --mcp`
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #Claude #Anthropic #MCP #ModelContextProtocol #LegalTech #AIWorkflow #Automation #OpenSource #Rust

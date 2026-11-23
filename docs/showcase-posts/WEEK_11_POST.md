@@ -55,6 +55,14 @@ job_id = resp.json()["job_id"] # Async streaming progress
 
 Scale document optimization locally across multi-core processors without blowing your cloud budget.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #FinOps #CloudStorage #BigData #DevOps #RustLang #Concurrency #OpenSource #BatchProcessing #PaperPilot #MCP

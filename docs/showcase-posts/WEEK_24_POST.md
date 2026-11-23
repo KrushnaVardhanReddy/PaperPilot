@@ -30,6 +30,14 @@ Same task, your choice of interface:
 
 The future of AI is local, private, and blazingly fast.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #LocalFirst #Privacy #DataSovereignty #EnterpriseAI #RustLang #OpenSource #FutureOfAI #PaperPilot #MCP #EdgeComputing

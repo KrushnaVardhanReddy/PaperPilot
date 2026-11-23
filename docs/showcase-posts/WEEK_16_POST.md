@@ -54,6 +54,14 @@ clean_text = resp.json()["text"] # Sanitized for LLM prompt
 
 Transform messy, scanned physical records into pristine token-efficient context on local hardware.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #OCR #DocumentProcessing #MachineLearning #DataEngineering #RustLang #AirGapped #OpenSource #PaperPilot #MCP

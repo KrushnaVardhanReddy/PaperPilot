@@ -53,6 +53,14 @@ resp = requests.post("http://localhost:8080/api/v1/pdf_to_pdfa", json={
 
 Zero cloud egress. 0 bytes transmitted. Passes rigorous VeraPDF validation suites with 0 infractions.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #Compliance #Archiving #HealthcareIT #GovTech #CyberSecurity #DataPreservation #ISO19005 #RustLang #OpenSource #PaperPilot #MCP

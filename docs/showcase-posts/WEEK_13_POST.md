@@ -11,7 +11,7 @@
 
 Why are enterprise operations teams still manually typing names, addresses, and policy numbers into government and insurance PDFs? 📋
 
-AcroForms and XFA interactive fields are notoriously finicky: font sizes mismatch, checkboxes fail to toggle, and filled values disappear when opened in third-party viewers. 🛑
+AcroForms and XFA fields are finicky: fonts mismatch, checkboxes fail, and filled values disappear in third-party viewers. 🛑
 
 PaperPilot provides deterministic, bi-directional AcroForm processing in native Rust:
 1. `pdf_read_form`: Introspects form fields, types, and allowed options into structured JSON in 8ms.
@@ -58,6 +58,14 @@ resp = requests.post("http://localhost:8080/api/v1/fill-form", json={
 
 Automate tedious form filling pipelines without visual distortion or missing data.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #EnterpriseAI #Forms #AcroForm #Operations #InsurTech #Automation #RustLang #OpenSource #PaperPilot #MCP

@@ -43,6 +43,14 @@ paperpilot serve --port 8080 # Starts local HTTP REST API gateway
 
 No Python virtualenvs, no broken Node.js dependencies, no Docker containers required. Pure native performance.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #DeveloperExperience #DevOps #RustLang #OpenSource #Productivity #Tauri #CrossPlatform #PaperPilot #MCP

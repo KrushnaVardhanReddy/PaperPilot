@@ -41,6 +41,14 @@ resp = requests.get("http://localhost:8080/openapi.json")
 
 Don't deploy unvetted AI tools into production workflows. Demand enterprise-grade MCP engineering.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #CyberSecurity #OpenSSF #MCP #ModelContextProtocol #EnterpriseAI #InfoSec #RustLang #OpenSource #PaperPilot #Security

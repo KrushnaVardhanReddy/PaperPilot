@@ -58,7 +58,14 @@ Before piping sensitive documents into external LLM endpoints:
 
 100% open-source & local-first.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
-📦 Install: `cargo install paperpilot-cli` or `npx @usepaperpilot/mcp`
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #AI #CyberSecurity #DataPrivacy #Rust #LLM #InfoSec #LegalTech #MCP #OpenSource

@@ -56,6 +56,14 @@ resp = requests.post("http://localhost:8080/api/v1/bates", json={
 
 Assemble exhibits, stamp immutable sequence numbers, and lock confidential watermarks with sub-second precision.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #LegalTech #Litigation #DocumentAssembly #BatesStamping #Contracts #Compliance #LegalOps #RustLang #OpenSource #PaperPilot #MCP

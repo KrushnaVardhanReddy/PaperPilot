@@ -52,6 +52,14 @@ curl -T document.pdf http://localhost:9998/tika --header "Accept: text/plain"
 
 Stop letting a heavy Java runtime bottleneck your local AI stack. Swap in PaperPilot Gateway and watch ingestion fly.
 
-⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+⭐ GitHub: https://github.com/KrushnaVardhanReddy/PaperPilot
+
+⚡ 5-Second Flash Install:
+• Linux & macOS:
+`curl -fsSL https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.sh | bash`
+• Windows PowerShell:
+`irm https://raw.githubusercontent.com/KrushnaVardhanReddy/PaperPilot/main/scripts/install.ps1 | iex`
+• AI Agent / MCP:
+`npx -y @usepaperpilot/mcp`
 
 #LocalAI #OpenWebUI #Ollama #SelfHosted #RustLang #DevOps #ApacheTika #Privacy #OpenSource #PaperPilot #MCP
