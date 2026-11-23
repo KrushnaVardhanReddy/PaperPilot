@@ -1,7 +1,7 @@
 # Week 03: Structure-Aware RAG vs. Naive Text Chunking
 
 **Theme:** Advanced Retrieval-Augmented Generation (RAG) & Vector Ingestion  
-**Tools Featured:** `pdf_to_markdown`, `pdf_extract_text`, `pdf_chunk`  
+**Tools Featured:** `pdf_to_markdown`, `pdf_extract_text`, `pdf_chunk` (PaperPilot Desktop, MCP, CLI & REST API)  
 **Target Audience:** AI Engineers, Vector DB Specialists (Qdrant, Pinecone, Weaviate), RAG Practitioners  
 **Asset:** ![Week 03 Demo](../assets/showcase/week03-structure-aware-rag.gif)
 
@@ -9,58 +9,55 @@
 
 ## 📝 LinkedIn Post Copy
 
-### Hook
 Why does your enterprise RAG pipeline hallucinate on financial tables and pricing agreements? 📉
 
 It's not your embedding model. It's your chunker. 🧩
 
----
+When a naive 500-token character window hits a multi-column pricing matrix:
+- Column headers get severed from their data rows.
+- Numbers lose context (`$1,499` floats without knowing if it's "Monthly Cost" or "Setup Fee").
+- When a user asks *"What is Pro tier uptime SLA?"*, vector search returns an orphan row, and your LLM hallucinates.
 
-### The Problem: Naive Character Splitting
-Most RAG ingestion pipelines do something like this:
-```python
-# The hallucination generator:
-RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+PaperPilot takes a structure-aware approach: preserving GFM Markdown pipes (`| Tier | Monthly | SLA |`) and attaching H1/H2 parent headers to child chunks in 11ms.
+
+Same task, your choice of interface:
+
+🖥️ **Desktop GUI (Dual-Pane Visual Inspector)**
+Open any complex PDF in PaperPilot Desktop -> Select "Structured Markdown" -> View original PDF on the left and live GitHub Flavored Markdown with table syntax on the right. Export with 1 click.
+
+🤖 **AI Agent / MCP (Claude & Cursor Ingestion)**
+```json
+{
+  "server": "paperpilot",
+  "tool": "pdf_to_markdown",
+  "arguments": {
+    "input": "Enterprise_SLA_Pricing.pdf",
+    "table_mode": "github_pipes",
+    "preserve_hierarchy": true
+  }
+}
 ```
 
-When this naive window hits a 5-column financial statement or service-level agreement:
-- Headers get severed from their data rows.
-- Currency figures lose their column context (`$12,000` floats without knowing if it's "Annual Cost" or "Setup Fee").
-- H1/H2 document hierarchy is obliterated into an amorphous blob of words.
+💻 **CLI (High-Speed Ingestion Pipeline)**
+```bash
+# Convert complex tables to pristine GFM markdown in 11ms
+paperpilot pdf-to-markdown -i SLA_Pricing.pdf -o sla.md --table-mode github_pipes
+paperpilot chunk -i sla.md --strategy semantic
+```
 
-When the user asks: *"What is the enterprise renewal discount in Year 3?"*, your vector search retrieves an orphan table row with no header, and the LLM confidently fabricates an answer.
-
----
-
-### The PaperPilot Solution: Structure-Aware Extraction
-PaperPilot (`pdf_to_markdown` / `pdf_chunk`) respects the visual and semantic hierarchy of the document tree:
-
-1. **Table Integrity**: Tables are identified and converted into clean GFM (GitHub Flavored Markdown) pipes (`| Tier | Monthly | SLA |`). Rows remain locked to their column headers.
-2. **Semantic Hierarchy**: Headers (`# Header`, `## Section`) stay attached to child content blocks, preserving contextual relevance.
-3. **Semantic Boundary Chunking**: Never split across a table boundary or mid-sentence.
-
----
-
-### The Difference in Vector Retrieval
-| Metric | Naive Token Chunker | PaperPilot Structure-Aware |
-|---|---|---|
-| **Table Layout** | Scrambled strings | Pristine Markdown tables |
-| **Context Retention** | Lost across cut-offs | Preserved H1/H2 parent tags |
-| **LLM Grounding** | Frequent hallucinations | 100% deterministic lookup |
-| **Extraction Latency** | Slow Python OCR wrapper | Sub-15ms native Rust engine |
-
----
-
-### See it in action:
-In the comparison graphic below:
-- **Left**: Naive 500-token character chunking splits a multi-tier SaaS pricing matrix into fragmented, unreadable gibberish.
-- **Right**: PaperPilot's `pdf_to_markdown` preserves clean markdown syntax, headers, and bulleted SLAs—ready for vector embeddings that actually work.
+🌐 **Python / REST API (Sub-5ms Microservice)**
+```python
+resp = requests.post("http://localhost:8080/api/v1/to-markdown", json={
+    "input_path": "Enterprise_SLA.pdf",
+    "extract_tables": True,
+    "chunk_strategy": "semantic_headers"
+})
+chunks = resp.json()["chunks"] # 0 orphan rows, 100% grounded retrieval
+```
 
 Garbage in, garbage out. High-performance RAG starts with structure-aware document parsing.
 
----
+⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+📦 Try it: `paperpilot pdf-to-markdown -i spec.pdf -o spec.md`
 
-⭐ Explore PaperPilot on GitHub: https://github.com/usepaperpilot/paperpilot  
-Try it: `paperpilot pdf-to-markdown --input spec.pdf --output spec.md`
-
-#RAG #GenerativeAI #VectorDatabase #AI #MachineLearning #LlamaIndex #LangChain #DataEngineering #Rust
+#RAG #GenerativeAI #VectorDatabase #AI #MachineLearning #LlamaIndex #LangChain #DataEngineering #Rust #OpenSource

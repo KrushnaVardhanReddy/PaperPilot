@@ -1,7 +1,7 @@
 # Week 06: n8n Workflow Automation: Automated Invoice Extraction & Archival Vault
 
 **Theme:** No-Code/Low-Code Workflow Automation & Cold Storage Archival  
-**Tools Featured:** `pdf_extract_form`, `pdf_compress`, `pdf_encrypt` (n8n Node Integration)  
+**Tools Featured:** `pdf_extract_form`, `pdf_compress`, `pdf_encrypt` (PaperPilot Desktop, MCP, CLI & REST API / n8n)  
 **Target Audience:** n8n Community, Automation Engineers, Zapier Switchers, CFOs & Operations Leaders  
 **Asset:** ![Week 06 Demo](../assets/showcase/week06-n8n-invoice-vault.gif)
 
@@ -9,59 +9,51 @@
 
 ## 📝 LinkedIn Post Copy
 
-### Hook
 Are your automated financial workflows storing bloated, unencrypted PDFs across cloud storage buckets? 💸
 
-Every uncompressed 10MB invoice that hits your inbox is silently eating away at your S3 storage tiers and cloud egress budgets—all while exposing plaintext vendor and tax data to anyone with bucket access. 🔓
+Every uncompressed 10MB invoice that hits your inbox quietly inflates your S3 storage tiers and egress budgets—while exposing plaintext vendor and tax data. 🔓
 
-Here is how to automate invoice extraction, 85% compression, and military-grade AES-256 encryption in a single self-hosted **n8n** workflow. ⚡
+Here is how to automate invoice extraction, 85% compression, and military-grade AES-256 encryption in a single workflow. ⚡
 
----
+By integrating PaperPilot's native tools into self-hosted **n8n**, backend services, or desktop apps:
+1. **Deterministic AcroForm Extraction (`pdf_extract_form`)**: Parses line items and totals into structured JSON in 12ms.
+2. **Perceptual Compression (`pdf_compress`)**: Slashes file sizes from 8.4MB down to 1.1MB (86.7% savings) with zero visual degradation.
+3. **AES-256 Encryption (`pdf_encrypt`)**: Applies revision 6 AES-256 cipher with granular permission lockouts before long-term archival.
 
-### The Problem: The Hidden Costs of Cloud Invoicing
-When accounting teams receive hundreds of vendor invoices every month:
-1. **Manual Data Entry Bottleneck**: Staff re-type line items, tax IDs, and totals into ERP/accounting software.
-2. **Storage Bloat**: Invoices scanned at 300+ DPI often exceed 8MB to 15MB each. Storing millions of uncompressed invoices over a 7-year statutory retention period costs thousands in cold-storage fees.
-3. **Compliance Vulnerability (SOX & GDPR)**: Financial documents left unencrypted at rest fail enterprise security audits.
+Same task, your choice of interface:
 
----
+🖥️ **Desktop GUI (Batch Invoice Processing Dock)**
+Drag monthly invoices into PaperPilot Desktop -> Toggle "Extract JSON", "Lossless Compress", and "AES-256 Lock" -> Process 50 invoices in 400ms with visual audit logs.
 
-### The PaperPilot + n8n Solution
-By plugging PaperPilot's native tools into self-hosted **n8n**:
-
-1. **Deterministic AcroForm & Table Extraction (`pdf_extract_form`)**:
-   Automatically parses inbound invoice fields (Invoice #, Vendor, Total USD, Tax ID, line items) directly into structured JSON in **12ms**—no brittle OCR prompts required.
-2. **Perceptual Stream Compression (`pdf_compress`)**:
-   Strips duplicate embedded font subsets and applies lossless stream flate recompression, slashing file sizes from **8.4MB down to 1.1MB (86.7% space savings)** with zero visual degradation.
-3. **AES-256 Cryptographic Lock (`pdf_encrypt`)**:
-   Applies revision 6 AES-256 encryption with granular permission controls (Print Allowed, Modification & Copying REVOKED) before depositing into secure S3 Glacier Deep Archive vaults.
-
----
-
-### The 4-Node n8n Pipeline
-```
-[ Inbound Email Trigger ]
-         ↓
-[ PaperPilot: pdf_extract_form ] ──> Structured JSON payload -> ERP / Stripe
-         ↓
-[ PaperPilot: pdf_compress ]     ──> 8.42 MB -> 1.12 MB (86.7% saved)
-         ↓
-[ PaperPilot: pdf_encrypt ]      ──> AES-256 cipher + permission lockout
-         ↓
-[ S3 Glacier Archival Deposit ]  ──> Cryptographically sealed & compliant
+🤖 **AI Agent / MCP (Claude & Windsurf Agent)**
+```json
+{
+  "server": "paperpilot",
+  "tool": "pdf_extract_form",
+  "arguments": {
+    "input": "invoice_nov2026.pdf",
+    "export_format": "json"
+  }
+}
 ```
 
-In the animated demonstration below, watch the entire end-to-end pipeline execute in n8n in real time.
+💻 **CLI (Terminal Batch Automation)**
+```bash
+paperpilot extract-form -i invoice.pdf -o invoice.json
+paperpilot compress -i invoice.pdf -o invoice_compact.pdf --target-mb 1.0
+paperpilot encrypt -i invoice_compact.pdf -o vault.pdf --aes-256 --user-pw "Pass2026!"
+```
 
----
+🌐 **n8n / REST API (Sub-5ms Webhook Node)**
+```python
+resp = requests.post("http://localhost:8080/api/v1/extract-form", json={
+    "input_path": "/invoices/inv_9482.pdf"
+})
+data = resp.json()["data"] # Sub-5ms response inside n8n HTTP Request node
+```
 
-### Key Takeaway for Operations & Finance Teams
-Document automation shouldn't force you to choose between speed, storage costs, and enterprise data security. 
-- Automate form extraction.
-- Compress before you archive.
-- Encrypt at rest by default.
+Document automation shouldn't force you to choose between speed, storage costs, and enterprise data security.
 
----
+⭐ GitHub: https://github.com/usepaperpilot/paperpilot
 
-## 🏷️ Hashtags & Social Metadata
-#n8n #Automation #FinOps #Invoicing #CloudStorage #CyberSecurity #ERP #OpenSource #DevOps #PaperPilot #WorkflowAutomation
+#n8n #Automation #FinOps #Invoicing #CloudStorage #CyberSecurity #ERP #OpenSource #DevOps #PaperPilot #WorkflowAutomation #MCP

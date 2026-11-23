@@ -1,7 +1,7 @@
 # Week 01: The Zero-Leak LLM Pipeline: Irreversible PII Redaction & Sanitization
 
 **Theme:** Enterprise AI Privacy & Security  
-**Tools Featured:** `pdf_redact`, `pdf_hash` (PaperPilot CLI & MCP)  
+**Tools Featured:** `pdf_redact`, `pdf_hash` (PaperPilot Desktop, MCP, CLI & REST API)  
 **Target Audience:** AI Engineers, Legal Tech, Security & Compliance, n8n/LangChain Builders  
 **Asset:** ![Week 01 Demo](../assets/showcase/week01-zero-leak-redaction.gif)
 
@@ -9,60 +9,56 @@
 
 ## 📝 LinkedIn Post Copy
 
-### Hook
-Most PDF "redaction" tools don't actually delete your sensitive data. They just slap a black rectangle on top of it. 🛑
+Most PDF "redaction" tools don't delete your sensitive data. They just slap a black rectangle on top of it. 🛑
 
-Feed that file into an LLM or OCR parser, and your client's SSN, credit card, and private health records get ingested straight into model context—or worse, logged to cloud APIs.
+Feed that file into an LLM or OCR parser, and your client's SSN, credit cards, and health records get ingested straight into model context—or logged to cloud APIs.
 
----
+Why? Traditional PDF annotations (`/Square`, `/Highlight`) merely render a visual mask. The raw glyph streams and font descriptors remain 100% extractable with 2 lines of Python.
 
-### The Problem
-When building autonomous AI document pipelines (using n8n, LangChain, or Claude Desktop), engineering teams often assume:
-> *"We drew redaction annotations over customer PII, so it's safe to send to OpenAI / Anthropic."*
+PaperPilot takes a cryptographic-first approach: surgical byte-stream excision in native Rust with deterministic SHA-256 auditing.
 
-Here's the harsh reality:
-Traditional PDF annotations (`/Square`, `/Highlight`) merely render a visual mask on the viewport. The raw glyph streams, font descriptors, and underlying text objects remain 100% intact in the PDF byte stream. A 2-line Python script or standard `pdftotext` extracts it effortlessly.
+Same engine, your choice of interface:
 
----
+🖥️ **Desktop GUI (1-Click Visual Redact)**
+Drag in your PDF -> Select "Auto-Sanitize PII (SSN, Cards, Emails)" -> Click "Apply". The document is permanently cleansed with zero visual artifacting.
 
-### The PaperPilot Solution
-PaperPilot (`pdf_redact` + `pdf_hash`) takes a zero-leak, cryptographic-first approach:
-
-1. **Irreversible Stream Incineration (`pdf_redact`)**:
-   Locates the exact coordinates of PII patterns (SSN, credit cards, emails, names) across text streams and vector objects, surgically excising the character byte sequences from the document content stream. It leaves zero extractable glyphs underneath.
-2. **Deterministic Cryptographic Hashing (`pdf_hash`)**:
-   Computes a SHA-256 audit digest of the sanitized artifact immediately upon output, providing verifiable chain-of-custody proof for compliance (SOC 2, HIPAA, GDPR).
-3. **Sub-15ms Execution**:
-   Written in native Rust. No bloated Python runtimes, no headless Chrome, and zero outbound network egress.
-
----
-
-### Terminal Walkthrough
-```bash
-# 1. Surgically burn PII from document stream
-paperpilot redact \
-  --input client_agreement.pdf \
-  --output agreement_sanitized.pdf \
-  --regex '\d{3}-\d{2}-\d{4}'
-
-# 2. Cryptographic audit fingerprint
-paperpilot hash --input agreement_sanitized.pdf
-# => SHA-256: 4f9a88...c1e3 (Zero extractable PII)
+🤖 **AI Agent / MCP (Claude Desktop & Cursor)**
+Let your AI agent orchestrate compliance locally:
+```json
+{
+  "server": "paperpilot",
+  "tool": "pdf_redact",
+  "arguments": {
+    "input": "contract.pdf",
+    "output": "safe.pdf",
+    "patterns": ["ssn", "credit_card", "email"]
+  }
+}
 ```
 
-In the animated demo below, watch the PaperPilot CLI execute stream redaction and audit hashing in milliseconds. When attempting copy-paste on the output, the underlying PII bytes no longer exist.
+💻 **CLI (Sub-15ms Terminal Execution)**
+```bash
+paperpilot redact -i contract.pdf -o safe.pdf --regex '\d{3}-\d{2}-\d{4}'
+paperpilot hash -i safe.pdf # => SHA-256 verified audit seal
+```
 
----
+🌐 **Python / REST API (Sub-5ms Microservice)**
+```python
+resp = requests.post("http://localhost:8080/api/v1/redact", json={
+    "input_path": "contract.pdf",
+    "output_path": "safe.pdf",
+    "regex": r"\d{3}-\d{2}-\d{4}"
+}) # Completed in 3.8ms
+```
 
-### Key Takeaway for AI Architects
-Before piping legal, financial, or healthcare PDFs into external LLM endpoints:
-- Never trust visual annotation overlays.
-- Sanitize at the byte-stream level locally.
-- Stamp an immutable hash for your audit logs.
+Before piping sensitive documents into external LLM endpoints:
+1. Never trust visual annotation overlays.
+2. Sanitize at the byte-stream level locally.
+3. Stamp an immutable hash for your audit logs.
 
-PaperPilot is 100% open-source, local-first, and available as a native CLI, REST API, and Model Context Protocol (MCP) server.
+100% open-source & local-first.
 
-⭐ Star the project on GitHub: https://github.com/usepaperpilot/paperpilot  
-📦 Install via brew / cargo / npx: `cargo install paperpilot-cli` or `npx @usepaperpilot/mcp`
+⭐ GitHub: https://github.com/usepaperpilot/paperpilot
+📦 Install: `cargo install paperpilot-cli` or `npx @usepaperpilot/mcp`
 
 #AI #CyberSecurity #DataPrivacy #Rust #LLM #InfoSec #LegalTech #MCP #OpenSource
