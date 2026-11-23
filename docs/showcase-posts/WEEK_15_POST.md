@@ -1,85 +1,60 @@
 # Week 15: Visual Document Diffing: High-Res Visual Pixel & Text Diff for Legal Revisions
 
-**Theme:** High-Resolution Pixel & Semantic Document Comparison  
-**Tools Featured:** `pdf_compare_visual`, `pdf_render_page`, `pdf_compare`  
-**Target Audience:** Contract Managers, Regulatory Affairs Directors, Compliance Auditors, M&A Legal Teams  
+**Theme:** High-Resolution Visual Pixel & Text Diffing for Complex Documents  
+**Tools Featured:** `pdf_compare_visual`, `pdf_render_page`, `pdf_compare` (PaperPilot Desktop, MCP, CLI & REST API)  
+**Target Audience:** Legal Design Teams, Regulatory Reviewers, Architects & Engineers, Quality Assurance  
 **Asset:** ![Week 15 Demo](../assets/showcase/week15-visual-document-diff.gif)
 
 ---
 
 ## 📝 LinkedIn Post Copy
 
-### Hook
-In an 80-page commercial contract revision, a counterparty changes a liability cap from `$500,000` to `$50,000`, shifts governing law from `Delaware` to `Nevada`, and shortens termination notice from `30 days` to `5 days`. 
+What happens when a document revision changes an architectural blueprint or CAD schematic instead of just body text? 📐
 
-Could your team catch that before signing? Or would it slip through manual review? ⚖️🔍
+Traditional text-only diffing tools miss visual layout shifts, altered watermarks, and repositioned diagram elements entirely. On the other hand, naive image diffing flags irrelevant scanner noise. 🛑
 
-Contract redlines sent over email are notoriously deceptive. Word "Track Changes" can be accepted selectively, and bad actors frequently convert documents back and forth to PDF to conceal alterations, misaligned clauses, or sneaky decimal shifts.
+PaperPilot's visual diffing engine combines sub-pixel perceptual rendering with structural AST analysis:
+- Renders vector pages at 300 DPI directly in native Rust.
+- Generates high-contrast colorized change maps (Green = Added, Red = Removed, Yellow = Displaced).
+- Ignores insignificant raster noise while highlighting genuine structural discrepancies.
 
-PaperPilot delivers sub-pixel visual and semantic document diffing—rendering differences crystal clear in sub-seconds. ⚡
+Same task, your choice of interface:
 
----
+🖥️ **Desktop GUI (Side-by-Side Visual Lens)**
+Drop `blueprint_v1.pdf` and `blueprint_v2.pdf` into PaperPilot Desktop -> Move the interactive slider lens across the drawing canvas -> Visual diff highlights moved columns and modified dimensions instantly.
 
-### The Problem: Why Traditional Document Comparison Fails
-Standard document review workflows suffer from critical blind spots:
-
-1. **Blind Text-Only Diffs**:
-   Comparing extracted raw text ignores formatting, moved paragraphs, layout changes, watermarks, signature boxes, and swapped diagram figures.
-
-2. **Scanned / Flattened Revision Blindness**:
-   When counterparties print and re-scan a contract, optical character recognition (OCR) introduces character errors, masking actual unauthorized changes behind OCR noise.
-
-3. **Human Eye Fatigue**:
-   Paralegals and contract analysts spend hours scanning multi-page exhibits line-by-line, leading to costly oversight in fast-paced deal environments.
-
----
-
-### The PaperPilot Solution: Sub-Pixel Perceptual Heatmaps & Text Alignments
-PaperPilot’s `pdf_compare_visual` combines high-density rasterization with hardware-accelerated structural image comparison:
-
-1. **High-Density Rasterization (`pdf_render_page`)**:
-   - Converts vector page viewports to pristine 300+ DPI raster layers in parallel across CPU threads.
-   - Evaluates typography, kerning, line heights, and table geometries exactly as rendered by print engines.
-
-2. **Sub-Pixel Delta Heatmap (`pdf_compare_visual`)**:
-   - Performs structural similarity (SSIM) indexing and perceptual color difference metrics ($ΔE$).
-   - Flags deleted clauses in vibrant red strikethrough, newly added text in distinct emerald green, and altered numerical values in high-contrast bounding boxes.
-   - Ignores inconsequential anti-aliasing artifacts while catching minute decimal points and single-glyph changes.
-
-3. **Auditable Diff Package Generation**:
-   - Generates an auditable comparison report PDF showing side-by-side viewports and delta heatmaps with millisecond-level execution timestamps.
-
----
-
-### CLI Command Example
-```bash
-# Compare base contract vs. incoming counterparty revision at 300 DPI
-paperpilot pdf_compare_visual \
-  --base agreement_v1.pdf \
-  --target agreement_v2_redlined.pdf \
-  --dpi 300 \
-  --threshold 0.02 \
-  --mode composite \
-  --output diff_audit_report.pdf
+🤖 **AI Agent / MCP (Autonomous Visual Auditor)**
+```json
+{
+  "server": "paperpilot",
+  "tool": "pdf_compare_visual",
+  "arguments": {
+    "original": "patent_spec_v1.pdf",
+    "revised": "patent_spec_v2.pdf",
+    "dpi": 300,
+    "highlight_color": "red_green"
+  }
+}
 ```
 
----
+💻 **CLI (Sub-35ms Visual Comparison)**
+```bash
+paperpilot compare-visual -a plan_v1.pdf -b plan_v2.pdf -o diff_overlay.png --dpi 300
+# Visual discrepancy score: 2.4% difference detected on Page 3
+```
 
-### Key Audit Findings Surfaced (Demo Example)
-- ❌ **Section 4.2 Liability Cap:** `$500,000` dropped to `$50,000`
-- ❌ **Section 9.1 Governing Jurisdiction:** Changed from `Delaware` to `Nevada`
-- ❌ **Section 12.4 Termination Notice:** Shortened from `30 days` to `5 days`
-- ⚠️ **Table Geometry:** Table column offset altered by +1.4pt delta
+🌐 **Python / REST API (Sub-15ms Webhook Diff)**
+```python
+resp = requests.post("http://localhost:8080/api/v1/compare-visual", json={
+    "file_a": "drawing_rev1.pdf",
+    "file_b": "drawing_rev2.pdf",
+    "generate_overlay": True
+})
+overlay_url = resp.json()["diff_image_path"] # Ready for human QA
+```
 
----
+Catch rogue visual shifts, moved architectural features, and layout changes before approving high-stakes revisions.
 
-### Key Technical Specifications
-- **Render Engine:** 300 DPI high-density multi-threaded rasterizer
-- **Comparison Algorithms:** Perceptual Pixel Delta + SSIM (Structural Similarity Index)
-- **Execution Speed:** 31.6 ms across multi-page contract revisions
-- **Output Formats:** Side-by-side composite PDF, visual heatmap PNG, JSON coordinate delta matrix
+⭐ GitHub: https://github.com/usepaperpilot/paperpilot
 
----
-
-### Key Hashtags
-#LegalTech #ContractManagement #RegulatoryCompliance #PaperPilot #PDF #Audit #DocumentAutomation #FinTech #OpenSource #LocalFirst
+#LegalTech #VisualDiff #QualityAssurance #Architecture #Engineering #RustLang #ComputerVision #OpenSource #PaperPilot #MCP

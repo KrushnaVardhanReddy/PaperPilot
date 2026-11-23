@@ -1,105 +1,57 @@
 # Week 17: Bookmark & Chapter Navigation: Automatic Table-of-Contents & Structural Indexing
 
-**Theme:** Structural Navigation, PDF Outlines & Regulatory Compliance  
-**Tools Featured:** `pdf_toc`, `pdf_bookmark_add`  
-**Target Audience:** Academic Researchers, Technical Writers, Regulatory Affairs Specialists, Legal Operations Directors  
+**Theme:** PDF Bookmarks, Outline Hierarchies & Semantic Table of Contents  
+**Tools Featured:** `pdf_toc`, `pdf_bookmark_add` (PaperPilot Desktop, MCP, CLI & REST API)  
+**Target Audience:** Technical Writers, Regulatory Affairs, Publishers, Legal Discovery Teams  
 **Asset:** ![Week 17 Demo](../assets/showcase/week17-bookmark-toc-indexing.gif)
 
 ---
 
 ## 📝 LinkedIn Post Copy
 
-### Hook
-Imagine receiving a 400-page clinical trial protocol or a 1,200-page regulatory filing with zero table of contents and zero interactive bookmarks. 📑📉
+Ever opened a 400-page technical manual or regulatory filing only to find that the PDF bookmark sidebar is completely empty? 📚
 
-To find Section 4.2.1 (Pharmacokinetic Biomarkers), you are forced to drag the scrollbar blindly through hundreds of pages. Even worse: regulatory agencies like the FDA (eCTD) and EMA reject electronic submissions that lack compliant, hierarchical outline trees.
+Navigating an unindexed document forces readers and AI agents to waste time blindly scrolling or performing brute-force keyword searches across hundreds of pages. 🛑
 
-Creating these bookmarks manually inside desktop software takes 45 to 60 minutes per document.
+PaperPilot automatically reconstructs structural outlines, bookmarks, and navigational hierarchies directly from visual headings:
+- Detects font sizes, weights, and heading patterns (H1, H2, H3) to build nested outline trees.
+- Generates interactive PDF Table of Contents (`/Outlines`) compatible with all standard viewers.
+- Preserves exact page destination coordinates for instant jump navigation.
 
-With PaperPilot, it takes 18 milliseconds. ⚡
+Same task, your choice of interface:
 
----
+🖥️ **Desktop GUI (Visual Outline Builder)**
+Drop an unindexed PDF into PaperPilot Desktop -> Click "Auto-Generate Outline" -> Review detected hierarchy in the left sidebar -> Click "Save PDF with Bookmarks". Instant navigation in 45ms.
 
-### The Problem: The High Cost of Unindexed PDFs
-Long-form technical, legal, and academic documents routinely ship without internal PDF bookmarks:
+🤖 **AI Agent / MCP (Structural Indexer)**
+```json
+{
+  "server": "paperpilot",
+  "tool": "pdf_toc",
+  "arguments": {
+    "input": "technical_specification_400p.pdf",
+    "output": "indexed_specification.pdf",
+    "max_depth": 3
+  }
+}
+```
 
-1. **Regulatory Rejection Risk (eCTD & 21 CFR Part 11)**:
-   Healthcare and pharmaceutical submissions mandate functional, multi-level PDF bookmarks pointing to explicit coordinate targets (`/XYZ`). Missing outlines trigger immediate technical review delays.
-
-2. **Severe Research & Reading Inefficiency**:
-   Engineers, legal associates, and researchers waste countless hours navigating massive technical manuals, specification sheets, and patents without clickable navigation.
-
-3. **LLM Context Inefficiency**:
-   When AI agents or RAG pipelines ingest massive PDFs without structural metadata, they cannot pinpoint exact section boundaries, leading to blind token scanning and inaccurate retrievals.
-
----
-
-### The PaperPilot Solution: Automated Heading Discovery & Lossless Outline Injection
-PaperPilot delivers structural document understanding with zero visual disruption:
-
-1. **Structural TOC Extraction (`pdf_toc`)**:
-   - Inspects existing `/Outlines` object dictionaries in the PDF catalog.
-   - When missing, analyzes font hierarchies, size differentials, weight distributions, and numbered section patterns (`1.0`, `1.1`, `1.1.2`) to rebuild document semantics from the ground up.
-
-2. **Hierarchical Bookmark Insertion (`pdf_bookmark_add`)**:
-   - Constructs standard PDF outline trees (`/First`, `/Last`, `/Next`, `/Prev`, `/Parent`) with explicit destination coordinate viewports.
-   - Supports configurable tree depth (1 to 6 heading levels) without altering or re-compressing underlying page content streams.
-
-3. **Visual & Clickable Table of Contents Generation**:
-   - Can synthesize a dedicated front-matter TOC page with internal hyperlink annotations, ensuring universal navigation across any PDF viewer (Acrobat, Apple Preview, PDF.js, Foxit).
-
----
-
-### CLI Command Example
+💻 **CLI (Sub-20ms Terminal Indexing)**
 ```bash
-# Extract heading structure and inject a 3-level FDA-compliant bookmark tree
-paperpilot pdf_toc \
-  --input clinical_trial_submission.pdf \
-  --json \
-  | paperpilot pdf_bookmark_add \
-      --hierarchy from-headings \
-      --levels 3 \
-      --output clinical_trial_indexed.pdf
+paperpilot toc -i manual.pdf -o manual_indexed.pdf --depth 3
+paperpilot bookmark add -i report.pdf -o report_bm.pdf --title "Executive Summary" --page 3
 ```
 
----
-
-### Python SDK / MCP Agentic Integration
+🌐 **Python / REST API (Sub-10ms Microservice)**
 ```python
-from paperpilot import PaperPilotClient
-
-client = PaperPilotClient()
-
-# Extract structural table of contents
-toc_tree = client.pdf_toc("clinical_trial_submission.pdf", detect_headings=True)
-
-# Programmatically inject custom navigation outlines
-client.pdf_bookmark_add(
-    input_path="clinical_trial_submission.pdf",
-    bookmarks=[
-        {"title": "1.0 Executive Summary", "page": 1, "level": 1},
-        {"title": "1.1 Study Methodology", "page": 4, "level": 2},
-        {"title": "1.1.2 PK Profiles", "page": 12, "level": 3},
-        {"title": "2.0 Safety Profile", "page": 28, "level": 1},
-    ],
-    output_path="clinical_trial_indexed.pdf"
-)
-
-print(f"Indexed {len(toc_tree.entries)} chapters in 18ms.")
+resp = requests.post("http://localhost:8080/api/v1/toc", json={
+    "input_path": "audit_report.pdf",
+    "output_path": "audit_report_indexed.pdf"
+}) # Complete 300-page outline built in 8.1ms
 ```
 
----
+Turn unstructured mega-documents into easily navigable, professionally indexed PDF publications.
 
-### Key Technical Specifications
-- **Navigation Standard:** ISO 32000-1 / ISO 32000-2 Outline Dictionary Specs
-- **Compliance:** FDA eCTD Section 5 & EMA Electronic Dossier Compliant
-- **Target Addressing:** `/XYZ` coordinate viewports preserving user zoom levels
-- **Execution Performance:** 18.4 ms across a 142-page dossier
-- **Viewer Support:** 100% interoperable across Adobe Acrobat, Chrome/Firefox PDF.js, Apple Preview
+⭐ GitHub: https://github.com/usepaperpilot/paperpilot
 
----
-
-### 💡 How much time does your team spend manually organizing and bookmarking multi-page PDF filings?
-Share your thoughts below or check out the PaperPilot GitHub repository!
-
-#LegalTech #RegulatoryAffairs #PharmaCompliance #TechnicalWriting #OpenSource #DataEngineering #PaperPilot
+#Publishing #TechnicalWriting #UX #DocumentManagement #RustLang #OpenSource #PaperPilot #MCP #LegalOps
