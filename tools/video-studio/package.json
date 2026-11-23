@@ -1,0 +1,31 @@
+{
+  "name": "paperpilot-video-studio",
+  "version": "1.0.0",
+  "description": "Automated YouTube Video and Shorts generation pipeline using Revideo for PaperPilot",
+  "type": "module",
+  "scripts": {
+    "audio:week01": "python3 scripts/generate_audio.py assets/week01_voiceover.mp3 assets/week01_captions.json",
+    "render:week01": "tsx scripts/render.ts",
+    "render": "tsx scripts/render.ts",
+    "build": "tsc"
+  },
+  "keywords": [
+    "paperpilot",
+    "video",
+    "revideo",
+    "shorts",
+    "automation"
+  ],
+  "author": "PaperPilot Team",
+  "license": "MIT",
+  "dependencies": {
+    "@revideo/2d": "0.11.0",
+    "@revideo/core": "0.11.0",
+    "@revideo/renderer": "0.11.0",
+    "@revideo/ui": "0.11.0",
+    "@revideo/vite-plugin": "0.11.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}
