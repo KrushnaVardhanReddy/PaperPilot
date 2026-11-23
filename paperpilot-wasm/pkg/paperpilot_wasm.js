@@ -939,18 +939,16 @@ export class WasmPdfEngine {
         }
     }
     /**
-     * @param {Uint8Array} input_bytes
+     * @param {Array<any>} buffers
      * @param {string} options_json
      * @returns {Uint8Array}
      */
-    static images_to_gif(input_bytes, options_json) {
+    static images_to_gif(buffers, options_json) {
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            const ptr0 = passArray8ToWasm0(input_bytes, wasm.__wbindgen_export3);
+            const ptr0 = passStringToWasm0(options_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
             const len0 = WASM_VECTOR_LEN;
-            const ptr1 = passStringToWasm0(options_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-            const len1 = WASM_VECTOR_LEN;
-            wasm.wasmpdfengine_images_to_gif(retptr, ptr0, len0, ptr1, len1);
+            wasm.wasmpdfengine_images_to_gif(retptr, addHeapObject(buffers), ptr0, len0);
             var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
             var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
             var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);

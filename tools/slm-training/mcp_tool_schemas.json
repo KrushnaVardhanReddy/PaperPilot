@@ -68,7 +68,34 @@
     ],
     "type": "object"
   },
+  "cli_ask": {
+    "additionalProperties": false,
+    "properties": {
+      "dry_run": {
+        "default": true,
+        "description": "Dry-run plan resolution flag (default true).",
+        "type": "boolean"
+      },
+      "input": {
+        "description": "Optional active PDF file path providing context to the resolver.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional file path where the interpreted plan summary text will be written.",
+        "type": "string"
+      },
+      "prompt": {
+        "description": "Natural-language document instruction or question to resolve offline.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "prompt"
+    ],
+    "type": "object"
+  },
   "document_pii_scan": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -110,6 +137,7 @@
     "type": "object"
   },
   "document_workflow": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -139,6 +167,7 @@
     "type": "object"
   },
   "excel_to_csv": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input Excel workbook (.xlsx or .xls).",
@@ -160,6 +189,7 @@
     "type": "object"
   },
   "excel_to_json": {
+    "additionalProperties": false,
     "properties": {
       "has_headers": {
         "default": true,
@@ -185,6 +215,7 @@
     "type": "object"
   },
   "execution_receipt_get": {
+    "additionalProperties": false,
     "properties": {
       "directory": {
         "description": "Directory containing stored execution receipt files.",
@@ -202,6 +233,7 @@
     "type": "object"
   },
   "execution_receipt_list": {
+    "additionalProperties": false,
     "properties": {
       "directory": {
         "description": "Directory containing stored execution receipt files.",
@@ -221,6 +253,7 @@
     "type": "object"
   },
   "json_to_pdf": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input JSON file matching the JsonDocument schema (document_name and pages).",
@@ -238,11 +271,13 @@
     "type": "object"
   },
   "list_workflows": {
+    "additionalProperties": false,
     "properties": {},
     "required": [],
     "type": "object"
   },
   "office_extract_text": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input .docx, .xlsx, or .pptx file.",
@@ -260,6 +295,7 @@
     "type": "object"
   },
   "office_modernize_legacy": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input legacy .doc, .xls, or .ppt file.",
@@ -277,6 +313,7 @@
     "type": "object"
   },
   "office_to_markdown": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input .docx, .xlsx, or .pptx file.",
@@ -294,6 +331,7 @@
     "type": "object"
   },
   "pdf_annotate": {
+    "additionalProperties": false,
     "properties": {
       "annotations": {
         "description": "List of explicit annotation objects ({id, type, page, x, y, w, h, color, content}) or JSON string/file path.",
@@ -351,6 +389,7 @@
     "type": "object"
   },
   "pdf_attachments": {
+    "additionalProperties": false,
     "properties": {
       "action": {
         "default": "list",
@@ -391,6 +430,7 @@
     "type": "object"
   },
   "pdf_auto_rotate": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -408,6 +448,7 @@
     "type": "object"
   },
   "pdf_bates": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -448,6 +489,7 @@
     "type": "object"
   },
   "pdf_booklet": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -465,6 +507,7 @@
     "type": "object"
   },
   "pdf_bookmarks": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -482,6 +525,7 @@
     "type": "object"
   },
   "pdf_burst": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -499,6 +543,7 @@
     "type": "object"
   },
   "pdf_change_permissions": {
+    "additionalProperties": false,
     "properties": {
       "allow_copying": {
         "description": "Whether content/text copying is permitted.",
@@ -535,7 +580,45 @@
     ],
     "type": "object"
   },
+  "pdf_chunk": {
+    "additionalProperties": false,
+    "properties": {
+      "break_on_headings": {
+        "default": true,
+        "description": "Trigger hard boundary splits on # / ## headings (default: true).",
+        "type": "boolean"
+      },
+      "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "output": {
+        "description": "Optional destination path for JSON output.",
+        "type": "string"
+      },
+      "overlap_tokens": {
+        "default": 50,
+        "description": "Overlap tokens between consecutive chunks (default: 50, range: 0-500).",
+        "type": "number"
+      },
+      "strip_boilerplate": {
+        "default": true,
+        "description": "Strip repetitive headers/footers across consecutive pages (default: true).",
+        "type": "boolean"
+      },
+      "target_tokens": {
+        "default": 500,
+        "description": "Target tokens per chunk (default: 500, range: 50-4000).",
+        "type": "number"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
   "pdf_classify_type": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -552,6 +635,7 @@
     "type": "object"
   },
   "pdf_comic_archive": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -569,6 +653,7 @@
     "type": "object"
   },
   "pdf_compare": {
+    "additionalProperties": false,
     "properties": {
       "input_a": {
         "description": "Path to the baseline/first PDF file.",
@@ -591,6 +676,7 @@
     "type": "object"
   },
   "pdf_compress": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -612,6 +698,7 @@
     "type": "object"
   },
   "pdf_convert_excel": {
+    "additionalProperties": false,
     "properties": {
       "custom_css": {
         "description": "Optional custom CSS rules injected into the rendered document.",
@@ -645,6 +732,7 @@
     "type": "object"
   },
   "pdf_convert_html": {
+    "additionalProperties": false,
     "properties": {
       "custom_css": {
         "description": "Optional custom CSS rules injected into the rendered document.",
@@ -678,6 +766,7 @@
     "type": "object"
   },
   "pdf_convert_markdown": {
+    "additionalProperties": false,
     "properties": {
       "custom_css": {
         "description": "Optional custom CSS rules injected into the rendered document.",
@@ -711,6 +800,7 @@
     "type": "object"
   },
   "pdf_create_form_field": {
+    "additionalProperties": false,
     "properties": {
       "field_name": {
         "description": "Unique AcroForm field identifier.",
@@ -771,6 +861,7 @@
     "type": "object"
   },
   "pdf_crop": {
+    "additionalProperties": false,
     "properties": {
       "box": {
         "description": "Crop coordinates in PDF points as 'left,bottom,right,top', e.g., '0,0,595,842'.",
@@ -793,6 +884,7 @@
     "type": "object"
   },
   "pdf_decrypt": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the encrypted input PDF file.",
@@ -815,6 +907,7 @@
     "type": "object"
   },
   "pdf_dedup_streams": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -832,6 +925,7 @@
     "type": "object"
   },
   "pdf_delete_pages": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -854,6 +948,7 @@
     "type": "object"
   },
   "pdf_encrypt": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -876,6 +971,7 @@
     "type": "object"
   },
   "pdf_extract_images": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -893,6 +989,7 @@
     "type": "object"
   },
   "pdf_extract_pages": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -914,7 +1011,49 @@
     ],
     "type": "object"
   },
+  "pdf_extract_patterns": {
+    "additionalProperties": false,
+    "properties": {
+      "case_sensitive": {
+        "default": false,
+        "description": "Enable case-sensitive keyword and regex matching (default false).",
+        "type": "boolean"
+      },
+      "context_len": {
+        "default": 30,
+        "description": "Number of surrounding context characters included per match (default 30).",
+        "type": "integer"
+      },
+      "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "keywords": {
+        "description": "List of literal keyword strings to search for across all pages.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "output": {
+        "description": "Optional destination .json file path to save the pattern match report.",
+        "type": "string"
+      },
+      "patterns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Key-value map of pattern label to regular expression string (e.g., {\"ssn\": \"\\\\d{3}-\\\\d{2}-\\\\d{4}\"}).",
+        "type": "object"
+      }
+    },
+    "required": [
+      "input"
+    ],
+    "type": "object"
+  },
   "pdf_extract_tables": {
+    "additionalProperties": false,
     "properties": {
       "format": {
         "default": "json",
@@ -945,6 +1084,7 @@
     "type": "object"
   },
   "pdf_extract_text": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -966,6 +1106,7 @@
     "type": "object"
   },
   "pdf_fill_form": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the fillable input PDF file.",
@@ -988,6 +1129,7 @@
     "type": "object"
   },
   "pdf_flatten": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1005,6 +1147,7 @@
     "type": "object"
   },
   "pdf_hash": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1021,6 +1164,7 @@
     "type": "object"
   },
   "pdf_header_footer": {
+    "additionalProperties": false,
     "properties": {
       "footer_center": {
         "description": "Optional footer banner placed at bottom-center (can be combined with header_left).",
@@ -1055,6 +1199,7 @@
     "type": "object"
   },
   "pdf_images_to_pdf": {
+    "additionalProperties": false,
     "properties": {
       "inputs": {
         "description": "Ordered list of input image file paths (.png, .jpg/.jpeg, .webp).",
@@ -1075,6 +1220,7 @@
     "type": "object"
   },
   "pdf_info": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1086,7 +1232,41 @@
     ],
     "type": "object"
   },
+  "pdf_invert_colors": {
+    "additionalProperties": false,
+    "properties": {
+      "input": {
+        "description": "Path to the input PDF file.",
+        "type": "string"
+      },
+      "mode": {
+        "default": "dark_mode",
+        "description": "Color transform preset (default 'dark_mode').",
+        "enum": [
+          "dark_mode",
+          "true_invert",
+          "high_contrast",
+          "sepia"
+        ],
+        "type": "string"
+      },
+      "output": {
+        "description": "Destination path for the color-transformed .pdf file.",
+        "type": "string"
+      },
+      "pages": {
+        "description": "Optional comma-separated 1-based page numbers (e.g., '1,3,5'); defaults to all pages.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "input",
+      "output"
+    ],
+    "type": "object"
+  },
   "pdf_linearize": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1104,6 +1284,7 @@
     "type": "object"
   },
   "pdf_merge": {
+    "additionalProperties": false,
     "properties": {
       "inputs": {
         "description": "Ordered list of input PDF file paths to concatenate.",
@@ -1124,6 +1305,7 @@
     "type": "object"
   },
   "pdf_merge_alternate": {
+    "additionalProperties": false,
     "properties": {
       "input_a": {
         "description": "Path to the first PDF document (e.g., odd/front pages).",
@@ -1166,6 +1348,7 @@
     "type": "object"
   },
   "pdf_metadata": {
+    "additionalProperties": false,
     "properties": {
       "author": {
         "description": "Optional new PDF author to write.",
@@ -1198,6 +1381,7 @@
     "type": "object"
   },
   "pdf_nup": {
+    "additionalProperties": false,
     "properties": {
       "draw_borders": {
         "default": false,
@@ -1244,6 +1428,7 @@
     "type": "object"
   },
   "pdf_ocr": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1261,6 +1446,7 @@
     "type": "object"
   },
   "pdf_overlay_underlay": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the target input PDF file.",
@@ -1303,6 +1489,7 @@
     "type": "object"
   },
   "pdf_page_numbers": {
+    "additionalProperties": false,
     "properties": {
       "format": {
         "default": "Page {n} of {total}",
@@ -1330,6 +1517,7 @@
     "type": "object"
   },
   "pdf_posterize": {
+    "additionalProperties": false,
     "properties": {
       "grid": {
         "description": "Grid dimensions as 'COLSxROWS', e.g., '2x2' (alternative to grid_cols and grid_rows).",
@@ -1379,6 +1567,7 @@
     "type": "object"
   },
   "pdf_rag_chunks": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1395,6 +1584,7 @@
     "type": "object"
   },
   "pdf_read_form": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1411,6 +1601,7 @@
     "type": "object"
   },
   "pdf_redact": {
+    "additionalProperties": false,
     "properties": {
       "case_sensitive": {
         "default": false,
@@ -1485,6 +1676,7 @@
     "type": "object"
   },
   "pdf_remove_blank": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1509,6 +1701,7 @@
     "type": "object"
   },
   "pdf_remove_signatures": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the signed input PDF file.",
@@ -1526,6 +1719,7 @@
     "type": "object"
   },
   "pdf_render": {
+    "additionalProperties": false,
     "properties": {
       "dpi": {
         "default": 150.0,
@@ -1564,6 +1758,7 @@
     "type": "object"
   },
   "pdf_reorder_pages": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1586,6 +1781,7 @@
     "type": "object"
   },
   "pdf_repair": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the corrupted or malformed input PDF file.",
@@ -1603,6 +1799,7 @@
     "type": "object"
   },
   "pdf_rotate": {
+    "additionalProperties": false,
     "properties": {
       "angle": {
         "description": "Clockwise rotation angle in degrees, typically 90, 180, or 270.",
@@ -1630,6 +1827,7 @@
     "type": "object"
   },
   "pdf_sanitize": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1662,6 +1860,7 @@
     "type": "object"
   },
   "pdf_scale_pages": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1689,6 +1888,7 @@
     "type": "object"
   },
   "pdf_search": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file (or top-level folder of PDFs).",
@@ -1710,6 +1910,7 @@
     "type": "object"
   },
   "pdf_sign": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1727,6 +1928,7 @@
     "type": "object"
   },
   "pdf_split": {
+    "additionalProperties": false,
     "properties": {
       "every": {
         "description": "Optional fixed number of pages per output split file.",
@@ -1753,6 +1955,7 @@
     "type": "object"
   },
   "pdf_split_by_outline": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the bookmarked input PDF file.",
@@ -1770,6 +1973,7 @@
     "type": "object"
   },
   "pdf_split_scanned_book": {
+    "additionalProperties": false,
     "properties": {
       "gutter_overlap": {
         "description": "Optional center gutter overlap margin in PDF points.",
@@ -1799,6 +2003,7 @@
     "type": "object"
   },
   "pdf_stamp": {
+    "additionalProperties": false,
     "properties": {
       "height": {
         "description": "Target stamp height in PDF points.",
@@ -1848,6 +2053,7 @@
     "type": "object"
   },
   "pdf_stitch_canvas": {
+    "additionalProperties": false,
     "properties": {
       "direction": {
         "default": "vertical",
@@ -1884,6 +2090,7 @@
     "type": "object"
   },
   "pdf_timestamp": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1901,6 +2108,7 @@
     "type": "object"
   },
   "pdf_to_docx": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1918,6 +2126,7 @@
     "type": "object"
   },
   "pdf_to_epub": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1935,6 +2144,7 @@
     "type": "object"
   },
   "pdf_to_html": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1952,6 +2162,7 @@
     "type": "object"
   },
   "pdf_to_json": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1969,6 +2180,7 @@
     "type": "object"
   },
   "pdf_to_markdown": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -1986,6 +2198,7 @@
     "type": "object"
   },
   "pdf_to_pdf_a": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -2003,6 +2216,7 @@
     "type": "object"
   },
   "pdf_to_pptx": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -2020,6 +2234,7 @@
     "type": "object"
   },
   "pdf_to_xlsx": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -2037,6 +2252,7 @@
     "type": "object"
   },
   "pdf_validate": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Path to the input PDF file.",
@@ -2053,6 +2269,7 @@
     "type": "object"
   },
   "pdf_validate_signatures": {
+    "additionalProperties": false,
     "properties": {
       "baseline": {
         "default": false,
@@ -2075,6 +2292,7 @@
     "type": "object"
   },
   "pdf_watermark": {
+    "additionalProperties": false,
     "properties": {
       "angle": {
         "default": 45,
@@ -2115,6 +2333,7 @@
     "type": "object"
   },
   "recipe_run": {
+    "additionalProperties": false,
     "properties": {
       "input": {
         "description": "Absolute path to the input PDF file.",
@@ -2140,6 +2359,7 @@
     "type": "object"
   },
   "semantic_search": {
+    "additionalProperties": false,
     "properties": {
       "dir": {
         "description": "Optional directory tree to scan recursively for PDFs when input is omitted (default '.').",
@@ -2169,11 +2389,13 @@
     "type": "object"
   },
   "watcher_list": {
+    "additionalProperties": false,
     "properties": {},
     "required": [],
     "type": "object"
   },
   "watcher_start": {
+    "additionalProperties": false,
     "properties": {
       "dir": {
         "description": "Absolute path to the directory to watch.",
@@ -2206,6 +2428,7 @@
     "type": "object"
   },
   "watcher_stop": {
+    "additionalProperties": false,
     "properties": {
       "watcher_id": {
         "description": "Unique identifier of the running watcher to stop.",
@@ -2218,6 +2441,7 @@
     "type": "object"
   },
   "workspace_search": {
+    "additionalProperties": false,
     "properties": {
       "dir": {
         "description": "Optional root directory to walk recursively when input is omitted (default '.').",

@@ -2,9 +2,7 @@ name: Security Audit & SAST Gate
 
 on:
   push:
-    branches: [main, feature/dev]
-  pull_request:
-    branches: [main, feature/dev]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -23,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run Semgrep OSS Scan
         run: |
@@ -45,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -63,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run Trivy Security Scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

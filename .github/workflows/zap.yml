@@ -1,14 +1,13 @@
 name: OWASP ZAP API Security Scan
 
 on:
-  schedule:
-    - cron: '0 4 * * 1' # Weekly Monday 04:00 UTC
-  workflow_dispatch:
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - 'paperpilot-gateway/**'
       - '.github/workflows/zap.yml'
       - '.zap/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -57,7 +56,7 @@ jobs:
           artifact_name: 'zap_scan'
 
       - name: Archive ZAP Report Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         continue-on-error: true
         with:

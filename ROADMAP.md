@@ -6,16 +6,15 @@
 
 - **Core Engine & Penta-Interface Parity (Phases 1–5, 8–10, 12)**: ✅ **100% Complete**. All 100 pure-Rust tools are implemented, validated with zero-mock tests across all 5 surfaces (Core Engine, CLI, MCP Server, REST Gateway, Desktop UI).
 - **Spec 170 (Native Image Intelligence & Animated Showcase GIF Engine)**: ✅ **100% Complete**. 8 new pure-Rust tools (`pdf_to_gif`, `showcase_gif`, `images_to_gif`, `img_deskew`, `img_crop_to_content`, `img_redact`, `img_optimize_for_llm`, `img_convert`) with zero external runtime dependencies.
+- **Spec 171 (Glama TDQS Grade A+ Enhancement)**: ✅ **100% Complete**. Hardened MCP JSON schemas with strict `"additionalProperties": false`, 4-section documentation standards per tool, and negative usage constraints in `paperpilot-mcp/src/server.rs`.
+- **WASM Engine & Web Studio Catalog Expansion**: ✅ **Complete**. 54 browser-safe operations supported in `paperpilot-wasm`, full UI bindings in `apps/web`.
 - **REST Gateway Semantic Route Aliasing**: ✅ **Complete**. Primary semantic routes (`/api/v1/image/*`, `/api/v1/office/*`) active alongside backwards-compatible `/api/v1/pdf/*` legacy aliases.
 - **Phase 0 Real Desktop E2E (@wdio/tauri-service)**: ✅ **Verified**. WebdriverIO suite with `tauri-driver` and WebKitGTK initialized and verified with passing smoke test.
 - **Penta-Scaffold v2**: ✅ **Upgraded**. Single command scaffolds Core, CLI, MCP, WASM, Desktop UI wiring, WDIO Desktop E2E test, Documentation, and OpenAPI spec.
-- **Documentation Milestone**: ✅ **Updated**. 100 tools indexed in Astro / Starlight handbook with `v0.8.0+` badges.
-
-- **Phase 6.0 (Adoption, Distribution & UX Polish - Specs 165, 166)**: 🚀 **In Progress**:
-  - **Item 1: `@usepaperpilot/mcp` on npm**: ✅ **Published & Live**. 5-second `npx` runner live on npmjs.com (`@usepaperpilot/mcp@0.7.0`), official Glama MCP server listing verified (Grade B), and submitted to `punkpeye/awesome-mcp-servers`.
-  - **Item 2: One-Click Sample PDFs in Web Studio**: ✅ **Live**. Integrated 3-page rich sample document (`sample_document.pdf`) with "✨ Try with Sample PDF" and "👁️ View Sample" directly into Web Studio drop zones.
-  - **Item 3: Community Submissions & Registries**: ✅ **Merged into `rust-unofficial/awesome-rust`** (PR #3064 merged), PR #19825 submitted to `punkpeye/awesome-mcp-servers`.
-  - **Item 4: Package Managers & Next Items**: Homebrew tap, crates.io publishing, and in-memory self-healing parser.
+- **Documentation Milestone & Versioning**: ✅ **Updated**. 100 tools indexed in Astro / Starlight handbook with `v0.8.1 (Current Release)` default, version switching dropdown (`v0.8.1`, `v0.8.0`, `v0.7.0`, `v0.6.0`, `v0.5.0`), and dynamic sidebar / tool index version filtering with direct-visit compatibility guards.
+- **Distribution & Packages (v0.8.1)**:
+  - Official GitHub Release `v0.8.1` tagged and binaries published for Linux, macOS, Windows, Android APK, and WASM.
+  - `@usepaperpilot/mcp@0.8.1` published to npmjs.com.
 
 ---
 
@@ -325,9 +324,9 @@
 
 | Task # | Feature Name | Core Functionality | Impact / Market Need | Status |
 |---|---|---|---|:---:|
-| **12.1** | `@usepaperpilot/mcp` NPM Package | Zero-install `npx -y @usepaperpilot/mcp` stdio runner with cross-platform release binary auto-downloader | 5-Second Agent Setup (Claude/Cursor) | ✅ Published (`v0.7.0`) |
+| **12.1** | `@usepaperpilot/mcp` NPM Package | Zero-install `npx -y @usepaperpilot/mcp` stdio runner with cross-platform release binary auto-downloader | 5-Second Agent Setup (Claude/Cursor) | ✅ Published (`v0.8.1`) |
 | **12.2** | One-Click Sample PDFs in Web Studio | 3-page rich sample document with instant "✨ Try with Sample PDF" and "👁️ View Sample" links in drop zones | Instant Zero-File Evaluation | ✅ Live (`usepaperpilot.com`) |
-| **12.3** | Model Context Protocol Registry Presence | Glama.ai MCP server listing with automated container introspection & score badge (Grade B) | Community Discovery & Social Proof | ✅ Verified & Live |
+| **12.3** | Model Context Protocol Registry Presence | Glama.ai MCP server listing with TDQS Grade A+ schema audit (Spec 171) & negative constraints | Community Discovery & Social Proof | ✅ Verified & Live |
 | **12.4** | Awesome Registry PRs | Inclusion in `rust-unofficial/awesome-rust` (PR #3064 merged ✅) and `punkpeye/awesome-mcp-servers` (PR #19825) | Organic Stars & Developer Traffic | ✅ Merged in Awesome-Rust |
 | **12.5** | Homebrew Tap & Crates.io | `brew install usepaperpilot/tap/paperpilot` formula and `cargo binstall paperpilot-cli` | Native Developer Package Management | 📋 Next Sprint |
 | **12.6** | In-Memory Parser Self-Healing | Pre-flight repair of malformed XREF tables and truncated streams across all 92 tools | Resilient Corrupt PDF Intake | 📋 Next Sprint |

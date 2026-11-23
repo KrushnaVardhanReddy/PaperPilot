@@ -1622,6 +1622,86 @@ READ_TEMPLATES = {
             "stop wtchr {watcher_id}"
         ],
     },
+    "pdf_chunk": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Chunk document {input} into semantic sections.",
+            "Chunk {input} with target token budget {target_tokens}.",
+            "Segment {input} into chunks and save to {output}."
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "break {input} into semantic chunks for RAG",
+            "chunk up {input} with {overlap_tokens} token overlap",
+            "can you chunk {input} for embedding?"
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Perform structure-aware semantic chunking on discovery record {input}.",
+            "Segment compliance filing {input} into bounded token chunks for vector ingestion."
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "chnk {input} to {output}",
+            "chunk doc {input} rag"
+        ],
+    },
+    "pdf_extract_patterns": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Extract keyword patterns from {input}.",
+            "Search and extract custom patterns from {input} saving to {output}.",
+            "Scan {input} for patterns with context length {context_len}."
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "find all pattern matches in {input}",
+            "extract regex patterns from {input} to {output}",
+            "can you scan {input} for specific patterns?"
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Execute targeted pattern extraction for entity identification across case file {input}.",
+            "Audit financial statements {input} for structured regex pattern identifiers."
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "extarct patterns {input}",
+            "find regex pattrns in {input}"
+        ],
+    },
+    "pdf_invert_colors": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Invert colors of {input} and save to {output}.",
+            "Convert {input} to dark mode at {output}.",
+            "Transform {input} using {mode} color preset to {output}."
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "turn {input} into dark mode please",
+            "invert the colors of {input} to {output}",
+            "make {input} dark mode readable for night"
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Apply high-contrast color inversion to technical drawings {input} for e-reader display.",
+            "Transform blueprint {input} to dark mode preserving vector clarity at {output}."
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "invrt colors {input} to {output}",
+            "dark mode pdf {input}"
+        ],
+    },
+    "cli_ask": {
+        TemplateCategory.DIRECT_IMPERATIVE: [
+            "Ask question: {prompt}.",
+            "Resolve natural language instruction: {prompt}.",
+            "Execute query {prompt} on {input}."
+        ],
+        TemplateCategory.CONVERSATIONAL: [
+            "ask: {prompt}",
+            "what does {input} say about {prompt}?",
+            "can you resolve {prompt} for me?"
+        ],
+        TemplateCategory.DOMAIN_LEGAL_FINANCE: [
+            "Query document repository with intent: {prompt}.",
+            "Resolve natural-language inquiry across dossier {input}: {prompt}."
+        ],
+        TemplateCategory.TYPO_NOISE: [
+            "ak {prompt}",
+            "ask doc {prompt}"
+        ],
+    },
 }
 
 SINGLE_TOOL_TEMPLATES.update(READ_TEMPLATES)

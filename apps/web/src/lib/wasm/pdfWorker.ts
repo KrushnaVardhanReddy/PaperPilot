@@ -143,7 +143,7 @@ case 'set_metadata':
                 break;
             case 'images_to_gif':
                 // @ts-ignore
-                result = WasmPdfEngine.images_to_gif(payload.file, JSON.stringify(payload.options || {}));
+                result = WasmPdfEngine.images_to_gif(payload.files, JSON.stringify(payload.options || {}));
                 break;
             case 'img_optimize_for_llm':
                 // @ts-ignore
@@ -195,7 +195,7 @@ case 'set_metadata':
                 break;
             case 'pdf_merge_alternate':
                 // @ts-ignore
-                result = WasmPdfEngine.pdf_merge_alternate(payload.primary, payload.secondary);
+                result = WasmPdfEngine.pdf_merge_alternate([payload.primary, payload.secondary], JSON.stringify(payload.options || {}));
                 break;
             case 'pdf_posterize':
                 // @ts-ignore

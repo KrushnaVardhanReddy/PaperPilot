@@ -10,14 +10,141 @@ import DefaultHeader from '@astrojs/starlight/components/Header.astro';
     <div class="version-select-wrapper">
       <span class="version-dot"></span>
       <select id="doc-version-select" aria-label="Documentation Version">
-        <option value="v0.7.0" selected>v0.7.0 (Current Release)</option>
+        <option value="v0.8.1" selected>v0.8.1 (Current Release)</option>
+        <option value="v0.8.0">v0.8.0</option>
+        <option value="v0.7.0">v0.7.0</option>
         <option value="v0.6.0">v0.6.0</option>
         <option value="v0.5.0">v0.5.0</option>
-        <option value="latest">v0.7.0-dev (latest)</option>
+        <option value="latest">v0.8.1-dev (latest)</option>
       </select>
     </div>
   </div>
 </div>
+
+<script>
+  // Dynamic Version Awareness & Navigation Guard
+  const V08_TOOLS = [
+    'img_deskew',
+    'img_crop_to_content',
+    'img_optimize_for_llm',
+    'img_redact',
+    'img_convert',
+    'images_to_gif',
+    'pdf_to_gif',
+    'showcase_gif'
+  ];
+
+  function getVersionFromUrlOrStorage(): string {
+    const params = new URLSearchParams(window.location.search);
+    const fromParam = params.get('v');
+    if (fromParam) return fromParam;
+    return localStorage.getItem('paperpilot_doc_version') || 'v0.8.1';
+  }
+
+  function setVersion(ver: string) {
+    localStorage.setItem('paperpilot_doc_version', ver);
+    const select = document.getElementById('doc-version-select') as HTMLSelectElement | null;
+    if (select && select.value !== ver) {
+      select.value = ver;
+    }
+    applyVersionFilter(ver);
+  }
+
+  function isPreV08(ver: string): boolean {
+    return ['v0.7.0', 'v0.6.0', 'v0.5.0'].includes(ver);
+  }
+
+  function applyVersionFilter(ver: string) {
+    const isLegacy = isPreV08(ver);
+
+    // 1. Filter Sidebar Items
+    // A) Hide Image Intelligence dedicated section if on legacy version
+    const sidebarSummaries = document.querySelectorAll('nav.sidebar details summary');
+    sidebarSummaries.forEach((sum) => {
+      const text = sum.textContent || '';
+      if (text.includes('Image Intelligence & GIF Studio')) {
+        const details = sum.closest('details');
+        if (details) {
+          (details as HTMLElement).style.display = isLegacy ? 'none' : '';
+        }
+      }
+    });
+
+    // B) Hide individual new tool links under All Tools Index or elsewhere
+    const toolLinks = document.querySelectorAll<HTMLAnchorElement>('nav.sidebar a');
+    toolLinks.forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      const isNewTool = V08_TOOLS.some((t) => href.includes(`/reference/tools/${t}`));
+      if (isNewTool) {
+        const li = link.closest('li');
+        if (li) {
+          (li as HTMLElement).style.display = isLegacy ? 'none' : '';
+        }
+      }
+    });
+
+    // 2. Banner on Page Content if viewing a v0.8.0+ tool while legacy version is selected
+    const currentPath = window.location.pathname;
+    const currentToolIsNew = V08_TOOLS.some((t) => currentPath.includes(`/reference/tools/${t}`));
+    const existingBanner = document.getElementById('version-compatibility-banner');
+
+    if (isLegacy && currentToolIsNew) {
+      if (!existingBanner) {
+        const main = document.querySelector('main');
+        if (main) {
+          const banner = document.createElement('div');
+          banner.id = 'version-compatibility-banner';
+          banner.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; color: #fca5a5; font-size: 0.875rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; backdrop-filter: blur(8px);">
+              <div>
+                <strong>⚠️ Version Incompatibility:</strong> This tool was added in <code>v0.8.0+</code> and is <strong>not available in ${ver}</strong>.
+              </div>
+              <button id="switch-to-v081-btn" style="background: #38bdf8; color: #0f172a; border: none; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 0.75rem; cursor: pointer; white-space: nowrap;">
+                Switch to v0.8.1
+              </button>
+            </div>
+          `;
+          main.prepend(banner);
+
+          document.getElementById('switch-to-v081-btn')?.addEventListener('click', () => {
+            setVersion('v0.8.1');
+          });
+        }
+      }
+    } else if (existingBanner) {
+      existingBanner.remove();
+    }
+  }
+
+  // Initialize once DOM is ready
+  function initVersionSelector() {
+    const select = document.getElementById('doc-version-select') as HTMLSelectElement | null;
+    const currentVer = getVersionFromUrlOrStorage();
+
+    if (select) {
+      select.value = currentVer;
+      select.addEventListener('change', (e) => {
+        const target = e.target as HTMLSelectElement;
+        const newVer = target.value;
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', newVer);
+        window.history.replaceState({}, '', url.toString());
+        setVersion(newVer);
+      });
+    }
+
+    applyVersionFilter(currentVer);
+  }
+
+  // Setup on page load and on Astro view transitions
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initVersionSelector);
+  } else {
+    initVersionSelector();
+  }
+
+  document.addEventListener('astro:page-load', initVersionSelector);
+</script>
 
 <style>
   .header-wrapper {

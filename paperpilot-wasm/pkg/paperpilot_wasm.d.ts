@@ -187,7 +187,7 @@ export class WasmPdfEngine {
     static extract_text(input_bytes: Uint8Array): string;
     static flatten(input_bytes: Uint8Array): Uint8Array;
     static header_footer(input_bytes: Uint8Array, header: string, footer: string): Uint8Array;
-    static images_to_gif(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static images_to_gif(buffers: Array<any>, options_json: string): Uint8Array;
     static images_to_pdf(image_buffers: Array<any>): Uint8Array;
     static img_convert(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static img_crop_to_content(input_bytes: Uint8Array, options_json: string): Uint8Array;
@@ -306,7 +306,7 @@ export interface InitOutput {
     readonly wasmpdfengine_extract_text: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_flatten: (a: number, b: number, c: number) => void;
     readonly wasmpdfengine_header_footer: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
-    readonly wasmpdfengine_images_to_gif: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_images_to_gif: (a: number, b: number, c: number, d: number) => void;
     readonly wasmpdfengine_images_to_pdf: (a: number, b: number) => void;
     readonly wasmpdfengine_img_convert: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_img_crop_to_content: (a: number, b: number, c: number, d: number, e: number) => void;

@@ -49,7 +49,7 @@ export const wasmpdfengine_extract_pages: (a: number, b: number, c: number, d: n
 export const wasmpdfengine_extract_text: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_flatten: (a: number, b: number, c: number) => void;
 export const wasmpdfengine_header_footer: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
-export const wasmpdfengine_images_to_gif: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_images_to_gif: (a: number, b: number, c: number, d: number) => void;
 export const wasmpdfengine_images_to_pdf: (a: number, b: number) => void;
 export const wasmpdfengine_img_convert: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_img_crop_to_content: (a: number, b: number, c: number, d: number, e: number) => void;
