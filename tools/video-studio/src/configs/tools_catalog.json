@@ -1,0 +1,554 @@
+[
+  {
+    "name": "batch_fill",
+    "category": "Autonomous Automation",
+    "description": "Fill one AcroForm PDF template across many records and write one PDF per row plus a receipt. When to use: bulk-populating an interactive PDF form from a CSV/JSON file or inline JSON rows while flattening outputs by default without overwriting existing files. Difference from related tools: unlike pdf_fill_form (fills a single form file once with one values map), batch_fill processes multiple records into output_dir and writes an execution receipt; do not use for adding new form fields (use pdf_create_form_field). Key parameters: template, output_dir, plus exactly one of data (CSV/JSON path) or records (inline JSON array); optional name_template, field_map, keep_editable, date. [Input: PDF template + CSV/JSON or records | Output: Multiple PDFs + JSON receipt]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_convert_html",
+    "category": "Format Conversion",
+    "description": "Convert an HTML file into a styled PDF document. When to use: rendering local HTML markup into a print-ready PDF with optional CSS presets and page layout settings. Difference from related tools: unlike pdf_to_html (PDF to HTML) or pdf_convert_markdown (Markdown to PDF), this tool accepts HTML input; do not use for JSON documents (use json_to_pdf). Key parameters: input, output; optional preset, custom_css, page_size, orientation. [Input: HTML (.html) | Output: PDF (.pdf)]",
+    "helper": "add_styled_tool"
+  },
+  {
+    "name": "json_to_pdf",
+    "category": "Document Operations",
+    "description": "Synthesize a PDF document from structured JSON pages, text, and optional images. When to use: turning structured JSON conforming to the document_name/pages schema (including output from pdf_to_json) back into a PDF. Difference from related tools: unlike pdf_convert_html or pdf_convert_markdown (ignore CSS/presets here), json_to_pdf renders structured page objects directly; do not use for Excel spreadsheets (use excel_to_json or pdf_convert_excel). Key parameters: input (.json file path), output (.pdf file path). [Input: JSON (.json) | Output: PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "watcher_start",
+    "category": "Autonomous Automation",
+    "description": "Start a background hot-folder watcher daemon on a local directory. When to use: continuously monitoring a folder so newly dropped PDFs automatically trigger a .ppflow recipe or preset workflow. Difference from related tools: unlike recipe_run or document_workflow (one-shot execution), watcher_start stays running in the background; do not use to inspect past runs (use execution_receipt_list). Key parameters: dir, recipe; optional output_dir, name_template, settle_delay_ms (default 500). [Input: Directory path + recipe | Output: JSON watcher status]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "watcher_stop",
+    "category": "Autonomous Automation",
+    "description": "Stop a running background hot-folder watcher daemon by its ID. When to use: tearing down an active folder watcher previously created by watcher_start. Difference from related tools: stops a specific watcher daemon; use watcher_list first if you need to discover active watcher IDs. Key parameters: watcher_id. [Input: watcher_id | Output: JSON status]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "watcher_list",
+    "category": "Autonomous Automation",
+    "description": "List all currently active hot-folder watcher daemons with status and processing counters. When to use: discovering active watcher_id values or checking how many PDFs succeeded or failed in background watchers. Difference from related tools: reports live background daemons only; use execution_receipt_list for durable historical run receipts on disk. Key parameters: none. [Input: None | Output: JSON watchers array]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "execution_receipt_list",
+    "category": "Autonomous Automation",
+    "description": "List durable local execution receipts recorded by workflow, batch, or watcher runs in a directory. When to use: browsing recent run IDs, statuses, and timestamps without reading any PDF contents or recipe parameters. Difference from related tools: returns summarized receipt listings (use execution_receipt_get to fetch full details for one specific receipt_id); do not use to check live watcher threads (use watcher_list). Key parameters: directory; optional limit (1-1000, default 50). [Input: Directory path | Output: JSON receipt summaries]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "execution_receipt_get",
+    "category": "Autonomous Automation",
+    "description": "Retrieve a single durable execution receipt by receipt_id from a local directory. When to use: inspecting step outcomes and metadata for one known execution receipt. Difference from related tools: fetches one full receipt by ID (use execution_receipt_list first to discover receipt IDs); no PDF contents or recipe secrets are stored. Key parameters: directory, receipt_id. [Input: Directory path + receipt_id | Output: JSON receipt object]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "recipe_run",
+    "category": "Autonomous Automation",
+    "description": "Execute a .ppflow recipe or preset workflow once against a local PDF file without starting a daemon. When to use: running a saved .ppflow TOML recipe (or preset/serialized workflow) immediately on a single PDF with receipt generation. Difference from related tools: unlike watcher_start (persistent background folder watcher) or document_workflow (requires explicit output path and accepts preset or recipe XOR), recipe_run defaults output to '<input>_processed.pdf' unless name_template is set. Key parameters: input, recipe; optional output, name_template. [Input: PDF + recipe path/preset | Output: Processed PDF + JSON receipt]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_convert_markdown",
+    "category": "Format Conversion",
+    "description": "Convert a Markdown file into a styled PDF document. When to use: rendering local .md documentation or reports into paginated PDFs with CSS theme presets. Difference from related tools: converts Markdown TO PDF (opposite of pdf_to_markdown which converts PDF to Markdown, and office_to_markdown which converts Office docs to Markdown); do not use for HTML inputs (use pdf_convert_html). Key parameters: input, output; optional preset, custom_css, page_size, orientation. [Input: Markdown (.md) | Output: PDF (.pdf)]",
+    "helper": "add_styled_tool"
+  },
+  {
+    "name": "pdf_convert_excel",
+    "category": "Format Conversion",
+    "description": "Convert an Excel spreadsheet or CSV file into a styled PDF via HTML rendering. When to use: producing formatted human-readable PDF reports from .xlsx, .xls, or .csv tables. Difference from related tools: outputs a visual .pdf document (use excel_to_json or excel_to_csv for machine-readable data extraction, and pdf_to_xlsx for PDF to Excel conversion). Key parameters: input, output; optional preset, custom_css, page_size, orientation. [Input: Spreadsheet (.xlsx, .xls, .csv) | Output: PDF (.pdf)]",
+    "helper": "add_styled_tool"
+  },
+  {
+    "name": "pdf_remove_blank",
+    "category": "Document Operations",
+    "description": "Detect and remove blank pages from a PDF document. When to use: stripping empty spacer or accidentally scanned blank sheets from PDFs based on content threshold. Difference from related tools: automatically detects blank pages rather than deleting explicit page numbers (use pdf_delete_pages to remove known page numbers). Key parameters: input, output; optional sensitivity (integer 0-100, default 95). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_page_numbers",
+    "category": "Document Operations",
+    "description": "Add formatted page numbers to every page of a PDF document. When to use: stamping sequential 'Page N of Total' indicators at a page corner or margin. Difference from related tools: unlike pdf_bates (sequential Bates legal numbering with prefix/zero-padding) or pdf_header_footer (arbitrary header/footer text banners), this tool specifically renders page-count labels. Key parameters: input, output; optional position (default 'bottom-right'), format (default 'Page {n} of {total}'). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_merge",
+    "category": "Document Operations",
+    "description": "Concatenate two or more PDF files sequentially end-to-end into a single PDF. When to use: combining multiple PDF files in list order into one output document. Difference from related tools: appends entire documents in sequence; use pdf_merge_alternate to interleave odd/even pages from two scans, or pdf_stitch_canvas to combine pages onto one continuous canvas. Key parameters: inputs (array of PDF paths), output. [Input: 2+ PDFs (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_split",
+    "category": "Document Operations",
+    "description": "Split a PDF into multiple part PDFs inside a directory using fixed page chunks or range cut points. When to use: breaking a multi-page PDF into grouped files (e.g., every N pages or at explicit page ranges), defaulting to single-page splits when no cut parameters are given. Difference from related tools: unlike pdf_burst (always writes page_N.pdf per single page without grouping), pdf_split_by_outline (splits by bookmarks into a .zip), or pdf_extract_pages (saves one selected subset into one file), pdf_split writes split_1.pdf, split_2.pdf, etc. Key parameters: input, output_dir; optional every, ranges. [Input: PDF (.pdf) | Output: Multiple .pdf files]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_extract_pages",
+    "category": "AI & Knowledge Extraction",
+    "description": "Extract a selected subset of pages into one new PDF document. When to use: keeping only specific 1-based pages or ranges (e.g., '1,3,5-7') from a larger PDF in a single output file. Difference from related tools: outputs a single combined PDF of chosen pages, whereas pdf_split/pdf_burst write multiple files and pdf_delete_pages removes specified pages instead of keeping them. Key parameters: input, pages, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_delete_pages",
+    "category": "Document Operations",
+    "description": "Delete specified 1-based pages from a PDF document and save the remainder. When to use: removing unwanted pages (e.g., cover sheets or appendices like '1,3,5-7') while keeping everything else. Difference from related tools: subtractive page removal; use pdf_extract_pages to keep specific pages, or pdf_remove_blank to strip empty pages automatically. Key parameters: input, pages, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_reorder_pages",
+    "category": "Document Operations",
+    "description": "Reorder the pages of a PDF into an explicit 1-based sequence. When to use: permuting or reversing pages in an existing PDF according to a chosen index order (e.g., '3,2,1'). Difference from related tools: rearranges pages within one PDF without adding blanks; use pdf_booklet for saddle-stitch booklet ordering or pdf_merge_alternate to interleave two separate PDFs. Key parameters: input, order, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_rotate",
+    "category": "Document Operations",
+    "description": "Rotate specified PDF pages by an explicit clockwise angle in degrees. When to use: turning known pages ('all' or '1,3') by 90, 180, or 270 degrees. Difference from related tools: requires an explicit rotation angle; use pdf_auto_rotate when you want automatic MediaBox-based upright portrait normalization. Key parameters: input, pages, angle, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_crop",
+    "category": "Document Operations",
+    "description": "Crop PDF page boxes to explicit point coordinates. When to use: trimming margins or isolating a rectangular region defined as 'left,bottom,right,top' across pages. Difference from related tools: adjusts page crop bounds without changing content scale; use pdf_scale_pages to resize page dimensions proportionally or pdf_split_scanned_book to split two-up spreads. Key parameters: input, box, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_burst",
+    "category": "Document Operations",
+    "description": "Explode every page of a PDF into individual single-page files (page_1.pdf, page_2.pdf, ...). When to use: unconditionally separating every single page into its own PDF file in output_dir. Difference from related tools: unlike pdf_split (supports every-N or range grouping), pdf_split_by_outline (splits by chapters into a .zip), or pdf_extract_pages (extracts chosen pages into one file), pdf_burst always outputs one PDF per page. Key parameters: input, output_dir. [Input: PDF (.pdf) | Output: Single-page .pdf files]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_compress",
+    "category": "Optimization & Performance",
+    "description": "Compress a PDF to reduce file size according to a quality preset or numeric level. When to use: shrinking PDF size when recompression/quality tuning is acceptable. Difference from related tools: unlike pdf_dedup_streams (strictly lossless SHA-256 deduplication of identical indirect streams without recompression), pdf_compress optimizes and compresses based on quality. Key parameters: input, output; optional quality ('low', 'medium', 'high', or '1'-'100'). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_extract_text",
+    "category": "AI & Knowledge Extraction",
+    "description": "Extract raw plain text from PDF pages in document order. When to use: dumping unstyled page text to a .txt file or reading literal page strings without structural markup. Difference from related tools: unlike pdf_to_markdown (preserves Markdown headings/lists), pdf_to_json (per-page structured JSON objects), pdf_chunk / pdf_rag_chunks (AI-sized RAG segments), pdf_extract_tables (tabular rows/cells), or office_extract_text (.docx/.xlsx/.pptx), pdf_extract_text extracts raw text directly from an existing text layer; do not use on scanned image-only PDFs (use pdf_ocr instead). Key parameters: input, output; optional pages (e.g., '1,3,5-7' or 'all'). [Input: PDF (.pdf) | Output: Plain Text (.txt)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_rag_chunks",
+    "category": "AI & Knowledge Extraction",
+    "description": "Split a PDF strictly by Markdown '#' headings into un-overlapped heading-level JSON chunks. When to use: zero-configuration extraction of one chunk per Markdown section where each '#' heading defines a complete section and word-count token_count is sufficient. Difference from related tools: unlike pdf_chunk (configurable target_tokens default 500, overlap_tokens default 50, boilerplate stripping, page_start/headings_context metadata), pdf_rag_chunks never enforces a token limit or adds overlap; unlike pdf_to_markdown (single .md file), it outputs a JSON chunk array. Do not use for query-ranked retrieval (use semantic_search). Key parameters: input; optional output (.json path). [Input: PDF (.pdf) | Output: JSON array]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_chunk",
+    "category": "AI & Knowledge Extraction",
+    "description": "Chunk a PDF into token-budgeted, overlapping, boilerplate-stripped segments for LLM context windows and RAG pipelines. When to use: preparing a PDF for embedding or LLM ingestion with explicit token budgets, sliding overlap, page tracking, and removal of repeated headers/footers. Difference from related tools: unlike pdf_rag_chunks (splits only on '#' headings with zero overlap and word-count sizing), pdf_chunk enforces target_tokens (50-4000, default 500) and overlap_tokens (0-500, default 50) while tracking headings_context and page_start; unlike semantic_search, it returns all chunks without query scoring. Key parameters: input; optional output, target_tokens, overlap_tokens, strip_boilerplate, break_on_headings. [Input: PDF (.pdf) | Output: JSON object]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "office_to_markdown",
+    "category": "Format Conversion",
+    "description": "Convert a modern Microsoft Office file (.docx, .xlsx, .pptx) into formatted Markdown. When to use: converting Word, Excel, or PowerPoint files into structured Markdown headings, paragraphs, and tables. Difference from related tools: unlike office_extract_text (flat plain .txt without formatting) or pdf_to_markdown (PDF input), this accepts Office Open XML formats; do not use on legacy binary .doc/.xls/.ppt files without converting first (use office_modernize_legacy). Key parameters: input, output. [Input: Office (.docx, .xlsx, .pptx) | Output: Markdown (.md)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "office_extract_text",
+    "category": "AI & Knowledge Extraction",
+    "description": "Extract unformatted plain text from a modern Microsoft Office file (.docx, .xlsx, .pptx). When to use: dumping raw text content from Office documents to a .txt file without Markdown markup. Difference from related tools: unlike office_to_markdown (preserves Markdown structure) or pdf_extract_text (extracts text from PDFs), office_extract_text outputs flat .txt from Office files; do not use on legacy .doc/.xls/.ppt files (use office_modernize_legacy first) or typed JSON/CSV from Excel (use excel_to_json / excel_to_csv). Key parameters: input, output. [Input: Office (.docx, .xlsx, .pptx) | Output: Plain Text (.txt)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "office_modernize_legacy",
+    "category": "Document Operations",
+    "description": "Upgrade a legacy binary Microsoft Office file (.doc, .xls, .ppt) into a modern Office Open XML file (.docx, .xlsx, .pptx). When to use: converting legacy binary Office formats into modern XML-based files supported by office_extract_text, office_to_markdown, and excel_to_json. Difference from related tools: outputs .docx/.xlsx/.pptx rather than PDF (unlike pdf_convert_excel) or text/Markdown (unlike office_extract_text / office_to_markdown). Key parameters: input, output. [Input: Legacy Office (.doc, .xls, .ppt) | Output: Modern Office (.docx, .xlsx, .pptx)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_extract_images",
+    "category": "AI & Knowledge Extraction",
+    "description": "Extract embedded raster image assets from inside a PDF into a directory. When to use: recovering original embedded photographs, scans, or figures embedded in a PDF file. Difference from related tools: extracts internal embedded image objects rather than rasterizing whole PDF pages into PNG/JPEG/WebP snapshots (use pdf_render for full-page rendering). Key parameters: input, output_dir. [Input: PDF (.pdf) | Output: PNG/JPEG images in output_dir]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_extract_tables",
+    "category": "AI & Knowledge Extraction",
+    "description": "Detect and extract structured tabular data (headers and rows) from PDF pages into JSON or CSV. When to use: pulling structured tables out of a PDF for downstream analysis. Difference from related tools: unlike pdf_extract_text (flat unstructured text) or pdf_to_json (full-page text objects), pdf_extract_tables reconstructs table rows and columns; do not use on Excel workbooks (use excel_to_json or excel_to_csv). Key parameters: input; optional output, format ('json' or 'csv', default 'json'), pages (default 'all'). [Input: PDF (.pdf) | Output: JSON or CSV]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "semantic_search",
+    "category": "Document Operations",
+    "description": "Search and rank relevant PDF passages using local structure-aware chunking and weighted term, heading, and phrase scoring. When to use: retrieving the top-N most relevant PDF sections for a question or concept across one PDF or a directory tree of PDFs without exact substring requirements. Difference from related tools: unlike pdf_search (exact page-number substring match), workspace_search (literal case-insensitive line/page grep across PDF, TXT, MD, DOCX, XLSX, CSV, JSON), or pdf_extract_patterns (custom keywords + regexes with character windows), semantic_search chunks PDFs locally (300 tokens, 2x heading weight, phrase boost; no external embeddings API) and returns scored passages; do not use for non-PDF files (use workspace_search). Key parameters: query; optional input, dir (default '.'), limit (default 5), output. [Input: PDF file or directory tree + query | Output: Ranked JSON results]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "workspace_search",
+    "category": "Document Operations",
+    "description": "Recursively search for an exact case-insensitive substring across heterogeneous workspace files (PDF, TXT, MD, DOCX, XLSX, CSV, JSON). When to use: finding every file, page, line, or spreadsheet row in a folder tree containing a literal phrase or identifier. Difference from related tools: unlike pdf_search (PDF-only, non-recursive directory scan returning only page numbers), semantic_search (PDF-only ranked relevance chunks), or pdf_extract_patterns (single-PDF multi-regex extraction), workspace_search walks subdirectories across all specified formats with file, location, and snippet details; do not use for ranked semantic scoring (use semantic_search). Key parameters: query; optional input, dir (default '.'), formats ('all' or CSV list), output. [Input: Directory or file + query | Output: JSON match list]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_search",
+    "category": "Document Operations",
+    "description": "Find exact case-insensitive substring matches inside a single PDF (or top-level PDF directory) and return matching 1-based page numbers. When to use: quickly checking which pages in a PDF contain a literal term before reading or extracting those pages. Difference from related tools: unlike semantic_search (returns ranked passage text across recursive PDF trees), workspace_search (recursively searches PDF, TXT, MD, DOCX, XLSX, CSV, JSON with snippets), or pdf_extract_patterns (supports multiple keywords, named regexes, case sensitivity, and match context windows), pdf_search returns matching page numbers for one literal query; do not use for non-PDFs or regex matching. Key parameters: input (PDF path or directory), query; optional output. [Input: PDF (.pdf) or directory | Output: JSON page match list]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_watermark",
+    "category": "Legal & Compliance",
+    "description": "Apply a rotated translucent text watermark across all pages of a PDF. When to use: stamping text overlays like 'CONFIDENTIAL' or 'DRAFT' across document pages. Difference from related tools: unlike pdf_stamp (places raster image/logo files at explicit coordinates), pdf_overlay_underlay (composites another PDF template as stationery), or pdf_header_footer (adds static edge text), pdf_watermark draws rotated translucent text across pages; do not use for image logos (use pdf_stamp). Key parameters: input, text, output; optional angle (default 45), opacity (default 0.2), color, font_size. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_encrypt",
+    "category": "Privacy & Security",
+    "description": "Encrypt a PDF file with a password required to open it. When to use: locking a PDF with an open password prior to distribution or storage. Difference from related tools: unlike pdf_change_permissions (fine-grained print/copy/modify flags with separate owner/user passwords) or pdf_decrypt (removes password protection), pdf_encrypt sets the password symmetrically as both user and owner password. Key parameters: input, password, output. [Input: PDF (.pdf) | Output: Encrypted PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_decrypt",
+    "category": "Privacy & Security",
+    "description": "Decrypt a password-protected PDF using its password and write an unlocked copy. When to use: removing password protection from a PDF you have credentials for prior to reading or editing. Difference from related tools: reverses pdf_encrypt protection; do not use to modify permission flags directly (use pdf_change_permissions). Key parameters: input, password, output. [Input: Encrypted PDF (.pdf) | Output: Decrypted PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_info",
+    "category": "Document Operations",
+    "description": "Inspect read-only structural summary details (such as page_count) for a PDF without modifying it. When to use: checking page count and basic structural metrics before page extraction, splitting, or rendering. Difference from related tools: unlike pdf_metadata (reads/updates Title/Author/Subject/Keywords) or pdf_validate (verifies structural validity), pdf_info returns summary metrics; do not use to check PII or document classification (use document_pii_scan / pdf_classify_type). Key parameters: input. [Input: PDF (.pdf) | Output: JSON object]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_metadata",
+    "category": "Document Operations",
+    "description": "Read existing PDF Info dictionary metadata or update title, author, subject, and keywords into a new PDF file. When to use: inspecting document metadata or updating Info dictionary tags when saving to output. Difference from related tools: unlike pdf_info (reports structural metrics like page_count), pdf_metadata reads or writes Title/Author/Subject/Keywords fields; do not use to strip metadata for privacy (use pdf_sanitize). Key parameters: input; optional output (.pdf to write updates), title, author, subject, keywords. [Input: PDF (.pdf) | Output: Metadata summary or PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_to_docx",
+    "category": "Format Conversion",
+    "description": "Convert a PDF into an editable Microsoft Word (.docx) document by extracting its text into paragraphs. When to use: producing a .docx draft from a PDF for word-processor editing. Difference from related tools: unlike pdf_extract_text (.txt), pdf_to_markdown (.md), or pdf_to_html (.html), this produces an Office Word .docx file; do not use on spreadsheets (use pdf_to_xlsx or pdf_extract_tables). Key parameters: input, output. [Input: PDF (.pdf) | Output: Word (.docx)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_to_xlsx",
+    "category": "Document Operations",
+    "description": "Convert tables detected in a PDF into a Microsoft Excel (.xlsx) workbook on a best-effort basis. When to use: exporting PDF tables directly into a spreadsheet workbook for Excel. Difference from related tools: unlike pdf_extract_tables (outputs raw JSON or CSV text), pdf_to_xlsx writes a binary .xlsx workbook; unlike excel_to_json / excel_to_csv (reads .xlsx inputs), this takes a PDF input. Key parameters: input, output. [Input: PDF (.pdf) | Output: Excel (.xlsx)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_to_pptx",
+    "category": "Format Conversion",
+    "description": "Convert a PDF into a Microsoft PowerPoint (.pptx) presentation on a best-effort slide-per-page basis. When to use: turning PDF pages or decks into editable .pptx slides. Difference from related tools: unlike pdf_render (exports static raster PNG/JPEG/WebP images), pdf_to_pptx builds a PowerPoint .pptx deck; do not use for Word or Excel output (use pdf_to_docx / pdf_to_xlsx). Key parameters: input, output. [Input: PDF (.pdf) | Output: PowerPoint (.pptx)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_to_json",
+    "category": "Document Operations",
+    "description": "Convert a PDF document into structured page-by-page JSON (document_name, page_number, text, char_count, and image references). When to use: obtaining clean per-page JSON conforming to the JsonDocument schema for inspection or round-trip re-rendering via json_to_pdf. Difference from related tools: unlike pdf_extract_text (flat .txt), pdf_to_markdown (.md prose), pdf_extract_tables (table grids), or pdf_chunk / pdf_rag_chunks (overlapping or heading-split RAG segments), pdf_to_json returns one JSON object per page matching json_to_pdf input. Key parameters: input, output. [Input: PDF (.pdf) | Output: JSON (.json)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_to_markdown",
+    "category": "Format Conversion",
+    "description": "Convert a PDF document into structured Markdown (.md) text preserving headings and prose structure. When to use: turning a readable PDF into Markdown documentation or LLM-ready prose. Difference from related tools: unlike pdf_extract_text (unformatted flat .txt), pdf_to_json (per-page JSON), or pdf_rag_chunks (splits Markdown on '#' headings into JSON chunks), pdf_to_markdown outputs a single .md file; unlike pdf_convert_markdown (Markdown -> PDF) or office_to_markdown (Office -> Markdown), it reads PDF and writes Markdown. Key parameters: input, output. [Input: PDF (.pdf) | Output: Markdown (.md)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_to_html",
+    "category": "Format Conversion",
+    "description": "Convert a PDF document into a responsive, styled HTML5 web page. When to use: publishing PDF content to the web or inspecting styled HTML output. Difference from related tools: unlike pdf_convert_html (renders HTML input into PDF), pdf_to_html converts PDF to HTML; unlike pdf_to_markdown (.md) or pdf_to_epub (.epub), it outputs a standalone .html page. Key parameters: input, output. [Input: PDF (.pdf) | Output: HTML (.html)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_classify_type",
+    "category": "Document Operations",
+    "description": "Classify a PDF document category (such as invoice, contract, receipt, form, or report) using content heuristics. When to use: triaging unknown PDFs before routing them to downstream workflows or recipes. Difference from related tools: unlike pdf_info (reports structural metrics like page_count), pdf_validate (verifies syntax), or document_pii_scan (detects PII entities), pdf_classify_type predicts document category and confidence. Key parameters: input; optional output (.json path). [Input: PDF (.pdf) | Output: JSON classification report]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_read_form",
+    "category": "Forms & Ingestion",
+    "description": "Read AcroForm interactive field names and current values from a PDF. When to use: discovering exact form field keys before calling pdf_fill_form or batch_fill. Difference from related tools: read-only inspection of form fields; use pdf_fill_form to populate a single form or pdf_create_form_field to add new form widgets. Key parameters: input; optional output (.json file path). [Input: PDF (.pdf) | Output: JSON object / file (.json)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_fill_form",
+    "category": "Forms & Ingestion",
+    "description": "Fill AcroForm fields in a single PDF using a JSON field-value map. When to use: populating one fillable PDF form with one set of values. Difference from related tools: unlike batch_fill (iterates CSV/JSON records across one template into output_dir with receipts and optional flattening), pdf_fill_form writes one filled PDF file; do not use to add brand-new form fields (use pdf_create_form_field). Key parameters: input, values (or JSON file path), output. [Input: PDF (.pdf) + values | Output: Filled PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_create_form_field",
+    "category": "Forms & Ingestion",
+    "description": "Add a new interactive AcroForm widget field (such as text or checkbox) at explicit page coordinates on a PDF. When to use: making a static PDF fillable by placing named form inputs. Difference from related tools: creates new form fields from scratch, unlike pdf_fill_form (fills existing fields), pdf_read_form (inspects existing fields), or pdf_annotate (adds markup annotations). Key parameters: input, field_name, field_type, page, x, y, width, height, output; optional rect, label. [Input: PDF (.pdf) | Output: Fillable PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_repair",
+    "category": "Document Operations",
+    "description": "Attempt recovery of a corrupted or malformed PDF by rebuilding its cross-reference table and object stream structure. When to use: fixing broken PDFs that fail validation or fail to open cleanly. Difference from related tools: repairs structural PDF errors unlike pdf_validate (read-only health check) or pdf_sanitize (strips metadata/scripts/attachments). Key parameters: input, output. [Input: Malformed PDF (.pdf) | Output: Repaired PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_linearize",
+    "category": "Optimization & Performance",
+    "description": "Optimize a PDF for Fast Web View (byte-range progressive streaming over HTTP). When to use: preparing large PDFs for web serving so page 1 loads before the full download finishes. Difference from related tools: reorders objects for streaming rather than shrinking image/stream size (use pdf_compress or pdf_dedup_streams) or archiving (use pdf_to_pdf_a). Key parameters: input, output. [Input: PDF (.pdf) | Output: Linearized PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_flatten",
+    "category": "Document Operations",
+    "description": "Flatten interactive AcroForm fields and annotations permanently into static page content streams. When to use: locking filled form values and markups visually into pages so they cannot be edited later. Difference from related tools: renders general form fields and annotations static, unlike pdf_remove_signatures (strips digital signature locks/fields) or pdf_sanitize (strips hidden attachments/metadata/scripts). Key parameters: input, output. [Input: PDF (.pdf) | Output: Flattened PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_to_pdf_a",
+    "category": "Document Operations",
+    "description": "Convert a PDF into ISO-oriented PDF/A archival structure for long-term preservation. When to use: preparing compliance or records-management PDFs for long-term archival storage. Difference from related tools: targets PDF/A conformance unlike pdf_linearize (Fast Web View), pdf_compress (size reduction), or pdf_sanitize (privacy stripping). Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF/A (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_redact",
+    "category": "Privacy & Security",
+    "description": "Permanently remove matching text glyphs, regex matches, or rectangular areas from a PDF and paint opaque blackout boxes with optional overlay text. When to use: irreversibly sanitizing sensitive terms (e.g., SSNs, names, clause text) or page coordinates from a PDF before sharing. Difference from related tools: destroys underlying PDF text/content rather than drawing non-destructive highlights (use pdf_annotate) or only reporting PII locations without modifying the PDF (use document_pii_scan); unlike pdf_sanitize (removes metadata/scripts/attachments), pdf_redact targets visible page text/regions. Key parameters: input, output; provide query, regex, patterns, rules, or page+x+y+width+height (or rect); optional overlay_text, occurrence, case_sensitive. [Input: PDF (.pdf) | Output: Redacted PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_validate_signatures",
+    "category": "Legal & Compliance",
+    "description": "Inspect digital signature fields, byte ranges, and optional incremental-update tamper forensics on a PDF and write a JSON validation report. When to use: auditing signature presence, coverage, or baseline integrity of a signed PDF. Difference from related tools: unlike pdf_sign (adds a signature placeholder) or pdf_remove_signatures (strips signature fields), pdf_validate_signatures inspects signatures read-only; do not use for file SHA-256 hashing alone (use pdf_hash). Key parameters: input, output (.json path); optional baseline (boolean). [Input: PDF (.pdf) | Output: JSON report (.json)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_booklet",
+    "category": "Document Operations",
+    "description": "Pad page count to a multiple of 4 with blank pages and reorder single pages into saddle-stitch booklet printing sequence ([N, 1, 2, N-1, ...]). When to use: preparing a PDF page stream in saddle-stitch booklet folding order before duplex printing. Difference from related tools: unlike pdf_nup (places 2, 4, 9, or 16 pages onto one grid sheet without saddle-stitch reordering) or pdf_reorder_pages (manual explicit page order), pdf_booklet computes saddle-stitch sequence automatically. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_nup",
+    "category": "Document Operations",
+    "description": "Impose multiple PDF pages onto each output sheet in an N-up grid layout (2, 4, 9, or 16 pages per sheet). When to use: creating compact handouts, proof sheets, or multi-page grids on fewer pages. Difference from related tools: unlike pdf_booklet (saddle-stitch sequence reordering of single pages) or pdf_stitch_canvas (one continuous long scroll canvas), pdf_nup arranges discrete multi-page sheets; do not use to tile one oversized page onto small sheets (use pdf_posterize). Key parameters: input, output; optional nup (default 2), ordering ('horizontal' or 'vertical'), margin_pt (default 18), spacing_pt (default 10), draw_borders (default false). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_scale_pages",
+    "category": "Document Operations",
+    "description": "Scale PDF pages cleanly to a target standard page size or multiplier factor. When to use: normalizing mixed-size PDFs to 'A4'/'Letter' or shrinking/enlarging page dimensions proportionally. Difference from related tools: scales page size and content uniformly unlike pdf_crop (clips margins without rescaling) or pdf_nup (combines multiple pages per sheet). Key parameters: input, output; optional target_size (default 'A4'), scale_factor (default 1.0). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_remove_signatures",
+    "category": "Legal & Compliance",
+    "description": "Remove digital signature dictionaries, cryptographic lock flags, and signature widget annotations from a PDF. When to use: clearing existing digital signatures so a PDF can be edited or re-signed cleanly. Difference from related tools: unlike pdf_validate_signatures (inspects signatures without altering the PDF) or pdf_flatten (flattens general form fields/markups into static content), pdf_remove_signatures strips signature fields specifically. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_stamp",
+    "category": "Legal & Compliance",
+    "description": "Stamp a raster image, logo, or signature graphic onto PDF pages at explicit coordinates. When to use: placing a PNG/JPEG image or logo overlay at a known position and size on selected pages. Difference from related tools: unlike pdf_watermark (draws rotated translucent text), pdf_overlay_underlay (composites another PDF template page as stationery), or pdf_sign (adds AcroForm signature dictionary metadata), pdf_stamp draws a raster image onto pages. Key parameters: input, output; provide image_path or image_data; optional x, y, width, height, opacity, pages. [Input: PDF (.pdf) + Image | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_overlay_underlay",
+    "category": "Document Operations",
+    "description": "Composite another PDF template page (such as letterhead, stationery, or form background) under or over pages of a PDF. When to use: applying corporate stationery behind text ('underlay') or stamping a PDF vector template over content ('overlay'). Difference from related tools: unlike pdf_stamp (places a raster image file at box coordinates) or pdf_watermark (renders rotated plain text strings), pdf_overlay_underlay merges another PDF template page across pages. Key parameters: input, output; optional template_path, template_data, mode ('underlay' or 'overlay', default 'underlay'), pages, opacity. [Input: PDF (.pdf) + Template PDF | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_auto_rotate",
+    "category": "Document Operations",
+    "description": "Automatically rotate landscape-oriented PDF pages to upright portrait orientation using MediaBox and /Rotate geometry. When to use: normalizing sideways pages whose MediaBox width exceeds height back into portrait orientation without computing angles manually. Difference from related tools: unlike pdf_rotate (applies explicit fixed angle rotation to specified pages), pdf_auto_rotate inspects page MediaBox and /Rotate dimensions to enforce upright portrait geometry (it does not run OCR text baseline analysis). Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_invert_colors",
+    "category": "Document Operations",
+    "description": "Recolor PDF pages into dark mode, true inverted colors, high contrast, or sepia palette for night reading or accessibility. When to use: transforming white-background PDFs into eye-friendly dark mode, sepia, or high-contrast output. Difference from related tools: modifies PDF page color streams directly rather than rendering static images (use pdf_render) or compressing streams (use pdf_compress). Key parameters: input, output; optional mode ('dark_mode', 'true_invert', 'high_contrast', 'sepia'; default 'dark_mode'), pages (1-based CSV). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_stitch_canvas",
+    "category": "Document Operations",
+    "description": "Stitch multiple PDF pages end-to-end vertically or horizontally into a single continuous tall or wide page canvas. When to use: combining multi-page diagrams, receipts, or infographics into one seamless scrollable PDF sheet. Difference from related tools: unlike pdf_nup (lays out multi-page grid sheets) or pdf_merge (appends discrete files as separate pages), pdf_stitch_canvas merges pages onto one unified canvas. Key parameters: input, output; optional direction ('vertical' or 'horizontal', default 'vertical'), margin_pt (default 0), spacing_pt (default 0). [Input: PDF (.pdf) | Output: Single-canvas PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_attachments",
+    "category": "Document Operations",
+    "description": "List, extract, embed, or remove file attachments inside a PDF container/portfolio. When to use: inspecting embedded files inside a PDF, extracting them (raw file or .zip), embedding a base64 payload, or deleting a named attachment. Difference from related tools: manages individual PDF attachments cleanly unlike pdf_sanitize (removes metadata/scripts and strips all attachments unconditionally) or pdf_extract_images (extracts page raster images). Key parameters: input, output; optional action ('list' default, 'extract', 'add', 'remove'), file_name, description, file_data_base64. [Input: PDF (.pdf) | Output: JSON report, extracted file/.zip, or updated PDF]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_timestamp",
+    "category": "Legal & Compliance",
+    "description": "Append an RFC 3161 TSA verification timestamp marker to a PDF document (with offline fallback if TSA timestamping fails). When to use: recording an archival timestamp marker in a PDF trailer pipeline step. Difference from related tools: unlike pdf_sign (adds AcroForm /SigFlags dictionary) or pdf_validate_signatures (inspects existing signature fields), pdf_timestamp stamps a trailer verification marker; use pdf_hash for a standalone SHA-256 file digest. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_change_permissions",
+    "category": "Privacy & Security",
+    "description": "Configure PDF document restriction flags (printing, copying, modifying) with owner and optional user passwords. When to use: restricting downstream printing, text copying, or editing on a distributed PDF while managing owner/user passwords. Difference from related tools: unlike pdf_encrypt (sets a basic symmetric open/owner password without permission granularity) or pdf_decrypt (removes password protection), pdf_change_permissions sets permission flags and separate owner/user passwords. Key parameters: input, output; optional allow_printing, allow_copying, allow_modifying, owner_password, user_password. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_split_scanned_book",
+    "category": "Document Operations",
+    "description": "Split scanned two-page book spreads along the center spine or horizontal fold into individual single pages. When to use: separating double-page book scans into properly ordered single pages (LTR or RTL). Difference from related tools: splits each spread down the middle into two pages, unlike pdf_crop (crops one fixed region) or pdf_split (splits across existing page boundaries without halving spreads). Key parameters: input, output; optional reading_direction, gutter_overlap, split_horizontal. [Input: Spread PDF (.pdf) | Output: Single-page PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_comic_archive",
+    "category": "Document Operations",
+    "description": "Convert a PDF document into a comic book image archive (.cbz / .cbr) by rendering pages as PNGs inside a ZIP archive. When to use: exporting illustrated PDFs, manga, or comics into a CBZ/CBR archive for comic readers. Difference from related tools: bundles all rendered page PNGs into one .cbz/.cbr archive rather than saving loose PNG/JPEG/WebP files (use pdf_render) or reflowable eBooks (use pdf_to_epub). Key parameters: input, output (.cbz or .cbr). [Input: PDF (.pdf) | Output: CBZ/CBR archive]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_split_by_outline",
+    "category": "Document Operations",
+    "description": "Split a multi-chapter PDF into separate PDF files along its /Outlines bookmark hierarchy and bundle them into a .zip archive. When to use: breaking a book or manual into per-chapter PDF files using existing table-of-contents bookmarks. Difference from related tools: splits logically by bookmark headings into a .zip unlike pdf_split (splits by uniform page counts or explicit ranges), pdf_burst (1 file per page), or pdf_bookmarks (exports bookmarks to JSON only). Key parameters: input, output (.zip). [Input: PDF (.pdf) | Output: ZIP archive (.zip)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_merge_alternate",
+    "category": "Document Operations",
+    "description": "Interleave pages alternately from two PDF documents (useful for merging separately scanned front and back stacks). When to use: combining odd pages (input_a) and even pages (input_b), with optional page-order reversal for duplex ADF stacks. Difference from related tools: unlike pdf_merge (concatenates documents sequentially end-to-end), pdf_merge_alternate interleaves page batches from input_a and input_b using step/step_b and reverse flags. Key parameters: input_a, input_b, output; optional step (default 1), step_b (default 1), reverse_a (default false), reverse_b (default false). [Input: Two PDFs (.pdf) | Output: Interleaved PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_posterize",
+    "category": "Document Operations",
+    "description": "Slice oversized PDF pages into a tiled grid of standard printable sheets with overlap margins and cut guides. When to use: printing large posters, blueprints, or wide diagrams across multiple A4/Letter sheets. Difference from related tools: unlike pdf_nup (shrinks multiple pages onto fewer sheets) or pdf_split_scanned_book (splits two-up book spreads down the spine), pdf_posterize splits single large pages into printable tiles. Key parameters: input, output; optional target_sheet (default 'a4'), grid (e.g., '2x2'), grid_cols, grid_rows, overlap_pt (default 14.17), scale (default 1.0), include_guides (default true). [Input: PDF (.pdf) | Output: Tiled PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_dedup_streams",
+    "category": "Document Operations",
+    "description": "Deduplicate identical indirect object streams (fonts, images, content streams) in a PDF using lossless SHA-256 and byte comparison. When to use: shrinking PDFs containing repeated headers, logos, fonts, or templates with zero visual quality loss. Difference from related tools: unlike pdf_compress (applies quality-based recompression), pdf_dedup_streams strictly deduplicates byte-identical streams losslessly; unlike pdf_linearize (optimizes object layout for HTTP streaming), it reduces repeated stream count. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_to_epub",
+    "category": "Document Operations",
+    "description": "Convert a fixed-layout PDF document into a reflowable EPUB 3.0 eBook (.epub). When to use: packaging PDFs for e-readers and mobile reading apps that reflow text dynamically. Difference from related tools: produces a reflowable .epub eBook unlike pdf_to_html (.html), pdf_to_markdown (.md), pdf_to_docx (.docx), or pdf_comic_archive (.cbz/.cbr image archive for comics). Key parameters: input, output. [Input: PDF (.pdf) | Output: EPUB (.epub)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_extract_patterns",
+    "category": "AI & Knowledge Extraction",
+    "description": "Search a PDF for caller-specified keywords and named regular expressions, returning matched strings with page numbers and surrounding character context. When to use: extracting structured custom entities (such as invoice numbers, clauses, dates, or regex patterns) with contextual snippets from one PDF. Difference from related tools: unlike pdf_search (single literal substring returning matching 1-based page numbers), semantic_search (query-ranked chunk scoring across files), workspace_search (recursive literal substring search across Office/text/PDF), or document_pii_scan (built-in SSN/CC/email/phone/IBAN PII scanner), pdf_extract_patterns runs custom keyword lists and regex maps; do not use to permanently blackout matches (use pdf_redact). Key parameters: input; optional output (.json), keywords, patterns, case_sensitive (default false), context_len (default 30). [Input: PDF (.pdf) | Output: JSON match report (.json)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_sanitize",
+    "category": "Privacy & Security",
+    "description": "Deeply sanitize a PDF document by stripping metadata, JavaScript actions, embedded attachments, thumbnails, and private data. When to use: scrubbing hidden document internals and privacy traces before external distribution. Difference from related tools: unlike pdf_redact (blacks out visible page text or coordinates), pdf_metadata (updates or reads Info dictionary tags), or pdf_attachments (selectively lists/adds/extracts/removes individual files), pdf_sanitize scrubs hidden non-page payloads broadly. Key parameters: input, output; optional remove_metadata (default true), remove_attachments (default true), remove_scripts (default true). [Input: PDF (.pdf) | Output: Sanitized PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "document_pii_scan",
+    "category": "Document Operations",
+    "description": "Scan a PDF read-only for personally identifiable information (SSNs, credit cards, emails, phone numbers, IBANs) and return a structured findings report. When to use: auditing a document for regulated PII entities before redaction or release. Difference from related tools: unlike pdf_redact (modifies the PDF to permanently erase matching text/boxes) or pdf_extract_patterns (runs custom caller-supplied keywords and regexes), document_pii_scan uses built-in PII detectors without altering the PDF. Key parameters: input; optional output (.json), scan_ssn, scan_credit_cards, scan_emails, scan_phones, scan_iban (all default true). [Input: PDF (.pdf) | Output: JSON PII report (.json)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_header_footer",
+    "category": "Document Operations",
+    "description": "Stamp static custom header and/or footer text onto every page of a PDF. When to use: adding repeated document titles, confidentiality classification banners, or author footers across pages. Difference from related tools: unlike pdf_page_numbers (formats dynamic {n} and {total} page counters) or pdf_bates (sequential prefix+zero-padded legal numbering), pdf_header_footer places static banner text along top/bottom margins; unlike pdf_watermark, it does not rotate translucent text across the page center. Key parameters: input, output; provide text + position (default 'Header' at 'header') or header_left / footer_center. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_bates",
+    "category": "Legal & Compliance",
+    "description": "Stamp sequential Bates numbering (such as CONF-000001, CONF-000002) across pages of a PDF for legal and discovery indexing. When to use: applying unique incremental legal/discovery document stamps with prefix and fixed zero-padding. Difference from related tools: unlike pdf_page_numbers ('Page N of Total') or pdf_header_footer (static margin banners), pdf_bates increments a formatted prefix+counter per page. Key parameters: input, output, start_number, prefix, padding; optional position (default 'bottom-right'). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_render",
+    "category": "Document Operations",
+    "description": "Rasterize a selected PDF page into a PNG, JPEG, or WebP image file at the specified DPI. When to use: generating a page thumbnail, visual inspection snapshot, or high-DPI raster export of one page. Difference from related tools: unlike pdf_extract_images (extracts original embedded bitmap XObjects only), pdf_comic_archive (packages all pages into one .cbz/.cbr archive), or pdf_images_to_pdf (reverse: images to PDF), pdf_render renders full page vector, font, and image content to an image file. Key parameters: input, output; optional page (default 1), dpi (default 150.0), format (png/jpeg/webp). [Input: PDF (.pdf) | Output: Image (.png, .jpg, .webp)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_images_to_pdf",
+    "category": "Document Operations",
+    "description": "Combine one or more raster image files (PNG, JPEG, WebP) sequentially into pages of a single PDF document. When to use: bundling photos, scanned page images, or figures into one PDF. Difference from related tools: converts image files into a PDF (opposite of pdf_render and pdf_extract_images); do not use to combine existing PDF files (use pdf_merge). Key parameters: inputs (array of image paths), output (.pdf path). [Input: Image files | Output: PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_compare",
+    "category": "Document Operations",
+    "description": "Compare two PDF documents and generate a structured JSON diff report indicating whether differences were detected. When to use: verifying revisions or regression-checking changes between two versions of a PDF. Difference from related tools: compares two separate PDFs unlike single-file inspection tools (pdf_info, pdf_validate, pdf_hash). Key parameters: input_a, input_b; optional output (defaults to 'diff_report.json'). [Input: Two PDFs (.pdf) | Output: JSON diff report (.json)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_bookmarks",
+    "category": "Document Operations",
+    "description": "Extract the hierarchical table-of-contents (/Outlines bookmarks) from a PDF to JSON. When to use: reading chapter titles and destination structure from a bookmarked PDF. Difference from related tools: exports bookmarks as JSON without modifying or splitting the PDF, unlike pdf_split_by_outline (splits the PDF into chapter files inside a .zip) or pdf_to_json (exports full page text). Key parameters: input, output (.json file path). [Input: PDF (.pdf) | Output: JSON bookmarks (.json)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_ocr",
+    "category": "AI & Knowledge Extraction",
+    "description": "Run optical character recognition (OCR) on a PDF to extract recognized text or create a searchable PDF with an invisible text layer (requires local OCR model pack). When to use: making scanned image-only PDFs searchable (.pdf output) or transcribing scanned pages into text (.txt output). Difference from related tools: unlike pdf_extract_text (reads only an existing text stream and fails to read scanned bitmaps without OCR), pdf_ocr recognizes bitmap page images and chooses output format by output file extension (.txt vs .pdf). Key parameters: input, output. [Input: Scanned/Image PDF (.pdf) | Output: Searchable PDF (.pdf) or Plain Text (.txt)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_sign",
+    "category": "Document Operations",
+    "description": "Add an AcroForm signature placeholder dictionary (/SigFlags = 3) to a PDF without requiring external PKI keys or certificates. When to use: preparing a PDF catalog with signature field indicator flags in offline workflows. Difference from related tools: unlike pdf_stamp (places a visual image signature), pdf_timestamp (writes an archival trailer timestamp), pdf_validate_signatures (inspects existing signatures), or pdf_remove_signatures (strips signatures), pdf_sign writes AcroForm /SigFlags = 3. Key parameters: input, output. [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+    "helper": "add_io_tool"
+  },
+  {
+    "name": "pdf_hash",
+    "category": "Document Operations",
+    "description": "Compute the SHA-256 cryptographic file digest and byte size of a PDF document. When to use: generating a tamper-evident checksum or verifying exact file identity on disk. Difference from related tools: hashes raw file bytes unlike pdf_validate (parses PDF structure validity), pdf_validate_signatures (checks digital signatures), or pdf_compare (compares content between two PDFs). Key parameters: input; optional output (.txt summary file). [Input: PDF (.pdf) | Output: JSON SHA-256 digest / optional .txt report]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_validate",
+    "category": "Document Operations",
+    "description": "Validate a PDF document's internal syntax and object tree integrity read-only, reporting validity status and page count. When to use: verifying whether a PDF opens cleanly without corruption before processing or delivery. Difference from related tools: read-only structure check unlike pdf_repair (repairs corrupted PDFs), pdf_validate_signatures (inspects cryptographic signatures), or pdf_hash (computes SHA-256 digest); do not use to summarize metadata fields (use pdf_metadata). Key parameters: input; optional output (.json report file). [Input: PDF (.pdf) | Output: JSON validation report (.json)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "pdf_annotate",
+    "category": "Document Operations",
+    "description": "Add non-destructive PDF markup annotations (highlights, notes, underlines) using explicit coordinates, annotation rules, or search/regex matching. When to use: highlighting key phrases, attaching reviewer comments, or marking coordinates visually while preserving underlying text. Difference from related tools: unlike pdf_redact (permanently destroys underlying text with black boxes), pdf_stamp (embeds raster images), or pdf_create_form_field (creates fillable input widgets), pdf_annotate adds standard PDF annotation objects. Key parameters: input, output; optional annotations, rules, search, regex, type (default 'highlight'), color (default '#FFFF00'), occurrence (default 'all'), case_sensitive (default false), content. [Input: PDF (.pdf) | Output: Annotated PDF (.pdf)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "excel_to_json",
+    "category": "Format Conversion",
+    "description": "Extract data rows from an Excel workbook (.xlsx/.xls) into structured JSON while preserving cell types. When to use: ingesting spreadsheet data programmatically as typed JSON records. Difference from related tools: unlike excel_to_csv (exports a single sheet to CSV text), pdf_convert_excel (renders spreadsheets to a visual .pdf), or pdf_to_xlsx (creates .xlsx from a PDF), excel_to_json reads Excel inputs into JSON; do not use on legacy binary Office Word/PPT (use office_modernize_legacy). Key parameters: input; optional output (.json path), sheet, has_headers (default true). [Input: Excel (.xlsx, .xls) | Output: JSON data / .json file]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "excel_to_csv",
+    "category": "Format Conversion",
+    "description": "Export an Excel workbook (.xlsx/.xls) worksheet to standard RFC 4180 CSV format. When to use: converting an Excel sheet into a flat comma-separated .csv file. Difference from related tools: unlike excel_to_json (outputs structured typed JSON), pdf_convert_excel (renders to PDF), or office_extract_text (dumps unformatted text across Office formats), excel_to_csv writes RFC 4180 CSV to output. Key parameters: input, output (.csv); optional sheet. [Input: Excel (.xlsx, .xls) | Output: CSV (.csv)]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "list_workflows",
+    "category": "Autonomous Automation",
+    "description": "List all built-in preset document workflow IDs and pipeline definitions. When to use: discovering available preset IDs (such as 'preset-legal-discovery', 'preset-clean-scan', 'preset-redact-protect') before calling document_workflow or recipe_run. Difference from related tools: returns static built-in preset workflows only, unlike execution_receipt_list (historical execution logs on disk) or watcher_list (running background folder daemons). Key parameters: none. [Input: None | Output: JSON workflows array]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "document_workflow",
+    "category": "Autonomous Automation",
+    "description": "Execute a multi-step document workflow pipeline once on a PDF using either a built-in preset ID or a .ppflow/JSON recipe, saving output and receipt. When to use: running a multi-operation PDF pipeline (specified by preset XOR recipe) with an explicit output path or named output directory. Difference from related tools: unlike recipe_run (requires recipe and makes output optional), document_workflow requires output and accepts exactly one of preset or recipe; unlike watcher_start (continuous daemon), it runs synchronously once; call list_workflows first to list presets. Key parameters: input, output; provide preset OR recipe; optional name_template. [Input: PDF (.pdf) + preset/recipe | Output: Processed PDF (.pdf) + JSON receipt]",
+    "helper": "add_tool"
+  },
+  {
+    "name": "cli_ask",
+    "category": "Document Operations",
+    "description": "Resolve a natural-language document request into a structured offline ExecutionPlan (intent, input_files, output_file) without mutating PDFs. When to use: parsing free-form user requests into a deterministic PaperPilot operation intent and plan summary offline. Difference from related tools: interprets natural language into a read-only plan (and optionally writes that plan summary to output), unlike document_workflow, recipe_run, or pdf_* tools which execute document transformations directly. Key parameters: prompt; optional input (context PDF path), output (optional plan summary text path), dry_run (default true). [Input: Natural-language prompt | Output: JSON ExecutionPlan]",
+    "helper": "add_tool"
+  }
+]
