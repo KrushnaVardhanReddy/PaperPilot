@@ -1,1 +1,1 @@
-export const CURRENT_TOOL_NAME = 'batch_fill';
+export const CURRENT_TOOL_NAME = 'cli_ask';

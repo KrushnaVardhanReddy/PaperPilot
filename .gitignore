@@ -84,3 +84,4 @@ apps/extension/*.zip
 # WebdriverIO test output logs
 apps/desktop/logs/
 
+.webui_secret_key
