@@ -1,7 +1,5 @@
 node_modules/
-out/*
-!out/final_videos/
-!out/tool_videos/
+out/
 .revideo/
 *.log
 *.js
