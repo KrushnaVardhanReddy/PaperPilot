@@ -1,12 +1,13 @@
 import { makeProject } from '@revideo/core';
 import deepdiveData from './configs/tools_deepdive.json' with { type: 'json' };
 import { createSingleToolScene, SingleToolData, ToolCaptionsMetadata } from './scenes/single-tool-scene';
-import { captionsData_tool_pdf_compress } from './scenes/captions_tool_pdf_compress';
+import { allToolCaptions } from './scenes/all_tool_captions';
+import { CURRENT_TOOL_NAME } from './current_tool_target';
 
-const TARGET_TOOL_NAME = 'pdf_compress';
-const toolEntry = (deepdiveData as SingleToolData[]).find(t => t.tool_name === TARGET_TOOL_NAME) || (deepdiveData as SingleToolData[])[0];
+const toolEntry = (deepdiveData as SingleToolData[]).find(t => t.tool_name === CURRENT_TOOL_NAME) || (deepdiveData as SingleToolData[])[0];
+const captions = (allToolCaptions[CURRENT_TOOL_NAME] || allToolCaptions['pdf_compress']) as ToolCaptionsMetadata;
 
-const scene = createSingleToolScene(toolEntry, captionsData_tool_pdf_compress as unknown as ToolCaptionsMetadata);
+const scene = createSingleToolScene(toolEntry, captions);
 
 export default makeProject({
   scenes: [scene],
