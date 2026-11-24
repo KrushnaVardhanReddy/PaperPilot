@@ -79,9 +79,9 @@ export function createUniversalToolScene(tool: ToolWeekConfig, captionsData: Cap
           opacity={0.10}
         />
 
-        {/* Voiceover Audio Stream */}
+        {/* Voiceover Audio Stream (Served from public directory) */}
         <Audio
-          src={`../assets/week${tool.weekStr}_voiceover.mp3`}
+          src={`/week${tool.weekStr}_voiceover.mp3`}
           play={true}
         />
 
