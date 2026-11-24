@@ -4,9 +4,13 @@
   "description": "Automated YouTube Video and Shorts generation pipeline using Revideo for PaperPilot",
   "type": "module",
   "scripts": {
-    "audio:week01": "python3 scripts/generate_audio.py assets/week01_voiceover.mp3 assets/week01_captions.json",
+    "audio": "python3 scripts/generate_audio.py",
+    "update-registry": "python3 -c \"import os; ...\"",
+    "audio:all": "python3 scripts/generate_audio.py --all",
+    "audio:week01": "python3 scripts/generate_audio.py --week 1",
+    "render": "tsx scripts/render_all.ts",
+    "render:all": "tsx scripts/render_all.ts --all",
     "render:week01": "tsx scripts/render.ts",
-    "render": "tsx scripts/render.ts",
     "build": "tsc"
   },
   "keywords": [

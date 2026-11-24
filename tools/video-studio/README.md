@@ -1,6 +1,8 @@
 # PaperPilot Video Studio 🎥
 
-Automated video generation pipeline for PaperPilot YouTube Shorts & feature videos using [Revideo](https://revideo.dev) (MIT license), `edge-tts`, and headless Puppeteer / Chrome.
+Automated video generation pipeline for PaperPilot YouTube feature showcases and social media videos using [Revideo](https://revideo.dev) (MIT license), `edge-tts`, and headless Puppeteer / Chrome.
+
+Scales across **all 26 weekly showcase tools** with a 5-part 16:9 Full HD (1920x1080 @ 30fps) architecture, complete multi-interface demonstrations, and synchronized captions.
 
 ---
 
@@ -9,53 +11,73 @@ Automated video generation pipeline for PaperPilot YouTube Shorts & feature vide
 ```
 tools/video-studio/
 ├── assets/
-│   ├── frames/                 # Multi-interface UI snapshots & benchmark diagrams
-│   ├── screen_recording.mp4    # 30fps screen video capture of tool action
-│   ├── week01_captions.json    # Word-level & phrase-level timestamps from edge-tts
-│   └── week01_voiceover.mp3    # Neural voiceover audio (en-US-ChristopherNeural)
+│   ├── weekXX_captions.json    # Word-level & phrase-level timestamps from edge-tts
+│   └── weekXX_voiceover.mp3    # Neural voiceover audio (en-US-ChristopherNeural)
 ├── out/
-│   └── week01_compression.mp4  # Rendered 1080x1920 9:16 vertical MP4 video
+│   └── weekXX_<slug>.mp4       # Rendered 1920x1080 16:9 Landscape Full HD MP4 video
 ├── scripts/
-│   ├── generate_audio.py       # Voiceover synthesizer & word timestamp extractor
-│   └── render.ts               # Headless Revideo render orchestrator
+│   ├── generate_audio.py       # Batch voiceover & subtitle timing synthesizer (Weeks 1-26)
+│   ├── render_all.ts           # Batch video renderer CLI (Supports single, ranges, or all weeks)
+│   └── render.ts               # Standalone runner for Week 01
 ├── src/
-│   ├── project.ts              # Revideo project definition (1080x1920, 30fps)
+│   ├── configs/
+│   │   └── tools-data.ts       # Typed configurations, metadata, CLI commands, MCP tools & REST APIs
+│   ├── configs_tools.json      # Structured tool definitions parsed from showcase posts
+│   ├── project.ts              # Revideo project root with dynamic week selection (TARGET_WEEK)
 │   └── scenes/
-│       ├── captions.ts         # TypeScript subtitle transcript data
-│       └── week01-scene.tsx    # Scene animation, badges, video viewport, captions, outro
+│       ├── captions_weekXX.ts  # Bundled TypeScript subtitle transcripts for each week
+│       ├── universal-scene.tsx # Scalable, parameterized 5-part storyboard scene template
+│       └── week01-scene.tsx    # Canonical Week 01 scene
 ├── package.json
 └── tsconfig.json
 ```
 
 ---
 
-## 🚀 Quickstart
+## 🎯 The 5-Part Storyboard Structure
 
-### 1. Generate Voiceover & Captions
-Runs `edge-tts` to generate neural audio and extract word-level subtitle timings:
-```bash
-pnpm audio:week01
-# or
-python3 scripts/generate_audio.py assets/week01_voiceover.mp3 assets/week01_captions.json
-```
-
-### 2. Render Video (Headless MP4)
-Renders the complete short at 1080x1920 30fps into `out/week01_compression.mp4`:
-```bash
-pnpm render:week01
-# or
-npx tsx scripts/render.ts
-```
+Every tool video follows the standardized narrative architecture:
+1. **Introduction & Core Architecture**: PaperPilot definition (Pure Rust, local-first document intelligence toolkit, 100 tools, zero cloud subscriptions, zero data egress).
+2. **Problem & High-Speed Engine Solution**: Tailored to the specific week's topic (e.g. Broken workflows, privacy leaks, monthly subscriptions vs. Rust native engine).
+3. **Featured Tool Announcement**: Tool number, operational parameters, and core capabilities.
+4. **All 5 Interfaces (Input -> Output Demonstration)**:
+   - 🖥️ **Desktop GUI**: Visual dock, drag-and-drop, interactive sliders, preview, and receipt.
+   - 🤖 **AI Agent / MCP**: User prompt -> deterministic MCP tool call -> output receipt.
+   - 💻 **Terminal CLI**: `paperpilot <cmd>` -> ANSI formatted terminal receipt.
+   - 🌐 **Local REST API**: `POST localhost:7823/v1/...` -> 200 OK JSON response.
+   - ⚡ **Web / WASM**: In-browser execution at `usepaperpilot.com` with 0 bytes server upload.
+5. **Outro & 5-Second Flash Install**: GitHub star CTA (`github.com/KrushnaVardhanReddy/PaperPilot`), website (`usepaperpilot.com`), and 5-second flash install command.
 
 ---
 
-## 🎬 Prototype Tool #1: Instant PDF Compression
+## 🚀 Usage Guide
 
-- **Resolution:** 1080x1920 (9:16 Vertical HD for YouTube Shorts / Reels / TikTok)
-- **Duration:** 40.07 seconds
-- **Features Included:**
-  1. **Intro Hook Badge:** "WEEK 1 • MULTI-INTERFACE SHOWCASE — Instant PDF Compression"
-  2. **Screen Recording:** Smooth playback demonstrating Desktop GUI, MCP Agent, CLI, and REST API
-  3. **Live Animated Subtitles:** Word/sentence captions dynamically synchronized with the voiceover
-  4. **Metrics Card:** Throughput (237 docs/sec), Storage Reclaimed (-74.4% / -48.2 GB), $0 API Fees
-  5. **Outro CTA Card:** 100% offline & open source with 5-second flash install command.
+### 1. Generating Audio & Captions
+
+Generate high-quality voiceover audio and synchronized subtitle data using `edge-tts`:
+
+```bash
+# Generate for all 26 weeks
+pnpm audio:all
+
+# Generate for a specific week (e.g. Week 2)
+python3 scripts/generate_audio.py --week 2
+
+# Generate for a range of weeks (e.g. Weeks 2 through 10)
+python3 scripts/generate_audio.py --week 2..10
+```
+
+### 2. Rendering Videos (Headless MP4)
+
+Render Full HD 16:9 MP4 videos into `out/`:
+
+```bash
+# Render all 26 weeks
+pnpm render:all
+
+# Render a single week (e.g. Week 2)
+pnpm render 2
+
+# Render a range of weeks (e.g. Weeks 2 through 5)
+pnpm render 2..5
+```

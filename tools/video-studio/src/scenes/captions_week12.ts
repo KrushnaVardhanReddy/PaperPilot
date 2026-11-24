@@ -1,0 +1,3855 @@
+export const captionsData_week12 = {
+  "week": 12,
+  "weekStr": "12",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+6%",
+  "script": "Welcome to PaperPilot, the pure Rust, local-first document and PDF toolkit. Featuring one hundred native tools, zero cloud subscriptions, and absolute privacy where your files never leave your machine. Today we tackle a critical challenge in Autonomous Agentic Self-Correction & Document Recovery. Cloud services charge monthly subscription fees, rate-limit your batch requests, and expose your confidential documents to external third-party servers. PaperPilot solves this with a high-speed engine written in native Rust. Equipped with doctor, pdf_repair, pdf_flatten, it runs deterministically on your local machine with multi-threaded performance and zero data egress. Now highlighting Tool Number 12: MCP Agent Diagnosing & Healing Corrupt PDFs, powered by PaperPilot. Let us explore how you can run this across all five interfaces. First, the Desktop GUI. Simply drag and drop your document, customize operational parameters with interactive controls, and inspect the live instant preview with real-time feedback. Second, the AI Agent. With our native Model Context Protocol server, your local agent or Claude invokes the doctor tool directly, executing deterministic workflows without any data leaving localhost. Third, the Terminal CLI. Run the native command-line binary, and receive an ultra-fast, ANSI-formatted terminal receipt in just milliseconds. Fourth, the Local REST API. Send a standard HTTP POST request to your local PaperPilot daemon, and receive structured JSON output with zero cloud latency and sub-5 millisecond overhead. Fifth, Web and WebAssembly. Open usepaperpilot.com in any modern browser, and process your files with pure client-side WebAssembly memory without uploading a single byte to the internet. PaperPilot delivers total document sovereignty with zero cloud lock-in. Star us on GitHub at github.com/KrushnaVardhanReddy/PaperPilot, visit usepaperpilot.com, and install it in five seconds using curl -fsSL usepaperpilot.com/install.sh pipe bash.",
+  "sections": [
+    {
+      "id": "intro",
+      "title": "Welcome to PaperPilot",
+      "text": "Welcome to PaperPilot, the pure Rust, local-first document and PDF toolkit. Featuring one hundred native tools, zero cloud subscriptions, and absolute privacy where your files never leave your machine."
+    },
+    {
+      "id": "problem_solution",
+      "title": "Problem & Solution: Autonomous Agentic Self-Correction & Document Recovery",
+      "text": "Today we tackle a critical challenge in Autonomous Agentic Self-Correction & Document Recovery. Cloud services charge monthly subscription fees, rate-limit your batch requests, and expose your confidential documents to external third-party servers. PaperPilot solves this with a high-speed engine written in native Rust. Equipped with doctor, pdf_repair, pdf_flatten, it runs deterministically on your local machine with multi-threaded performance and zero data egress."
+    },
+    {
+      "id": "tool_focus",
+      "title": "Tool 12: MCP Agent Diagnosing & Healing Corrupt PDFs",
+      "text": "Now highlighting Tool Number 12: MCP Agent Diagnosing & Healing Corrupt PDFs, powered by PaperPilot."
+    },
+    {
+      "id": "interface_gui",
+      "title": "Interface 1: Desktop GUI",
+      "text": "Let us explore how you can run this across all five interfaces. First, the Desktop GUI. Simply drag and drop your document, customize operational parameters with interactive controls, and inspect the live instant preview with real-time feedback."
+    },
+    {
+      "id": "interface_agent",
+      "title": "Interface 2: AI Agent (Claude / MCP)",
+      "text": "Second, the AI Agent. With our native Model Context Protocol server, your local agent or Claude invokes the doctor tool directly, executing deterministic workflows without any data leaving localhost."
+    },
+    {
+      "id": "interface_cli",
+      "title": "Interface 3: Terminal CLI",
+      "text": "Third, the Terminal CLI. Run the native command-line binary, and receive an ultra-fast, ANSI-formatted terminal receipt in just milliseconds."
+    },
+    {
+      "id": "interface_api",
+      "title": "Interface 4: Local REST API",
+      "text": "Fourth, the Local REST API. Send a standard HTTP POST request to your local PaperPilot daemon, and receive structured JSON output with zero cloud latency and sub-5 millisecond overhead."
+    },
+    {
+      "id": "interface_wasm",
+      "title": "Interface 5: Web / WASM",
+      "text": "Fifth, Web and WebAssembly. Open usepaperpilot.com in any modern browser, and process your files with pure client-side WebAssembly memory without uploading a single byte to the internet."
+    },
+    {
+      "id": "outro",
+      "title": "Outro & Installation",
+      "text": "PaperPilot delivers total document sovereignty with zero cloud lock-in. Star us on GitHub at github.com/KrushnaVardhanReddy/PaperPilot, visit usepaperpilot.com, and install it in five seconds using curl -fsSL usepaperpilot.com/install.sh pipe bash."
+    }
+  ],
+  "total_words": 276,
+  "duration": 132.476,
+  "words": [
+    {
+      "word": "Welcome",
+      "start": 0.097,
+      "end": 0.522,
+      "duration": 0.425
+    },
+    {
+      "word": "to",
+      "start": 0.533,
+      "end": 0.628,
+      "duration": 0.094
+    },
+    {
+      "word": "PaperPilot",
+      "start": 0.64,
+      "end": 1.383,
+      "duration": 0.743
+    },
+    {
+      "word": "the",
+      "start": 1.595,
+      "end": 1.701,
+      "duration": 0.106
+    },
+    {
+      "word": "pure",
+      "start": 1.713,
+      "end": 2.043,
+      "duration": 0.33
+    },
+    {
+      "word": "Rust",
+      "start": 2.055,
+      "end": 2.432,
+      "duration": 0.377
+    },
+    {
+      "word": "local-first",
+      "start": 2.644,
+      "end": 3.258,
+      "duration": 0.613
+    },
+    {
+      "word": "document",
+      "start": 3.269,
+      "end": 3.765,
+      "duration": 0.495
+    },
+    {
+      "word": "and",
+      "start": 3.859,
+      "end": 3.977,
+      "duration": 0.118
+    },
+    {
+      "word": "PDF",
+      "start": 3.989,
+      "end": 4.508,
+      "duration": 0.519
+    },
+    {
+      "word": "toolkit",
+      "start": 4.519,
+      "end": 5.05,
+      "duration": 0.531
+    },
+    {
+      "word": "Featuring",
+      "start": 5.861,
+      "end": 6.38,
+      "duration": 0.519
+    },
+    {
+      "word": "one",
+      "start": 6.391,
+      "end": 6.557,
+      "duration": 0.165
+    },
+    {
+      "word": "hundred",
+      "start": 6.568,
+      "end": 6.899,
+      "duration": 0.33
+    },
+    {
+      "word": "native",
+      "start": 6.91,
+      "end": 7.217,
+      "duration": 0.307
+    },
+    {
+      "word": "tools",
+      "start": 7.229,
+      "end": 7.7,
+      "duration": 0.472
+    },
+    {
+      "word": "zero",
+      "start": 7.901,
+      "end": 8.255,
+      "duration": 0.354
+    },
+    {
+      "word": "cloud",
+      "start": 8.267,
+      "end": 8.573,
+      "duration": 0.307
+    },
+    {
+      "word": "subscriptions",
+      "start": 8.585,
+      "end": 9.328,
+      "duration": 0.743
+    },
+    {
+      "word": "and",
+      "start": 9.587,
+      "end": 9.764,
+      "duration": 0.177
+    },
+    {
+      "word": "absolute",
+      "start": 9.776,
+      "end": 10.295,
+      "duration": 0.519
+    },
+    {
+      "word": "privacy",
+      "start": 10.307,
+      "end": 10.837,
+      "duration": 0.531
+    },
+    {
+      "word": "where",
+      "start": 10.849,
+      "end": 10.991,
+      "duration": 0.141
+    },
+    {
+      "word": "your",
+      "start": 11.002,
+      "end": 11.097,
+      "duration": 0.094
+    },
+    {
+      "word": "files",
+      "start": 11.108,
+      "end": 11.533,
+      "duration": 0.425
+    },
+    {
+      "word": "never",
+      "start": 11.545,
+      "end": 11.816,
+      "duration": 0.271
+    },
+    {
+      "word": "leave",
+      "start": 11.828,
+      "end": 12.028,
+      "duration": 0.2
+    },
+    {
+      "word": "your",
+      "start": 12.04,
+      "end": 12.146,
+      "duration": 0.106
+    },
+    {
+      "word": "machine",
+      "start": 12.158,
+      "end": 12.665,
+      "duration": 0.507
+    },
+    {
+      "word": "Today",
+      "start": 13.479,
+      "end": 13.868,
+      "duration": 0.389
+    },
+    {
+      "word": "we",
+      "start": 13.88,
+      "end": 14.021,
+      "duration": 0.141
+    },
+    {
+      "word": "tackle",
+      "start": 14.033,
+      "end": 14.399,
+      "duration": 0.366
+    },
+    {
+      "word": "a",
+      "start": 14.41,
+      "end": 14.469,
+      "duration": 0.059
+    },
+    {
+      "word": "critical",
+      "start": 14.481,
+      "end": 14.882,
+      "duration": 0.401
+    },
+    {
+      "word": "challenge",
+      "start": 14.894,
+      "end": 15.366,
+      "duration": 0.472
+    },
+    {
+      "word": "in",
+      "start": 15.377,
+      "end": 15.484,
+      "duration": 0.106
+    },
+    {
+      "word": "Autonomous",
+      "start": 15.495,
+      "end": 16.05,
+      "duration": 0.554
+    },
+    {
+      "word": "Agentic",
+      "start": 16.061,
+      "end": 16.521,
+      "duration": 0.46
+    },
+    {
+      "word": "Self-Correction",
+      "start": 16.533,
+      "end": 17.3,
+      "duration": 0.766
+    },
+    {
+      "word": "&",
+      "start": 17.311,
+      "end": 17.453,
+      "duration": 0.141
+    },
+    {
+      "word": "Document",
+      "start": 17.465,
+      "end": 17.889,
+      "duration": 0.425
+    },
+    {
+      "word": "Recovery",
+      "start": 17.901,
+      "end": 18.467,
+      "duration": 0.566
+    },
+    {
+      "word": "Cloud",
+      "start": 19.281,
+      "end": 19.611,
+      "duration": 0.33
+    },
+    {
+      "word": "services",
+      "start": 19.623,
+      "end": 20.142,
+      "duration": 0.519
+    },
+    {
+      "word": "charge",
+      "start": 20.153,
+      "end": 20.495,
+      "duration": 0.342
+    },
+    {
+      "word": "monthly",
+      "start": 20.507,
+      "end": 20.849,
+      "duration": 0.342
+    },
+    {
+      "word": "subscription",
+      "start": 20.861,
+      "end": 21.427,
+      "duration": 0.566
+    },
+    {
+      "word": "fees",
+      "start": 21.439,
+      "end": 21.875,
+      "duration": 0.436
+    },
+    {
+      "word": "rate-limit",
+      "start": 22.158,
+      "end": 22.571,
+      "duration": 0.413
+    },
+    {
+      "word": "your",
+      "start": 22.583,
+      "end": 22.712,
+      "duration": 0.13
+    },
+    {
+      "word": "batch",
+      "start": 22.724,
+      "end": 22.995,
+      "duration": 0.271
+    },
+    {
+      "word": "requests",
+      "start": 23.007,
+      "end": 23.573,
+      "duration": 0.566
+    },
+    {
+      "word": "and",
+      "start": 23.809,
+      "end": 23.939,
+      "duration": 0.13
+    },
+    {
+      "word": "expose",
+      "start": 23.95,
+      "end": 24.387,
+      "duration": 0.436
+    },
+    {
+      "word": "your",
+      "start": 24.399,
+      "end": 24.493,
+      "duration": 0.094
+    },
+    {
+      "word": "confidential",
+      "start": 24.505,
+      "end": 25.071,
+      "duration": 0.566
+    },
+    {
+      "word": "documents",
+      "start": 25.083,
+      "end": 25.59,
+      "duration": 0.507
+    },
+    {
+      "word": "to",
+      "start": 25.601,
+      "end": 25.719,
+      "duration": 0.118
+    },
+    {
+      "word": "external",
+      "start": 25.731,
+      "end": 26.179,
+      "duration": 0.448
+    },
+    {
+      "word": "third-party",
+      "start": 26.191,
+      "end": 26.71,
+      "duration": 0.519
+    },
+    {
+      "word": "servers",
+      "start": 26.722,
+      "end": 27.311,
+      "duration": 0.59
+    },
+    {
+      "word": "PaperPilot",
+      "start": 28.125,
+      "end": 28.797,
+      "duration": 0.672
+    },
+    {
+      "word": "solves",
+      "start": 28.809,
+      "end": 29.186,
+      "duration": 0.377
+    },
+    {
+      "word": "this",
+      "start": 29.198,
+      "end": 29.387,
+      "duration": 0.189
+    },
+    {
+      "word": "with",
+      "start": 29.399,
+      "end": 29.505,
+      "duration": 0.106
+    },
+    {
+      "word": "a",
+      "start": 29.517,
+      "end": 29.552,
+      "duration": 0.035
+    },
+    {
+      "word": "high-speed",
+      "start": 29.564,
+      "end": 30.118,
+      "duration": 0.554
+    },
+    {
+      "word": "engine",
+      "start": 30.13,
+      "end": 30.483,
+      "duration": 0.354
+    },
+    {
+      "word": "written",
+      "start": 30.495,
+      "end": 30.778,
+      "duration": 0.283
+    },
+    {
+      "word": "in",
+      "start": 30.79,
+      "end": 30.92,
+      "duration": 0.13
+    },
+    {
+      "word": "native",
+      "start": 30.932,
+      "end": 31.203,
+      "duration": 0.271
+    },
+    {
+      "word": "Rust",
+      "start": 31.215,
+      "end": 31.663,
+      "duration": 0.448
+    },
+    {
+      "word": "Equipped",
+      "start": 32.476,
+      "end": 32.901,
+      "duration": 0.425
+    },
+    {
+      "word": "with",
+      "start": 32.913,
+      "end": 33.054,
+      "duration": 0.141
+    },
+    {
+      "word": "doctor",
+      "start": 33.066,
+      "end": 33.514,
+      "duration": 0.448
+    },
+    {
+      "word": "pdf_repair",
+      "start": 33.715,
+      "end": 35.094,
+      "duration": 1.38
+    },
+    {
+      "word": "pdf_flatten",
+      "start": 35.366,
+      "end": 36.71,
+      "duration": 1.344
+    },
+    {
+      "word": "it",
+      "start": 37.005,
+      "end": 37.123,
+      "duration": 0.118
+    },
+    {
+      "word": "runs",
+      "start": 37.134,
+      "end": 37.37,
+      "duration": 0.236
+    },
+    {
+      "word": "deterministically",
+      "start": 37.382,
+      "end": 38.184,
+      "duration": 0.802
+    },
+    {
+      "word": "on",
+      "start": 38.196,
+      "end": 38.302,
+      "duration": 0.106
+    },
+    {
+      "word": "your",
+      "start": 38.314,
+      "end": 38.432,
+      "duration": 0.118
+    },
+    {
+      "word": "local",
+      "start": 38.443,
+      "end": 38.715,
+      "duration": 0.271
+    },
+    {
+      "word": "machine",
+      "start": 38.726,
+      "end": 39.163,
+      "duration": 0.436
+    },
+    {
+      "word": "with",
+      "start": 39.175,
+      "end": 39.316,
+      "duration": 0.141
+    },
+    {
+      "word": "multi-threaded",
+      "start": 39.328,
+      "end": 39.965,
+      "duration": 0.637
+    },
+    {
+      "word": "performance",
+      "start": 39.976,
+      "end": 40.519,
+      "duration": 0.542
+    },
+    {
+      "word": "and",
+      "start": 40.531,
+      "end": 40.684,
+      "duration": 0.153
+    },
+    {
+      "word": "zero",
+      "start": 40.696,
+      "end": 41.026,
+      "duration": 0.33
+    },
+    {
+      "word": "data",
+      "start": 41.038,
+      "end": 41.321,
+      "duration": 0.283
+    },
+    {
+      "word": "egress",
+      "start": 41.333,
+      "end": 41.958,
+      "duration": 0.625
+    },
+    {
+      "word": "Now",
+      "start": 42.771,
+      "end": 43.066,
+      "duration": 0.295
+    },
+    {
+      "word": "highlighting",
+      "start": 43.078,
+      "end": 43.608,
+      "duration": 0.531
+    },
+    {
+      "word": "Tool",
+      "start": 43.62,
+      "end": 43.88,
+      "duration": 0.259
+    },
+    {
+      "word": "Number",
+      "start": 43.892,
+      "end": 44.104,
+      "duration": 0.212
+    },
+    {
+      "word": "12",
+      "start": 44.116,
+      "end": 44.528,
+      "duration": 0.413
+    },
+    {
+      "word": "MCP",
+      "start": 44.835,
+      "end": 45.448,
+      "duration": 0.613
+    },
+    {
+      "word": "Agent",
+      "start": 45.46,
+      "end": 45.814,
+      "duration": 0.354
+    },
+    {
+      "word": "Diagnosing",
+      "start": 45.825,
+      "end": 46.568,
+      "duration": 0.743
+    },
+    {
+      "word": "&",
+      "start": 46.58,
+      "end": 46.686,
+      "duration": 0.106
+    },
+    {
+      "word": "Healing",
+      "start": 46.698,
+      "end": 47.028,
+      "duration": 0.33
+    },
+    {
+      "word": "Corrupt",
+      "start": 47.04,
+      "end": 47.429,
+      "duration": 0.389
+    },
+    {
+      "word": "PDFs",
+      "start": 47.441,
+      "end": 48.101,
+      "duration": 0.66
+    },
+    {
+      "word": "powered",
+      "start": 48.278,
+      "end": 48.632,
+      "duration": 0.354
+    },
+    {
+      "word": "by",
+      "start": 48.644,
+      "end": 48.762,
+      "duration": 0.118
+    },
+    {
+      "word": "PaperPilot",
+      "start": 48.774,
+      "end": 49.564,
+      "duration": 0.79
+    },
+    {
+      "word": "Let",
+      "start": 50.377,
+      "end": 50.59,
+      "duration": 0.212
+    },
+    {
+      "word": "us",
+      "start": 50.601,
+      "end": 50.731,
+      "duration": 0.13
+    },
+    {
+      "word": "explore",
+      "start": 50.743,
+      "end": 51.215,
+      "duration": 0.472
+    },
+    {
+      "word": "how",
+      "start": 51.226,
+      "end": 51.344,
+      "duration": 0.118
+    },
+    {
+      "word": "you",
+      "start": 51.356,
+      "end": 51.498,
+      "duration": 0.141
+    },
+    {
+      "word": "can",
+      "start": 51.509,
+      "end": 51.674,
+      "duration": 0.165
+    },
+    {
+      "word": "run",
+      "start": 51.686,
+      "end": 51.863,
+      "duration": 0.177
+    },
+    {
+      "word": "this",
+      "start": 51.875,
+      "end": 52.04,
+      "duration": 0.165
+    },
+    {
+      "word": "across",
+      "start": 52.052,
+      "end": 52.429,
+      "duration": 0.377
+    },
+    {
+      "word": "all",
+      "start": 52.441,
+      "end": 52.653,
+      "duration": 0.212
+    },
+    {
+      "word": "five",
+      "start": 52.665,
+      "end": 52.995,
+      "duration": 0.33
+    },
+    {
+      "word": "interfaces",
+      "start": 53.007,
+      "end": 53.75,
+      "duration": 0.743
+    },
+    {
+      "word": "First",
+      "start": 54.564,
+      "end": 55.059,
+      "duration": 0.495
+    },
+    {
+      "word": "the",
+      "start": 55.236,
+      "end": 55.354,
+      "duration": 0.118
+    },
+    {
+      "word": "Desktop",
+      "start": 55.366,
+      "end": 55.896,
+      "duration": 0.531
+    },
+    {
+      "word": "GUI",
+      "start": 55.908,
+      "end": 56.533,
+      "duration": 0.625
+    },
+    {
+      "word": "Simply",
+      "start": 57.347,
+      "end": 57.759,
+      "duration": 0.413
+    },
+    {
+      "word": "drag",
+      "start": 57.771,
+      "end": 58.137,
+      "duration": 0.366
+    },
+    {
+      "word": "and",
+      "start": 58.149,
+      "end": 58.208,
+      "duration": 0.059
+    },
+    {
+      "word": "drop",
+      "start": 58.219,
+      "end": 58.479,
+      "duration": 0.259
+    },
+    {
+      "word": "your",
+      "start": 58.491,
+      "end": 58.597,
+      "duration": 0.106
+    },
+    {
+      "word": "document",
+      "start": 58.608,
+      "end": 59.163,
+      "duration": 0.554
+    },
+    {
+      "word": "customize",
+      "start": 59.375,
+      "end": 59.965,
+      "duration": 0.59
+    },
+    {
+      "word": "operational",
+      "start": 59.976,
+      "end": 60.554,
+      "duration": 0.578
+    },
+    {
+      "word": "parameters",
+      "start": 60.566,
+      "end": 61.12,
+      "duration": 0.554
+    },
+    {
+      "word": "with",
+      "start": 61.132,
+      "end": 61.262,
+      "duration": 0.13
+    },
+    {
+      "word": "interactive",
+      "start": 61.274,
+      "end": 61.84,
+      "duration": 0.566
+    },
+    {
+      "word": "controls",
+      "start": 61.851,
+      "end": 62.441,
+      "duration": 0.59
+    },
+    {
+      "word": "and",
+      "start": 62.7,
+      "end": 62.83,
+      "duration": 0.13
+    },
+    {
+      "word": "inspect",
+      "start": 62.842,
+      "end": 63.255,
+      "duration": 0.413
+    },
+    {
+      "word": "the",
+      "start": 63.267,
+      "end": 63.349,
+      "duration": 0.083
+    },
+    {
+      "word": "live",
+      "start": 63.361,
+      "end": 63.632,
+      "duration": 0.271
+    },
+    {
+      "word": "instant",
+      "start": 63.644,
+      "end": 63.998,
+      "duration": 0.354
+    },
+    {
+      "word": "preview",
+      "start": 64.009,
+      "end": 64.387,
+      "duration": 0.377
+    },
+    {
+      "word": "with",
+      "start": 64.399,
+      "end": 64.552,
+      "duration": 0.153
+    },
+    {
+      "word": "real-time",
+      "start": 64.564,
+      "end": 65.047,
+      "duration": 0.483
+    },
+    {
+      "word": "feedback",
+      "start": 65.059,
+      "end": 65.672,
+      "duration": 0.613
+    },
+    {
+      "word": "Second",
+      "start": 66.486,
+      "end": 67.016,
+      "duration": 0.531
+    },
+    {
+      "word": "the",
+      "start": 67.182,
+      "end": 67.311,
+      "duration": 0.13
+    },
+    {
+      "word": "AI",
+      "start": 67.323,
+      "end": 67.771,
+      "duration": 0.448
+    },
+    {
+      "word": "Agent",
+      "start": 67.783,
+      "end": 68.314,
+      "duration": 0.531
+    },
+    {
+      "word": "With",
+      "start": 69.127,
+      "end": 69.316,
+      "duration": 0.189
+    },
+    {
+      "word": "our",
+      "start": 69.328,
+      "end": 69.458,
+      "duration": 0.13
+    },
+    {
+      "word": "native",
+      "start": 69.469,
+      "end": 69.764,
+      "duration": 0.295
+    },
+    {
+      "word": "Model",
+      "start": 69.776,
+      "end": 70.094,
+      "duration": 0.318
+    },
+    {
+      "word": "Context",
+      "start": 70.106,
+      "end": 70.637,
+      "duration": 0.531
+    },
+    {
+      "word": "Protocol",
+      "start": 70.649,
+      "end": 71.085,
+      "duration": 0.436
+    },
+    {
+      "word": "server",
+      "start": 71.097,
+      "end": 71.474,
+      "duration": 0.377
+    },
+    {
+      "word": "your",
+      "start": 71.745,
+      "end": 71.887,
+      "duration": 0.141
+    },
+    {
+      "word": "local",
+      "start": 71.899,
+      "end": 72.229,
+      "duration": 0.33
+    },
+    {
+      "word": "agent",
+      "start": 72.241,
+      "end": 72.571,
+      "duration": 0.33
+    },
+    {
+      "word": "or",
+      "start": 72.583,
+      "end": 72.7,
+      "duration": 0.118
+    },
+    {
+      "word": "Claude",
+      "start": 72.712,
+      "end": 72.995,
+      "duration": 0.283
+    },
+    {
+      "word": "invokes",
+      "start": 73.007,
+      "end": 73.42,
+      "duration": 0.413
+    },
+    {
+      "word": "the",
+      "start": 73.432,
+      "end": 73.526,
+      "duration": 0.094
+    },
+    {
+      "word": "doctor",
+      "start": 73.538,
+      "end": 73.868,
+      "duration": 0.33
+    },
+    {
+      "word": "tool",
+      "start": 73.88,
+      "end": 74.127,
+      "duration": 0.248
+    },
+    {
+      "word": "directly",
+      "start": 74.139,
+      "end": 74.646,
+      "duration": 0.507
+    },
+    {
+      "word": "executing",
+      "start": 74.859,
+      "end": 75.389,
+      "duration": 0.531
+    },
+    {
+      "word": "deterministic",
+      "start": 75.401,
+      "end": 76.038,
+      "duration": 0.637
+    },
+    {
+      "word": "workflows",
+      "start": 76.05,
+      "end": 76.568,
+      "duration": 0.519
+    },
+    {
+      "word": "without",
+      "start": 76.58,
+      "end": 76.934,
+      "duration": 0.354
+    },
+    {
+      "word": "any",
+      "start": 76.946,
+      "end": 77.111,
+      "duration": 0.165
+    },
+    {
+      "word": "data",
+      "start": 77.123,
+      "end": 77.417,
+      "duration": 0.295
+    },
+    {
+      "word": "leaving",
+      "start": 77.429,
+      "end": 77.736,
+      "duration": 0.307
+    },
+    {
+      "word": "localhost",
+      "start": 77.748,
+      "end": 78.502,
+      "duration": 0.755
+    },
+    {
+      "word": "Third",
+      "start": 79.316,
+      "end": 79.741,
+      "duration": 0.425
+    },
+    {
+      "word": "the",
+      "start": 79.929,
+      "end": 80.035,
+      "duration": 0.106
+    },
+    {
+      "word": "Terminal",
+      "start": 80.047,
+      "end": 80.46,
+      "duration": 0.413
+    },
+    {
+      "word": "CLI",
+      "start": 80.472,
+      "end": 81.132,
+      "duration": 0.66
+    },
+    {
+      "word": "Run",
+      "start": 81.946,
+      "end": 82.217,
+      "duration": 0.271
+    },
+    {
+      "word": "the",
+      "start": 82.229,
+      "end": 82.288,
+      "duration": 0.059
+    },
+    {
+      "word": "native",
+      "start": 82.3,
+      "end": 82.606,
+      "duration": 0.307
+    },
+    {
+      "word": "command-line",
+      "start": 82.618,
+      "end": 83.243,
+      "duration": 0.625
+    },
+    {
+      "word": "binary",
+      "start": 83.255,
+      "end": 83.774,
+      "duration": 0.519
+    },
+    {
+      "word": "and",
+      "start": 83.962,
+      "end": 84.104,
+      "duration": 0.141
+    },
+    {
+      "word": "receive",
+      "start": 84.116,
+      "end": 84.458,
+      "duration": 0.342
+    },
+    {
+      "word": "an",
+      "start": 84.469,
+      "end": 84.599,
+      "duration": 0.13
+    },
+    {
+      "word": "ultra-fast",
+      "start": 84.611,
+      "end": 85.342,
+      "duration": 0.731
+    },
+    {
+      "word": "ANSI-formatted",
+      "start": 85.495,
+      "end": 86.415,
+      "duration": 0.92
+    },
+    {
+      "word": "terminal",
+      "start": 86.427,
+      "end": 86.828,
+      "duration": 0.401
+    },
+    {
+      "word": "receipt",
+      "start": 86.84,
+      "end": 87.229,
+      "duration": 0.389
+    },
+    {
+      "word": "in",
+      "start": 87.241,
+      "end": 87.382,
+      "duration": 0.141
+    },
+    {
+      "word": "just",
+      "start": 87.394,
+      "end": 87.63,
+      "duration": 0.236
+    },
+    {
+      "word": "milliseconds",
+      "start": 87.641,
+      "end": 88.42,
+      "duration": 0.778
+    },
+    {
+      "word": "Fourth",
+      "start": 89.234,
+      "end": 89.717,
+      "duration": 0.483
+    },
+    {
+      "word": "the",
+      "start": 89.906,
+      "end": 90.024,
+      "duration": 0.118
+    },
+    {
+      "word": "Local",
+      "start": 90.035,
+      "end": 90.377,
+      "duration": 0.342
+    },
+    {
+      "word": "REST",
+      "start": 90.389,
+      "end": 90.672,
+      "duration": 0.283
+    },
+    {
+      "word": "API",
+      "start": 90.684,
+      "end": 91.309,
+      "duration": 0.625
+    },
+    {
+      "word": "Send",
+      "start": 92.123,
+      "end": 92.417,
+      "duration": 0.295
+    },
+    {
+      "word": "a",
+      "start": 92.429,
+      "end": 92.476,
+      "duration": 0.047
+    },
+    {
+      "word": "standard",
+      "start": 92.488,
+      "end": 92.925,
+      "duration": 0.436
+    },
+    {
+      "word": "HTTP",
+      "start": 92.936,
+      "end": 93.762,
+      "duration": 0.825
+    },
+    {
+      "word": "POST",
+      "start": 93.774,
+      "end": 94.104,
+      "duration": 0.33
+    },
+    {
+      "word": "request",
+      "start": 94.116,
+      "end": 94.564,
+      "duration": 0.448
+    },
+    {
+      "word": "to",
+      "start": 94.575,
+      "end": 94.658,
+      "duration": 0.083
+    },
+    {
+      "word": "your",
+      "start": 94.67,
+      "end": 94.811,
+      "duration": 0.141
+    },
+    {
+      "word": "local",
+      "start": 94.823,
+      "end": 95.106,
+      "duration": 0.283
+    },
+    {
+      "word": "PaperPilot",
+      "start": 95.118,
+      "end": 95.743,
+      "duration": 0.625
+    },
+    {
+      "word": "daemon",
+      "start": 95.755,
+      "end": 96.108,
+      "duration": 0.354
+    },
+    {
+      "word": "and",
+      "start": 96.391,
+      "end": 96.486,
+      "duration": 0.094
+    },
+    {
+      "word": "receive",
+      "start": 96.498,
+      "end": 96.851,
+      "duration": 0.354
+    },
+    {
+      "word": "structured",
+      "start": 96.863,
+      "end": 97.264,
+      "duration": 0.401
+    },
+    {
+      "word": "JSON",
+      "start": 97.276,
+      "end": 97.748,
+      "duration": 0.472
+    },
+    {
+      "word": "output",
+      "start": 97.759,
+      "end": 98.149,
+      "duration": 0.389
+    },
+    {
+      "word": "with",
+      "start": 98.16,
+      "end": 98.278,
+      "duration": 0.118
+    },
+    {
+      "word": "zero",
+      "start": 98.29,
+      "end": 98.632,
+      "duration": 0.342
+    },
+    {
+      "word": "cloud",
+      "start": 98.644,
+      "end": 98.986,
+      "duration": 0.342
+    },
+    {
+      "word": "latency",
+      "start": 98.998,
+      "end": 99.517,
+      "duration": 0.519
+    },
+    {
+      "word": "and",
+      "start": 99.528,
+      "end": 99.658,
+      "duration": 0.13
+    },
+    {
+      "word": "sub-5",
+      "start": 99.67,
+      "end": 100.401,
+      "duration": 0.731
+    },
+    {
+      "word": "millisecond",
+      "start": 100.413,
+      "end": 100.955,
+      "duration": 0.542
+    },
+    {
+      "word": "overhead",
+      "start": 100.967,
+      "end": 101.509,
+      "duration": 0.542
+    },
+    {
+      "word": "Fifth",
+      "start": 102.323,
+      "end": 102.795,
+      "duration": 0.472
+    },
+    {
+      "word": "Web",
+      "start": 103.031,
+      "end": 103.314,
+      "duration": 0.283
+    },
+    {
+      "word": "and",
+      "start": 103.408,
+      "end": 103.538,
+      "duration": 0.13
+    },
+    {
+      "word": "WebAssembly",
+      "start": 103.55,
+      "end": 104.304,
+      "duration": 0.755
+    },
+    {
+      "word": "Open",
+      "start": 105.118,
+      "end": 105.424,
+      "duration": 0.307
+    },
+    {
+      "word": "usepaperpilot.com",
+      "start": 105.436,
+      "end": 106.887,
+      "duration": 1.45
+    },
+    {
+      "word": "in",
+      "start": 106.899,
+      "end": 107.064,
+      "duration": 0.165
+    },
+    {
+      "word": "any",
+      "start": 107.075,
+      "end": 107.241,
+      "duration": 0.165
+    },
+    {
+      "word": "modern",
+      "start": 107.252,
+      "end": 107.594,
+      "duration": 0.342
+    },
+    {
+      "word": "browser",
+      "start": 107.606,
+      "end": 108.078,
+      "duration": 0.472
+    },
+    {
+      "word": "and",
+      "start": 108.337,
+      "end": 108.432,
+      "duration": 0.094
+    },
+    {
+      "word": "process",
+      "start": 108.443,
+      "end": 108.915,
+      "duration": 0.472
+    },
+    {
+      "word": "your",
+      "start": 108.927,
+      "end": 109.033,
+      "duration": 0.106
+    },
+    {
+      "word": "files",
+      "start": 109.045,
+      "end": 109.469,
+      "duration": 0.425
+    },
+    {
+      "word": "with",
+      "start": 109.481,
+      "end": 109.611,
+      "duration": 0.13
+    },
+    {
+      "word": "pure",
+      "start": 109.623,
+      "end": 109.929,
+      "duration": 0.307
+    },
+    {
+      "word": "client-side",
+      "start": 109.941,
+      "end": 110.519,
+      "duration": 0.578
+    },
+    {
+      "word": "WebAssembly",
+      "start": 110.531,
+      "end": 111.085,
+      "duration": 0.554
+    },
+    {
+      "word": "memory",
+      "start": 111.097,
+      "end": 111.462,
+      "duration": 0.366
+    },
+    {
+      "word": "without",
+      "start": 111.474,
+      "end": 111.804,
+      "duration": 0.33
+    },
+    {
+      "word": "uploading",
+      "start": 111.816,
+      "end": 112.229,
+      "duration": 0.413
+    },
+    {
+      "word": "a",
+      "start": 112.241,
+      "end": 112.288,
+      "duration": 0.047
+    },
+    {
+      "word": "single",
+      "start": 112.3,
+      "end": 112.689,
+      "duration": 0.389
+    },
+    {
+      "word": "byte",
+      "start": 112.7,
+      "end": 112.924,
+      "duration": 0.224
+    },
+    {
+      "word": "to",
+      "start": 112.936,
+      "end": 113.031,
+      "duration": 0.094
+    },
+    {
+      "word": "the",
+      "start": 113.042,
+      "end": 113.125,
+      "duration": 0.083
+    },
+    {
+      "word": "internet",
+      "start": 113.137,
+      "end": 113.632,
+      "duration": 0.495
+    },
+    {
+      "word": "PaperPilot",
+      "start": 114.446,
+      "end": 115.106,
+      "duration": 0.66
+    },
+    {
+      "word": "delivers",
+      "start": 115.118,
+      "end": 115.566,
+      "duration": 0.448
+    },
+    {
+      "word": "total",
+      "start": 115.578,
+      "end": 115.884,
+      "duration": 0.307
+    },
+    {
+      "word": "document",
+      "start": 115.896,
+      "end": 116.356,
+      "duration": 0.46
+    },
+    {
+      "word": "sovereignty",
+      "start": 116.368,
+      "end": 116.958,
+      "duration": 0.59
+    },
+    {
+      "word": "with",
+      "start": 116.969,
+      "end": 117.134,
+      "duration": 0.165
+    },
+    {
+      "word": "zero",
+      "start": 117.146,
+      "end": 117.512,
+      "duration": 0.366
+    },
+    {
+      "word": "cloud",
+      "start": 117.524,
+      "end": 117.889,
+      "duration": 0.366
+    },
+    {
+      "word": "lock-in",
+      "start": 117.901,
+      "end": 118.408,
+      "duration": 0.507
+    },
+    {
+      "word": "Star",
+      "start": 119.222,
+      "end": 119.623,
+      "duration": 0.401
+    },
+    {
+      "word": "us",
+      "start": 119.634,
+      "end": 119.776,
+      "duration": 0.141
+    },
+    {
+      "word": "on",
+      "start": 119.788,
+      "end": 119.929,
+      "duration": 0.141
+    },
+    {
+      "word": "GitHub",
+      "start": 119.941,
+      "end": 120.354,
+      "duration": 0.413
+    },
+    {
+      "word": "at",
+      "start": 120.366,
+      "end": 120.472,
+      "duration": 0.106
+    },
+    {
+      "word": "github.com/KrushnaVardhanReddy/PaperPilot,",
+      "start": 120.484,
+      "end": 123.691,
+      "duration": 3.208
+    },
+    {
+      "word": "visit",
+      "start": 123.891,
+      "end": 124.198,
+      "duration": 0.307
+    },
+    {
+      "word": "usepaperpilot.com",
+      "start": 124.21,
+      "end": 125.613,
+      "duration": 1.403
+    },
+    {
+      "word": "and",
+      "start": 125.908,
+      "end": 126.002,
+      "duration": 0.094
+    },
+    {
+      "word": "install",
+      "start": 126.014,
+      "end": 126.45,
+      "duration": 0.436
+    },
+    {
+      "word": "it",
+      "start": 126.462,
+      "end": 126.545,
+      "duration": 0.083
+    },
+    {
+      "word": "in",
+      "start": 126.557,
+      "end": 126.663,
+      "duration": 0.106
+    },
+    {
+      "word": "five",
+      "start": 126.675,
+      "end": 127.005,
+      "duration": 0.33
+    },
+    {
+      "word": "seconds",
+      "start": 127.016,
+      "end": 127.406,
+      "duration": 0.389
+    },
+    {
+      "word": "using",
+      "start": 127.417,
+      "end": 127.677,
+      "duration": 0.259
+    },
+    {
+      "word": "curl",
+      "start": 127.689,
+      "end": 128.042,
+      "duration": 0.354
+    },
+    {
+      "word": "fsSL",
+      "start": 128.267,
+      "end": 128.927,
+      "duration": 0.66
+    },
+    {
+      "word": "usepaperpilot.com/install.sh",
+      "start": 128.939,
+      "end": 131.71,
+      "duration": 2.771
+    },
+    {
+      "word": "pipe",
+      "start": 131.722,
+      "end": 131.958,
+      "duration": 0.236
+    },
+    {
+      "word": "bash",
+      "start": 131.969,
+      "end": 132.476,
+      "duration": 0.507
+    }
+  ],
+  "captions": [
+    {
+      "text": "Welcome to PaperPilot the",
+      "start": 0.097,
+      "end": 1.701,
+      "words": [
+        {
+          "word": "Welcome",
+          "start": 0.097,
+          "end": 0.522,
+          "duration": 0.425
+        },
+        {
+          "word": "to",
+          "start": 0.533,
+          "end": 0.628,
+          "duration": 0.094
+        },
+        {
+          "word": "PaperPilot",
+          "start": 0.64,
+          "end": 1.383,
+          "duration": 0.743
+        },
+        {
+          "word": "the",
+          "start": 1.595,
+          "end": 1.701,
+          "duration": 0.106
+        }
+      ]
+    },
+    {
+      "text": "pure Rust local-first document",
+      "start": 1.713,
+      "end": 3.765,
+      "words": [
+        {
+          "word": "pure",
+          "start": 1.713,
+          "end": 2.043,
+          "duration": 0.33
+        },
+        {
+          "word": "Rust",
+          "start": 2.055,
+          "end": 2.432,
+          "duration": 0.377
+        },
+        {
+          "word": "local-first",
+          "start": 2.644,
+          "end": 3.258,
+          "duration": 0.613
+        },
+        {
+          "word": "document",
+          "start": 3.269,
+          "end": 3.765,
+          "duration": 0.495
+        }
+      ]
+    },
+    {
+      "text": "and PDF toolkit Featuring",
+      "start": 3.859,
+      "end": 6.38,
+      "words": [
+        {
+          "word": "and",
+          "start": 3.859,
+          "end": 3.977,
+          "duration": 0.118
+        },
+        {
+          "word": "PDF",
+          "start": 3.989,
+          "end": 4.508,
+          "duration": 0.519
+        },
+        {
+          "word": "toolkit",
+          "start": 4.519,
+          "end": 5.05,
+          "duration": 0.531
+        },
+        {
+          "word": "Featuring",
+          "start": 5.861,
+          "end": 6.38,
+          "duration": 0.519
+        }
+      ]
+    },
+    {
+      "text": "one hundred native tools",
+      "start": 6.391,
+      "end": 7.7,
+      "words": [
+        {
+          "word": "one",
+          "start": 6.391,
+          "end": 6.557,
+          "duration": 0.165
+        },
+        {
+          "word": "hundred",
+          "start": 6.568,
+          "end": 6.899,
+          "duration": 0.33
+        },
+        {
+          "word": "native",
+          "start": 6.91,
+          "end": 7.217,
+          "duration": 0.307
+        },
+        {
+          "word": "tools",
+          "start": 7.229,
+          "end": 7.7,
+          "duration": 0.472
+        }
+      ]
+    },
+    {
+      "text": "zero cloud subscriptions and",
+      "start": 7.901,
+      "end": 9.764,
+      "words": [
+        {
+          "word": "zero",
+          "start": 7.901,
+          "end": 8.255,
+          "duration": 0.354
+        },
+        {
+          "word": "cloud",
+          "start": 8.267,
+          "end": 8.573,
+          "duration": 0.307
+        },
+        {
+          "word": "subscriptions",
+          "start": 8.585,
+          "end": 9.328,
+          "duration": 0.743
+        },
+        {
+          "word": "and",
+          "start": 9.587,
+          "end": 9.764,
+          "duration": 0.177
+        }
+      ]
+    },
+    {
+      "text": "absolute privacy where your",
+      "start": 9.776,
+      "end": 11.097,
+      "words": [
+        {
+          "word": "absolute",
+          "start": 9.776,
+          "end": 10.295,
+          "duration": 0.519
+        },
+        {
+          "word": "privacy",
+          "start": 10.307,
+          "end": 10.837,
+          "duration": 0.531
+        },
+        {
+          "word": "where",
+          "start": 10.849,
+          "end": 10.991,
+          "duration": 0.141
+        },
+        {
+          "word": "your",
+          "start": 11.002,
+          "end": 11.097,
+          "duration": 0.094
+        }
+      ]
+    },
+    {
+      "text": "files never leave your",
+      "start": 11.108,
+      "end": 12.146,
+      "words": [
+        {
+          "word": "files",
+          "start": 11.108,
+          "end": 11.533,
+          "duration": 0.425
+        },
+        {
+          "word": "never",
+          "start": 11.545,
+          "end": 11.816,
+          "duration": 0.271
+        },
+        {
+          "word": "leave",
+          "start": 11.828,
+          "end": 12.028,
+          "duration": 0.2
+        },
+        {
+          "word": "your",
+          "start": 12.04,
+          "end": 12.146,
+          "duration": 0.106
+        }
+      ]
+    },
+    {
+      "text": "machine Today we tackle",
+      "start": 12.158,
+      "end": 14.399,
+      "words": [
+        {
+          "word": "machine",
+          "start": 12.158,
+          "end": 12.665,
+          "duration": 0.507
+        },
+        {
+          "word": "Today",
+          "start": 13.479,
+          "end": 13.868,
+          "duration": 0.389
+        },
+        {
+          "word": "we",
+          "start": 13.88,
+          "end": 14.021,
+          "duration": 0.141
+        },
+        {
+          "word": "tackle",
+          "start": 14.033,
+          "end": 14.399,
+          "duration": 0.366
+        }
+      ]
+    },
+    {
+      "text": "a critical challenge in",
+      "start": 14.41,
+      "end": 15.484,
+      "words": [
+        {
+          "word": "a",
+          "start": 14.41,
+          "end": 14.469,
+          "duration": 0.059
+        },
+        {
+          "word": "critical",
+          "start": 14.481,
+          "end": 14.882,
+          "duration": 0.401
+        },
+        {
+          "word": "challenge",
+          "start": 14.894,
+          "end": 15.366,
+          "duration": 0.472
+        },
+        {
+          "word": "in",
+          "start": 15.377,
+          "end": 15.484,
+          "duration": 0.106
+        }
+      ]
+    },
+    {
+      "text": "Autonomous Agentic Self-Correction &",
+      "start": 15.495,
+      "end": 17.453,
+      "words": [
+        {
+          "word": "Autonomous",
+          "start": 15.495,
+          "end": 16.05,
+          "duration": 0.554
+        },
+        {
+          "word": "Agentic",
+          "start": 16.061,
+          "end": 16.521,
+          "duration": 0.46
+        },
+        {
+          "word": "Self-Correction",
+          "start": 16.533,
+          "end": 17.3,
+          "duration": 0.766
+        },
+        {
+          "word": "&",
+          "start": 17.311,
+          "end": 17.453,
+          "duration": 0.141
+        }
+      ]
+    },
+    {
+      "text": "Document Recovery Cloud services",
+      "start": 17.465,
+      "end": 20.142,
+      "words": [
+        {
+          "word": "Document",
+          "start": 17.465,
+          "end": 17.889,
+          "duration": 0.425
+        },
+        {
+          "word": "Recovery",
+          "start": 17.901,
+          "end": 18.467,
+          "duration": 0.566
+        },
+        {
+          "word": "Cloud",
+          "start": 19.281,
+          "end": 19.611,
+          "duration": 0.33
+        },
+        {
+          "word": "services",
+          "start": 19.623,
+          "end": 20.142,
+          "duration": 0.519
+        }
+      ]
+    },
+    {
+      "text": "charge monthly subscription fees",
+      "start": 20.153,
+      "end": 21.875,
+      "words": [
+        {
+          "word": "charge",
+          "start": 20.153,
+          "end": 20.495,
+          "duration": 0.342
+        },
+        {
+          "word": "monthly",
+          "start": 20.507,
+          "end": 20.849,
+          "duration": 0.342
+        },
+        {
+          "word": "subscription",
+          "start": 20.861,
+          "end": 21.427,
+          "duration": 0.566
+        },
+        {
+          "word": "fees",
+          "start": 21.439,
+          "end": 21.875,
+          "duration": 0.436
+        }
+      ]
+    },
+    {
+      "text": "rate-limit your batch requests",
+      "start": 22.158,
+      "end": 23.573,
+      "words": [
+        {
+          "word": "rate-limit",
+          "start": 22.158,
+          "end": 22.571,
+          "duration": 0.413
+        },
+        {
+          "word": "your",
+          "start": 22.583,
+          "end": 22.712,
+          "duration": 0.13
+        },
+        {
+          "word": "batch",
+          "start": 22.724,
+          "end": 22.995,
+          "duration": 0.271
+        },
+        {
+          "word": "requests",
+          "start": 23.007,
+          "end": 23.573,
+          "duration": 0.566
+        }
+      ]
+    },
+    {
+      "text": "and expose your confidential",
+      "start": 23.809,
+      "end": 25.071,
+      "words": [
+        {
+          "word": "and",
+          "start": 23.809,
+          "end": 23.939,
+          "duration": 0.13
+        },
+        {
+          "word": "expose",
+          "start": 23.95,
+          "end": 24.387,
+          "duration": 0.436
+        },
+        {
+          "word": "your",
+          "start": 24.399,
+          "end": 24.493,
+          "duration": 0.094
+        },
+        {
+          "word": "confidential",
+          "start": 24.505,
+          "end": 25.071,
+          "duration": 0.566
+        }
+      ]
+    },
+    {
+      "text": "documents to external third-party",
+      "start": 25.083,
+      "end": 26.71,
+      "words": [
+        {
+          "word": "documents",
+          "start": 25.083,
+          "end": 25.59,
+          "duration": 0.507
+        },
+        {
+          "word": "to",
+          "start": 25.601,
+          "end": 25.719,
+          "duration": 0.118
+        },
+        {
+          "word": "external",
+          "start": 25.731,
+          "end": 26.179,
+          "duration": 0.448
+        },
+        {
+          "word": "third-party",
+          "start": 26.191,
+          "end": 26.71,
+          "duration": 0.519
+        }
+      ]
+    },
+    {
+      "text": "servers PaperPilot solves this",
+      "start": 26.722,
+      "end": 29.387,
+      "words": [
+        {
+          "word": "servers",
+          "start": 26.722,
+          "end": 27.311,
+          "duration": 0.59
+        },
+        {
+          "word": "PaperPilot",
+          "start": 28.125,
+          "end": 28.797,
+          "duration": 0.672
+        },
+        {
+          "word": "solves",
+          "start": 28.809,
+          "end": 29.186,
+          "duration": 0.377
+        },
+        {
+          "word": "this",
+          "start": 29.198,
+          "end": 29.387,
+          "duration": 0.189
+        }
+      ]
+    },
+    {
+      "text": "with a high-speed engine",
+      "start": 29.399,
+      "end": 30.483,
+      "words": [
+        {
+          "word": "with",
+          "start": 29.399,
+          "end": 29.505,
+          "duration": 0.106
+        },
+        {
+          "word": "a",
+          "start": 29.517,
+          "end": 29.552,
+          "duration": 0.035
+        },
+        {
+          "word": "high-speed",
+          "start": 29.564,
+          "end": 30.118,
+          "duration": 0.554
+        },
+        {
+          "word": "engine",
+          "start": 30.13,
+          "end": 30.483,
+          "duration": 0.354
+        }
+      ]
+    },
+    {
+      "text": "written in native Rust",
+      "start": 30.495,
+      "end": 31.663,
+      "words": [
+        {
+          "word": "written",
+          "start": 30.495,
+          "end": 30.778,
+          "duration": 0.283
+        },
+        {
+          "word": "in",
+          "start": 30.79,
+          "end": 30.92,
+          "duration": 0.13
+        },
+        {
+          "word": "native",
+          "start": 30.932,
+          "end": 31.203,
+          "duration": 0.271
+        },
+        {
+          "word": "Rust",
+          "start": 31.215,
+          "end": 31.663,
+          "duration": 0.448
+        }
+      ]
+    },
+    {
+      "text": "Equipped with doctor pdf_repair",
+      "start": 32.476,
+      "end": 35.094,
+      "words": [
+        {
+          "word": "Equipped",
+          "start": 32.476,
+          "end": 32.901,
+          "duration": 0.425
+        },
+        {
+          "word": "with",
+          "start": 32.913,
+          "end": 33.054,
+          "duration": 0.141
+        },
+        {
+          "word": "doctor",
+          "start": 33.066,
+          "end": 33.514,
+          "duration": 0.448
+        },
+        {
+          "word": "pdf_repair",
+          "start": 33.715,
+          "end": 35.094,
+          "duration": 1.38
+        }
+      ]
+    },
+    {
+      "text": "pdf_flatten it runs deterministically",
+      "start": 35.366,
+      "end": 38.184,
+      "words": [
+        {
+          "word": "pdf_flatten",
+          "start": 35.366,
+          "end": 36.71,
+          "duration": 1.344
+        },
+        {
+          "word": "it",
+          "start": 37.005,
+          "end": 37.123,
+          "duration": 0.118
+        },
+        {
+          "word": "runs",
+          "start": 37.134,
+          "end": 37.37,
+          "duration": 0.236
+        },
+        {
+          "word": "deterministically",
+          "start": 37.382,
+          "end": 38.184,
+          "duration": 0.802
+        }
+      ]
+    },
+    {
+      "text": "on your local machine",
+      "start": 38.196,
+      "end": 39.163,
+      "words": [
+        {
+          "word": "on",
+          "start": 38.196,
+          "end": 38.302,
+          "duration": 0.106
+        },
+        {
+          "word": "your",
+          "start": 38.314,
+          "end": 38.432,
+          "duration": 0.118
+        },
+        {
+          "word": "local",
+          "start": 38.443,
+          "end": 38.715,
+          "duration": 0.271
+        },
+        {
+          "word": "machine",
+          "start": 38.726,
+          "end": 39.163,
+          "duration": 0.436
+        }
+      ]
+    },
+    {
+      "text": "with multi-threaded performance and",
+      "start": 39.175,
+      "end": 40.684,
+      "words": [
+        {
+          "word": "with",
+          "start": 39.175,
+          "end": 39.316,
+          "duration": 0.141
+        },
+        {
+          "word": "multi-threaded",
+          "start": 39.328,
+          "end": 39.965,
+          "duration": 0.637
+        },
+        {
+          "word": "performance",
+          "start": 39.976,
+          "end": 40.519,
+          "duration": 0.542
+        },
+        {
+          "word": "and",
+          "start": 40.531,
+          "end": 40.684,
+          "duration": 0.153
+        }
+      ]
+    },
+    {
+      "text": "zero data egress Now",
+      "start": 40.696,
+      "end": 43.066,
+      "words": [
+        {
+          "word": "zero",
+          "start": 40.696,
+          "end": 41.026,
+          "duration": 0.33
+        },
+        {
+          "word": "data",
+          "start": 41.038,
+          "end": 41.321,
+          "duration": 0.283
+        },
+        {
+          "word": "egress",
+          "start": 41.333,
+          "end": 41.958,
+          "duration": 0.625
+        },
+        {
+          "word": "Now",
+          "start": 42.771,
+          "end": 43.066,
+          "duration": 0.295
+        }
+      ]
+    },
+    {
+      "text": "highlighting Tool Number 12",
+      "start": 43.078,
+      "end": 44.528,
+      "words": [
+        {
+          "word": "highlighting",
+          "start": 43.078,
+          "end": 43.608,
+          "duration": 0.531
+        },
+        {
+          "word": "Tool",
+          "start": 43.62,
+          "end": 43.88,
+          "duration": 0.259
+        },
+        {
+          "word": "Number",
+          "start": 43.892,
+          "end": 44.104,
+          "duration": 0.212
+        },
+        {
+          "word": "12",
+          "start": 44.116,
+          "end": 44.528,
+          "duration": 0.413
+        }
+      ]
+    },
+    {
+      "text": "MCP Agent Diagnosing &",
+      "start": 44.835,
+      "end": 46.686,
+      "words": [
+        {
+          "word": "MCP",
+          "start": 44.835,
+          "end": 45.448,
+          "duration": 0.613
+        },
+        {
+          "word": "Agent",
+          "start": 45.46,
+          "end": 45.814,
+          "duration": 0.354
+        },
+        {
+          "word": "Diagnosing",
+          "start": 45.825,
+          "end": 46.568,
+          "duration": 0.743
+        },
+        {
+          "word": "&",
+          "start": 46.58,
+          "end": 46.686,
+          "duration": 0.106
+        }
+      ]
+    },
+    {
+      "text": "Healing Corrupt PDFs powered",
+      "start": 46.698,
+      "end": 48.632,
+      "words": [
+        {
+          "word": "Healing",
+          "start": 46.698,
+          "end": 47.028,
+          "duration": 0.33
+        },
+        {
+          "word": "Corrupt",
+          "start": 47.04,
+          "end": 47.429,
+          "duration": 0.389
+        },
+        {
+          "word": "PDFs",
+          "start": 47.441,
+          "end": 48.101,
+          "duration": 0.66
+        },
+        {
+          "word": "powered",
+          "start": 48.278,
+          "end": 48.632,
+          "duration": 0.354
+        }
+      ]
+    },
+    {
+      "text": "by PaperPilot Let us",
+      "start": 48.644,
+      "end": 50.731,
+      "words": [
+        {
+          "word": "by",
+          "start": 48.644,
+          "end": 48.762,
+          "duration": 0.118
+        },
+        {
+          "word": "PaperPilot",
+          "start": 48.774,
+          "end": 49.564,
+          "duration": 0.79
+        },
+        {
+          "word": "Let",
+          "start": 50.377,
+          "end": 50.59,
+          "duration": 0.212
+        },
+        {
+          "word": "us",
+          "start": 50.601,
+          "end": 50.731,
+          "duration": 0.13
+        }
+      ]
+    },
+    {
+      "text": "explore how you can",
+      "start": 50.743,
+      "end": 51.674,
+      "words": [
+        {
+          "word": "explore",
+          "start": 50.743,
+          "end": 51.215,
+          "duration": 0.472
+        },
+        {
+          "word": "how",
+          "start": 51.226,
+          "end": 51.344,
+          "duration": 0.118
+        },
+        {
+          "word": "you",
+          "start": 51.356,
+          "end": 51.498,
+          "duration": 0.141
+        },
+        {
+          "word": "can",
+          "start": 51.509,
+          "end": 51.674,
+          "duration": 0.165
+        }
+      ]
+    },
+    {
+      "text": "run this across all",
+      "start": 51.686,
+      "end": 52.653,
+      "words": [
+        {
+          "word": "run",
+          "start": 51.686,
+          "end": 51.863,
+          "duration": 0.177
+        },
+        {
+          "word": "this",
+          "start": 51.875,
+          "end": 52.04,
+          "duration": 0.165
+        },
+        {
+          "word": "across",
+          "start": 52.052,
+          "end": 52.429,
+          "duration": 0.377
+        },
+        {
+          "word": "all",
+          "start": 52.441,
+          "end": 52.653,
+          "duration": 0.212
+        }
+      ]
+    },
+    {
+      "text": "five interfaces First the",
+      "start": 52.665,
+      "end": 55.354,
+      "words": [
+        {
+          "word": "five",
+          "start": 52.665,
+          "end": 52.995,
+          "duration": 0.33
+        },
+        {
+          "word": "interfaces",
+          "start": 53.007,
+          "end": 53.75,
+          "duration": 0.743
+        },
+        {
+          "word": "First",
+          "start": 54.564,
+          "end": 55.059,
+          "duration": 0.495
+        },
+        {
+          "word": "the",
+          "start": 55.236,
+          "end": 55.354,
+          "duration": 0.118
+        }
+      ]
+    },
+    {
+      "text": "Desktop GUI Simply drag",
+      "start": 55.366,
+      "end": 58.137,
+      "words": [
+        {
+          "word": "Desktop",
+          "start": 55.366,
+          "end": 55.896,
+          "duration": 0.531
+        },
+        {
+          "word": "GUI",
+          "start": 55.908,
+          "end": 56.533,
+          "duration": 0.625
+        },
+        {
+          "word": "Simply",
+          "start": 57.347,
+          "end": 57.759,
+          "duration": 0.413
+        },
+        {
+          "word": "drag",
+          "start": 57.771,
+          "end": 58.137,
+          "duration": 0.366
+        }
+      ]
+    },
+    {
+      "text": "and drop your document",
+      "start": 58.149,
+      "end": 59.163,
+      "words": [
+        {
+          "word": "and",
+          "start": 58.149,
+          "end": 58.208,
+          "duration": 0.059
+        },
+        {
+          "word": "drop",
+          "start": 58.219,
+          "end": 58.479,
+          "duration": 0.259
+        },
+        {
+          "word": "your",
+          "start": 58.491,
+          "end": 58.597,
+          "duration": 0.106
+        },
+        {
+          "word": "document",
+          "start": 58.608,
+          "end": 59.163,
+          "duration": 0.554
+        }
+      ]
+    },
+    {
+      "text": "customize operational parameters with",
+      "start": 59.375,
+      "end": 61.262,
+      "words": [
+        {
+          "word": "customize",
+          "start": 59.375,
+          "end": 59.965,
+          "duration": 0.59
+        },
+        {
+          "word": "operational",
+          "start": 59.976,
+          "end": 60.554,
+          "duration": 0.578
+        },
+        {
+          "word": "parameters",
+          "start": 60.566,
+          "end": 61.12,
+          "duration": 0.554
+        },
+        {
+          "word": "with",
+          "start": 61.132,
+          "end": 61.262,
+          "duration": 0.13
+        }
+      ]
+    },
+    {
+      "text": "interactive controls and inspect",
+      "start": 61.274,
+      "end": 63.255,
+      "words": [
+        {
+          "word": "interactive",
+          "start": 61.274,
+          "end": 61.84,
+          "duration": 0.566
+        },
+        {
+          "word": "controls",
+          "start": 61.851,
+          "end": 62.441,
+          "duration": 0.59
+        },
+        {
+          "word": "and",
+          "start": 62.7,
+          "end": 62.83,
+          "duration": 0.13
+        },
+        {
+          "word": "inspect",
+          "start": 62.842,
+          "end": 63.255,
+          "duration": 0.413
+        }
+      ]
+    },
+    {
+      "text": "the live instant preview",
+      "start": 63.267,
+      "end": 64.387,
+      "words": [
+        {
+          "word": "the",
+          "start": 63.267,
+          "end": 63.349,
+          "duration": 0.083
+        },
+        {
+          "word": "live",
+          "start": 63.361,
+          "end": 63.632,
+          "duration": 0.271
+        },
+        {
+          "word": "instant",
+          "start": 63.644,
+          "end": 63.998,
+          "duration": 0.354
+        },
+        {
+          "word": "preview",
+          "start": 64.009,
+          "end": 64.387,
+          "duration": 0.377
+        }
+      ]
+    },
+    {
+      "text": "with real-time feedback Second",
+      "start": 64.399,
+      "end": 67.016,
+      "words": [
+        {
+          "word": "with",
+          "start": 64.399,
+          "end": 64.552,
+          "duration": 0.153
+        },
+        {
+          "word": "real-time",
+          "start": 64.564,
+          "end": 65.047,
+          "duration": 0.483
+        },
+        {
+          "word": "feedback",
+          "start": 65.059,
+          "end": 65.672,
+          "duration": 0.613
+        },
+        {
+          "word": "Second",
+          "start": 66.486,
+          "end": 67.016,
+          "duration": 0.531
+        }
+      ]
+    },
+    {
+      "text": "the AI Agent With",
+      "start": 67.182,
+      "end": 69.316,
+      "words": [
+        {
+          "word": "the",
+          "start": 67.182,
+          "end": 67.311,
+          "duration": 0.13
+        },
+        {
+          "word": "AI",
+          "start": 67.323,
+          "end": 67.771,
+          "duration": 0.448
+        },
+        {
+          "word": "Agent",
+          "start": 67.783,
+          "end": 68.314,
+          "duration": 0.531
+        },
+        {
+          "word": "With",
+          "start": 69.127,
+          "end": 69.316,
+          "duration": 0.189
+        }
+      ]
+    },
+    {
+      "text": "our native Model Context",
+      "start": 69.328,
+      "end": 70.637,
+      "words": [
+        {
+          "word": "our",
+          "start": 69.328,
+          "end": 69.458,
+          "duration": 0.13
+        },
+        {
+          "word": "native",
+          "start": 69.469,
+          "end": 69.764,
+          "duration": 0.295
+        },
+        {
+          "word": "Model",
+          "start": 69.776,
+          "end": 70.094,
+          "duration": 0.318
+        },
+        {
+          "word": "Context",
+          "start": 70.106,
+          "end": 70.637,
+          "duration": 0.531
+        }
+      ]
+    },
+    {
+      "text": "Protocol server your local",
+      "start": 70.649,
+      "end": 72.229,
+      "words": [
+        {
+          "word": "Protocol",
+          "start": 70.649,
+          "end": 71.085,
+          "duration": 0.436
+        },
+        {
+          "word": "server",
+          "start": 71.097,
+          "end": 71.474,
+          "duration": 0.377
+        },
+        {
+          "word": "your",
+          "start": 71.745,
+          "end": 71.887,
+          "duration": 0.141
+        },
+        {
+          "word": "local",
+          "start": 71.899,
+          "end": 72.229,
+          "duration": 0.33
+        }
+      ]
+    },
+    {
+      "text": "agent or Claude invokes",
+      "start": 72.241,
+      "end": 73.42,
+      "words": [
+        {
+          "word": "agent",
+          "start": 72.241,
+          "end": 72.571,
+          "duration": 0.33
+        },
+        {
+          "word": "or",
+          "start": 72.583,
+          "end": 72.7,
+          "duration": 0.118
+        },
+        {
+          "word": "Claude",
+          "start": 72.712,
+          "end": 72.995,
+          "duration": 0.283
+        },
+        {
+          "word": "invokes",
+          "start": 73.007,
+          "end": 73.42,
+          "duration": 0.413
+        }
+      ]
+    },
+    {
+      "text": "the doctor tool directly",
+      "start": 73.432,
+      "end": 74.646,
+      "words": [
+        {
+          "word": "the",
+          "start": 73.432,
+          "end": 73.526,
+          "duration": 0.094
+        },
+        {
+          "word": "doctor",
+          "start": 73.538,
+          "end": 73.868,
+          "duration": 0.33
+        },
+        {
+          "word": "tool",
+          "start": 73.88,
+          "end": 74.127,
+          "duration": 0.248
+        },
+        {
+          "word": "directly",
+          "start": 74.139,
+          "end": 74.646,
+          "duration": 0.507
+        }
+      ]
+    },
+    {
+      "text": "executing deterministic workflows without",
+      "start": 74.859,
+      "end": 76.934,
+      "words": [
+        {
+          "word": "executing",
+          "start": 74.859,
+          "end": 75.389,
+          "duration": 0.531
+        },
+        {
+          "word": "deterministic",
+          "start": 75.401,
+          "end": 76.038,
+          "duration": 0.637
+        },
+        {
+          "word": "workflows",
+          "start": 76.05,
+          "end": 76.568,
+          "duration": 0.519
+        },
+        {
+          "word": "without",
+          "start": 76.58,
+          "end": 76.934,
+          "duration": 0.354
+        }
+      ]
+    },
+    {
+      "text": "any data leaving localhost",
+      "start": 76.946,
+      "end": 78.502,
+      "words": [
+        {
+          "word": "any",
+          "start": 76.946,
+          "end": 77.111,
+          "duration": 0.165
+        },
+        {
+          "word": "data",
+          "start": 77.123,
+          "end": 77.417,
+          "duration": 0.295
+        },
+        {
+          "word": "leaving",
+          "start": 77.429,
+          "end": 77.736,
+          "duration": 0.307
+        },
+        {
+          "word": "localhost",
+          "start": 77.748,
+          "end": 78.502,
+          "duration": 0.755
+        }
+      ]
+    },
+    {
+      "text": "Third the Terminal CLI",
+      "start": 79.316,
+      "end": 81.132,
+      "words": [
+        {
+          "word": "Third",
+          "start": 79.316,
+          "end": 79.741,
+          "duration": 0.425
+        },
+        {
+          "word": "the",
+          "start": 79.929,
+          "end": 80.035,
+          "duration": 0.106
+        },
+        {
+          "word": "Terminal",
+          "start": 80.047,
+          "end": 80.46,
+          "duration": 0.413
+        },
+        {
+          "word": "CLI",
+          "start": 80.472,
+          "end": 81.132,
+          "duration": 0.66
+        }
+      ]
+    },
+    {
+      "text": "Run the native command-line",
+      "start": 81.946,
+      "end": 83.243,
+      "words": [
+        {
+          "word": "Run",
+          "start": 81.946,
+          "end": 82.217,
+          "duration": 0.271
+        },
+        {
+          "word": "the",
+          "start": 82.229,
+          "end": 82.288,
+          "duration": 0.059
+        },
+        {
+          "word": "native",
+          "start": 82.3,
+          "end": 82.606,
+          "duration": 0.307
+        },
+        {
+          "word": "command-line",
+          "start": 82.618,
+          "end": 83.243,
+          "duration": 0.625
+        }
+      ]
+    },
+    {
+      "text": "binary and receive an",
+      "start": 83.255,
+      "end": 84.599,
+      "words": [
+        {
+          "word": "binary",
+          "start": 83.255,
+          "end": 83.774,
+          "duration": 0.519
+        },
+        {
+          "word": "and",
+          "start": 83.962,
+          "end": 84.104,
+          "duration": 0.141
+        },
+        {
+          "word": "receive",
+          "start": 84.116,
+          "end": 84.458,
+          "duration": 0.342
+        },
+        {
+          "word": "an",
+          "start": 84.469,
+          "end": 84.599,
+          "duration": 0.13
+        }
+      ]
+    },
+    {
+      "text": "ultra-fast ANSI-formatted terminal receipt",
+      "start": 84.611,
+      "end": 87.229,
+      "words": [
+        {
+          "word": "ultra-fast",
+          "start": 84.611,
+          "end": 85.342,
+          "duration": 0.731
+        },
+        {
+          "word": "ANSI-formatted",
+          "start": 85.495,
+          "end": 86.415,
+          "duration": 0.92
+        },
+        {
+          "word": "terminal",
+          "start": 86.427,
+          "end": 86.828,
+          "duration": 0.401
+        },
+        {
+          "word": "receipt",
+          "start": 86.84,
+          "end": 87.229,
+          "duration": 0.389
+        }
+      ]
+    },
+    {
+      "text": "in just milliseconds Fourth",
+      "start": 87.241,
+      "end": 89.717,
+      "words": [
+        {
+          "word": "in",
+          "start": 87.241,
+          "end": 87.382,
+          "duration": 0.141
+        },
+        {
+          "word": "just",
+          "start": 87.394,
+          "end": 87.63,
+          "duration": 0.236
+        },
+        {
+          "word": "milliseconds",
+          "start": 87.641,
+          "end": 88.42,
+          "duration": 0.778
+        },
+        {
+          "word": "Fourth",
+          "start": 89.234,
+          "end": 89.717,
+          "duration": 0.483
+        }
+      ]
+    },
+    {
+      "text": "the Local REST API",
+      "start": 89.906,
+      "end": 91.309,
+      "words": [
+        {
+          "word": "the",
+          "start": 89.906,
+          "end": 90.024,
+          "duration": 0.118
+        },
+        {
+          "word": "Local",
+          "start": 90.035,
+          "end": 90.377,
+          "duration": 0.342
+        },
+        {
+          "word": "REST",
+          "start": 90.389,
+          "end": 90.672,
+          "duration": 0.283
+        },
+        {
+          "word": "API",
+          "start": 90.684,
+          "end": 91.309,
+          "duration": 0.625
+        }
+      ]
+    },
+    {
+      "text": "Send a standard HTTP",
+      "start": 92.123,
+      "end": 93.762,
+      "words": [
+        {
+          "word": "Send",
+          "start": 92.123,
+          "end": 92.417,
+          "duration": 0.295
+        },
+        {
+          "word": "a",
+          "start": 92.429,
+          "end": 92.476,
+          "duration": 0.047
+        },
+        {
+          "word": "standard",
+          "start": 92.488,
+          "end": 92.925,
+          "duration": 0.436
+        },
+        {
+          "word": "HTTP",
+          "start": 92.936,
+          "end": 93.762,
+          "duration": 0.825
+        }
+      ]
+    },
+    {
+      "text": "POST request to your",
+      "start": 93.774,
+      "end": 94.811,
+      "words": [
+        {
+          "word": "POST",
+          "start": 93.774,
+          "end": 94.104,
+          "duration": 0.33
+        },
+        {
+          "word": "request",
+          "start": 94.116,
+          "end": 94.564,
+          "duration": 0.448
+        },
+        {
+          "word": "to",
+          "start": 94.575,
+          "end": 94.658,
+          "duration": 0.083
+        },
+        {
+          "word": "your",
+          "start": 94.67,
+          "end": 94.811,
+          "duration": 0.141
+        }
+      ]
+    },
+    {
+      "text": "local PaperPilot daemon and",
+      "start": 94.823,
+      "end": 96.486,
+      "words": [
+        {
+          "word": "local",
+          "start": 94.823,
+          "end": 95.106,
+          "duration": 0.283
+        },
+        {
+          "word": "PaperPilot",
+          "start": 95.118,
+          "end": 95.743,
+          "duration": 0.625
+        },
+        {
+          "word": "daemon",
+          "start": 95.755,
+          "end": 96.108,
+          "duration": 0.354
+        },
+        {
+          "word": "and",
+          "start": 96.391,
+          "end": 96.486,
+          "duration": 0.094
+        }
+      ]
+    },
+    {
+      "text": "receive structured JSON output",
+      "start": 96.498,
+      "end": 98.149,
+      "words": [
+        {
+          "word": "receive",
+          "start": 96.498,
+          "end": 96.851,
+          "duration": 0.354
+        },
+        {
+          "word": "structured",
+          "start": 96.863,
+          "end": 97.264,
+          "duration": 0.401
+        },
+        {
+          "word": "JSON",
+          "start": 97.276,
+          "end": 97.748,
+          "duration": 0.472
+        },
+        {
+          "word": "output",
+          "start": 97.759,
+          "end": 98.149,
+          "duration": 0.389
+        }
+      ]
+    },
+    {
+      "text": "with zero cloud latency",
+      "start": 98.16,
+      "end": 99.517,
+      "words": [
+        {
+          "word": "with",
+          "start": 98.16,
+          "end": 98.278,
+          "duration": 0.118
+        },
+        {
+          "word": "zero",
+          "start": 98.29,
+          "end": 98.632,
+          "duration": 0.342
+        },
+        {
+          "word": "cloud",
+          "start": 98.644,
+          "end": 98.986,
+          "duration": 0.342
+        },
+        {
+          "word": "latency",
+          "start": 98.998,
+          "end": 99.517,
+          "duration": 0.519
+        }
+      ]
+    },
+    {
+      "text": "and sub-5 millisecond overhead",
+      "start": 99.528,
+      "end": 101.509,
+      "words": [
+        {
+          "word": "and",
+          "start": 99.528,
+          "end": 99.658,
+          "duration": 0.13
+        },
+        {
+          "word": "sub-5",
+          "start": 99.67,
+          "end": 100.401,
+          "duration": 0.731
+        },
+        {
+          "word": "millisecond",
+          "start": 100.413,
+          "end": 100.955,
+          "duration": 0.542
+        },
+        {
+          "word": "overhead",
+          "start": 100.967,
+          "end": 101.509,
+          "duration": 0.542
+        }
+      ]
+    },
+    {
+      "text": "Fifth Web and WebAssembly",
+      "start": 102.323,
+      "end": 104.304,
+      "words": [
+        {
+          "word": "Fifth",
+          "start": 102.323,
+          "end": 102.795,
+          "duration": 0.472
+        },
+        {
+          "word": "Web",
+          "start": 103.031,
+          "end": 103.314,
+          "duration": 0.283
+        },
+        {
+          "word": "and",
+          "start": 103.408,
+          "end": 103.538,
+          "duration": 0.13
+        },
+        {
+          "word": "WebAssembly",
+          "start": 103.55,
+          "end": 104.304,
+          "duration": 0.755
+        }
+      ]
+    },
+    {
+      "text": "Open usepaperpilot.com in any",
+      "start": 105.118,
+      "end": 107.241,
+      "words": [
+        {
+          "word": "Open",
+          "start": 105.118,
+          "end": 105.424,
+          "duration": 0.307
+        },
+        {
+          "word": "usepaperpilot.com",
+          "start": 105.436,
+          "end": 106.887,
+          "duration": 1.45
+        },
+        {
+          "word": "in",
+          "start": 106.899,
+          "end": 107.064,
+          "duration": 0.165
+        },
+        {
+          "word": "any",
+          "start": 107.075,
+          "end": 107.241,
+          "duration": 0.165
+        }
+      ]
+    },
+    {
+      "text": "modern browser and process",
+      "start": 107.252,
+      "end": 108.915,
+      "words": [
+        {
+          "word": "modern",
+          "start": 107.252,
+          "end": 107.594,
+          "duration": 0.342
+        },
+        {
+          "word": "browser",
+          "start": 107.606,
+          "end": 108.078,
+          "duration": 0.472
+        },
+        {
+          "word": "and",
+          "start": 108.337,
+          "end": 108.432,
+          "duration": 0.094
+        },
+        {
+          "word": "process",
+          "start": 108.443,
+          "end": 108.915,
+          "duration": 0.472
+        }
+      ]
+    },
+    {
+      "text": "your files with pure",
+      "start": 108.927,
+      "end": 109.929,
+      "words": [
+        {
+          "word": "your",
+          "start": 108.927,
+          "end": 109.033,
+          "duration": 0.106
+        },
+        {
+          "word": "files",
+          "start": 109.045,
+          "end": 109.469,
+          "duration": 0.425
+        },
+        {
+          "word": "with",
+          "start": 109.481,
+          "end": 109.611,
+          "duration": 0.13
+        },
+        {
+          "word": "pure",
+          "start": 109.623,
+          "end": 109.929,
+          "duration": 0.307
+        }
+      ]
+    },
+    {
+      "text": "client-side WebAssembly memory without",
+      "start": 109.941,
+      "end": 111.804,
+      "words": [
+        {
+          "word": "client-side",
+          "start": 109.941,
+          "end": 110.519,
+          "duration": 0.578
+        },
+        {
+          "word": "WebAssembly",
+          "start": 110.531,
+          "end": 111.085,
+          "duration": 0.554
+        },
+        {
+          "word": "memory",
+          "start": 111.097,
+          "end": 111.462,
+          "duration": 0.366
+        },
+        {
+          "word": "without",
+          "start": 111.474,
+          "end": 111.804,
+          "duration": 0.33
+        }
+      ]
+    },
+    {
+      "text": "uploading a single byte",
+      "start": 111.816,
+      "end": 112.924,
+      "words": [
+        {
+          "word": "uploading",
+          "start": 111.816,
+          "end": 112.229,
+          "duration": 0.413
+        },
+        {
+          "word": "a",
+          "start": 112.241,
+          "end": 112.288,
+          "duration": 0.047
+        },
+        {
+          "word": "single",
+          "start": 112.3,
+          "end": 112.689,
+          "duration": 0.389
+        },
+        {
+          "word": "byte",
+          "start": 112.7,
+          "end": 112.924,
+          "duration": 0.224
+        }
+      ]
+    },
+    {
+      "text": "to the internet PaperPilot",
+      "start": 112.936,
+      "end": 115.106,
+      "words": [
+        {
+          "word": "to",
+          "start": 112.936,
+          "end": 113.031,
+          "duration": 0.094
+        },
+        {
+          "word": "the",
+          "start": 113.042,
+          "end": 113.125,
+          "duration": 0.083
+        },
+        {
+          "word": "internet",
+          "start": 113.137,
+          "end": 113.632,
+          "duration": 0.495
+        },
+        {
+          "word": "PaperPilot",
+          "start": 114.446,
+          "end": 115.106,
+          "duration": 0.66
+        }
+      ]
+    },
+    {
+      "text": "delivers total document sovereignty",
+      "start": 115.118,
+      "end": 116.958,
+      "words": [
+        {
+          "word": "delivers",
+          "start": 115.118,
+          "end": 115.566,
+          "duration": 0.448
+        },
+        {
+          "word": "total",
+          "start": 115.578,
+          "end": 115.884,
+          "duration": 0.307
+        },
+        {
+          "word": "document",
+          "start": 115.896,
+          "end": 116.356,
+          "duration": 0.46
+        },
+        {
+          "word": "sovereignty",
+          "start": 116.368,
+          "end": 116.958,
+          "duration": 0.59
+        }
+      ]
+    },
+    {
+      "text": "with zero cloud lock-in",
+      "start": 116.969,
+      "end": 118.408,
+      "words": [
+        {
+          "word": "with",
+          "start": 116.969,
+          "end": 117.134,
+          "duration": 0.165
+        },
+        {
+          "word": "zero",
+          "start": 117.146,
+          "end": 117.512,
+          "duration": 0.366
+        },
+        {
+          "word": "cloud",
+          "start": 117.524,
+          "end": 117.889,
+          "duration": 0.366
+        },
+        {
+          "word": "lock-in",
+          "start": 117.901,
+          "end": 118.408,
+          "duration": 0.507
+        }
+      ]
+    },
+    {
+      "text": "Star us on GitHub",
+      "start": 119.222,
+      "end": 120.354,
+      "words": [
+        {
+          "word": "Star",
+          "start": 119.222,
+          "end": 119.623,
+          "duration": 0.401
+        },
+        {
+          "word": "us",
+          "start": 119.634,
+          "end": 119.776,
+          "duration": 0.141
+        },
+        {
+          "word": "on",
+          "start": 119.788,
+          "end": 119.929,
+          "duration": 0.141
+        },
+        {
+          "word": "GitHub",
+          "start": 119.941,
+          "end": 120.354,
+          "duration": 0.413
+        }
+      ]
+    },
+    {
+      "text": "at github.com/KrushnaVardhanReddy/PaperPilot, visit usepaperpilot.com",
+      "start": 120.366,
+      "end": 125.613,
+      "words": [
+        {
+          "word": "at",
+          "start": 120.366,
+          "end": 120.472,
+          "duration": 0.106
+        },
+        {
+          "word": "github.com/KrushnaVardhanReddy/PaperPilot,",
+          "start": 120.484,
+          "end": 123.691,
+          "duration": 3.208
+        },
+        {
+          "word": "visit",
+          "start": 123.891,
+          "end": 124.198,
+          "duration": 0.307
+        },
+        {
+          "word": "usepaperpilot.com",
+          "start": 124.21,
+          "end": 125.613,
+          "duration": 1.403
+        }
+      ]
+    },
+    {
+      "text": "and install it in",
+      "start": 125.908,
+      "end": 126.663,
+      "words": [
+        {
+          "word": "and",
+          "start": 125.908,
+          "end": 126.002,
+          "duration": 0.094
+        },
+        {
+          "word": "install",
+          "start": 126.014,
+          "end": 126.45,
+          "duration": 0.436
+        },
+        {
+          "word": "it",
+          "start": 126.462,
+          "end": 126.545,
+          "duration": 0.083
+        },
+        {
+          "word": "in",
+          "start": 126.557,
+          "end": 126.663,
+          "duration": 0.106
+        }
+      ]
+    },
+    {
+      "text": "five seconds using curl",
+      "start": 126.675,
+      "end": 128.042,
+      "words": [
+        {
+          "word": "five",
+          "start": 126.675,
+          "end": 127.005,
+          "duration": 0.33
+        },
+        {
+          "word": "seconds",
+          "start": 127.016,
+          "end": 127.406,
+          "duration": 0.389
+        },
+        {
+          "word": "using",
+          "start": 127.417,
+          "end": 127.677,
+          "duration": 0.259
+        },
+        {
+          "word": "curl",
+          "start": 127.689,
+          "end": 128.042,
+          "duration": 0.354
+        }
+      ]
+    },
+    {
+      "text": "fsSL usepaperpilot.com/install.sh pipe bash",
+      "start": 128.267,
+      "end": 132.476,
+      "words": [
+        {
+          "word": "fsSL",
+          "start": 128.267,
+          "end": 128.927,
+          "duration": 0.66
+        },
+        {
+          "word": "usepaperpilot.com/install.sh",
+          "start": 128.939,
+          "end": 131.71,
+          "duration": 2.771
+        },
+        {
+          "word": "pipe",
+          "start": 131.722,
+          "end": 131.958,
+          "duration": 0.236
+        },
+        {
+          "word": "bash",
+          "start": 131.969,
+          "end": 132.476,
+          "duration": 0.507
+        }
+      ]
+    }
+  ]
+};
