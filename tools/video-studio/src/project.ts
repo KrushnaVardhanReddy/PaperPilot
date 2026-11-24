@@ -2,12 +2,10 @@ import { makeProject } from '@revideo/core';
 import { TOOLS_DATA } from './configs/tools-data';
 import { createUniversalToolScene } from './scenes/universal-scene';
 import { getCaptionsForWeek } from './scenes/captions_registry';
+import { CURRENT_WEEK } from './current_target';
 
-// Select week dynamically via environment variable or default to week 1
-const targetWeek = Number(process.env.TARGET_WEEK || 1);
-const toolConfig = TOOLS_DATA[targetWeek] || TOOLS_DATA[1];
+const toolConfig = TOOLS_DATA[CURRENT_WEEK] || TOOLS_DATA[1];
 const captionsData = getCaptionsForWeek(toolConfig.weekStr);
-
 const scene = createUniversalToolScene(toolConfig, captionsData);
 
 export default makeProject({
@@ -22,3 +20,6 @@ export default makeProject({
     },
   },
 });
+
+
+

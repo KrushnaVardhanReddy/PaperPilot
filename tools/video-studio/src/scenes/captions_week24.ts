@@ -3,7 +3,7 @@ export const captionsData_week24 = {
   "weekStr": "24",
   "voice": "en-US-ChristopherNeural",
   "rate": "+6%",
-  "script": "Welcome to PaperPilot, the pure Rust, local-first document and PDF toolkit. Featuring one hundred native tools, zero cloud subscriptions, and absolute privacy where your files never leave your machine. Today we tackle a critical challenge in Local-First AI Architecture, Data Sovereignty & Sovereign Document Workflows. Cloud services charge monthly subscription fees, rate-limit your batch requests, and expose your confidential documents to external third-party servers. PaperPilot solves this with a high-speed engine written in native Rust. Equipped with Complete 100-tool monorepo tour, zero-cloud architecture, benchmarks vs traditional cloud APIs, it runs deterministically on your local machine with multi-threaded performance and zero data egress. Now highlighting Tool Number 24: Why 2026 Belongs to Local Edge Tools & Private Context, powered by PaperPilot. Let us explore how you can run this across all five interfaces. First, the Desktop GUI. Simply drag and drop your document, customize operational parameters with interactive controls, and inspect the live instant preview with real-time feedback. Second, the AI Agent. With our native Model Context Protocol server, your local agent or Claude invokes the Complete 100-tool monorepo tour tool directly, executing deterministic workflows without any data leaving localhost. Third, the Terminal CLI. Run the native command-line binary, and receive an ultra-fast, ANSI-formatted terminal receipt in just milliseconds. Fourth, the Local REST API. Send a standard HTTP POST request to your local PaperPilot daemon, and receive structured JSON output with zero cloud latency and sub-5 millisecond overhead. Fifth, Web and WebAssembly. Open usepaperpilot.com in any modern browser, and process your files with pure client-side WebAssembly memory without uploading a single byte to the internet. PaperPilot delivers total document sovereignty with zero cloud lock-in. Star us on GitHub at github.com/KrushnaVardhanReddy/PaperPilot, visit usepaperpilot.com, and install it in five seconds using curl -fsSL usepaperpilot.com/install.sh pipe bash.",
+  "script": "Welcome to PaperPilot, the pure Rust, local-first document and PDF toolkit. Featuring one hundred native tools, zero cloud subscriptions, and absolute privacy where your files never leave your machine. Today we tackle a critical challenge in Local-First AI Architecture, Data Sovereignty & Sovereign Document Workflows. Cloud services charge monthly subscription fees, rate-limit your batch requests, and expose your confidential documents to external third-party servers. PaperPilot solves this with a high-speed engine written in native Rust. Equipped with Complete 100-tool monorepo tour, zero-cloud architecture, benchmarks vs traditional cloud APIs, it runs deterministically on your local machine with multi-threaded performance and zero data egress. Now highlighting Tool Number 24: Why 2026 Belongs to Local Edge Tools & Private Context, powered by PaperPilot. Let us explore how you can run this across all five interfaces. First, the Desktop GUI. Simply drag and drop your document, customize operational parameters with interactive controls, and inspect the live instant preview with real-time feedback. Second, the AI Agent. With our native Model Context Protocol server, your local agent or Claude invokes the Complete 100-tool monorepo tour tool directly, executing deterministic workflows without any data leaving localhost. Third, the Terminal CLI. Run the native command-line binary, and receive an ultra-fast, ANSI-formatted terminal receipt in just milliseconds. Fourth, the Local REST API. Send a standard HTTP POST request to your local PaperPilot daemon, and receive structured JSON output with zero cloud latency and sub-5 millisecond overhead. Fifth, Web and WebAssembly. Open usepaperpilot.com in any modern browser, and process your files with pure client-side WebAssembly memory without uploading a single byte to the internet. PaperPilot delivers total document sovereignty with zero cloud lock-in. Visit usepaperpilot.com to explore all one hundred tools, try the interactive demos, and get started today.",
   "sections": [
     {
       "id": "intro",
@@ -48,11 +48,11 @@ export const captionsData_week24 = {
     {
       "id": "outro",
       "title": "Outro & Installation",
-      "text": "PaperPilot delivers total document sovereignty with zero cloud lock-in. Star us on GitHub at github.com/KrushnaVardhanReddy/PaperPilot, visit usepaperpilot.com, and install it in five seconds using curl -fsSL usepaperpilot.com/install.sh pipe bash."
+      "text": "PaperPilot delivers total document sovereignty with zero cloud lock-in. Visit usepaperpilot.com to explore all one hundred tools, try the interactive demos, and get started today."
     }
   ],
-  "total_words": 293,
-  "duration": 139.163,
+  "total_words": 289,
+  "duration": 132.571,
   "words": [
     {
       "word": "Welcome",
@@ -1693,124 +1693,100 @@ export const captionsData_week24 = {
       "duration": 0.507
     },
     {
-      "word": "Star",
+      "word": "Visit",
       "start": 125.908,
-      "end": 126.309,
-      "duration": 0.401
-    },
-    {
-      "word": "us",
-      "start": 126.321,
-      "end": 126.462,
-      "duration": 0.141
-    },
-    {
-      "word": "on",
-      "start": 126.474,
-      "end": 126.616,
-      "duration": 0.141
-    },
-    {
-      "word": "GitHub",
-      "start": 126.627,
-      "end": 127.04,
-      "duration": 0.413
-    },
-    {
-      "word": "at",
-      "start": 127.052,
-      "end": 127.158,
-      "duration": 0.106
-    },
-    {
-      "word": "github.com/KrushnaVardhanReddy/PaperPilot,",
-      "start": 127.17,
-      "end": 130.377,
-      "duration": 3.208
-    },
-    {
-      "word": "visit",
-      "start": 130.578,
-      "end": 130.884,
-      "duration": 0.307
+      "end": 126.274,
+      "duration": 0.366
     },
     {
       "word": "usepaperpilot.com",
-      "start": 130.896,
-      "end": 132.3,
-      "duration": 1.403
+      "start": 126.285,
+      "end": 127.724,
+      "duration": 1.439
     },
     {
-      "word": "and",
-      "start": 132.594,
-      "end": 132.689,
-      "duration": 0.094
-    },
-    {
-      "word": "install",
-      "start": 132.7,
-      "end": 133.137,
-      "duration": 0.436
-    },
-    {
-      "word": "it",
-      "start": 133.149,
-      "end": 133.231,
-      "duration": 0.083
-    },
-    {
-      "word": "in",
-      "start": 133.243,
-      "end": 133.349,
+      "word": "to",
+      "start": 127.736,
+      "end": 127.842,
       "duration": 0.106
     },
     {
-      "word": "five",
-      "start": 133.361,
-      "end": 133.691,
-      "duration": 0.33
+      "word": "explore",
+      "start": 127.854,
+      "end": 128.396,
+      "duration": 0.542
     },
     {
-      "word": "seconds",
-      "start": 133.703,
-      "end": 134.092,
-      "duration": 0.389
+      "word": "all",
+      "start": 128.408,
+      "end": 128.632,
+      "duration": 0.224
     },
     {
-      "word": "using",
-      "start": 134.104,
-      "end": 134.363,
-      "duration": 0.259
+      "word": "one",
+      "start": 128.644,
+      "end": 128.797,
+      "duration": 0.153
     },
     {
-      "word": "curl",
-      "start": 134.375,
-      "end": 134.729,
-      "duration": 0.354
+      "word": "hundred",
+      "start": 128.809,
+      "end": 129.116,
+      "duration": 0.307
     },
     {
-      "word": "fsSL",
-      "start": 134.953,
-      "end": 135.613,
-      "duration": 0.66
+      "word": "tools",
+      "start": 129.127,
+      "end": 129.564,
+      "duration": 0.436
     },
     {
-      "word": "usepaperpilot.com/install.sh",
-      "start": 135.625,
-      "end": 138.396,
-      "duration": 2.771
+      "word": "try",
+      "start": 129.811,
+      "end": 130.035,
+      "duration": 0.224
     },
     {
-      "word": "pipe",
-      "start": 138.408,
-      "end": 138.644,
-      "duration": 0.236
+      "word": "the",
+      "start": 130.047,
+      "end": 130.13,
+      "duration": 0.083
     },
     {
-      "word": "bash",
-      "start": 138.656,
-      "end": 139.163,
+      "word": "interactive",
+      "start": 130.142,
+      "end": 130.696,
+      "duration": 0.554
+    },
+    {
+      "word": "demos",
+      "start": 130.708,
+      "end": 131.215,
       "duration": 0.507
+    },
+    {
+      "word": "and",
+      "start": 131.45,
+      "end": 131.592,
+      "duration": 0.141
+    },
+    {
+      "word": "get",
+      "start": 131.604,
+      "end": 131.769,
+      "duration": 0.165
+    },
+    {
+      "word": "started",
+      "start": 131.781,
+      "end": 132.146,
+      "duration": 0.366
+    },
+    {
+      "word": "today",
+      "start": 132.158,
+      "end": 132.571,
+      "duration": 0.413
     }
   ],
   "captions": [
@@ -3923,9 +3899,9 @@ export const captionsData_week24 = {
       ]
     },
     {
-      "text": "lock-in Star us on",
+      "text": "lock-in Visit usepaperpilot.com to",
       "start": 124.587,
-      "end": 126.616,
+      "end": 127.842,
       "words": [
         {
           "word": "lock-in",
@@ -3934,159 +3910,128 @@ export const captionsData_week24 = {
           "duration": 0.507
         },
         {
-          "word": "Star",
+          "word": "Visit",
           "start": 125.908,
-          "end": 126.309,
-          "duration": 0.401
+          "end": 126.274,
+          "duration": 0.366
         },
         {
-          "word": "us",
-          "start": 126.321,
-          "end": 126.462,
-          "duration": 0.141
+          "word": "usepaperpilot.com",
+          "start": 126.285,
+          "end": 127.724,
+          "duration": 1.439
         },
         {
-          "word": "on",
-          "start": 126.474,
-          "end": 126.616,
-          "duration": 0.141
+          "word": "to",
+          "start": 127.736,
+          "end": 127.842,
+          "duration": 0.106
         }
       ]
     },
     {
-      "text": "GitHub at github.com/KrushnaVardhanReddy/PaperPilot, visit",
-      "start": 126.627,
-      "end": 130.884,
+      "text": "explore all one hundred",
+      "start": 127.854,
+      "end": 129.116,
       "words": [
         {
-          "word": "GitHub",
-          "start": 126.627,
-          "end": 127.04,
-          "duration": 0.413
+          "word": "explore",
+          "start": 127.854,
+          "end": 128.396,
+          "duration": 0.542
         },
         {
-          "word": "at",
-          "start": 127.052,
-          "end": 127.158,
-          "duration": 0.106
+          "word": "all",
+          "start": 128.408,
+          "end": 128.632,
+          "duration": 0.224
         },
         {
-          "word": "github.com/KrushnaVardhanReddy/PaperPilot,",
-          "start": 127.17,
-          "end": 130.377,
-          "duration": 3.208
+          "word": "one",
+          "start": 128.644,
+          "end": 128.797,
+          "duration": 0.153
         },
         {
-          "word": "visit",
-          "start": 130.578,
-          "end": 130.884,
+          "word": "hundred",
+          "start": 128.809,
+          "end": 129.116,
           "duration": 0.307
         }
       ]
     },
     {
-      "text": "usepaperpilot.com and install it",
-      "start": 130.896,
-      "end": 133.231,
+      "text": "tools try the interactive",
+      "start": 129.127,
+      "end": 130.696,
       "words": [
         {
-          "word": "usepaperpilot.com",
-          "start": 130.896,
-          "end": 132.3,
-          "duration": 1.403
-        },
-        {
-          "word": "and",
-          "start": 132.594,
-          "end": 132.689,
-          "duration": 0.094
-        },
-        {
-          "word": "install",
-          "start": 132.7,
-          "end": 133.137,
+          "word": "tools",
+          "start": 129.127,
+          "end": 129.564,
           "duration": 0.436
         },
         {
-          "word": "it",
-          "start": 133.149,
-          "end": 133.231,
+          "word": "try",
+          "start": 129.811,
+          "end": 130.035,
+          "duration": 0.224
+        },
+        {
+          "word": "the",
+          "start": 130.047,
+          "end": 130.13,
           "duration": 0.083
+        },
+        {
+          "word": "interactive",
+          "start": 130.142,
+          "end": 130.696,
+          "duration": 0.554
         }
       ]
     },
     {
-      "text": "in five seconds using",
-      "start": 133.243,
-      "end": 134.363,
+      "text": "demos and get started",
+      "start": 130.708,
+      "end": 132.146,
       "words": [
         {
-          "word": "in",
-          "start": 133.243,
-          "end": 133.349,
-          "duration": 0.106
-        },
-        {
-          "word": "five",
-          "start": 133.361,
-          "end": 133.691,
-          "duration": 0.33
-        },
-        {
-          "word": "seconds",
-          "start": 133.703,
-          "end": 134.092,
-          "duration": 0.389
-        },
-        {
-          "word": "using",
-          "start": 134.104,
-          "end": 134.363,
-          "duration": 0.259
-        }
-      ]
-    },
-    {
-      "text": "curl fsSL usepaperpilot.com/install.sh pipe",
-      "start": 134.375,
-      "end": 138.644,
-      "words": [
-        {
-          "word": "curl",
-          "start": 134.375,
-          "end": 134.729,
-          "duration": 0.354
-        },
-        {
-          "word": "fsSL",
-          "start": 134.953,
-          "end": 135.613,
-          "duration": 0.66
-        },
-        {
-          "word": "usepaperpilot.com/install.sh",
-          "start": 135.625,
-          "end": 138.396,
-          "duration": 2.771
-        },
-        {
-          "word": "pipe",
-          "start": 138.408,
-          "end": 138.644,
-          "duration": 0.236
-        }
-      ]
-    },
-    {
-      "text": "bash",
-      "start": 138.656,
-      "end": 139.163,
-      "words": [
-        {
-          "word": "bash",
-          "start": 138.656,
-          "end": 139.163,
+          "word": "demos",
+          "start": 130.708,
+          "end": 131.215,
           "duration": 0.507
+        },
+        {
+          "word": "and",
+          "start": 131.45,
+          "end": 131.592,
+          "duration": 0.141
+        },
+        {
+          "word": "get",
+          "start": 131.604,
+          "end": 131.769,
+          "duration": 0.165
+        },
+        {
+          "word": "started",
+          "start": 131.781,
+          "end": 132.146,
+          "duration": 0.366
+        }
+      ]
+    },
+    {
+      "text": "today",
+      "start": 132.158,
+      "end": 132.571,
+      "words": [
+        {
+          "word": "today",
+          "start": 132.158,
+          "end": 132.571,
+          "duration": 0.413
         }
       ]
     }

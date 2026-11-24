@@ -1012,14 +1012,10 @@ export function createUniversalToolScene(tool: ToolWeekConfig, captionsData: Cap
             <Txt text={'curl -fsSL https://usepaperpilot.com/install.sh | bash'} fill={'#4ade80'} fontSize={32} fontWeight={900} fontFamily={'monospace'} />
           </Rect>
 
-          <Rect layout direction={'row'} gap={50} marginTop={10}>
-            <Rect fill={'#1e293b'} stroke={'#64748b'} lineWidth={1.5} radius={12} paddingLeft={24} paddingRight={24} paddingTop={12} paddingBottom={12} layout direction={'row'} alignItems={'center'} gap={12}>
-              <Txt text={'⭐ Star us on GitHub:'} fill={'#fbbf24'} fontSize={20} fontWeight={800} />
-              <Txt text={'github.com/KrushnaVardhanReddy/PaperPilot'} fill={'#ffffff'} fontSize={20} fontWeight={700} />
-            </Rect>
-            <Rect fill={'#1e293b'} stroke={'#64748b'} lineWidth={1.5} radius={12} paddingLeft={24} paddingRight={24} paddingTop={12} paddingBottom={12} layout direction={'row'} alignItems={'center'} gap={12}>
-              <Txt text={'🌐 Website:'} fill={'#38bdf8'} fontSize={20} fontWeight={800} />
-              <Txt text={'https://usepaperpilot.com'} fill={'#ffffff'} fontSize={20} fontWeight={700} />
+          <Rect layout direction={'row'} gap={30} marginTop={10}>
+            <Rect fill={'#0369a1'} stroke={'#38bdf8'} lineWidth={2} radius={16} paddingLeft={40} paddingRight={40} paddingTop={16} paddingBottom={16} layout direction={'row'} alignItems={'center'} gap={16}>
+              <Txt text={'🌐 Explore All Tools:'} fill={'#ffffff'} fontSize={26} fontWeight={800} />
+              <Txt text={'https://usepaperpilot.com'} fill={'#38bdf8'} fontSize={26} fontWeight={800} />
             </Rect>
           </Rect>
         </Rect>

@@ -14,9 +14,13 @@ const toolsData: Array<{ week: number; weekStr: string; slug: string; toolName: 
 
 const projectFile = path.resolve(__dirname, '../src/project.ts');
 const outDir = path.resolve(__dirname, '../out');
+const finalVideosDir = path.resolve(__dirname, '../out/final_videos');
+const tempDir = path.resolve(__dirname, '../out/temp_builds');
 
-if (!fs.existsSync(outDir)) {
-  fs.mkdirSync(outDir, { recursive: true });
+for (const dir of [outDir, finalVideosDir, tempDir]) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
 async function renderWeek(weekNum: number) {
@@ -32,14 +36,17 @@ async function renderWeek(weekNum: number) {
   console.log(`📁 Target Output: ${path.join(outDir, outFile)}`);
   console.log('====================================================');
 
-  process.env.TARGET_WEEK = String(weekNum);
+  // Update current_target.ts for Vite bundler
+  const currentTargetFile = path.resolve(__dirname, '../src/current_target.ts');
+  fs.writeFileSync(currentTargetFile, `export const CURRENT_WEEK = ${weekNum};\n`, 'utf-8');
+
   const startTime = Date.now();
 
   try {
     const renderedFile = await renderVideo({
       projectFile,
       settings: {
-        outDir,
+        outDir: tempDir,
         outFile: outFile as `${string}.mp4`,
         logProgress: true,
         puppeteer: {
@@ -54,8 +61,15 @@ async function renderWeek(weekNum: number) {
       },
     });
 
+    // Move only the final assembled MP4 video to finalVideosDir and clean up temp pieces
+    const finalDestination = path.join(finalVideosDir, outFile);
+    if (fs.existsSync(renderedFile)) {
+      fs.copyFileSync(renderedFile, finalDestination);
+    }
+
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`✅ Week ${tool.weekStr} rendered successfully in ${elapsed}s -> ${renderedFile}`);
+    console.log(`✅ Week ${tool.weekStr} rendered successfully in ${elapsed}s!`);
+    console.log(`📁 Final Clean Video: ${finalDestination}`);
   } catch (err) {
     console.error(`❌ Error rendering week ${tool.weekStr}:`, err);
     throw err;
