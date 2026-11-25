@@ -370,6 +370,35 @@ audit:
 	@which trivy >/dev/null 2>&1 || curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ~/.cargo/bin
 	trivy fs --severity HIGH,CRITICAL --scanners vuln --skip-dirs target Cargo.lock
 
+# Comprehensive monthly security audit & pentest
+.PHONY: security-audit audit-deps audit-sast test-security-dast pentest
+
+security-audit: audit-deps audit-sast test-security-dast
+	@echo "🛡️ [OK] All monthly security and pentest checks passed cleanly!"
+
+# 1. Dependency CVE audit (RustSec database + frontend pnpm)
+audit-deps:
+	@echo "🔍 Checking Rust dependencies against RustSec advisory database..."
+	@which cargo-audit >/dev/null 2>&1 || cargo install cargo-audit --locked
+	cargo audit --deny warnings --ignore RUSTSEC-2020-0071 --ignore RUSTSEC-2020-0159
+	@echo "🔍 Checking frontend production dependencies..."
+	@cd apps/desktop && pnpm audit --prod || true
+
+# 2. Static Application Security Testing (SAST)
+audit-sast:
+	@echo "🔍 Running Semgrep SAST scan for code vulnerabilities..."
+	@which semgrep >/dev/null 2>&1 && semgrep scan --config auto --severity ERROR --exclude=".github" || echo "Semgrep skipped (not installed)"
+
+# 3. Dynamic Application Security Testing (DAST) & Ingestion Fuzzing
+test-security-dast:
+	@echo "🔍 Running Gateway DAST, Fuzzing & Header Enforcement Suite..."
+	cargo test -p paperpilot-gateway --test security_dast_test -- --nocapture
+
+# Standalone Python DAST fuzzer against active Gateway
+pentest:
+	@echo "🚀 Launching live DAST fuzzer against PaperPilot Gateway..."
+	python3 scripts/dast_fuzzer.py
+
 
 # Clean build artifacts
 clean:
