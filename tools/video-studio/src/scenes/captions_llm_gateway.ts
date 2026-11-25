@@ -1,0 +1,418 @@
+export interface WordCaption {
+  word: string;
+  start: number;
+  end: number;
+  duration: number;
+}
+
+export const LLM_GATEWAY_WORDS: WordCaption[] = [
+  {
+    "word": "Enterprise",
+    "start": 0.097,
+    "end": 0.758,
+    "duration": 0.66
+  },
+  {
+    "word": "LLM",
+    "start": 0.769,
+    "end": 1.276,
+    "duration": 0.507
+  },
+  {
+    "word": "pipelines",
+    "start": 1.288,
+    "end": 1.842,
+    "duration": 0.554
+  },
+  {
+    "word": "often",
+    "start": 1.854,
+    "end": 2.208,
+    "duration": 0.354
+  },
+  {
+    "word": "choke",
+    "start": 2.22,
+    "end": 2.526,
+    "duration": 0.307
+  },
+  {
+    "word": "on",
+    "start": 2.538,
+    "end": 2.644,
+    "duration": 0.106
+  },
+  {
+    "word": "document",
+    "start": 2.656,
+    "end": 3.128,
+    "duration": 0.472
+  },
+  {
+    "word": "parsing",
+    "start": 3.14,
+    "end": 3.541,
+    "duration": 0.401
+  },
+  {
+    "word": "before",
+    "start": 3.552,
+    "end": 3.847,
+    "duration": 0.295
+  },
+  {
+    "word": "generation",
+    "start": 3.859,
+    "end": 4.46,
+    "duration": 0.601
+  },
+  {
+    "word": "even",
+    "start": 4.472,
+    "end": 4.696,
+    "duration": 0.224
+  },
+  {
+    "word": "begins",
+    "start": 4.708,
+    "end": 5.309,
+    "duration": 0.601
+  },
+  {
+    "word": "PaperPilot",
+    "start": 6.12,
+    "end": 6.816,
+    "duration": 0.696
+  },
+  {
+    "word": "changes",
+    "start": 6.828,
+    "end": 7.252,
+    "duration": 0.425
+  },
+  {
+    "word": "that",
+    "start": 7.264,
+    "end": 7.606,
+    "duration": 0.342
+  },
+  {
+    "word": "With",
+    "start": 8.42,
+    "end": 8.608,
+    "duration": 0.189
+  },
+  {
+    "word": "our",
+    "start": 8.62,
+    "end": 8.738,
+    "duration": 0.118
+  },
+  {
+    "word": "native",
+    "start": 8.75,
+    "end": 9.068,
+    "duration": 0.318
+  },
+  {
+    "word": "Rust",
+    "start": 9.08,
+    "end": 9.34,
+    "duration": 0.259
+  },
+  {
+    "word": "ingestion",
+    "start": 9.351,
+    "end": 9.858,
+    "duration": 0.507
+  },
+  {
+    "word": "gateway",
+    "start": 9.87,
+    "end": 10.318,
+    "duration": 0.448
+  },
+  {
+    "word": "documents",
+    "start": 10.566,
+    "end": 11.061,
+    "duration": 0.495
+  },
+  {
+    "word": "like",
+    "start": 11.073,
+    "end": 11.226,
+    "duration": 0.153
+  },
+  {
+    "word": "this",
+    "start": 11.238,
+    "end": 11.391,
+    "duration": 0.153
+  },
+  {
+    "word": "quarterly",
+    "start": 11.403,
+    "end": 11.804,
+    "duration": 0.401
+  },
+  {
+    "word": "financial",
+    "start": 11.816,
+    "end": 12.311,
+    "duration": 0.495
+  },
+  {
+    "word": "report",
+    "start": 12.323,
+    "end": 12.7,
+    "duration": 0.377
+  },
+  {
+    "word": "are",
+    "start": 12.712,
+    "end": 12.842,
+    "duration": 0.13
+  },
+  {
+    "word": "parsed",
+    "start": 12.854,
+    "end": 13.219,
+    "duration": 0.366
+  },
+  {
+    "word": "in",
+    "start": 13.231,
+    "end": 13.314,
+    "duration": 0.083
+  },
+  {
+    "word": "just",
+    "start": 13.325,
+    "end": 13.538,
+    "duration": 0.212
+  },
+  {
+    "word": "3.4",
+    "start": 13.55,
+    "end": 14.257,
+    "duration": 0.708
+  },
+  {
+    "word": "milliseconds",
+    "start": 14.269,
+    "end": 14.953,
+    "duration": 0.684
+  },
+  {
+    "word": "taking",
+    "start": 15.189,
+    "end": 15.519,
+    "duration": 0.33
+  },
+  {
+    "word": "under",
+    "start": 15.531,
+    "end": 15.719,
+    "duration": 0.189
+  },
+  {
+    "word": "50",
+    "start": 15.731,
+    "end": 16.061,
+    "duration": 0.33
+  },
+  {
+    "word": "megabytes",
+    "start": 16.073,
+    "end": 16.604,
+    "duration": 0.531
+  },
+  {
+    "word": "of",
+    "start": 16.616,
+    "end": 16.698,
+    "duration": 0.083
+  },
+  {
+    "word": "memory",
+    "start": 16.71,
+    "end": 17.158,
+    "duration": 0.448
+  },
+  {
+    "word": "Clean",
+    "start": 17.972,
+    "end": 18.278,
+    "duration": 0.307
+  },
+  {
+    "word": "tabular",
+    "start": 18.29,
+    "end": 18.726,
+    "duration": 0.436
+  },
+  {
+    "word": "Markdown",
+    "start": 18.738,
+    "end": 19.257,
+    "duration": 0.519
+  },
+  {
+    "word": "feeds",
+    "start": 19.269,
+    "end": 19.623,
+    "duration": 0.354
+  },
+  {
+    "word": "directly",
+    "start": 19.634,
+    "end": 20.106,
+    "duration": 0.472
+  },
+  {
+    "word": "into",
+    "start": 20.118,
+    "end": 20.295,
+    "duration": 0.177
+  },
+  {
+    "word": "high-throughput",
+    "start": 20.307,
+    "end": 20.908,
+    "duration": 0.601
+  },
+  {
+    "word": "models",
+    "start": 20.92,
+    "end": 21.356,
+    "duration": 0.436
+  },
+  {
+    "word": "like",
+    "start": 21.368,
+    "end": 21.533,
+    "duration": 0.165
+  },
+  {
+    "word": "Llama",
+    "start": 21.545,
+    "end": 21.851,
+    "duration": 0.307
+  },
+  {
+    "word": "3.3",
+    "start": 21.863,
+    "end": 22.724,
+    "duration": 0.861
+  },
+  {
+    "word": "70B",
+    "start": 22.736,
+    "end": 23.396,
+    "duration": 0.66
+  },
+  {
+    "word": "instantly",
+    "start": 23.715,
+    "end": 24.139,
+    "duration": 0.425
+  },
+  {
+    "word": "delivering",
+    "start": 24.151,
+    "end": 24.599,
+    "duration": 0.448
+  },
+  {
+    "word": "accurate",
+    "start": 24.611,
+    "end": 24.976,
+    "duration": 0.366
+  },
+  {
+    "word": "financial",
+    "start": 24.988,
+    "end": 25.448,
+    "duration": 0.46
+  },
+  {
+    "word": "intelligence",
+    "start": 25.46,
+    "end": 26.061,
+    "duration": 0.601
+  },
+  {
+    "word": "with",
+    "start": 26.073,
+    "end": 26.215,
+    "duration": 0.141
+  },
+  {
+    "word": "zero",
+    "start": 26.226,
+    "end": 26.568,
+    "duration": 0.342
+  },
+  {
+    "word": "cloud",
+    "start": 26.58,
+    "end": 26.934,
+    "duration": 0.354
+  },
+  {
+    "word": "egress",
+    "start": 26.946,
+    "end": 27.547,
+    "duration": 0.601
+  },
+  {
+    "word": "Blazing",
+    "start": 28.361,
+    "end": 28.797,
+    "duration": 0.436
+  },
+  {
+    "word": "speed",
+    "start": 28.809,
+    "end": 29.222,
+    "duration": 0.413
+  },
+  {
+    "word": "minimal",
+    "start": 29.422,
+    "end": 29.776,
+    "duration": 0.354
+  },
+  {
+    "word": "footprint",
+    "start": 29.788,
+    "end": 30.377,
+    "duration": 0.59
+  },
+  {
+    "word": "Get",
+    "start": 31.191,
+    "end": 31.38,
+    "duration": 0.189
+  },
+  {
+    "word": "started",
+    "start": 31.392,
+    "end": 31.792,
+    "duration": 0.401
+  },
+  {
+    "word": "at",
+    "start": 31.804,
+    "end": 31.899,
+    "duration": 0.094
+  },
+  {
+    "word": "usepaperpilot.com",
+    "start": 31.91,
+    "end": 33.432,
+    "duration": 1.521
+  }
+];
+export const LLM_GATEWAY_TOTAL_DURATION: number = 33.432;
