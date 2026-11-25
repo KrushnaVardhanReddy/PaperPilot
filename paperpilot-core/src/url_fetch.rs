@@ -2,7 +2,7 @@ use crate::error::{OperationResult, PdfError};
 use reqwest::blocking::Client;
 use std::fs::File;
 use std::io::Write;
-use std::net::IpAddr;
+use std::net::{IpAddr, ToSocketAddrs};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -26,17 +26,28 @@ pub fn resolve_url_to_bytes(url: &str) -> OperationResult<Vec<u8>> {
     // Note: httptest uses 127.0.0.1 for local tests, so we need to bypass SSRF check during tests.
     #[cfg(not(test))]
     if let Some(host_str) = parsed_url.host_str() {
-        if let Ok(ip) = host_str.parse::<IpAddr>()
-            && is_private_ip(ip)
-        {
-            return Err(PdfError::InvalidInput(
-                "SSRF blocked: private IP detected".to_string(),
-            ));
-        }
-        if host_str == "localhost" {
+        if let Ok(ip) = host_str.parse::<IpAddr>() {
+            if is_private_ip(ip) {
+                return Err(PdfError::InvalidInput(
+                    "SSRF blocked: private IP detected".to_string(),
+                ));
+            }
+        } else if host_str.eq_ignore_ascii_case("localhost") {
             return Err(PdfError::InvalidInput(
                 "SSRF blocked: localhost detected".to_string(),
             ));
+        } else {
+            // Resolve hostname to IP addresses to prevent DNS rebinding / host alias SSRF
+            let port = parsed_url.port_or_known_default().unwrap_or(80);
+            if let Ok(addrs) = (host_str, port).to_socket_addrs() {
+                for addr in addrs {
+                    if is_private_ip(addr.ip()) {
+                        return Err(PdfError::InvalidInput(
+                            format!("SSRF blocked: host resolved to private IP {}", addr.ip()),
+                        ));
+                    }
+                }
+            }
         }
     }
 

@@ -42,6 +42,23 @@ async fn main() -> std::io::Result<()> {
 
     let bind = env::var("BIND").unwrap_or_else(|_| "127.0.0.1".to_string());
 
+    // Support --max-body-mb <MB> CLI argument
+    let args: Vec<String> = env::args().collect();
+    let mut i = 1;
+    while i < args.len() {
+        if args[i] == "--max-body-mb" && i + 1 < args.len() {
+            unsafe {
+                env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", &args[i + 1]);
+            }
+            i += 1;
+        } else if let Some(val) = args[i].strip_prefix("--max-body-mb=") {
+            unsafe {
+                env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", val);
+            }
+        }
+        i += 1;
+    }
+
     let result = paperpilot_gateway::server::start(port, &bind, async {
         let _ = tokio::signal::ctrl_c().await;
     })

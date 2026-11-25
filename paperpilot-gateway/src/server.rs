@@ -289,6 +289,25 @@ async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Resp
     }
 
     let mut response = response;
+    // Security Hardening Headers (OWASP ZAP Compliance)
+    let headers = response.headers_mut();
+    headers.insert(
+        HeaderName::from_static("x-content-type-options"),
+        HeaderValue::from_static("nosniff"),
+    );
+    headers.insert(
+        HeaderName::from_static("x-frame-options"),
+        HeaderValue::from_static("DENY"),
+    );
+    headers.insert(
+        HeaderName::from_static("referrer-policy"),
+        HeaderValue::from_static("no-referrer"),
+    );
+    headers.insert(
+        HeaderName::from_static("cross-origin-resource-policy"),
+        HeaderValue::from_static("same-origin"),
+    );
+
     if is_zero_trace {
         response.headers_mut().insert(
             HeaderName::from_static("x-zero-trace-enforced"),
@@ -540,7 +559,11 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/search/semantic_search", post(handlers::semantic_search))
 
         .route("/api/v1/pdf/pdf_watermark", post(handlers::watermark))
-        .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100 MB max request body to prevent memory exhaustion DoS
+        .layer(if handlers::get_max_body_limit() == usize::MAX {
+            axum::extract::DefaultBodyLimit::disable()
+        } else {
+            axum::extract::DefaultBodyLimit::max(handlers::get_max_body_limit())
+        })
         .layer(cors)
         .layer(middleware::from_fn(request_id_and_tracing_middleware))
         .with_state(registry)

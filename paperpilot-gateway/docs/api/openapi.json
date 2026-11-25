@@ -1682,6 +1682,168 @@
         ]
       }
     },
+    "/api/v1/pdf/images-to-gif": {
+      "post": {
+        "operationId": "images_to_gif",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Combine Images into Animated GIF completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Combine Images into Animated GIF [Stitch a sequence of images into a single animated looping GIF] [Input: .png | Output: .gif]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/img-convert": {
+      "post": {
+        "operationId": "img_convert",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Convert Image Format completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Convert Image Format [Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats] [Input: .image | Output: .image]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/img-crop-to-content": {
+      "post": {
+        "operationId": "img_crop_to_content",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Auto-Crop Image to Content completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Auto-Crop Image to Content [Detect document boundaries and auto-crop background margins from scanned images] [Input: .image | Output: .image]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/img-deskew": {
+      "post": {
+        "operationId": "img_deskew",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Deskew Document Image completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Deskew Document Image [Detect text angle and straighten tilted scanned document images] [Input: .image | Output: .image]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/img-optimize-for-llm": {
+      "post": {
+        "operationId": "img_optimize_for_llm",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Optimize Image for Vision LLMs completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Optimize Image for Vision LLMs [Downscale and optimize images for LLM vision token economy and clarity] [Input: .image | Output: .image]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/img-redact": {
+      "post": {
+        "operationId": "img_redact",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Redact Sensitive Image Regions completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Redact Sensitive Image Regions [Apply permanent, irreversible pixel-level redaction over sensitive image regions] [Input: .image | Output: .image]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/info": {
       "post": {
         "operationId": "info",
@@ -2140,6 +2302,33 @@
         ]
       }
     },
+    "/api/v1/pdf/showcase-gif": {
+      "post": {
+        "operationId": "showcase_gif",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Generate Showcase GIF completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Generate Showcase GIF [Generate animated showcase demo GIF comparing before and after transformations] [Input: .pdf | Output: .gif]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
     "/api/v1/pdf/split": {
       "post": {
         "operationId": "split",
@@ -2341,6 +2530,33 @@
           }
         },
         "summary": "PDF to EPUB 3.0 [Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks] [Input: .pdf | Output: .epub]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/to-gif": {
+      "post": {
+        "operationId": "pdf_to_gif",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Convert PDF to Animated GIF completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Convert PDF to Animated GIF [Convert multi-page PDF documents into animated looping GIF previews] [Input: .pdf | Output: .gif]",
         "tags": [
           "PDF Operations"
         ]
