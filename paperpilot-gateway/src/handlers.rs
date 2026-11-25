@@ -18,7 +18,32 @@ use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
-pub const MAX_BODY_LIMIT: usize = 100 * 1024 * 1024; // 100 MB max request body
+pub const DEFAULT_MAX_BODY_LIMIT_MB: usize = 100;
+pub const MAX_BODY_LIMIT: usize = DEFAULT_MAX_BODY_LIMIT_MB * 1024 * 1024; // 100 MB max request body
+
+/// Returns the configured request body limit in bytes based on `PAPERPILOT_MAX_BODY_LIMIT_MB`.
+/// - If not set or invalid: defaults to 100 MB (`100 * 1024 * 1024`).
+/// - If set to `0`, `"unlimited"`, or `"none"`: returns `usize::MAX` (unlimited).
+/// - If set to a positive integer `N`: returns `N * 1024 * 1024` bytes.
+pub fn get_max_body_limit() -> usize {
+    match std::env::var("PAPERPILOT_MAX_BODY_LIMIT_MB") {
+        Ok(val) => {
+            let trimmed = val.trim();
+            if trimmed.eq_ignore_ascii_case("unlimited") || trimmed.eq_ignore_ascii_case("none") {
+                usize::MAX
+            } else if let Ok(mb) = trimmed.parse::<usize>() {
+                if mb == 0 {
+                    usize::MAX
+                } else {
+                    mb.saturating_mul(1024 * 1024)
+                }
+            } else {
+                MAX_BODY_LIMIT
+            }
+        }
+        Err(_) => MAX_BODY_LIMIT,
+    }
+}
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct StartWatcherRequest {
@@ -732,7 +757,7 @@ pub async fn handle_tool(
     let mut temp_files = vec![];
 
     if content_type.starts_with("application/json") {
-        let body_bytes = axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT)
+        let body_bytes = axum::body::to_bytes(req.into_body(), get_max_body_limit())
             .await
             .unwrap_or_default();
         if let Ok(Value::Object(map)) = serde_json::from_slice(&body_bytes) {
@@ -1439,7 +1464,7 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     let is_json = content_type.starts_with("application/json");
 
     if is_json {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), get_max_body_limit()).await {
             Ok(b) => b,
             Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid body").into_response(),
         };
@@ -1886,7 +1911,7 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
         .unwrap_or("");
 
     if content_type.starts_with("application/json") {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), get_max_body_limit()).await {
             Ok(b) => b,
             Err(_) => {
                 return (StatusCode::BAD_REQUEST, "Invalid JSON body").into_response();
@@ -2226,6 +2251,54 @@ mod tests {
         };
         let res = workflow_run_json(axum::Json(req)).await.into_response();
         assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn test_get_max_body_limit_parsing() {
+        // Test default when unset
+        unsafe {
+            std::env::remove_var("PAPERPILOT_MAX_BODY_LIMIT_MB");
+        }
+        assert_eq!(get_max_body_limit(), 100 * 1024 * 1024);
+
+        // Test 0 => unlimited (usize::MAX)
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "0");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        // Test "unlimited" (case-insensitive) => unlimited (usize::MAX)
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "unlimited");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "UNLIMITED");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        // Test "none" => unlimited (usize::MAX)
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "none");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        // Test positive integer N => N * 1024 * 1024
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "50");
+        }
+        assert_eq!(get_max_body_limit(), 50 * 1024 * 1024);
+
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "200");
+        }
+        assert_eq!(get_max_body_limit(), 200 * 1024 * 1024);
+
+        // Clean up
+        unsafe {
+            std::env::remove_var("PAPERPILOT_MAX_BODY_LIMIT_MB");
+        }
     }
 }
 #[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
@@ -3416,7 +3489,7 @@ pub async fn pdf_chunk_endpoint(req: axum::extract::Request) -> impl IntoRespons
         .unwrap_or("");
 
     if content_type.starts_with("application/json") {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), get_max_body_limit()).await {
             Ok(b) => b,
             Err(e) => {
                 return (

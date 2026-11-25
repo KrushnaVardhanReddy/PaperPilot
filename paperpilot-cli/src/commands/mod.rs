@@ -1548,7 +1548,12 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
 
         #[cfg(feature = "daemon")]
         #[cfg(feature = "daemon")]
-        Commands::Serve { port, bind } => {
+        Commands::Serve { port, bind, max_body_mb } => {
+            if let Some(mb) = max_body_mb {
+                unsafe {
+                    std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", mb);
+                }
+            }
             let rt = tokio::runtime::Runtime::new()
                 .map_err(paperpilot_core::error::PdfError::IoError)?;
             rt.block_on(async {
