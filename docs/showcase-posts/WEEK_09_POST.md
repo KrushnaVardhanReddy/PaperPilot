@@ -3,7 +3,7 @@
 **Theme:** Self-Hosted AI Infrastructure & Wire-Compatible Document Extraction  
 **Tools Featured:** PaperPilot Gateway (`/tika/text`, `/tika/json/md` & `/rmeta/text`), `extract_meta` (PaperPilot Desktop, MCP, CLI & REST API)  
 **Target Audience:** Self-Hosted AI Builders, Ollama/Open-WebUI Users, Privacy Architects, DevOps  
-**Asset:** ![Week 09 Demo](../assets/showcase/llm_gateway_financial_extraction.gif)
+**Asset:** ![Week 09 Demo](../assets/showcase/week09-tika-wire-openwebui.gif)
 
 ---
 
