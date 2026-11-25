@@ -169,7 +169,7 @@ Requires Rust 1.75+, Node.js, and pnpm.
 Verify your environment, gateway port, temp storage, and OCR models with one command:
 ```bash
 paperpilot doctor
-# PaperPilot System Diagnostics (v0.8.1)
+# PaperPilot System Diagnostics (v0.8.2)
 # ==================================================
 # Status:    Healthy
 # [✓] Temp Directory: /tmp (writable & ephemeral cleanup verified)
