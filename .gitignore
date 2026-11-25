@@ -84,4 +84,12 @@ apps/extension/*.zip
 # WebdriverIO test output logs
 apps/desktop/logs/
 
+# Local build artifacts, video studio outputs, and temporary audit cache
+tools/video-studio/out/
+tools/video-studio/**/*.js
+.cargo_temp/
 .webui_secret_key
+semgrep.sarif
+!reports/security-audit-report.md
+!scripts/dast_fuzzer.py
+

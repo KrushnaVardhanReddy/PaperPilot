@@ -1090,6 +1090,9 @@ pub enum Commands {
         port: u16,
         #[arg(long, default_value = "127.0.0.1")]
         bind: String,
+        /// Maximum request body limit in MB (0 or "unlimited" to disable limit)
+        #[arg(long = "max-body-mb", env = "PAPERPILOT_MAX_BODY_LIMIT_MB")]
+        max_body_mb: Option<String>,
     },
 
     /// Ask in natural language: execute operations via natural language intent [e.g. "rotate 90 degrees" doc.pdf]

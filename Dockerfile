@@ -64,16 +64,12 @@ COPY --from=rust-builder /app/target/release/paperpilot-gateway /usr/local/bin/p
 COPY --from=rust-builder /app/target/release/paperpilot-cli /usr/local/bin/paperpilot
 COPY --from=rust-builder /app/target/release/paperpilot-mcp /usr/local/bin/paperpilot-mcp
 
-# Create non-root paperpilot user and directories
+# Create non-root paperpilot user, directories, and set permissions
 RUN useradd -m -u 10001 paperpilot && \
     mkdir -p /data /models && \
-    chown -R paperpilot:paperpilot /data /models
+    chown -R paperpilot:paperpilot /data /models /usr/local/bin/paperpilot*
 
 WORKDIR /data
-
-# Create non-root user and set permissions
-RUN groupadd -r paperpilot && useradd -r -g paperpilot paperpilot && \
-    chown -R paperpilot:paperpilot /data /models /app /usr/local/bin/paperpilot*
 
 # Default environment configuration
 ENV PORT=7823
