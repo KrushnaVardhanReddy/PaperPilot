@@ -1,10 +1,6 @@
 name: OpenSSF Scorecard Supply-Chain Security Gate
 
 on:
-  branch_protection_rule:
-  schedule:
-    # Run once a week at 00:00 on Sunday UTC
-    - cron: '0 0 * * 0'
   push:
     branches: [main]
   workflow_dispatch:
@@ -30,7 +26,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Scorecard Security Analysis
-        uses: ossf/scorecard-action@f49aabe0b5e4dcc7352480f42f5d022db215f386 # v2.4.1
+        uses: ossf/scorecard-action@f49aabe0b5af0936a0987cfb85d86b75731b0186 # v2.4.1
         with:
           results_file: results.sarif
           results_format: sarif

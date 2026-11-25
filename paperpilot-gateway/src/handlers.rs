@@ -18,6 +18,33 @@ use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
+pub const DEFAULT_MAX_BODY_LIMIT_MB: usize = 100;
+pub const MAX_BODY_LIMIT: usize = DEFAULT_MAX_BODY_LIMIT_MB * 1024 * 1024; // 100 MB max request body
+
+/// Returns the configured request body limit in bytes based on `PAPERPILOT_MAX_BODY_LIMIT_MB`.
+/// - If not set or invalid: defaults to 100 MB (`100 * 1024 * 1024`).
+/// - If set to `0`, `"unlimited"`, or `"none"`: returns `usize::MAX` (unlimited).
+/// - If set to a positive integer `N`: returns `N * 1024 * 1024` bytes.
+pub fn get_max_body_limit() -> usize {
+    match std::env::var("PAPERPILOT_MAX_BODY_LIMIT_MB") {
+        Ok(val) => {
+            let trimmed = val.trim();
+            if trimmed.eq_ignore_ascii_case("unlimited") || trimmed.eq_ignore_ascii_case("none") {
+                usize::MAX
+            } else if let Ok(mb) = trimmed.parse::<usize>() {
+                if mb == 0 {
+                    usize::MAX
+                } else {
+                    mb.saturating_mul(1024 * 1024)
+                }
+            } else {
+                MAX_BODY_LIMIT
+            }
+        }
+        Err(_) => MAX_BODY_LIMIT,
+    }
+}
+
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct StartWatcherRequest {
     pub name_template: Option<String>,
@@ -730,7 +757,7 @@ pub async fn handle_tool(
     let mut temp_files = vec![];
 
     if content_type.starts_with("application/json") {
-        let body_bytes = axum::body::to_bytes(req.into_body(), usize::MAX)
+        let body_bytes = axum::body::to_bytes(req.into_body(), get_max_body_limit())
             .await
             .unwrap_or_default();
         if let Ok(Value::Object(map)) = serde_json::from_slice(&body_bytes) {
@@ -790,19 +817,39 @@ pub async fn handle_tool(
                 || name == "input_a"
                 || name == "input_b"
             {
-                let temp_file = NamedTempFile::new().unwrap();
+                let temp_file = match NamedTempFile::new() {
+                    Ok(tf) => tf,
+                    Err(e) => return (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({"success": false, "error": format!("Tempfile creation failed: {}", e)})),
+                    ).into_response(),
+                };
                 let path = temp_file.path().to_owned();
-                let mut file = File::create(&path).unwrap();
-                file.write_all(&data).unwrap();
+                let mut file = match File::create(&path) {
+                    Ok(f) => f,
+                    Err(e) => return (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({"success": false, "error": format!("File creation failed: {}", e)})),
+                    ).into_response(),
+                };
+                if let Err(e) = file.write_all(&data) {
+                    return (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({"success": false, "error": format!("File write failed: {}", e)})),
+                    ).into_response();
+                }
 
                 if name == "input" || name == "file" {
                     args.insert(
                         "input".to_string(),
                         Value::String(path.to_string_lossy().to_string()),
                     );
-                } else if args.contains_key(&name) {
-                    if let Value::Array(arr) = args.get_mut(&name).unwrap() {
+                } else if let Some(existing) = args.get_mut(&name) {
+                    if let Value::Array(arr) = existing {
                         arr.push(Value::String(path.to_string_lossy().to_string()));
+                    } else {
+                        let prev = existing.clone();
+                        *existing = Value::Array(vec![prev, Value::String(path.to_string_lossy().to_string())]);
                     }
                 } else {
                     args.insert(
@@ -1417,7 +1464,7 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     let is_json = content_type.starts_with("application/json");
 
     if is_json {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), get_max_body_limit()).await {
             Ok(b) => b,
             Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid body").into_response(),
         };
@@ -1864,7 +1911,7 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
         .unwrap_or("");
 
     if content_type.starts_with("application/json") {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), get_max_body_limit()).await {
             Ok(b) => b,
             Err(_) => {
                 return (StatusCode::BAD_REQUEST, "Invalid JSON body").into_response();
@@ -2204,6 +2251,54 @@ mod tests {
         };
         let res = workflow_run_json(axum::Json(req)).await.into_response();
         assert_eq!(res.status(), axum::http::StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn test_get_max_body_limit_parsing() {
+        // Test default when unset
+        unsafe {
+            std::env::remove_var("PAPERPILOT_MAX_BODY_LIMIT_MB");
+        }
+        assert_eq!(get_max_body_limit(), 100 * 1024 * 1024);
+
+        // Test 0 => unlimited (usize::MAX)
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "0");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        // Test "unlimited" (case-insensitive) => unlimited (usize::MAX)
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "unlimited");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "UNLIMITED");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        // Test "none" => unlimited (usize::MAX)
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "none");
+        }
+        assert_eq!(get_max_body_limit(), usize::MAX);
+
+        // Test positive integer N => N * 1024 * 1024
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "50");
+        }
+        assert_eq!(get_max_body_limit(), 50 * 1024 * 1024);
+
+        unsafe {
+            std::env::set_var("PAPERPILOT_MAX_BODY_LIMIT_MB", "200");
+        }
+        assert_eq!(get_max_body_limit(), 200 * 1024 * 1024);
+
+        // Clean up
+        unsafe {
+            std::env::remove_var("PAPERPILOT_MAX_BODY_LIMIT_MB");
+        }
     }
 }
 #[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
@@ -2648,10 +2743,9 @@ pub async fn start_watcher(
             Json(StartWatcherResponse {
                 watcher_id,
                 status: serde_json::to_value(snapshot.status)
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .into(),
+                    .ok()
+                    .and_then(|v| v.as_str().map(|s| s.to_string()))
+                    .unwrap_or_else(|| "unknown".to_string()),
                 dir: snapshot.directory.to_string_lossy().into(),
                 recipe: snapshot.recipe_name,
             }),
@@ -2687,10 +2781,9 @@ pub async fn list_watchers(
         .map(|h| WatcherSummary {
             watcher_id: h.id,
             status: serde_json::to_value(h.status)
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .into(),
+                .ok()
+                .and_then(|v| v.as_str().map(|s| s.to_string()))
+                .unwrap_or_else(|| "unknown".to_string()),
             dir: h.directory.to_string_lossy().into(),
             recipe: h.recipe_name,
             last_processed_file: h.last_processed_file.map(|p| p.to_string_lossy().into()),
@@ -2739,26 +2832,32 @@ pub async fn run_recipe_once(mut multipart: axum::extract::Multipart) -> impl In
     let mut file_bytes = None;
     let mut recipe_content = None;
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap().to_string();
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = match field.name() {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
         if name == "file" {
-            file_bytes = Some(field.bytes().await.unwrap());
+            if let Ok(bytes) = field.bytes().await {
+                file_bytes = Some(bytes);
+            }
         } else if name == "recipe" {
-            let data = field.bytes().await.unwrap();
-            recipe_content = Some(String::from_utf8_lossy(&data).to_string());
+            if let Ok(data) = field.bytes().await {
+                recipe_content = Some(String::from_utf8_lossy(&data).to_string());
+            }
         }
     }
 
-    if file_bytes.is_none() || recipe_content.is_none() {
-        return (
-            axum::http::StatusCode::BAD_REQUEST,
-            axum::Json(serde_json::json!({"error": "Missing file or recipe"})),
-        )
-            .into_response();
-    }
-
-    let bytes = file_bytes.unwrap();
-    let r_content = recipe_content.unwrap();
+    let (bytes, r_content) = match (file_bytes, recipe_content) {
+        (Some(f), Some(r)) => (f, r),
+        _ => {
+            return (
+                axum::http::StatusCode::BAD_REQUEST,
+                axum::Json(serde_json::json!({"error": "Missing file or recipe"})),
+            )
+                .into_response();
+        }
+    };
 
     let workflow =
         if r_content.starts_with('{')
@@ -3390,7 +3489,7 @@ pub async fn pdf_chunk_endpoint(req: axum::extract::Request) -> impl IntoRespons
         .unwrap_or("");
 
     if content_type.starts_with("application/json") {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), get_max_body_limit()).await {
             Ok(b) => b,
             Err(e) => {
                 return (

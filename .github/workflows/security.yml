@@ -2,9 +2,7 @@ name: Security Audit & SAST Gate
 
 on:
   push:
-    branches: [main, feature/dev]
-  pull_request:
-    branches: [main, feature/dev]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
