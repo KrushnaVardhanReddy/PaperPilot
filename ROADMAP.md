@@ -11,10 +11,10 @@
 - **REST Gateway Semantic Route Aliasing**: ✅ **Complete**. Primary semantic routes (`/api/v1/image/*`, `/api/v1/office/*`) active alongside backwards-compatible `/api/v1/pdf/*` legacy aliases.
 - **Phase 0 Real Desktop E2E (@wdio/tauri-service)**: ✅ **Verified**. WebdriverIO suite with `tauri-driver` and WebKitGTK initialized and verified with passing smoke test.
 - **Penta-Scaffold v2**: ✅ **Upgraded**. Single command scaffolds Core, CLI, MCP, WASM, Desktop UI wiring, WDIO Desktop E2E test, Documentation, and OpenAPI spec.
-- **Documentation Milestone & Versioning**: ✅ **Updated**. 100 tools indexed in Astro / Starlight handbook with `v0.8.1 (Current Release)` default, version switching dropdown (`v0.8.1`, `v0.8.0`, `v0.7.0`, `v0.6.0`, `v0.5.0`), and dynamic sidebar / tool index version filtering with direct-visit compatibility guards.
-- **Distribution & Packages (v0.8.1)**:
-  - Official GitHub Release `v0.8.1` tagged and binaries published for Linux, macOS, Windows, Android APK, and WASM.
-  - `@usepaperpilot/mcp@0.8.1` published to npmjs.com.
+- **Documentation Milestone & Versioning**: ✅ **Updated**. 100 tools indexed in Astro / Starlight handbook with `v0.8.2 (Current Release)` default, version switching dropdown (`v0.8.2`, `v0.8.1`, `v0.8.0`, `v0.7.0`, `v0.6.0`, `v0.5.0`), and dynamic sidebar / tool index version filtering with direct-visit compatibility guards.
+- **Distribution & Packages (v0.8.2)**:
+  - Official GitHub Release `v0.8.2` tagged and binaries published for Linux, macOS, Windows, Android APK, and WASM.
+  - `@usepaperpilot/mcp@0.8.2` published to npmjs.com.
 
 ---
 
