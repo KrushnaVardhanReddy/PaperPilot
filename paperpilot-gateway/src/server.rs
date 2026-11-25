@@ -289,6 +289,25 @@ async fn request_id_and_tracing_middleware(mut req: Request, next: Next) -> Resp
     }
 
     let mut response = response;
+    // Security Hardening Headers (OWASP ZAP Compliance)
+    let headers = response.headers_mut();
+    headers.insert(
+        HeaderName::from_static("x-content-type-options"),
+        HeaderValue::from_static("nosniff"),
+    );
+    headers.insert(
+        HeaderName::from_static("x-frame-options"),
+        HeaderValue::from_static("DENY"),
+    );
+    headers.insert(
+        HeaderName::from_static("referrer-policy"),
+        HeaderValue::from_static("no-referrer"),
+    );
+    headers.insert(
+        HeaderName::from_static("cross-origin-resource-policy"),
+        HeaderValue::from_static("same-origin"),
+    );
+
     if is_zero_trace {
         response.headers_mut().insert(
             HeaderName::from_static("x-zero-trace-enforced"),

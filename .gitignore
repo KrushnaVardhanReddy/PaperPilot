@@ -90,6 +90,7 @@ tools/video-studio/**/*.js
 .cargo_temp/
 .webui_secret_key
 semgrep.sarif
-reports/security-audit-report.md
+!reports/security-audit-report.md
+!scripts/dast_fuzzer.py
 
 

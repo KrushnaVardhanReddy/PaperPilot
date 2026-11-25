@@ -18,6 +18,8 @@ use std::fs::File;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
+pub const MAX_BODY_LIMIT: usize = 100 * 1024 * 1024; // 100 MB max request body
+
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct StartWatcherRequest {
     pub name_template: Option<String>,
@@ -730,7 +732,7 @@ pub async fn handle_tool(
     let mut temp_files = vec![];
 
     if content_type.starts_with("application/json") {
-        let body_bytes = axum::body::to_bytes(req.into_body(), usize::MAX)
+        let body_bytes = axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT)
             .await
             .unwrap_or_default();
         if let Ok(Value::Object(map)) = serde_json::from_slice(&body_bytes) {
@@ -790,19 +792,39 @@ pub async fn handle_tool(
                 || name == "input_a"
                 || name == "input_b"
             {
-                let temp_file = NamedTempFile::new().unwrap();
+                let temp_file = match NamedTempFile::new() {
+                    Ok(tf) => tf,
+                    Err(e) => return (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({"success": false, "error": format!("Tempfile creation failed: {}", e)})),
+                    ).into_response(),
+                };
                 let path = temp_file.path().to_owned();
-                let mut file = File::create(&path).unwrap();
-                file.write_all(&data).unwrap();
+                let mut file = match File::create(&path) {
+                    Ok(f) => f,
+                    Err(e) => return (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({"success": false, "error": format!("File creation failed: {}", e)})),
+                    ).into_response(),
+                };
+                if let Err(e) = file.write_all(&data) {
+                    return (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(serde_json::json!({"success": false, "error": format!("File write failed: {}", e)})),
+                    ).into_response();
+                }
 
                 if name == "input" || name == "file" {
                     args.insert(
                         "input".to_string(),
                         Value::String(path.to_string_lossy().to_string()),
                     );
-                } else if args.contains_key(&name) {
-                    if let Value::Array(arr) = args.get_mut(&name).unwrap() {
+                } else if let Some(existing) = args.get_mut(&name) {
+                    if let Value::Array(arr) = existing {
                         arr.push(Value::String(path.to_string_lossy().to_string()));
+                    } else {
+                        let prev = existing.clone();
+                        *existing = Value::Array(vec![prev, Value::String(path.to_string_lossy().to_string())]);
                     }
                 } else {
                     args.insert(
@@ -1417,7 +1439,7 @@ pub async fn render_page(req: axum::extract::Request) -> axum::response::Respons
     let is_json = content_type.starts_with("application/json");
 
     if is_json {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT).await {
             Ok(b) => b,
             Err(_) => return (axum::http::StatusCode::BAD_REQUEST, "Invalid body").into_response(),
         };
@@ -1864,7 +1886,7 @@ pub async fn workflow_run(req: axum::extract::Request) -> impl IntoResponse {
         .unwrap_or("");
 
     if content_type.starts_with("application/json") {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT).await {
             Ok(b) => b,
             Err(_) => {
                 return (StatusCode::BAD_REQUEST, "Invalid JSON body").into_response();
@@ -2648,10 +2670,9 @@ pub async fn start_watcher(
             Json(StartWatcherResponse {
                 watcher_id,
                 status: serde_json::to_value(snapshot.status)
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .into(),
+                    .ok()
+                    .and_then(|v| v.as_str().map(|s| s.to_string()))
+                    .unwrap_or_else(|| "unknown".to_string()),
                 dir: snapshot.directory.to_string_lossy().into(),
                 recipe: snapshot.recipe_name,
             }),
@@ -2687,10 +2708,9 @@ pub async fn list_watchers(
         .map(|h| WatcherSummary {
             watcher_id: h.id,
             status: serde_json::to_value(h.status)
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .into(),
+                .ok()
+                .and_then(|v| v.as_str().map(|s| s.to_string()))
+                .unwrap_or_else(|| "unknown".to_string()),
             dir: h.directory.to_string_lossy().into(),
             recipe: h.recipe_name,
             last_processed_file: h.last_processed_file.map(|p| p.to_string_lossy().into()),
@@ -2739,26 +2759,32 @@ pub async fn run_recipe_once(mut multipart: axum::extract::Multipart) -> impl In
     let mut file_bytes = None;
     let mut recipe_content = None;
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap().to_string();
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = match field.name() {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
         if name == "file" {
-            file_bytes = Some(field.bytes().await.unwrap());
+            if let Ok(bytes) = field.bytes().await {
+                file_bytes = Some(bytes);
+            }
         } else if name == "recipe" {
-            let data = field.bytes().await.unwrap();
-            recipe_content = Some(String::from_utf8_lossy(&data).to_string());
+            if let Ok(data) = field.bytes().await {
+                recipe_content = Some(String::from_utf8_lossy(&data).to_string());
+            }
         }
     }
 
-    if file_bytes.is_none() || recipe_content.is_none() {
-        return (
-            axum::http::StatusCode::BAD_REQUEST,
-            axum::Json(serde_json::json!({"error": "Missing file or recipe"})),
-        )
-            .into_response();
-    }
-
-    let bytes = file_bytes.unwrap();
-    let r_content = recipe_content.unwrap();
+    let (bytes, r_content) = match (file_bytes, recipe_content) {
+        (Some(f), Some(r)) => (f, r),
+        _ => {
+            return (
+                axum::http::StatusCode::BAD_REQUEST,
+                axum::Json(serde_json::json!({"error": "Missing file or recipe"})),
+            )
+                .into_response();
+        }
+    };
 
     let workflow =
         if r_content.starts_with('{')
@@ -3390,7 +3416,7 @@ pub async fn pdf_chunk_endpoint(req: axum::extract::Request) -> impl IntoRespons
         .unwrap_or("");
 
     if content_type.starts_with("application/json") {
-        let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
+        let body_bytes = match axum::body::to_bytes(req.into_body(), MAX_BODY_LIMIT).await {
             Ok(b) => b,
             Err(e) => {
                 return (
