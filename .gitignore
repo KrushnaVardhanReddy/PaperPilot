@@ -92,4 +92,5 @@ tools/video-studio/**/*.js
 semgrep.sarif
 !reports/security-audit-report.md
 !scripts/dast_fuzzer.py
+!scripts/release_stats.py
 
