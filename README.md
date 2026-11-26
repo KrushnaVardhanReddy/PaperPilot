@@ -52,7 +52,12 @@ Install PaperPilot with zero toolchain prerequisites. Choose between **Homebrew*
 
 #### Package Manager (Homebrew)
 
-**macOS (Homebrew Cask):**
+**macOS (Desktop GUI App):**
+```bash
+brew install --cask KrushnaVardhanReddy/tap/paperpilot
+```
+
+**macOS & Linux (CLI Only):**
 ```bash
 brew install KrushnaVardhanReddy/tap/paperpilot
 ```
