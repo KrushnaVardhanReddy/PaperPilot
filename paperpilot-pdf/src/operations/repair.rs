@@ -23,11 +23,34 @@ impl RepairOperation {
             return Ok(out);
         }
 
-        // Fallback: Reconstruct XREF table and Trailer from raw objects
+        // Tier 1 repair: Strip leading junk/noise prior to `%PDF-`
+        let clean_bytes = if let Some(pos) = bytes.windows(5).position(|w| w == b"%PDF-") {
+            if pos > 0 {
+                &bytes[pos..]
+            } else {
+                bytes
+            }
+        } else {
+            bytes
+        };
+
+        // Check if stripping leading junk was sufficient
+        if clean_bytes.len() != bytes.len() {
+            if let Ok(doc) = lopdf::Document::load_mem(clean_bytes) {
+                let mut out = Vec::new();
+                let mut doc = doc;
+                doc.save_to(&mut out)
+                    .map_err(|e| PdfError::Other(format!("Failed to save repaired document: {e}")))?;
+                return Ok(out);
+            }
+        }
+
+        // Tier 2 repair: Fallback: Reconstruct XREF table and Trailer from raw objects
+        let bytes_to_repair = clean_bytes;
         let obj_re = Regex::new(r"(\d+)\s+(\d+)\s+obj")
             .map_err(|e| PdfError::Other(format!("Regex error: {e}")))?;
 
-        let matches: Vec<_> = obj_re.captures_iter(bytes).collect();
+        let matches: Vec<_> = obj_re.captures_iter(bytes_to_repair).collect();
         if matches.is_empty() {
             return Err(PdfError::ParseError("No valid PDF objects found in damaged file".to_string()));
         }
@@ -66,9 +89,9 @@ impl RepairOperation {
             let end = if i + 1 < match_positions.len() {
                 match_positions[i + 1].1
             } else {
-                bytes.len()
+                bytes_to_repair.len()
             };
-            let chunk = &bytes[start..end];
+            let chunk = &bytes_to_repair[start..end];
 
             if cat_re.is_match(chunk) {
                 root_id = Some(num);
@@ -80,13 +103,13 @@ impl RepairOperation {
 
         // Determine base data up to the last `endobj`
         let endobj_marker = b"endobj";
-        let cut_point = bytes
+        let cut_point = bytes_to_repair
             .windows(endobj_marker.len())
             .rposition(|window| window == endobj_marker)
             .map(|pos| pos + endobj_marker.len())
-            .unwrap_or(bytes.len());
+            .unwrap_or(bytes_to_repair.len());
 
-        let mut repaired = bytes[..cut_point].to_vec();
+        let mut repaired = bytes_to_repair[..cut_point].to_vec();
         if !repaired.ends_with(b"\n") {
             repaired.push(b'\n');
         }
@@ -131,6 +154,30 @@ impl RepairOperation {
                 Ok(repaired)
             }
         }
+    }
+
+    /// In-memory self-healing parser: attempts to load a `lopdf::Document` from bytes,
+    /// transparently repairing corrupted xrefs, trailers, or prefix junk on failure.
+    pub fn load_document_resilient(bytes: &[u8]) -> OperationResult<lopdf::Document> {
+        // Fast path: standard load
+        if let Ok(doc) = lopdf::Document::load_mem(bytes) {
+            return Ok(doc);
+        }
+
+        // Tier 1: Check if stripping leading junk before `%PDF-` fixes it
+        if let Some(pos) = bytes.windows(5).position(|w| w == b"%PDF-") {
+            if pos > 0 {
+                let clean = &bytes[pos..];
+                if let Ok(doc) = lopdf::Document::load_mem(clean) {
+                    return Ok(doc);
+                }
+            }
+        }
+
+        // Tier 2: Perform in-memory reconstruction
+        let repaired = Self::repair_bytes(bytes)?;
+        lopdf::Document::load_mem(&repaired)
+            .map_err(|e| PdfError::ParseError(format!("Self-healing failed to parse repaired PDF: {e}")))
     }
 
     /// High-level file repair method that reads from input path, repairs, and writes to output path.

@@ -101,17 +101,19 @@
 
 ---
 
-### 🥈 Tier 2: Enterprise Governance & AI Document Ingestion
-*Goal: Solidify PaperPilot for high-scale enterprise and RAG deployments.*
+### 🥈 Tier 2: AI Document Parsing & High-Volume Streaming (Open-Core Moats)
+*Goal: Solidify PaperPilot as the highest-performance offline document ingestion and RAG engine (< 10ms/page).*
 
-4. **Phase 6.8: Enterprise Job Queue & Webhooks**:
-   - Asynchronous job execution with HMAC-SHA256 signed HTTP callbacks (`callback_url`) for long-running batch OCR and conversions.
-   - Outbound webhook dispatcher (`diff.completed`, `ocr.finished`, `signature.verified`) with retry and exponential backoff.
-5. **Phase 6.8.3: Embedded libSQL / Turso Storage**:
-   - Embedded local-first database in `get_app_data_root()` for audit trails, persistent receipts, and job status with optional cloud sync.
-6. **Phase 5.8: Advanced Document AST & Layout Extraction (`DocAST`)**:
-   - Layout-aware structured Markdown extraction preserving reading order, headers, tables, and math.
-   - Zero-copy streaming (`memmap2`) for 1,000+ page high-volume document processing.
+> [!NOTE]
+> **Enterprise Boundary Notice**: Asynchronous priority job queues (`crates/enterprise-async`), worker leasing, and HMAC-SHA256 signed webhook dispatchers are **strictly commercial features** maintained and already implemented in the private [`PaperPilot-Enterprise`](/home/krushna/Project/PaperPilot-Enterprise) repository. They are intentionally kept out of open-core `PaperPilot` to preserve the commercial moat.
+
+4. **Phase 5.8: Advanced Document AST & Layout-Aware Structured Markdown (`DocAST`)**:
+   - Layout-aware structured Markdown extraction preserving reading order, headers (`# H1`, `## H2`), multi-column flow, tables, and math blocks.
+   - Outperform Python-heavy Marker and Docling in pure Rust with sub-10ms per page throughput and zero Python runtime dependencies.
+5. **Phase 5.2.9: Memory-Mapped Streaming (`memmap2`)**:
+   - Zero-copy streaming and multi-core Rayon processing for instant loading and transformation of 1,000+ page high-volume enterprise document processing without memory bloat.
+6. **Phase 6.8.3: Embedded libSQL / Turso Local Storage**:
+   - Embedded local-first database in `get_app_data_root()` for local audit trails, persistent receipts, and offline tool execution history.
 
 ---
 

@@ -50,7 +50,7 @@ impl LopdfDocument {
     }
 
     pub fn from_bytes(bytes: &[u8]) -> OperationResult<Self> {
-        let doc = Document::load_mem(bytes).map_err(|e| PdfError::ParseError(e.to_string()))?;
+        let doc = crate::operations::repair::RepairOperation::load_document_resilient(bytes)?;
         Ok(Self {
             inner: doc,
             original_bytes: Some(bytes.to_vec()),

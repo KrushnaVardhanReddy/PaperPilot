@@ -1310,7 +1310,13 @@ impl PdfOperation for PdfToMarkdownOperation {
                         final_md.insert_str(insert_pos, &format!("\n\n{}\n\n", markup));
                     }
 
-                    md.push_str(final_md.trim());
+                    let doc_ast = crate::operations::docast::LayoutExtractor::parse_text(&final_md);
+                    let structured_md = doc_ast.to_markdown();
+                    if !structured_md.is_empty() {
+                        md.push_str(&structured_md);
+                    } else {
+                        md.push_str(final_md.trim());
+                    }
                     md.push_str("\n\n");
                 }
             }
@@ -1324,7 +1330,13 @@ impl PdfOperation for PdfToMarkdownOperation {
                 match inner.extract_text(&[page_id]) {
                     Ok(text) => {
                         md.push_str(&format!("# Page {}\n\n", page_id));
-                        md.push_str(text.trim());
+                        let doc_ast = crate::operations::docast::LayoutExtractor::parse_text(&text);
+                        let page_md = doc_ast.to_markdown();
+                        if page_md.is_empty() {
+                            md.push_str(text.trim());
+                        } else {
+                            md.push_str(&page_md);
+                        }
                         md.push_str("\n\n");
                     }
                     Err(e) => {
@@ -1397,9 +1409,16 @@ impl PdfOperation for PdfToLlmExportOperation {
         for page_id in &all_pages {
             match inner.extract_text(&[*page_id]) {
                 Ok(text) => {
-                    let trimmed = text.trim();
-                    let chars = trimmed.chars().count();
-                    let words = trimmed.split_whitespace().count();
+                    let doc_ast = crate::operations::docast::LayoutExtractor::parse_text(&text);
+                    let page_md = doc_ast.to_markdown();
+                    let content = if page_md.is_empty() {
+                        text.trim().to_string()
+                    } else {
+                        page_md
+                    };
+
+                    let chars = content.chars().count();
+                    let words = content.split_whitespace().count();
 
                     pages_meta.push(PageMetadata {
                         page_number: *page_id,
@@ -1411,7 +1430,7 @@ impl PdfOperation for PdfToLlmExportOperation {
                     total_words += words;
 
                     md.push_str(&format!("## Page {}\n\n", page_id));
-                    md.push_str(trimmed);
+                    md.push_str(&content);
                     md.push_str("\n\n---\n\n");
                 }
                 Err(e) => {
@@ -2610,6 +2629,22 @@ mod tests {
     }
 
     #[test]
+    fn test_pdf_to_markdown_structured_elements() {
+        let content = "BT /F1 12 Tf 0 0 Td (1 Introduction\nThis is an introduction paragraph.\n• Feature A\n• Feature B) Tj ET";
+        let mut doc = create_dummy_doc(1, Some(content));
+        let op = PdfToMarkdownOperation::new();
+        assert!(op.execute(&mut doc).is_ok());
+
+        let text = op.extracted_markdown.lock().unwrap();
+        assert!(text.is_some());
+        let extracted = text.as_ref().unwrap();
+        assert!(extracted.contains("# Page 1"));
+        assert!(extracted.contains("# 1 Introduction"));
+        assert!(extracted.contains("- Feature A"));
+        assert!(extracted.contains("- Feature B"));
+    }
+
+    #[test]
     fn test_pdf_to_llm_export() {
         let mut doc = create_dummy_doc(1, None);
         let op = PdfToLlmExportOperation::new();
@@ -2625,6 +2660,22 @@ mod tests {
         let extracted_meta = meta.as_ref().unwrap();
         assert_eq!(extracted_meta.total_pages, 1);
         assert_eq!(extracted_meta.pages.len(), 1);
+    }
+
+    #[test]
+    fn test_pdf_to_llm_export_structured_elements() {
+        let content = "BT /F1 12 Tf 0 0 Td (1.1 Overview) Tj 0 -15 Td (1. First step) Tj 0 -15 Td (2. Second step) Tj ET";
+        let mut doc = create_dummy_doc(1, Some(content));
+        let op = PdfToLlmExportOperation::new();
+        assert!(op.execute(&mut doc).is_ok());
+
+        let text = op.extracted_markdown.lock().unwrap();
+        assert!(text.is_some());
+        let extracted = text.as_ref().unwrap();
+        assert!(extracted.contains("## Page 1"));
+        assert!(extracted.contains("## 1.1 Overview"));
+        assert!(extracted.contains("1. First step"));
+        assert!(extracted.contains("1. Second step") || extracted.contains("2. Second step"));
     }
 
     #[test]
@@ -2665,12 +2716,14 @@ mod tests {
         let mut image_count = 0;
         for i in 0..archive.len() {
             let file = archive.by_index(i).unwrap();
-            println!("DOCX File: {}", file.name());
+            let name = file.name().map_or_else(|_| String::new(), |n| n.to_string());
+            println!("DOCX File: {}", name);
         }
         for i in 0..archive.len() {
             let file = archive.by_index(i).unwrap();
-            if file.name().starts_with("word/media/")
-                && (file.name().ends_with(".png") || file.name().ends_with(".jpeg"))
+            let name = file.name().map_or_else(|_| String::new(), |n| n.to_string());
+            if name.starts_with("word/media/")
+                && (name.ends_with(".png") || name.ends_with(".jpeg"))
             {
                 image_count += 1;
                 assert!(file.size() > 0);
