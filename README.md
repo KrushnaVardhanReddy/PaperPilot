@@ -48,7 +48,21 @@ No Chromium, no C++ runtime, no cloud calls.
 
 ### 1. Flash Install PaperPilot (5-Second Setup — No Rust or Node.js Required)
 
-Install PaperPilot with zero toolchain prerequisites. Choose between the **Desktop App** (default), standalone **CLI**, or **All-in-One** (Desktop App + CLI + MCP Server):
+Install PaperPilot with zero toolchain prerequisites. Choose between **Homebrew**, the **Quick Installer**, standalone **CLI**, or **All-in-One**:
+
+#### Package Manager (Homebrew)
+
+**macOS (Desktop GUI App):**
+```bash
+brew install --cask KrushnaVardhanReddy/tap/paperpilot
+```
+
+**macOS & Linux (CLI Only):**
+```bash
+brew install KrushnaVardhanReddy/tap/paperpilot
+```
+
+#### Quick Installer (curl / irm)
 
 **Linux & macOS:**
 ```bash
