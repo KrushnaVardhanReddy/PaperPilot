@@ -530,3 +530,86 @@ async fn test_image_and_office_route_aliases() {
         );
     }
 }
+
+#[tokio::test]
+async fn test_pdf_edit_text_endpoint() {
+    use lopdf::{Dictionary, Document, Object, Stream, content::{Content, Operation}, dictionary};
+
+    let app = build_app().await;
+
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
+    let font_id = doc.add_object(dictionary! {
+        "Type" => "Font",
+        "Subtype" => "Type1",
+        "BaseFont" => "Helvetica",
+    });
+    let resources_id = doc.add_object(dictionary! {
+        "Font" => dictionary! { "F1" => font_id },
+    });
+    let content = Content {
+        operations: vec![
+            Operation::new("BT", vec![]),
+            Operation::new("Tf", vec![Object::Name(b"F1".to_vec()), Object::Real(12.0)]),
+            Operation::new(
+                "Tj",
+                vec![Object::string_literal("Gateway Typoo first and Typoo second check")],
+            ),
+            Operation::new("ET", vec![]),
+        ],
+    };
+    let content_id = doc.add_object(Stream::new(Dictionary::new(), content.encode().unwrap()));
+    let page_id = doc.add_object(dictionary! {
+        "Type" => "Page",
+        "Parent" => pages_id,
+        "Resources" => resources_id,
+        "Contents" => content_id,
+        "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+    });
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(dictionary! {
+            "Type" => "Pages",
+            "Kids" => vec![page_id.into()],
+            "Count" => 1,
+        }),
+    );
+    let catalog_id = doc.add_object(dictionary! {
+        "Type" => "Catalog",
+        "Pages" => pages_id,
+    });
+    doc.trailer.set("Root", catalog_id);
+
+    let dir = tempfile::tempdir().unwrap();
+    let input_path = dir.path().join("gw_edit_in.pdf");
+    let output_path = dir.path().join("gw_edit_out.pdf");
+    doc.save(&input_path).unwrap();
+
+    let payload = serde_json::json!({
+        "input": input_path.to_string_lossy().to_string(),
+        "output": output_path.to_string_lossy().to_string(),
+        "find": "Typoo",
+        "replace": "Typo",
+        "page": 1,
+        "occurrence": 1,
+        "match_case": true
+    });
+
+    let request = Request::builder()
+        .uri("/api/v1/pdf/edit-text")
+        .method("POST")
+        .header("content-type", "application/json")
+        .body(Body::from(payload.to_string()))
+        .unwrap();
+
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    assert!(output_path.exists());
+
+    let edited = Document::load(&output_path).unwrap();
+    let text = edited.extract_text(&[1]).unwrap();
+    assert!(
+        text.contains("Gateway Typo first and Typoo second check"),
+        "Extracted: {text}"
+    );
+}

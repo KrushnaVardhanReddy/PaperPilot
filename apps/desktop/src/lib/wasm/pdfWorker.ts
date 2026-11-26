@@ -61,6 +61,20 @@ self.onmessage = async (e: MessageEvent) => {
             case 'pdf_to_docx':
                 result = WasmPdfEngine.pdf_to_docx(payload.file);
                 break;
+            case 'edit_text':
+            case 'pdf_edit_text':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_edit_text(
+                    payload.file,
+                    JSON.stringify({
+                        find: payload.find || '',
+                        replace: payload.replace || '',
+                        page: payload.page,
+                        occurrence: payload.occurrence,
+                        match_case: payload.match_case
+                    })
+                );
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }

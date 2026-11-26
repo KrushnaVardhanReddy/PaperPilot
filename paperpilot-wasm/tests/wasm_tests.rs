@@ -490,3 +490,145 @@ fn test_ocr() {
     let result = ocr(&pdf_bytes);
     assert!(result.is_ok(), "OCR failed: {:?}", result.err());
 }
+
+#[test]
+fn test_pdf_edit_text() {
+    use lopdf::content::{Content, Operation};
+    use lopdf::{Object, dictionary};
+
+    let mut doc = Document::with_version("1.5");
+    let pages_id = doc.new_object_id();
+    let root_id = doc.new_object_id();
+    let font_id = doc.add_object(lopdf::dictionary! {
+        "Type" => "Font",
+        "Subtype" => "Type1",
+        "BaseFont" => "Helvetica",
+    });
+    let resources_id = doc.add_object(lopdf::dictionary! {
+        "Font" => lopdf::dictionary! {
+            "F1" => Object::Reference(font_id),
+        },
+    });
+    let content = Content {
+        operations: vec![
+            Operation::new("BT", vec![]),
+            Operation::new("Tf", vec!["F1".into(), 12.into()]),
+            Operation::new("Td", vec![72.into(), 720.into()]),
+            Operation::new("Tj", vec![Object::string_literal("Hello Wrld")]),
+            Operation::new("ET", vec![]),
+        ],
+    };
+    let content_id = doc.add_object(lopdf::Stream::new(
+        lopdf::dictionary! {},
+        content.encode().unwrap(),
+    ));
+    let page_id = doc.add_object(lopdf::dictionary! {
+        "Type" => "Page",
+        "Parent" => pages_id,
+        "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+        "Resources" => Object::Reference(resources_id),
+        "Contents" => Object::Reference(content_id),
+    });
+    doc.objects.insert(
+        pages_id,
+        Object::Dictionary(lopdf::dictionary! {
+            "Type" => "Pages",
+            "Count" => 1,
+            "Kids" => vec![Object::Reference(page_id)],
+        }),
+    );
+    doc.objects.insert(
+        root_id,
+        Object::Dictionary(lopdf::dictionary! {
+            "Type" => "Catalog",
+            "Pages" => pages_id,
+        }),
+    );
+    doc.trailer.set("Root", Object::Reference(root_id));
+
+    let mut buffer = Vec::new();
+    doc.save_to(&mut buffer).unwrap();
+
+    let result = paperpilot_wasm::operations::pdf_edit_text(
+        &buffer,
+        r#"{"find":"Wrld","replace":"World","match_case":true}"#,
+    );
+    assert!(result.is_ok(), "pdf_edit_text failed: {:?}", result.err());
+
+    let edited_bytes = result.unwrap();
+    let extracted = extract_text(&edited_bytes).unwrap();
+    assert!(
+        extracted.contains("Hello World"),
+        "Expected updated text 'Hello World', got: {extracted:?}"
+    );
+    assert!(
+        !extracted.contains("Wrld"),
+        "Expected old typo 'Wrld' to be replaced, got: {extracted:?}"
+    );
+
+    // Also verify single-occurrence targeting across repeated matches on a page
+    let repeated_doc_bytes = {
+        let mut rdoc = Document::with_version("1.5");
+        let rpages_id = rdoc.new_object_id();
+        let rroot_id = rdoc.new_object_id();
+        let rfont_id = rdoc.add_object(lopdf::dictionary! {
+            "Type" => "Font",
+            "Subtype" => "Type1",
+            "BaseFont" => "Helvetica",
+        });
+        let rresources_id = rdoc.add_object(lopdf::dictionary! {
+            "Font" => lopdf::dictionary! {
+                "F1" => Object::Reference(rfont_id),
+            },
+        });
+        let rcontent = Content {
+            operations: vec![
+                Operation::new("BT", vec![]),
+                Operation::new("Tf", vec!["F1".into(), 12.into()]),
+                Operation::new("Td", vec![72.into(), 720.into()]),
+                Operation::new("Tj", vec![Object::string_literal("typox and typox")]),
+                Operation::new("ET", vec![]),
+            ],
+        };
+        let rcontent_id = rdoc.add_object(lopdf::Stream::new(
+            lopdf::dictionary! {},
+            rcontent.encode().unwrap(),
+        ));
+        let rpage_id = rdoc.add_object(lopdf::dictionary! {
+            "Type" => "Page",
+            "Parent" => rpages_id,
+            "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+            "Resources" => Object::Reference(rresources_id),
+            "Contents" => Object::Reference(rcontent_id),
+        });
+        rdoc.objects.insert(
+            rpages_id,
+            Object::Dictionary(lopdf::dictionary! {
+                "Type" => "Pages",
+                "Count" => 1,
+                "Kids" => vec![Object::Reference(rpage_id)],
+            }),
+        );
+        rdoc.objects.insert(
+            rroot_id,
+            Object::Dictionary(lopdf::dictionary! {
+                "Type" => "Catalog",
+                "Pages" => rpages_id,
+            }),
+        );
+        rdoc.trailer.set("Root", Object::Reference(rroot_id));
+        let mut out = Vec::new();
+        rdoc.save_to(&mut out).unwrap();
+        out
+    };
+    let occ_edited = paperpilot_wasm::operations::pdf_edit_text(
+        &repeated_doc_bytes,
+        r#"{"find":"typox","replace":"typo","occurrence":1}"#,
+    )
+    .unwrap();
+    let occ_extracted = extract_text(&occ_edited).unwrap();
+    assert!(
+        occ_extracted.contains("typo and typox"),
+        "Expected only 1st occurrence replaced, got: {occ_extracted:?}"
+    );
+}

@@ -18,6 +18,9 @@
 
 - **Current Working Branch**: `chore/bump-v0.8.2` (ready to merge to `feature/dev`).
 - **Release Status**: `v0.8.2` target version bump applied across all crates and documentation; `@usepaperpilot/mcp@0.8.2` package synchronized.
+- **Recent Core Performance Milestones**:
+  - **Phase 5.2.9: Memory-Mapped Streaming (`memmap2`) [Complete]**: Integrated zero-copy memory mapping and Rayon parallelization for 1,000+ page high-volume PDFs with constant memory footprint and self-healing resilience (`62693d03`). Verified with 1,000-page & 50-file stress tests.
+  - **Phase 6.8.3: Primary Database Standard: Turso / libSQL Integration [Verified Complete]**: Embedded local libSQL engine active in `paperpilot-storage` implementing `DatabasePort` for offline-first jobs, audit logs, vector embeddings, and chunk indexing. Verified operational in both community and enterprise tiers.
 - **System Stability & Audits**:
   - **100/100 Tools Penta-Interface Parity**: **100% PASS** across CLI, MCP, REST Gateway API, Desktop UI, and Core Rust.
   - **Security DAST & Fuzzing**: 6/6 tests passing in `paperpilot-gateway/tests/security_dast_test.rs` covering DoS panic resilience, body limit overflow, path traversal defense, and malformed PDF fuzzing.

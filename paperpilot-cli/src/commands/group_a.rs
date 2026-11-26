@@ -1,7 +1,6 @@
 #![cfg(feature = "pdf")]
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use paperpilot_pdf::document::LopdfDocument;
 use std::path::PathBuf;
 
 pub fn handle_merge(input: &[PathBuf], output: &std::path::Path) -> OperationResult<()> {
@@ -11,7 +10,7 @@ pub fn handle_merge(input: &[PathBuf], output: &std::path::Path) -> OperationRes
         ));
     }
 
-    let mut doc = LopdfDocument::load(&input[0])?;
+    let mut doc = super::load_document(&input[0])?;
     let op = paperpilot_pdf::operations::merge::MergeOperation {
         paths: input[1..].iter().map(|p| p.to_path_buf()).collect(),
     };
@@ -25,7 +24,7 @@ pub fn handle_split(
     every: Option<u32>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = if let Some(n) = every {
         let total_pages = doc.page_count()?;
         paperpilot_pdf::operations::split::SplitOperation::from_every(
@@ -101,7 +100,7 @@ pub fn handle_extract(
     pages: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let total_pages = doc.page_count().ok();
     let op = paperpilot_pdf::operations::extract::ExtractPagesOperation {
         page_indices: parse_page_indices(pages, total_pages),
@@ -115,7 +114,7 @@ pub fn handle_delete(
     pages: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let total_pages = doc.page_count().ok();
     let op = paperpilot_pdf::operations::delete::DeletePagesOperation {
         page_indices: parse_page_indices(pages, total_pages),
@@ -129,7 +128,7 @@ pub fn handle_reorder(
     order: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::reorder::ReorderPagesOperation {
         new_order: parse_page_order(order),
     };
@@ -143,7 +142,7 @@ pub fn handle_rotate(
     degrees: i32,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let total_pages = doc.page_count().ok();
 
     let target_pages = if pages.trim().is_empty() || pages.trim().eq_ignore_ascii_case("all") {
@@ -171,7 +170,7 @@ pub fn handle_crop(
     rect: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
 
     let parts: Vec<&str> = rect.split(',').collect();
     if parts.len() != 4 {
@@ -206,7 +205,7 @@ pub fn handle_crop(
 }
 
 pub fn handle_burst(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     if !output.exists() {
         std::fs::create_dir_all(output).map_err(PdfError::IoError)?;
     }
@@ -221,7 +220,7 @@ pub fn handle_remove_blank(
     sensitivity: u8,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::cleanup::RemoveBlankPagesOperation::new(sensitivity);
     op.execute(&mut doc)?;
     doc.save(output)

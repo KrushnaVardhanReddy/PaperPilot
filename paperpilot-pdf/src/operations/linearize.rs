@@ -29,9 +29,8 @@ impl PdfOperation for LinearizeOperation {
         let mut lin_dict = Dictionary::new();
         lin_dict.set("Linearized", Object::Real(1.0));
         let file_len = lopdf_doc
-            .original_bytes
-            .as_ref()
-            .map(|b| b.len() as i64)
+            .source_len()
+            .map(|len| len as i64)
             .unwrap_or(4096);
         lin_dict.set("L", Object::Integer(file_len));
         lin_dict.set("O", Object::Integer(1));
@@ -59,6 +58,7 @@ mod tests {
         let mut lopdf_doc = LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         };
         let op = LinearizeOperation::new();
 

@@ -1,7 +1,8 @@
 use paperpilot_core::error::PdfError;
-use paperpilot_pdf::operations::table::{TableExtractOptions, extract_tables_bytes};
+use paperpilot_pdf::operations::table::{TableExtractOptions, extract_tables_source};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 pub fn execute(
     input: PathBuf,
@@ -9,7 +10,7 @@ pub fn execute(
     format: String,
     pages: String,
 ) -> Result<(), PdfError> {
-    let input_bytes = fs::read(&input).map_err(PdfError::IoError)?;
+    let doc_source = Arc::new(super::open_document_source(&input)?);
 
     let options = TableExtractOptions {
         format: format.clone(),
@@ -17,7 +18,7 @@ pub fn execute(
         ..Default::default()
     };
 
-    let result = extract_tables_bytes(&input_bytes, &options)?;
+    let result = extract_tables_source(doc_source, &options)?;
 
     let out_str = if format.to_lowercase() == "csv" {
         result.csv_output.unwrap_or_default()

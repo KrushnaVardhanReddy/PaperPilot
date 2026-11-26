@@ -1,14 +1,13 @@
 #![cfg(feature = "pdf")]
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use paperpilot_pdf::document::LopdfDocument;
 
 pub fn handle_compress(
     input: &std::path::Path,
     quality: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op =
         paperpilot_pdf::operations::compress::CompressOperation::new(Some(quality.to_string()));
     op.execute(&mut doc)?;
@@ -16,11 +15,55 @@ pub fn handle_compress(
 }
 
 pub fn handle_repair(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
-    paperpilot_pdf::operations::repair::RepairOperation::repair_file(input, output)
+    if super::should_use_mmap(input) {
+        paperpilot_pdf::operations::repair::RepairOperation::repair_file_mmap(input, output)
+    } else {
+        paperpilot_pdf::operations::repair::RepairOperation::repair_file(input, output)
+    }
+}
+
+pub fn handle_info(
+    input: &std::path::Path,
+    output: Option<&std::path::Path>,
+) -> OperationResult<()> {
+    let mut doc = super::load_document(input)?;
+    let is_mmap = doc.is_mmap();
+    let op = paperpilot_pdf::operations::info::InfoOperation::new();
+    op.execute(&mut doc)?;
+
+    let res = op
+        .result
+        .lock()
+        .map_err(|_| paperpilot_core::error::PdfError::Other("Mutex poisoned".to_string()))?
+        .clone()
+        .ok_or_else(|| {
+            paperpilot_core::error::PdfError::Other("Info operation produced no result".to_string())
+        })?;
+
+    let payload = serde_json::json!({
+        "file": input.to_string_lossy(),
+        "page_count": res.page_count,
+        "version": res.version,
+        "mmap": is_mmap,
+        "source_bytes": doc.source_len().unwrap_or(0),
+    });
+    let json_str = serde_json::to_string_pretty(&payload).unwrap_or_default();
+
+    if let Some(out_path) = output {
+        if let Some(parent) = out_path.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            std::fs::create_dir_all(parent).map_err(paperpilot_core::error::PdfError::IoError)?;
+        }
+        std::fs::write(out_path, &json_str).map_err(paperpilot_core::error::PdfError::IoError)?;
+    }
+
+    println!("{}", json_str);
+    Ok(())
 }
 
 pub fn handle_linearize(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::linearize::LinearizeOperation::new();
     op.execute(&mut doc)?;
     doc.save(output)
@@ -32,7 +75,7 @@ pub fn handle_encrypt(
     owner_password: &Option<String>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::encrypt::EncryptOperation {
         user_password: user_password.clone(),
         owner_password: owner_password.clone(),
@@ -46,7 +89,7 @@ pub fn handle_decrypt(
     password: &Option<String>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::decrypt::DecryptOperation::new(password.clone());
     op.execute(&mut doc)?;
     doc.save(output)
@@ -61,7 +104,7 @@ pub fn handle_watermark(
     font_size: Option<f32>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let mut op = paperpilot_pdf::operations::watermark::WatermarkOperation::new(text.to_string());
     op.angle = angle;
     op.opacity = opacity;
@@ -82,7 +125,7 @@ pub fn handle_redact(
     occurrence: Option<&str>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
 
     let target_pages: Vec<u32> = pages
         .split(',')
@@ -161,7 +204,7 @@ pub fn handle_metadata(
     keywords: &Option<String>,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let mut op = paperpilot_pdf::operations::metadata::MetadataOperation::new();
     op.title = title.clone();
     op.author = author.clone();
@@ -176,21 +219,21 @@ pub fn handle_signature(
     _cert: &std::path::Path,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::signature::SignatureOperation::new();
     op.execute(&mut doc)?;
     doc.save(output)
 }
 
 pub fn handle_flatten(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::flatten::FlattenOperation::new();
     op.execute(&mut doc)?;
     doc.save(output)
 }
 
 pub fn handle_pdf_a(input: &std::path::Path, output: &std::path::Path) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::pdf_a::PdfAConversionOperation::new();
     op.execute(&mut doc)?;
     doc.save(output)
@@ -202,7 +245,7 @@ pub fn handle_header_footer(
     position: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::header_footer::HeaderFooterOperation::new(
         text.to_string(),
         position.to_string(),
@@ -218,7 +261,7 @@ pub fn handle_bates(
     position: &str,
     output: &std::path::Path,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::bates::BatesNumberingOperation::new(
         start,
         prefix.to_string(),
@@ -234,7 +277,7 @@ pub fn handle_page_numbers(
     output: &std::path::Path,
     position: &str,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::page_numbers::PageNumbersOperation::new(
         position.to_string(),
         "Page {n} of {total}".to_string(),

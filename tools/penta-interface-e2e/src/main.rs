@@ -612,6 +612,14 @@ async fn main() -> Result<()> {
                 "reports/PENTA_INTERFACE_E2E_IMG_REDACT_REPORT.md",
             )?;
 
+            let res_pdf_edit_text = cases::pdf_edit_text::run_pdf_edit_text_suite().await?;
+            println!("Edit PDF Text finished: {} tests", res_pdf_edit_text.len());
+            generate_markdown_report(
+                "Phase 5.9.X — Rust-Native Penta-Interface Real Semantic Assertions Suite (Edit PDF Text)",
+                &res_pdf_edit_text,
+                "reports/PENTA_INTERFACE_E2E_PDF_EDIT_TEXT_REPORT.md",
+            )?;
+
             let mut all = Vec::new();
             all.extend(a);
             all.extend(b);
@@ -619,6 +627,7 @@ async fn main() -> Result<()> {
             all.extend(d);
             all.extend(s);
             all.extend(pii);
+            all.extend(res_pdf_edit_text);
             all.extend(res_img_redact);
             all.extend(res_img_crop_to_content);
             all.extend(res_img_convert);

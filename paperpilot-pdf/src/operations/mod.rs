@@ -95,6 +95,7 @@ pub mod img_deskew;
 pub mod img_convert;
 pub mod img_crop_to_content;
 pub mod img_redact;
+pub mod pdf_edit_text;
 pub use pdf_chunk::{
     chunk_pdf_bytes, chunk_pdf_path, chunk_pdf_source, pdf_chunk_bytes, ChunkOptions, ChunkResult,
     DocumentChunk, PdfChunkOperation,

@@ -616,4 +616,32 @@ describe('operationArgsBuilder', () => {
             quality: 80
         });
     });
+
+    it('builds args for pdf_edit_text', async () => {
+        const defaultArgs = await buildOperationArgs('pdf_edit_text', defaultContext);
+        expect(defaultArgs).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_edited.pdf',
+            find: '',
+            replace: ''
+        });
+
+        const customArgs = await buildOperationArgs('pdf_edit_text', {
+            ...defaultContext,
+            editTextFind: 'Helo',
+            editTextReplace: 'Hello',
+            editTextPage: 2,
+            editTextOccurrence: 1,
+            editTextMatchCase: false
+        });
+        expect(customArgs).toEqual({
+            input: '/docs/test.pdf',
+            output: '/docs/test_edited.pdf',
+            find: 'Helo',
+            replace: 'Hello',
+            page: 2,
+            occurrence: 1,
+            match_case: false
+        });
+    });
 });

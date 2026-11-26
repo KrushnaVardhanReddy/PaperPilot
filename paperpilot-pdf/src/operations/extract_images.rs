@@ -237,6 +237,7 @@ mod tests {
         LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         }
     }
 
@@ -299,6 +300,7 @@ mod tests {
         let mut lopdf_doc = LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         };
 
         let dir = tempdir().unwrap();

@@ -207,6 +207,7 @@ fn run_impl() {
     }
 
     let cli = Cli::parse();
+    commands::set_force_mmap(cli.mmap);
     init_logging(cli.log_format.as_deref(), cli.log_level.as_deref());
 
     let _ = env_logger::try_init();
@@ -229,14 +230,7 @@ fn run_impl() {
         _ => (commands::execute_command(&cli.command), None),
     };
 
-    let op_name = format!("{:?}", cli.command)
-        .split('(')
-        .next()
-        .unwrap_or("Unknown")
-        .split_whitespace()
-        .next()
-        .unwrap_or("Unknown")
-        .to_string();
+    let op_name = cli.command.operation_name();
 
     tracing::debug!(subcommand = %op_name, "Dispatching CLI subcommand");
 

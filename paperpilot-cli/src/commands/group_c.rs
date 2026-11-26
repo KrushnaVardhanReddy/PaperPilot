@@ -9,7 +9,7 @@ pub fn handle_extract_text(
     output: &std::path::Path,
     format: &str,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::extract_text::ExtractTextOperation::new(None);
     op.execute(&mut doc)?;
 
@@ -32,7 +32,7 @@ pub fn handle_extract_images(
     output: &std::path::Path,
 ) -> OperationResult<()> {
     std::fs::create_dir_all(output).map_err(paperpilot_core::error::PdfError::IoError)?;
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::extract_images::ExtractImagesOperation::new(
         output.to_path_buf(),
     );
@@ -46,7 +46,7 @@ pub fn handle_search(input: &std::path::Path, query: &str, output: Option<&std::
             for entry in entries.flatten() {
                 let ep = entry.path();
                 if ep.extension().and_then(|ext| ext.to_str()).map(|s| s.eq_ignore_ascii_case("pdf")).unwrap_or(false) {
-                    if let Ok(mut doc) = LopdfDocument::load(&ep) {
+                    if let Ok(mut doc) = super::load_document(&ep) {
                         let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
                         if op.execute(&mut doc).is_ok() {
                             let p = op.match_pages.lock().unwrap().clone();
@@ -57,7 +57,7 @@ pub fn handle_search(input: &std::path::Path, query: &str, output: Option<&std::
             }
         }
     } else {
-        let mut doc = LopdfDocument::load(input)?;
+        let mut doc = super::load_document(input)?;
         let op = paperpilot_pdf::operations::search::SearchOperation::new(query.to_string());
         op.execute(&mut doc)?;
         matches = op.match_pages.lock().unwrap().clone();
@@ -103,7 +103,7 @@ pub fn handle_render_with_options(
         None
     };
 
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::render::RenderOperation {
         page: Some(page),
         dpi,
@@ -124,7 +124,7 @@ pub fn handle_compare(
     input_b: &std::path::Path,
     output: Option<&std::path::Path>,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let mut op = paperpilot_pdf::operations::compare::CompareOperation::new();
     op.input_b = Some(input_b.to_string_lossy().to_string());
     op.execute(&mut doc)?;
@@ -151,7 +151,7 @@ pub fn handle_ocr(
     clipboard: bool,
     tier: Option<&str>,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let mut op = paperpilot_pdf::operations::ocr::OcrOperation::new();
 
     if let Some(t) = tier {
@@ -283,7 +283,7 @@ fn copy_text_to_clipboard(text: &str) {
 }
 
 pub fn handle_bookmarks(input: &std::path::Path) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::bookmarks::BookmarksOperation::new();
     op.execute(&mut doc)
 }

@@ -1,7 +1,69 @@
 use crate::document::LopdfDocument;
+use paperpilot_core::document_source::PageBatchIterator;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::sync::{Arc, Mutex};
+
+/// Maximum backing byte length for eager `Vec::to_vec()` heap cloning into `pdf_oxide`.
+/// Larger memory-mapped files use zero-copy parallel `lopdf` extraction to avoid multi-hundred-MB spikes.
+pub const MAX_PDF_OXIDE_HEAP_BYTES: usize = 32 * 1024 * 1024;
+
+/// Extract plain text per page from a parsed [`lopdf::Document`] in parallel using `rayon`
+/// on native targets (preserving ascending/requested page order), with sequential WASM fallback.
+pub fn extract_lopdf_pages_parallel(
+    inner: &lopdf::Document,
+    pages: Option<&[u32]>,
+) -> OperationResult<Vec<String>> {
+    let target_pages: Vec<u32> = match pages {
+        Some(requested) => requested.to_vec(),
+        None => inner.get_pages().keys().copied().collect(),
+    };
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use rayon::prelude::*;
+        target_pages
+            .par_iter()
+            .map(|&page_id| {
+                inner.extract_text(&[page_id]).map_err(|e| {
+                    PdfError::Other(format!("Failed to extract text from page {}: {}", page_id, e))
+                })
+            })
+            .collect()
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        target_pages
+            .iter()
+            .map(|&page_id| {
+                inner.extract_text(&[page_id]).map_err(|e| {
+                    PdfError::Other(format!("Failed to extract text from page {}: {}", page_id, e))
+                })
+            })
+            .collect()
+    }
+}
+
+/// Streams page-bounded text extraction in batches using [`PageBatchIterator`] and parallel
+/// worker execution per batch to keep memory usage bounded on 1,000+ page documents.
+pub fn stream_extract_text_batches(
+    doc: &LopdfDocument,
+    batch_size: usize,
+) -> OperationResult<Vec<String>> {
+    let all_pages: Vec<u32> = doc.inner.get_pages().keys().copied().collect();
+    if all_pages.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut out = Vec::with_capacity(all_pages.len());
+    for batch in PageBatchIterator::new(all_pages.len(), batch_size) {
+        let start_idx = *batch.start() - 1;
+        let end_idx = *batch.end();
+        let slice = &all_pages[start_idx..end_idx];
+        out.extend(extract_lopdf_pages_parallel(&doc.inner, Some(slice))?);
+    }
+    Ok(out)
+}
 
 /// Extract page-ordered Markdown (including detected tables) without disk I/O.
 /// Shared by document operations and binary-upload ingestion adapters.
@@ -63,37 +125,16 @@ impl PdfOperation for ExtractTextOperation {
 
         let mut pages_text = Vec::new();
 
-        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+        if let Some(bytes) = lopdf_doc.source_bytes()
             && !bytes.is_empty()
+            && (!lopdf_doc.is_mmap() || bytes.len() <= MAX_PDF_OXIDE_HEAP_BYTES)
             && let Ok(text) = run_extract_text_bytes(bytes, self.pages.as_deref())
         {
             pages_text = text;
         }
 
         if pages_text.is_empty() {
-            let inner = &mut lopdf_doc.inner;
-
-            let target_pages = match &self.pages {
-                Some(pages) => pages.clone(),
-                None => {
-                    let all_pages = inner.get_pages();
-                    all_pages.keys().copied().collect()
-                }
-            };
-
-            for page_id in target_pages {
-                match inner.extract_text(&[page_id]) {
-                    Ok(text) => {
-                        pages_text.push(text);
-                    }
-                    Err(e) => {
-                        return Err(PdfError::Other(format!(
-                            "Failed to extract text from page {}: {}",
-                            page_id, e
-                        )));
-                    }
-                }
-            }
+            pages_text = extract_lopdf_pages_parallel(&lopdf_doc.inner, self.pages.as_deref())?;
         }
 
         if let Ok(mut lock) = self.extracted_text.lock() {
@@ -162,6 +203,7 @@ mod tests {
         LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         }
     }
 

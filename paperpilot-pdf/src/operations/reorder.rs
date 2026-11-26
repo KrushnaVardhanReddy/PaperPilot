@@ -110,6 +110,7 @@ mod tests {
         LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         }
     }
 

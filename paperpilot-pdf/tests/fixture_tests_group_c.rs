@@ -92,6 +92,7 @@ fn test_images_to_pdf_fixture() {
     let mut doc = LopdfDocument {
         inner: doc_inner,
         original_bytes: None,
+        source: None,
     };
 
     let op = ImagesToPdfOperation::new(vec![img_path]);

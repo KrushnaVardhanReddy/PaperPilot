@@ -1,4 +1,3 @@
-use paperpilot_core::document_source::DocumentSource;
 use paperpilot_core::error::PdfError;
 use paperpilot_pdf::operations::pdf_chunk::{ChunkOptions, PdfChunkOperation};
 use std::path::{Path, PathBuf};
@@ -11,7 +10,7 @@ pub fn handle_pdf_chunk_command(
     break_on_headings: bool,
     output: Option<&PathBuf>,
 ) -> Result<(), PdfError> {
-    let doc_source = DocumentSource::open(input, None).map_err(PdfError::IoError)?;
+    let doc_source = super::open_document_source(input)?;
 
     let options = ChunkOptions {
         target_tokens,

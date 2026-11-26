@@ -315,8 +315,8 @@ impl PdfOperation for PdfComicArchiveOperation {
             .downcast_mut::<LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Expected LopdfDocument".to_string()))?;
 
-        let bytes = if let Some(orig) = &lopdf_doc.original_bytes {
-            orig.clone()
+        let bytes = if let Some(orig) = lopdf_doc.source_bytes() {
+            orig.to_vec()
         } else {
             let mut buf = Vec::new();
             lopdf_doc
