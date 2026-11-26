@@ -704,3 +704,83 @@ jobs:
 
             ### Checksums
             SHA-256 checksums are attached alongside each installer, binary package, and APK artifact.
+
+      - name: Update Homebrew Tap Cask
+        if: ${{ !inputs.draft }}
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          CLEAN_VER="${INPUT_VERSION#v}"
+          echo "Updating Homebrew Cask for PaperPilot v${CLEAN_VER}..."
+
+          # Find macOS aarch64 dmg artifact and calculate its SHA256
+          DMG_FILE=$(ls release-assets/*aarch64.dmg 2>/dev/null | head -n 1)
+          if [ -z "$DMG_FILE" ]; then
+            DMG_FILE=$(ls release-assets/*.dmg 2>/dev/null | head -n 1)
+          fi
+
+          if [ -n "$DMG_FILE" ]; then
+            DMG_HASH=$(sha256sum "$DMG_FILE" | awk '{print $1}')
+            echo "Found DMG: $DMG_FILE with SHA256: $DMG_HASH"
+
+            # Clone homebrew-tap repo
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git clone "https://x-access-token:${HOMEBREW_TAP_PAT}@github.com/KrushnaVardhanReddy/homebrew-tap.git" homebrew-tap-repo
+
+            cd homebrew-tap-repo
+            mkdir -p Casks
+
+            cat << 'CASK_EOF' > Casks/paperpilot.rb
+            cask "paperpilot" do
+              version "${CLEAN_VER}"
+
+              if Hardware::CPU.arm?
+                url "https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v#{version}/PaperPilot_#{version}_aarch64.dmg"
+                sha256 "${DMG_HASH}"
+              else
+                url "https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v#{version}/PaperPilot_#{version}_aarch64.dmg"
+                sha256 "${DMG_HASH}"
+              end
+
+              name "PaperPilot"
+              desc "Local-first, privacy-focused open source PDF studio and document manipulation toolkit"
+              homepage "https://usepaperpilot.com"
+
+              livecheck do
+                url :url
+                strategy :github_latest
+              end
+
+              auto_updates true
+              depends_on macos: ">= :high_sierra"
+
+              app "PaperPilot.app"
+
+              zap trash: [
+                "~/Library/Application Support/com.usepaperpilot.desktop",
+                "~/Library/Caches/com.usepaperpilot.desktop",
+                "~/Library/Preferences/com.usepaperpilot.desktop.plist",
+                "~/Library/Saved Application State/com.usepaperpilot.desktop.savedState",
+              ]
+            end
+          CASK_EOF
+            sed -i 's/^            //' Casks/paperpilot.rb
+            sed -i "s/\${CLEAN_VER}/${CLEAN_VER}/g" Casks/paperpilot.rb
+            sed -i "s/\${DMG_HASH}/${DMG_HASH}/g" Casks/paperpilot.rb
+
+            git add Casks/paperpilot.rb
+            if git diff --staged --quiet; then
+              echo "No changes to Casks/paperpilot.rb"
+            else
+              git commit -m "chore(cask): bump paperpilot to v${CLEAN_VER}"
+              git push origin main
+              echo "Successfully pushed Casks/paperpilot.rb v${CLEAN_VER} to KrushnaVardhanReddy/homebrew-tap!"
+            fi
+            cd ..
+            rm -rf homebrew-tap-repo
+          else
+            echo "Warning: No .dmg file found in release-assets. Skipping Homebrew Cask update."
+          fi
