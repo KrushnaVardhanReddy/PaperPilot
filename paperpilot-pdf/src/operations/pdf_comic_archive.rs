@@ -427,7 +427,7 @@ mod tests {
         assert_eq!(archive.len(), 1);
 
         let mut file = archive.by_index(0).unwrap();
-        assert_eq!(file.name(), "page_001.png");
+        assert_eq!(file.name().unwrap(), "page_001.png");
 
         let mut png_bytes = Vec::new();
         std::io::Read::read_to_end(&mut file, &mut png_bytes).unwrap();
@@ -458,9 +458,9 @@ mod tests {
         let mut archive = zip::ZipArchive::new(cursor).unwrap();
         assert_eq!(archive.len(), 3);
 
-        assert_eq!(archive.by_index(0).unwrap().name(), "photo_scan_1.png");
-        assert_eq!(archive.by_index(1).unwrap().name(), "photo_scan_2.png");
-        assert_eq!(archive.by_index(2).unwrap().name(), "photo_scan_10.png");
+        assert_eq!(archive.by_index(0).unwrap().name().unwrap(), "photo_scan_1.png");
+        assert_eq!(archive.by_index(1).unwrap().name().unwrap(), "photo_scan_2.png");
+        assert_eq!(archive.by_index(2).unwrap().name().unwrap(), "photo_scan_10.png");
     }
 
     #[test]
@@ -477,7 +477,7 @@ mod tests {
         let cursor = std::io::Cursor::new(cbz_bytes);
         let mut archive = zip::ZipArchive::new(cursor).unwrap();
         assert_eq!(archive.len(), 2);
-        assert_eq!(archive.by_index(0).unwrap().name(), "img1.png");
-        assert_eq!(archive.by_index(1).unwrap().name(), "img2.jpg");
+        assert_eq!(archive.by_index(0).unwrap().name().unwrap(), "img1.png");
+        assert_eq!(archive.by_index(1).unwrap().name().unwrap(), "img2.jpg");
     }
 }

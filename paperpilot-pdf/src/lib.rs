@@ -6,6 +6,7 @@ pub use paperpilot_core::document_source::{
     DEFAULT_MMAP_THRESHOLD_BYTES, DocumentSource, PageBatchIterator,
 };
 pub use operations::repair::RepairOperation;
+pub use operations::docast::{DocAst, DocElement, LayoutExtractor};
 pub use operations::pdf_chunk::{
     chunk_pdf_bytes, chunk_pdf_path, chunk_pdf_source, pdf_chunk_bytes, ChunkOptions, ChunkResult,
     DocumentChunk, PdfChunkOperation,
