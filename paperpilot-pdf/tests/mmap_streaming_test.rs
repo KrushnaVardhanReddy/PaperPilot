@@ -282,3 +282,78 @@ fn test_high_volume_150_page_mmap_streaming() {
     search_op.execute(&mut doc).unwrap();
     assert_eq!(*search_op.match_pages.lock().unwrap(), vec![149]);
 }
+
+#[test]
+fn test_real_usecase_1000_pages_mmap_streaming() {
+    let dir = tempdir().unwrap();
+    let pdf_path = dir.path().join("enterprise_1000_pages.pdf");
+    
+    // Generate an authentic 1,000-page document
+    let len = write_multipage_pdf(&pdf_path, 1000);
+    assert!(len > 100_000, "1,000-page document must have substantial byte size");
+
+    // Open via zero-copy mmap
+    let mut doc = LopdfDocument::from_file_mmap(&pdf_path).expect("from_file_mmap should succeed on 1000 pages");
+    assert_eq!(doc.page_count().unwrap(), 1000);
+    assert!(doc.is_mmap(), "Must be memory mapped");
+    assert!(doc.original_bytes.is_none(), "Must have zero heap duplication for original_bytes");
+
+    // Stream extract text across 1,000 pages in batches of 50
+    let streamed = stream_extract_text_batches(&doc, 50).expect("Stream extraction should succeed on 1000 pages");
+    assert_eq!(streamed.len(), 1000);
+    assert!(streamed[0].contains("Page 001"));
+    assert!(streamed[499].contains("Page 500"));
+    assert!(streamed[999].contains("Page 1000"));
+
+    // Targeted high-volume parallel search on page 888 and 999
+    let search_op = SearchOperation::new("Page 888".to_string());
+    search_op.execute_batched(&mut doc, 100).expect("Batched search should succeed");
+    assert_eq!(*search_op.match_pages.lock().unwrap(), vec![888]);
+
+    // Fast Info metadata extraction
+    let info_op = InfoOperation::new();
+    info_op.execute(&mut doc).unwrap();
+    let info = info_op.result.lock().unwrap().clone().unwrap();
+    assert_eq!(info.page_count, 1000);
+}
+
+#[test]
+fn test_real_usecase_multi_file_concurrent_mmap_streaming() {
+    use rayon::prelude::*;
+
+    let dir = tempdir().unwrap();
+    let file_count = 50;
+
+    // Create 50 distinct PDF files on disk
+    let file_paths: Vec<_> = (1..=file_count)
+        .map(|i| {
+            let path = dir.path().join(format!("doc_{:03}.pdf", i));
+            // Each doc has 10 to 30 pages
+            let pages = 10 + (i % 20);
+            write_multipage_pdf(&path, pages);
+            (path, pages)
+        })
+        .collect();
+
+    // Process all 50 files concurrently using rayon
+    let results: Vec<_> = file_paths
+        .par_iter()
+        .map(|(path, expected_pages)| {
+            let doc = LopdfDocument::from_file_mmap(path).expect("mmap file open failed");
+            assert!(doc.is_mmap());
+            let count = doc.page_count().unwrap();
+            assert_eq!(count, *expected_pages);
+
+            // Extract text in parallel
+            let pages_text = doc.extract_text_parallel(None).expect("text extract failed");
+            assert_eq!(pages_text.len(), *expected_pages as usize);
+            assert!(pages_text[0].contains("Page 001"));
+
+            count
+        })
+        .collect();
+
+    assert_eq!(results.len(), 50);
+    let total_pages: u32 = results.iter().sum();
+    assert!(total_pages >= 500, "Processed at least 500 total pages across 50 concurrent mmap files");
+}

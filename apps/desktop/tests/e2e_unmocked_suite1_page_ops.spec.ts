@@ -172,6 +172,7 @@ async function runToolFlow(
   const fixtureImg2 = path.join(fixtureDir, 'img2.png');
   const fixtureFour = path.join(fixtureDir, 'four_pages.pdf');
   const fixtureResearch = path.join(fixtureDir, 'research_paper.pdf');
+  const fixtureLarge = path.join(fixtureDir, 'large_doc.pdf');
 
   let cliCmd = '';
   switch (toolName) {
@@ -242,7 +243,7 @@ async function runToolFlow(
       cliCmd = `"${cliBin}" images-to-pdf --images "${fixturePng}" --output "${outFile}"`;
       break;
     case 'pdf_compress':
-      cliCmd = `"${cliBin}" compress --input "${fixtureSingle}" --quality 50 --output "${outFile}"`;
+      cliCmd = `"${cliBin}" compress --input "${fixtureResearch}" --quality 50 --output "${outFile}"`;
       break;
     case 'pdf_dedup_streams':
       cliCmd = `"${cliBin}" pdf-dedup-streams --input "${fixtureSingle}" --output "${outFile}"`;
@@ -322,7 +323,7 @@ test('pdf_merge — Page Addition Invariant', async ({ page }) => {
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
-  expect(result.numPages).toBe(4);
+  expect(result.numPages).toBe(7);
   expect(result.textByPage[0].length).toBeGreaterThan(0);
   expect(result.textByPage[1].length).toBeGreaterThan(0);
 
@@ -353,7 +354,7 @@ test('pdf_merge_alternate — Interleaving Invariant', async ({ page }) => {
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
-  expect(result.numPages).toBe(4);
+  expect(result.numPages).toBe(7);
   // Both pages must carry content (alternating source docs)
   expect(result.textByPage[0].length).toBeGreaterThan(0);
   expect(result.textByPage[1].length).toBeGreaterThan(0);
@@ -572,7 +573,7 @@ test('pdf_delete_pages — Page Subtraction Invariant', async ({ page }) => {
 
   expect(fs.existsSync(outFile)).toBe(true);
   const result = await PdfInspector.inspect(outFile);
-  expect(result.numPages).toBe(4);
+  expect(result.numPages).toBe(7);
   // Original page 1 text should not appear in new page 1
   if (originalPage1Text.trim().length > 0) {
     expect(result.textByPage[0]).not.toContain(originalPage1Text.trim());
@@ -1060,7 +1061,7 @@ test('pdf_compress — Byte Reduction Invariant', async ({ page }) => {
 
   await injectMock(
     page,
-    fixturePath('large_doc.pdf'),
+    fixturePath('research_paper.pdf'),
     outFile
   );
   await gotoApp(page);
@@ -1069,11 +1070,11 @@ test('pdf_compress — Byte Reduction Invariant', async ({ page }) => {
     outFile,
     toolName: 'pdf_compress',
     searchQuery: 'pdf_compress',
-    fixtures: [fixturePath('large_doc.pdf')],
+    fixtures: [fixturePath('research_paper.pdf')],
   });
 
   expect(fs.existsSync(outFile)).toBe(true);
-  const inSize = fs.statSync(fixturePath('large_doc.pdf')).size;
+  const inSize = fs.statSync(fixturePath('research_paper.pdf')).size;
   const outSize = fs.statSync(outFile).size;
   // Output must be a valid PDF and ≤ input size
   const raw = PdfInspector.inspectRaw(outFile);
