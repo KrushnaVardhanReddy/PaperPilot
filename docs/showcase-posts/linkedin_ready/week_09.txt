@@ -1,5 +1,5 @@
 // SCHEDULE: Thursday, Dec 24, 2026 at 9:00 AM EST
-// ASSET: /home/krushna/Project/PaperPilot/docs/assets/showcase/llm_gateway_financial_extraction.gif
+// ASSET: /home/krushna/Project/PaperPilot/docs/assets/showcase/week09-tika-wire-openwebui.gif
 // ============================================================
 
 Running local AI with Ollama and Open-WebUI, but document ingestion is slowing down your pipeline? 🛑

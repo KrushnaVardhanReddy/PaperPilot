@@ -1,0 +1,48 @@
+// SCHEDULE: Monday, Jan 11, 2027 at 9:00 AM EST
+// ASSET: /home/krushna/Project/PaperPilot/docs/assets/showcase/week14-secure-vault-permissions.gif
+// ============================================================
+
+Sharing sensitive executive compensation, merger drafts, or financial audits via email? Slapping a basic password on a PDF doesn't protect you if the cipher is obsolete. 🔐
+⠀
+Legacy tools often generate PDF encryption using weak 40-bit/128-bit RC4 ciphers that modern GPUs crack in seconds, leaving permissions unconfigured. 🛑
+⠀
+PaperPilot enforces revision 6 AES-256 cipher encryption with fine-grained cryptographic locking:
+- Separates Owner (admin) and User (read-only) passwords.
+- Restricts copying, printing, annotations, and assembly.
+- 100% client-side: Keys are derived in local memory. 0 bytes leave your machine.
+⠀
+Same task, your choice of interface:
+⠀
+🖥️ Desktop GUI (Security Vault Dock)
+Drop confidential financials into PaperPilot Desktop -> Check "Disable Copying", "Disable High-Res Printing", and "Enforce AES-256" -> Type recipient passphrase -> Click "Lock Vault". Ready in 25ms.
+⠀
+🤖 AI Agent / MCP (Automated Security Gate)
+{
+"server": "paperpilot",
+"tool": "pdf_encrypt",
+"arguments": {
+"input": "board_deck_q4.pdf",
+"output": "board_deck_q4_secured.pdf",
+"user_password": "BoardMember2026!",
+"cipher": "aes-256",
+"permissions": { "copy": false, "print": "low_resolution" }
+}
+}
+⠀
+💻 CLI (Sub-15ms Terminal Security Command)
+paperpilot encrypt -i financials.pdf -o vault.pdf   --user-pw "Client2026!" --owner-pw "AdminSecret!"   --cipher aes-256 --no-copy --no-print
+⠀
+🌐 Python / REST API (Sub-5ms Microservice)
+resp = requests.post("http://localhost:7823/api/v1/encrypt", json={
+"input_path": "tax_return.pdf",
+"user_password": "TaxClient987!",
+"cipher": "aes-256"
+}) # Locked with AES-256 in 4.8ms
+⠀
+Lock confidential enterprise documents with military-grade encryption without sending keys to cloud SaaS providers.
+⠀
+⚡ Try it now or wire it into your agent:
+• AI Agent / Claude MCP: npx -y @usepaperpilot/mcp
+• Website & Downloads: https://usepaperpilot.com
+⠀
+#CyberSecurity #ZeroKnowledge #Encryption #FinTech #Privacy #InfoSec #RustLang #OpenSource #PaperPilot #MCP

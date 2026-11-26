@@ -1,0 +1,39 @@
+// SCHEDULE: Monday, Feb 08, 2027 at 9:00 AM EST
+// ASSET: /home/krushna/Project/PaperPilot/docs/assets/showcase/week22-flash-installation-sync.gif
+// ============================================================
+
+Setting up developer tools across multiple operating systems is usually painful: missing system libraries, version conflicts, and broken environment paths. 🛑
+⠀
+PaperPilot was designed from day one to deliver a seamless, zero-friction developer experience across Linux, macOS, and Windows. ⚡
+⠀
+With a single copy-paste command, get the entire PaperPilot ecosystem up and running in under 5 seconds:
+- Detects OS architecture (x86_64, aarch64 Apple Silicon) and pulls optimized static binaries.
+- Installs the high-speed paperpilot CLI directly into your shell path.
+- Automatically registers the PaperPilot MCP server with Claude Desktop and Cursor.
+- Launches the native Tauri desktop GUI app instantly.
+⠀
+Same task, your choice of interface:
+⠀
+🖥️ Desktop GUI (Native App)
+Launch PaperPilot Desktop directly from your applications launcher or desktop shortcut. Full visual workspace with zero terminal knowledge required.
+⠀
+🤖 AI Agent / MCP (1-Click Auto-Configuration)
+The flash installer registers the MCP server configuration into your local agent config files automatically. Ready for tool calls in seconds.
+⠀
+💻 CLI (One-Liner Flash Installation)
+# macOS & Linux:
+curl -fsSL https://usepaperpilot.com/install.sh | bash
+⠀
+# Windows PowerShell:
+irm https://usepaperpilot.com/install.ps1 | iex
+⠀
+🌐 REST API (Self-Hosted Microservice)
+paperpilot serve --port 8080 # Starts local HTTP REST API gateway
+⠀
+No Python virtualenvs, no broken Node.js dependencies, no Docker containers required. Pure native performance.
+⠀
+⚡ Try it now or wire it into your agent:
+• AI Agent / Claude MCP: npx -y @usepaperpilot/mcp
+• Website & Downloads: https://usepaperpilot.com
+⠀
+#DeveloperExperience #DevOps #RustLang #OpenSource #Productivity #Tauri #CrossPlatform #PaperPilot #MCP

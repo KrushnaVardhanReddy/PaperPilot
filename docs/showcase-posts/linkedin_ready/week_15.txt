@@ -1,0 +1,49 @@
+// SCHEDULE: Thursday, Jan 14, 2027 at 9:00 AM EST
+// ASSET: /home/krushna/Project/PaperPilot/docs/assets/showcase/week15-visual-document-diff.gif
+// ============================================================
+
+What happens when a document revision changes an architectural blueprint or CAD schematic instead of just body text? 📐
+⠀
+Traditional text-only diffing tools miss visual layout shifts, altered watermarks, and repositioned diagram elements entirely. On the other hand, naive image diffing flags irrelevant scanner noise. 🛑
+⠀
+PaperPilot's visual diffing engine combines sub-pixel perceptual rendering with structural AST analysis:
+- Renders vector pages at 300 DPI directly in native Rust.
+- Generates high-contrast colorized change maps (Green = Added, Red = Removed, Yellow = Displaced).
+- Ignores insignificant raster noise while highlighting genuine structural discrepancies.
+⠀
+Same task, your choice of interface:
+⠀
+🖥️ Desktop GUI (Side-by-Side Visual Lens)
+Drop blueprint_v1.pdf and blueprint_v2.pdf into PaperPilot Desktop -> Move the interactive slider lens across the drawing canvas -> Visual diff highlights moved columns and modified dimensions instantly.
+⠀
+🤖 AI Agent / MCP (Autonomous Visual Auditor)
+{
+"server": "paperpilot",
+"tool": "pdf_compare_visual",
+"arguments": {
+"original": "patent_spec_v1.pdf",
+"revised": "patent_spec_v2.pdf",
+"dpi": 300,
+"highlight_color": "red_green"
+}
+}
+⠀
+💻 CLI (Sub-35ms Visual Comparison)
+paperpilot compare-visual -a plan_v1.pdf -b plan_v2.pdf -o diff_overlay.png --dpi 300
+# Visual discrepancy score: 2.4% difference detected on Page 3
+⠀
+🌐 Python / REST API (Sub-15ms Webhook Diff)
+resp = requests.post("http://localhost:7823/api/v1/compare-visual", json={
+"file_a": "drawing_rev1.pdf",
+"file_b": "drawing_rev2.pdf",
+"generate_overlay": True
+})
+overlay_url = resp.json()["diff_image_path"] # Ready for human QA
+⠀
+Catch rogue visual shifts, moved architectural features, and layout changes before approving high-stakes revisions.
+⠀
+⚡ Try it now or wire it into your agent:
+• AI Agent / Claude MCP: npx -y @usepaperpilot/mcp
+• Website & Downloads: https://usepaperpilot.com
+⠀
+#LegalTech #VisualDiff #QualityAssurance #Architecture #Engineering #RustLang #ComputerVision #OpenSource #PaperPilot #MCP

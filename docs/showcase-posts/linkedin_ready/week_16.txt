@@ -1,0 +1,48 @@
+// SCHEDULE: Monday, Jan 18, 2027 at 9:00 AM EST
+// ASSET: /home/krushna/Project/PaperPilot/docs/assets/showcase/week16-multilingual-ocr.gif
+// ============================================================
+
+Scanned invoices, legacy contracts, and crumpled paper receipts are the bane of every automated document pipeline. 📄
+⠀
+Raw optical character recognition (OCR) output is notoriously messy: broken hyphenation, garbled non-Latin Unicode characters, and speckle noise that confuse downstream LLM parsers. 🛑
+⠀
+PaperPilot pairs local, hardware-accelerated multilingual OCR with intelligent text-cleaning post-processors:
+- Automatically deskews rotated and tilted scans prior to character recognition.
+- Supports 40+ languages (English, German, Japanese, Chinese, French, and Spanish).
+- Re-stitches broken hyphenated words and removes margin artifact speckles in a single pass.
+- Outputs structured Markdown or clean plain text ready for immediate embedding.
+⠀
+Same task, your choice of interface:
+⠀
+🖥️ Desktop GUI (Instant OCR Dock)
+Drag a grainy scanned receipt or contract into PaperPilot Desktop -> Select "Multilingual OCR (Auto-Detect)" -> Click "Extract Clean Text". Preview searchable text overlaid on the scan in 220ms.
+⠀
+🤖 AI Agent / MCP (Air-Gapped Ingestion Tool)
+{
+"server": "paperpilot",
+"tool": "pdf_ocr",
+"arguments": {
+"input": "scanned_customs_manifest.pdf",
+"languages": ["eng", "deu", "fra"],
+"clean_hyphens": true
+}
+}
+⠀
+💻 CLI (Sub-second Terminal OCR)
+paperpilot ocr -i customs_bill.pdf -o clean_text.txt --lang eng+deu
+paperpilot clean-text -i clean_text.txt -o prompt_context.md
+⠀
+🌐 Python / REST API (Sub-50ms OCR Microservice)
+resp = requests.post("http://localhost:7823/api/v1/ocr", json={
+"input_path": "receipt_scan.pdf",
+"clean_whitespace": True
+})
+clean_text = resp.json()["text"] # Sanitized for LLM prompt
+⠀
+Transform messy, scanned physical records into pristine token-efficient context on local hardware.
+⠀
+⚡ Try it now or wire it into your agent:
+• AI Agent / Claude MCP: npx -y @usepaperpilot/mcp
+• Website & Downloads: https://usepaperpilot.com
+⠀
+#OCR #DocumentProcessing #MachineLearning #DataEngineering #RustLang #AirGapped #OpenSource #PaperPilot #MCP
