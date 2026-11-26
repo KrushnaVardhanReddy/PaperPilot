@@ -406,7 +406,7 @@ mod tests {
 
             assert_eq!(archive.len(), 3);
             let mut file_names: Vec<String> = (0..archive.len())
-                .map(|i| archive.by_index(i).unwrap().name().to_string())
+                .map(|i| archive.by_index(i).unwrap().name().unwrap().to_string())
                 .collect();
             file_names.sort();
 
@@ -465,7 +465,7 @@ mod tests {
 
         assert_eq!(archive.len(), 2);
         let mut file_names: Vec<String> = (0..archive.len())
-            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .map(|i| archive.by_index(i).unwrap().name().unwrap().to_string())
             .collect();
         file_names.sort();
 
