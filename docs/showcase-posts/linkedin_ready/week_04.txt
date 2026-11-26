@@ -1,0 +1,51 @@
+// SCHEDULE: Monday, Dec 07, 2026 at 9:00 AM EST
+// ASSET: /home/krushna/Project/PaperPilot/docs/assets/showcase/week04-document-forensics-diff.gif
+// ============================================================
+
+Someone sends you a revised 40-page contract. They claim they only *"fixed a typo in section 2"*.
+⠀
+Can you spot the rogue zero that turned a \$10,000 monthly retainer into \$100,000 before your team signs? 🔍🚨
+⠀
+Manual review is slow and error-prone. Naive pixel diffs trigger endless false positives on kerning while missing subtle text substitutions in the PDF byte stream.
+⠀
+And if the document was digitally signed? Modifying even one invisible character silently invalidates its legal seal.
+⠀
+PaperPilot pairs structural AST comparison with hardware-speed cryptographic verification in native Rust.
+⠀
+Same task, your choice of interface:
+⠀
+🖥️ Desktop GUI (Side-by-Side Visual Diff)
+Drag contract_v1.0.pdf and contract_v1.1.pdf into PaperPilot Desktop -> Visual redlines highlight changes in real-time -> Cryptographic badge alerts: *"TAMPER DETECTED: Page 1, Line 14 ($10,000 -> $100,000) & Digital Signature Invalidated"*.
+⠀
+🤖 AI Agent / MCP (Autonomous Legal Auditor)
+{
+"server": "paperpilot",
+"tool": "pdf_compare",
+"arguments": {
+"original": "contract_v1.0.pdf",
+"revised": "contract_v1.1.pdf",
+"mode": "structural_ast",
+"verify_signatures": true
+}
+}
+⠀
+💻 CLI (Terminal Audit One-Liner)
+# Structural AST diff and digital signature audit in 11ms
+paperpilot compare contract_v1.0.pdf contract_v1.1.pdf --format json
+paperpilot verify -i contract_v1.1.pdf # => REJECTED: Digest mismatch post-signing
+⠀
+🌐 Python / REST API (Sub-5ms Webhook Approval Gate)
+resp = requests.post("http://localhost:7823/api/v1/compare", json={
+"original_path": "contract_v1.0.pdf",
+"revised_path": "contract_v1.1.pdf"
+})
+if resp.json()["tamper_detected"]:
+raise SecurityException("Unauthorized contract modification detected!")
+⠀
+Never rely on honor-system redlines. Diff the AST and verify signatures locally.
+⠀
+⚡ Try it now or wire it into your agent:
+• AI Agent / Claude MCP: npx -y @usepaperpilot/mcp
+• Website & Downloads: https://usepaperpilot.com
+⠀
+#LegalTech #Compliance #DocumentSecurity #CyberSecurity #Audit #FinTech #OpenSource #RustLang #ContractManagement #PaperPilot #MCP
