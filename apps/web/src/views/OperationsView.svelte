@@ -87,6 +87,7 @@
     { id: 'pdf_posterize', title: 'Posterize Print', icon: '🪟', category: 'pages', releaseStatus: 'preview', description: 'Tile a large single PDF page across a multi-sheet grid for poster printing' },
 
     { id: 'pdf_attachments', title: 'Attachments', icon: '📎', category: 'edit', releaseStatus: 'preview', description: 'View, extract, add, or remove embedded PDF file attachments' },
+    { id: 'pdf_edit_text', title: 'Edit PDF Text', icon: '✏️', category: 'edit', releaseStatus: 'preview', description: 'Find and replace text typos in-place inside PDF content streams' },
 
     { id: 'pdf_dedup_streams', title: 'Dedup Streams', icon: '🗜️', category: 'optimize', releaseStatus: 'preview', description: 'Deduplicate identical font, image, and content streams to optimize file size' },
 
@@ -275,6 +276,13 @@ let metadataFile: File | null = $state(null);
   let redactBoxY = $state(50);
   let redactBoxW = $state(200);
   let redactBoxH = $state(100);
+
+  let editTextFile: File | null = $state(null);
+  let editTextFind = $state('');
+  let editTextReplace = $state('');
+  let editTextPage = $state<number | string | null | undefined>('');
+  let editTextOccurrence = $state<number | string | null | undefined>('');
+  let editTextMatchCase = $state(true);
 
 
   async function readAsUint8Array(file: File): Promise<Uint8Array> {
@@ -1181,6 +1189,39 @@ let metadataFile: File | null = $state(null);
       downloadBlob(res, `${redactImageFile.name.replace(/\.[^.]+$/i, '')}_redacted.png`, 'image/png');
     } catch (e) {
       alert(`Error redacting image: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
+  async function handlePdfEditText() {
+    if (!editTextFile || !editTextFind) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(editTextFile);
+      const parsePositiveInt = (val: number | string | null | undefined): number | undefined => {
+        const trimmed = val == null ? '' : String(val).trim();
+        if (trimmed === '') return undefined;
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) && parsed >= 1 ? Math.trunc(parsed) : undefined;
+      };
+      const options: Record<string, any> = {
+        find: editTextFind,
+        replace: editTextReplace,
+        match_case: editTextMatchCase
+      };
+      const parsedPage = parsePositiveInt(editTextPage);
+      if (parsedPage !== undefined) {
+        options.page = parsedPage;
+      }
+      const parsedOccurrence = parsePositiveInt(editTextOccurrence);
+      if (parsedOccurrence !== undefined) {
+        options.occurrence = parsedOccurrence;
+      }
+      const res = await wasmPdfClient.pdf_edit_text(buffer, options);
+      downloadBlob(res, `${editTextFile.name.replace(/\.pdf$/i, '')}_edited.pdf`);
+    } catch (e) {
+      alert(`Error editing PDF text: ${e}`);
     } finally {
       isProcessing = false;
     }
@@ -2704,6 +2745,45 @@ let metadataFile: File | null = $state(null);
             </div>
             <button class="action-btn" onclick={handleRedactImage} disabled={isProcessing}>
                 {isProcessing ? 'Processing...' : 'Burn Permanent Redaction'}
+            </button>
+        {/if}
+      </div>
+
+    {:else if activeTool === 'pdf_edit_text'}
+      <div class="tool-pane">
+        <h2>Edit PDF Text</h2>
+        <p>Find and replace literal text typos in-place inside PDF content streams without rasterizing pages.</p>
+        {#if !editTextFile}
+            <DropZone ondrop={(files: File[]) => editTextFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{editTextFile.name}</span>
+                <button onclick={() => editTextFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="webEditTextFind">Find Text:</label>
+                <input id="webEditTextFind" type="text" placeholder="Exact text to find..." bind:value={editTextFind} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+            </div>
+            <div class="input-group">
+                <label for="webEditTextReplace">Replace With:</label>
+                <input id="webEditTextReplace" type="text" placeholder="Corrected replacement text..." bind:value={editTextReplace} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: end;">
+                <div class="input-group">
+                    <label for="webEditTextPage">Page Number (optional):</label>
+                    <input id="webEditTextPage" type="number" min="1" placeholder="All pages" bind:value={editTextPage} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+                </div>
+                <div class="input-group">
+                    <label for="webEditTextOccurrence">Occurrence (1-indexed, optional):</label>
+                    <input id="webEditTextOccurrence" type="number" min="1" placeholder="All occurrences" bind:value={editTextOccurrence} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+                </div>
+            </div>
+            <div class="input-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                <input id="webEditTextMatchCase" type="checkbox" bind:checked={editTextMatchCase} />
+                <label for="webEditTextMatchCase" style="margin: 0; cursor: pointer;">Match case</label>
+            </div>
+            <button class="action-btn" onclick={handlePdfEditText} disabled={isProcessing || !editTextFind}>
+                {isProcessing ? 'Processing...' : 'Replace Text in PDF'}
             </button>
         {/if}
       </div>

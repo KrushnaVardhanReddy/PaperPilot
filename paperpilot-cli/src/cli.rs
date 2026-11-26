@@ -210,6 +210,29 @@ pub enum Commands {
     ExtendedPdf(ExtendedPdfCommands),
     #[command(flatten)]
     AiMedia(AiMediaCommands),
+    /// Edit PDF Text: Find and replace text typos in-place inside PDF content streams
+    #[command(
+        name = "edit-text",
+        alias = "pdf-edit-text",
+        alias = "pdf_edit_text",
+        alias = "edit_text"
+    )]
+    PdfEditText {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, allow_hyphen_values = true)]
+        find: String,
+        #[arg(long, allow_hyphen_values = true)]
+        replace: String,
+        #[arg(long)]
+        page: Option<u32>,
+        #[arg(long)]
+        occurrence: Option<u32>,
+        #[arg(long)]
+        match_case: Option<bool>,
+    },
     /// Declarative multi-step document workflow execution
     Run {
         /// TOML .ppflow or JSON recipe
@@ -1610,5 +1633,48 @@ mod tests {
         let cli2 = Cli::try_parse_from(sub_args).unwrap();
         assert!(cli2.mmap);
         assert_eq!(cli2.command.operation_name(), "ExtractText");
+    }
+
+    #[test]
+    fn test_edit_text_cli_and_aliases() {
+        for subcommand in ["edit-text", "pdf-edit-text"] {
+            let args = vec![
+                "paperpilot",
+                subcommand,
+                "--input",
+                "in.pdf",
+                "--output",
+                "out.pdf",
+                "--find",
+                "Helo",
+                "--replace",
+                "Hello",
+                "--page",
+                "2",
+                "--occurrence",
+                "1",
+            ];
+            let cli = Cli::try_parse_from(args).unwrap();
+            match cli.command {
+                Commands::PdfEditText {
+                    input,
+                    output,
+                    find,
+                    replace,
+                    page,
+                    occurrence,
+                    match_case,
+                } => {
+                    assert_eq!(input, PathBuf::from("in.pdf"));
+                    assert_eq!(output, PathBuf::from("out.pdf"));
+                    assert_eq!(find, "Helo");
+                    assert_eq!(replace, "Hello");
+                    assert_eq!(page, Some(2));
+                    assert_eq!(occurrence, Some(1));
+                    assert_eq!(match_case, None);
+                }
+                _ => panic!("Expected PdfEditText command for subcommand {subcommand}"),
+            }
+        }
     }
 }

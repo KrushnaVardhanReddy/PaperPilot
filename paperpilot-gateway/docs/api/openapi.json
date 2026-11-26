@@ -495,6 +495,60 @@
       "PdfDeletePagesJsonRequest": {
         "type": "object"
       },
+      "PdfEditTextJsonRequest": {
+        "properties": {
+          "find": {
+            "example": "Helo",
+            "type": "string"
+          },
+          "input": {
+            "example": "tests/e2e_fixtures/real/single_page.pdf",
+            "type": "string"
+          },
+          "match_case": {
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "occurrence": {
+            "example": 1,
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "output": {
+            "example": "tests/e2e_fixtures/out/penta_e2e/pdf_edit_text_out.pdf",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page": {
+            "example": 1,
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "replace": {
+            "example": "Hello",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input",
+          "find",
+          "replace"
+        ],
+        "type": "object"
+      },
       "PdfEncryptJsonRequest": {
         "type": "object"
       },
@@ -1618,6 +1672,44 @@
           }
         },
         "summary": "Lossless Stream Deduplication [Lossless hash-based indirect object stream deduplication & CMYK-safe image compression] [Input: .pdf | Output: .pdf]",
+        "tags": [
+          "PDF Operations"
+        ]
+      }
+    },
+    "/api/v1/pdf/edit-text": {
+      "post": {
+        "operationId": "pdf_edit_text",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PdfEditTextJsonRequest"
+              }
+            }
+          },
+          "description": "JSON configuration",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse"
+                }
+              }
+            },
+            "description": "Edit PDF Text completed"
+          },
+          "400": {
+            "description": "Invalid request arguments"
+          },
+          "500": {
+            "description": "Execution error"
+          }
+        },
+        "summary": "Edit PDF Text [Find and replace text typos in-place inside PDF content streams] [Input: .pdf | Output: .pdf]",
         "tags": [
           "PDF Operations"
         ]

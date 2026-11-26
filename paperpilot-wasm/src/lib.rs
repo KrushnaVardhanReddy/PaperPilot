@@ -567,6 +567,13 @@ impl WasmPdfEngine {
         Ok(js_sys::Uint8Array::from(&result[..]))
     }
     #[wasm_bindgen]
+    pub fn pdf_edit_text(input_bytes: &[u8], options_json: &str) -> Result<js_sys::Uint8Array, JsValue> {
+        let result = operations::pdf_edit_text(input_bytes, options_json)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(js_sys::Uint8Array::from(&result[..]))
+    }
+
+    #[wasm_bindgen]
     pub fn list_tools() -> String {
         serde_json::json!([
             {"id": "merge", "name": "Merge PDFs", "status": "stable"},
@@ -623,7 +630,8 @@ impl WasmPdfEngine {
             {"id": "img_deskew", "name": "Auto-Deskew Document Image", "status": "stable"},
             {"id": "img_convert", "name": "Universal Image Format Converter", "status": "stable"},
             {"id": "img_crop_to_content", "name": "Auto-Crop to Visual Content", "status": "stable"},
-            {"id": "img_redact", "name": "Redact Sensitive Image Regions", "status": "stable"}
+            {"id": "img_redact", "name": "Redact Sensitive Image Regions", "status": "stable"},
+            {"id": "pdf_edit_text", "name": "Edit PDF Text", "status": "stable"}
         ])
         .to_string()
     }

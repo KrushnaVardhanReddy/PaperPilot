@@ -3767,3 +3767,36 @@ pub async fn img_crop_to_content(req: axum::extract::Request) -> impl IntoRespon
 pub async fn img_redact(req: axum::extract::Request) -> impl IntoResponse {
     handle_tool(Path("img_redact".to_string()), req).await
 }
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PdfEditTextJsonRequest {
+    #[schema(example = "tests/e2e_fixtures/real/single_page.pdf")]
+    pub input: String,
+    #[schema(example = "tests/e2e_fixtures/out/penta_e2e/pdf_edit_text_out.pdf")]
+    pub output: Option<String>,
+    #[schema(example = "Helo")]
+    pub find: String,
+    #[schema(example = "Hello")]
+    pub replace: String,
+    #[schema(example = 1)]
+    pub page: Option<u32>,
+    #[schema(example = 1)]
+    pub occurrence: Option<u32>,
+    #[schema(example = true)]
+    pub match_case: Option<bool>,
+}
+
+/// Edit PDF Text [Find and replace text typos in-place inside PDF content streams] [Input: .pdf | Output: .pdf]
+#[utoipa::path(
+    post,
+    path = "/api/v1/pdf/edit-text",
+    tag = "PDF Operations",
+    request_body(content = PdfEditTextJsonRequest, description = "JSON configuration", content_type = "application/json"),
+    responses(
+        (status = 200, description = "Edit PDF Text completed", body = ApiResponse),
+        (status = 400, description = "Invalid request arguments"),
+        (status = 500, description = "Execution error")
+    )
+)]
+pub async fn pdf_edit_text(req: axum::extract::Request) -> impl IntoResponse {
+    handle_tool(Path("pdf_edit_text".to_string()), req).await
+}

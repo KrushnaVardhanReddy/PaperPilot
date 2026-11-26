@@ -211,6 +211,7 @@ export class WasmPdfEngine {
     static pdf_change_permissions(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static pdf_comic_archive(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static pdf_dedup_streams(input_bytes: Uint8Array, options_json: string): Uint8Array;
+    static pdf_edit_text(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static pdf_extract_patterns(input_bytes: Uint8Array, options_json: string): Uint8Array;
     static pdf_hash(input_bytes: Uint8Array): string;
     static pdf_info(input_bytes: Uint8Array): string;
@@ -324,6 +325,7 @@ export interface InitOutput {
     readonly wasmpdfengine_pdf_change_permissions: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_comic_archive: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_dedup_streams: (a: number, b: number, c: number, d: number, e: number) => void;
+    readonly wasmpdfengine_pdf_edit_text: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wasmpdfengine_pdf_extract_patterns: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly rust_zstd_wasm_shim_calloc: (a: number, b: number) => number;
     readonly rust_zstd_wasm_shim_free: (a: number) => void;

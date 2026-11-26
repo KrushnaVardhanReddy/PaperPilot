@@ -50,6 +50,7 @@ pub mod img_deskew;
 pub mod img_convert;
 pub mod img_crop_to_content;
 pub mod img_redact;
+pub mod pdf_edit_text;
 
 use crate::cli::{
     AiMediaCommands, Commands, DocumentOpsCommands, ExtendedPdfCommands, ExtractionCommands,
@@ -241,6 +242,23 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
         Commands::Workflow { .. } | Commands::Run { .. } => workflow::execute(command, false).0,
         Commands::ExtendedPdf(sub) => execute_extended_pdf(sub),
         Commands::AiMedia(sub) => execute_ai_media(sub),
+        Commands::PdfEditText {
+            input,
+            output,
+            find,
+            replace,
+            page,
+            occurrence,
+            match_case,
+        } => pdf_edit_text::handle_pdf_edit_text_command(
+            &resolve_input_path(input)?,
+            output,
+            find,
+            replace,
+            *page,
+            *occurrence,
+            *match_case,
+        ),
         Commands::ListTools => {
             println!("PaperPilot Available Tools (52 Core & Conversion Engines):\n");
             println!("{:<4} {:<24} {:<12} DESCRIPTION", "#", "TOOL ID", "STATUS");
@@ -511,6 +529,11 @@ pub fn execute_command(command: &Commands) -> OperationResult<()> {
                     "excel_to_csv",
                     "Stable (v0.5)",
                     "Export Excel worksheets to standard CSV files",
+                ),
+                (
+                    "pdf_edit_text",
+                    "Preview",
+                    "Find and replace text typos in-place inside PDF content streams",
                 ),
                 (
                     "img_redact",

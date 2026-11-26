@@ -35,6 +35,7 @@ export type OperationId =
   | 'pdf_decrypt'
   | 'pdf_dedup_streams'
   | 'pdf_delete_pages'
+  | 'pdf_edit_text'
   | 'pdf_encrypt'
   | 'pdf_extract_images'
   | 'pdf_extract_pages'
@@ -858,6 +859,18 @@ export const OPERATION_REGISTRY: Record<OperationId, {
     description: "Remove specific pages from the document",
     defaultParams: { input: '__input__', output: '__output__' },
     paramSchema: []
+  },
+  pdf_edit_text: {
+    label: "Edit PDF Text",
+    icon: "\u270f\ufe0f",
+    description: "Find and replace text typos in-place inside PDF content streams",
+    defaultParams: { input: '__input__', output: '__output__', find: '', replace: '' },
+    paramSchema: [
+      { key: 'find', label: 'Find Text', type: 'text', placeholder: 'Exact text to find' },
+      { key: 'replace', label: 'Replace With', type: 'text', placeholder: 'Corrected text' },
+      { key: 'page', label: 'Page (optional)', type: 'number', min: 1, step: 1, placeholder: 'All pages' },
+      { key: 'occurrence', label: 'Occurrence (optional)', type: 'number', min: 1, step: 1, placeholder: 'All matches' }
+    ]
   },
   pdf_extract_images: {
     label: "Extract Embedded Images",

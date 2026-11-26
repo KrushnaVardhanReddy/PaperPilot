@@ -37,6 +37,7 @@ use utoipa_swagger_ui::SwaggerUi;
         handlers::rag_chunks,
         handlers::handle_tool,
         handlers::list_tools,
+        handlers::pdf_edit_text,
         handlers::img_redact,
         handlers::img_crop_to_content,
         handlers::img_convert,
@@ -76,6 +77,7 @@ use utoipa_swagger_ui::SwaggerUi;
     ),
     components(
         schemas(
+        handlers::PdfEditTextJsonRequest,
         handlers::PdfInvertColorsJsonRequest,
             handlers::PdfSplitScannedBookJsonRequest,
             handlers::HealthResponse,
@@ -371,6 +373,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/info", post(handlers::info))
         .route("/api/v1/pdf/compare", post(handlers::compare))
         .route("/api/v1/pdf/mcp-exec", post(handlers::mcp_exec))
+        .route("/api/v1/pdf/edit-text", post(handlers::pdf_edit_text) )
         .route("/api/v1/pdf/img-redact", post(handlers::img_redact) )
         .route("/api/v1/pdf/img-crop-to-content", post(handlers::img_crop_to_content) )
         .route("/api/v1/pdf/img-convert", post(handlers::img_convert) )
@@ -538,6 +541,7 @@ pub async fn build_app(registry: WatcherRegistry) -> Router {
         .route("/api/v1/pdf/excel_to_json", post(handlers::excel_to_json))
         .route("/api/v1/pdf/excel_to_csv", post(handlers::excel_to_csv))
         .route("/api/v1/pdf/pdf_dedup_streams", post(handlers::pdf_dedup_streams))
+        .route("/api/v1/pdf/pdf_edit_text", post(handlers::pdf_edit_text))
         .route("/api/v1/pdf/pdf_invert_colors", post(handlers::pdf_invert_colors))
         .route("/api/v1/pdf/pdf_linearize", post(handlers::pdf_linearize))
         .route("/api/v1/pdf/pdf_repair", post(handlers::pdf_repair))

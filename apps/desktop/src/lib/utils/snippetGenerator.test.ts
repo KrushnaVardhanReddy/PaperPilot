@@ -118,4 +118,31 @@ describe('snippetGenerator', () => {
         expect(snippets.mcpAgentPrompt).toContain('Perform Split on "book.pdf"');
         expect(snippets.embedJs).toContain("window.PaperPilot.executeTool('pdf_split'");
     });
+
+    it('generates correct snippets for pdf_edit_text', () => {
+        const target: SnippetTarget = {
+            toolId: 'pdf_edit_text',
+            intent: 'Edit PDF Text',
+            params: {
+                find: 'Helo',
+                replace: 'Hello',
+                page: 2,
+                occurrence: 1,
+                match_case: false
+            },
+            inputFile: 'draft.pdf',
+            outputFile: 'draft_edited.pdf'
+        };
+
+        const snippets = generateSnippets(target);
+
+        expect(snippets.cli).toContain('paperpilot edit-text --input "draft.pdf" --find "Helo" --replace "Hello" --page 2 --occurrence 1 --match-case false --output "draft_edited.pdf"');
+        expect(snippets.curl).toContain('http://localhost:7823/api/v1/pdf/edit-text');
+        expect(snippets.curl).toContain('-F "occurrence=1"');
+        expect(snippets.mcpToolCall).toContain('"name": "pdf_edit_text"');
+        expect(snippets.mcpToolCall).toContain('"find": "Helo"');
+        expect(snippets.mcpToolCall).toContain('"replace": "Hello"');
+        expect(snippets.mcpToolCall).toContain('"occurrence": 1');
+        expect(snippets.embedJs).toContain("window.PaperPilot.executeTool('pdf_edit_text'");
+    });
 });

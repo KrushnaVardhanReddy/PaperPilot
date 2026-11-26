@@ -54,6 +54,7 @@ flatten(file: Uint8Array): Promise<Uint8Array>;
     pdf_dedup_streams(file: Uint8Array, options?: any): Promise<Uint8Array>;
     pdf_to_epub(file: Uint8Array, options?: any): Promise<Uint8Array>;
     pdf_extract_patterns(file: Uint8Array, options?: any): Promise<Uint8Array>;
+    pdf_edit_text(file: Uint8Array, options?: any): Promise<Uint8Array>;
 }
 
 export class WasmPdfClientImpl implements WasmPdfClient {
@@ -301,6 +302,10 @@ set_metadata(file: Uint8Array, title?: string, author?: string, subject?: string
 
     pdf_extract_patterns(file: Uint8Array, options?: any): Promise<Uint8Array> {
         return this.sendRequest('pdf_extract_patterns', { file, options });
+    }
+
+    pdf_edit_text(file: Uint8Array, options?: any): Promise<Uint8Array> {
+        return this.sendRequest('pdf_edit_text', { file, options });
     }
 
 }

@@ -197,6 +197,11 @@ export interface OperationContext {
     imgOptimizeQuality?: number;
     imgConvertFormat?: string;
     imgConvertQuality?: number;
+    editTextFind?: string;
+    editTextReplace?: string;
+    editTextPage?: number | string;
+    editTextOccurrence?: number | string;
+    editTextMatchCase?: boolean;
 }
 
 export async function buildOperationArgs(toolId: string, context: OperationContext): Promise<Record<string, any> | null> {
@@ -1380,6 +1385,35 @@ export async function buildOperationArgs(toolId: string, context: OperationConte
             };
             if (args.rect === undefined) delete args.rect;
             if (args.color === undefined) delete args.color;
+            break;
+        }
+        case 'edit_text':
+        case 'pdf_edit_text': {
+            const parsePositiveInt = (val?: number | string | null): number | undefined => {
+                if (val === undefined || val === null || String(val).trim() === '') {
+                    return undefined;
+                }
+                const parsed = Number(val);
+                return Number.isFinite(parsed) && parsed >= 1 ? Math.trunc(parsed) : undefined;
+            };
+            const editArgs: Record<string, any> = {
+                input: docPath,
+                output: customOutputPath || getOutputPath(`${docName.replace(/\.[^.]+$/i, '')}_edited.pdf`),
+                find: context.editTextFind ?? '',
+                replace: context.editTextReplace ?? ''
+            };
+            const parsedPage = parsePositiveInt(context.editTextPage);
+            if (parsedPage !== undefined) {
+                editArgs.page = parsedPage;
+            }
+            const parsedOccurrence = parsePositiveInt(context.editTextOccurrence);
+            if (parsedOccurrence !== undefined) {
+                editArgs.occurrence = parsedOccurrence;
+            }
+            if (context.editTextMatchCase !== undefined) {
+                editArgs.match_case = context.editTextMatchCase;
+            }
+            args = editArgs;
             break;
         }
         default:
