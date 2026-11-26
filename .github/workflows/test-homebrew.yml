@@ -1,0 +1,48 @@
+name: Test Homebrew Tap Installation
+
+on:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  # 1. Test macOS Cask & Formula on real macOS runner
+  test-macos-cask-and-formula:
+    name: Test macOS (Cask & Formula)
+    runs-on: macos-latest
+    steps:
+      - name: Tap repository
+        run: |
+          brew tap KrushnaVardhanReddy/tap
+
+      - name: Test Cask (Desktop App)
+        run: |
+          echo "Installing Desktop Cask..."
+          brew install --cask KrushnaVardhanReddy/tap/paperpilot
+          echo "Verifying PaperPilot.app in /Applications..."
+          ls -ld /Applications/PaperPilot.app
+
+      - name: Test Formula (CLI)
+        run: |
+          echo "Installing CLI Formula..."
+          brew install KrushnaVardhanReddy/tap/paperpilot
+          echo "Verifying CLI version and output..."
+          paperpilot --help
+
+  # 2. Test Linuxbrew on Ubuntu runner
+  test-linuxbrew-formula:
+    name: Test Linuxbrew (CLI Formula)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Homebrew on Linux
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Tap repository
+        run: |
+          brew tap KrushnaVardhanReddy/tap
+
+      - name: Install and verify CLI Formula
+        run: |
+          brew install KrushnaVardhanReddy/tap/paperpilot
+          echo "Verifying paperpilot CLI executable on Linux..."
+          paperpilot --help

@@ -72,12 +72,29 @@
 ```
 
 ### 🥇 Tier 1: Distribution & Registries (Immediate Focus)
-*Goal: Expand reach, installability, and ecosystem presence following the v0.8.1 launch.*
+*Goal: Expand reach, installability, and ecosystem presence following the v0.8.2 release (turn 1,200+ direct GitHub downloads into 10,000+ automated terminal installs).*
 
-1. **Homebrew Tap & Crates.io Publishing**:
-   - Publish `paperpilot-cli` and `paperpilot-core` to crates.io (`cargo binstall paperpilot-cli` support).
-   - Maintain official Homebrew tap `brew install usepaperpilot/tap/paperpilot`.
-2. **Glama TDQS Re-scoring & Verification**:
+1. **Homebrew Distribution Plan (macOS / Linux)**:
+   - **Phase A (Custom Tap - Launch Immediately)**:
+     - Repository: `https://github.com/KrushnaVardhanReddy/homebrew-tap`
+     - Formula/Cask type: **Cask** (`Casks/paperpilot.rb`) pointing to official GitHub Release macOS `.dmg` assets (`aarch64` and `x64`).
+     - Target user command:
+       ```bash
+       brew install KrushnaVardhanReddy/tap/paperpilot
+       ```
+     - Add automated GitHub Action dispatch in `.github/workflows/release.yml` on release publish to compute SHA256 of `.dmg` and push updated cask to `KrushnaVardhanReddy/homebrew-tap`.
+   - **Phase B (Official Upstream `homebrew/cask` Submission)**:
+     - Run `brew create --cask https://github.com/KrushnaVardhanReddy/PaperPilot/releases/download/v<version>/PaperPilot_<version>_aarch64.dmg`.
+     - Validate via `brew audit --cask --strict --online paperpilot` and `brew style --cask paperpilot`.
+     - Submit PR to `Homebrew/homebrew-cask` for universal `brew install --cask paperpilot`.
+
+2. **WinGet Distribution Plan (Windows - Pending)**:
+   - Target User Command: `winget install PaperPilot.PaperPilot` (deferred to subsequent phase; focus on Homebrew tap automation first).
+
+3. **Flathub Strategy (Linux)**:
+   - On hold for a few weeks before raising any new PR to respect submission intervals.
+
+4. **Glama TDQS Re-scoring & Verification**:
    - Trigger Glama.ai re-inspection to confirm TDQS Grade A / A+ status on the newly published `@usepaperpilot/mcp@0.8.1`.
 3. **In-Memory Parser Self-Healing**:
    - Pre-flight repair of malformed XREF tables, damaged trailers, and truncated streams across all document intake tools.
