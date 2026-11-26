@@ -556,7 +556,7 @@ mod tests {
 
         // Verify mimetype is entry index 0 and stored uncompressed
         let mut mimetype = archive.by_index(0).unwrap();
-        assert_eq!(mimetype.name(), "mimetype");
+        assert_eq!(mimetype.name().unwrap(), "mimetype");
         assert_eq!(mimetype.compression(), zip::CompressionMethod::Stored);
 
         let mut mimetype_content = String::new();
