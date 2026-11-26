@@ -171,6 +171,19 @@ impl LopdfDocument {
         self.source.as_deref().is_some_and(DocumentSource::is_mmap)
     }
 
+    /// Returns `true` if this document is safe to load/parse via `pdf_oxide` without
+    /// exceeding the maximum heap threshold for memory-mapped or zero-copy buffers.
+    #[inline]
+    pub fn is_safe_for_pdf_oxide(&self) -> bool {
+        if let Some(bytes) = self.source_bytes() {
+            !bytes.is_empty()
+                && (!self.is_mmap()
+                    || bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES)
+        } else {
+            false
+        }
+    }
+
     /// Extracts plain text across pages in parallel on native targets (via `rayon`), falling back
     /// cleanly to sequential extraction on WASM targets.
     pub fn extract_text_parallel(&self, pages: Option<&[u32]>) -> OperationResult<Vec<String>> {

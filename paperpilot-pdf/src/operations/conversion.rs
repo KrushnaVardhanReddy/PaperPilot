@@ -528,7 +528,7 @@ impl Ctm {
 }
 
 fn extract_page_media(
-    lopdf_doc: &mut lopdf::Document,
+    lopdf_doc: &lopdf::Document,
     page_id: (u32, u16),
     original_bytes: &[u8],
     page_index: usize,
@@ -969,11 +969,8 @@ impl PdfOperation for PdfToHtmlOperation {
             DEFAULT_PDF_HTML_CSS.trim().to_string()
         };
 
-        let is_mmap = lopdf_doc.source.as_deref().is_some_and(|s| s.is_mmap());
-        let raw_bytes = lopdf_doc
-            .original_bytes
-            .as_deref()
-            .or_else(|| lopdf_doc.source.as_deref().map(|s| s.as_slice()));
+        let is_mmap = lopdf_doc.is_mmap();
+        let raw_bytes = lopdf_doc.source_bytes();
         if let Some(bytes) = raw_bytes
             && !bytes.is_empty()
             && (!is_mmap || bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES)
@@ -998,7 +995,7 @@ impl PdfOperation for PdfToHtmlOperation {
                 };
 
                 let page_media = if obj_id.0 != 0 {
-                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                    extract_page_media(&lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
                 } else {
                     Vec::new()
                 };
@@ -1207,11 +1204,8 @@ impl PdfOperation for PdfToMarkdownOperation {
 
         let mut md = String::new();
 
-        let is_mmap = lopdf_doc.source.as_deref().is_some_and(|s| s.is_mmap());
-        let raw_bytes = lopdf_doc
-            .original_bytes
-            .as_deref()
-            .or_else(|| lopdf_doc.source.as_deref().map(|s| s.as_slice()));
+        let is_mmap = lopdf_doc.is_mmap();
+        let raw_bytes = lopdf_doc.source_bytes();
         if let Some(bytes) = raw_bytes
             && !bytes.is_empty()
             && (!is_mmap || bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES)
@@ -1232,7 +1226,7 @@ impl PdfOperation for PdfToMarkdownOperation {
                 };
 
                 let page_media = if obj_id.0 != 0 {
-                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                    extract_page_media(&lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
                 } else {
                     Vec::new()
                 };
