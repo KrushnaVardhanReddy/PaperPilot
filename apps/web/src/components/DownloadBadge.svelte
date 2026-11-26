@@ -4,17 +4,21 @@
 
   interface Props {
     repo?: string;
+    npmPackage?: string;
     forceShow?: boolean;
     minThreshold?: number;
   }
 
   let {
     repo = 'KrushnaVardhanReddy/PaperPilot',
+    npmPackage = '@usepaperpilot/mcp',
     forceShow = false,
     minThreshold = MIN_DOWNLOAD_COUNT_THRESHOLD
   }: Props = $props();
 
   let downloadCount = $state<number | null>(null);
+  let githubDownloads = $state<number>(0);
+  let npmDownloads = $state<number>(0);
   let latestReleaseTag = $state<string | null>(null);
   let loading = $state(true);
 
@@ -28,35 +32,66 @@
     }
 
     try {
-      const cached = sessionStorage.getItem(`gh_dls_${repo}`);
+      const cacheKey = `eco_dls_${repo}_${npmPackage}`;
+      const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Date.now() - parsed.timestamp < 1000 * 60 * 15) { // 15 min cache
           downloadCount = parsed.count;
+          githubDownloads = parsed.ghCount || 0;
+          npmDownloads = parsed.npmCount || 0;
           latestReleaseTag = parsed.tag;
           loading = false;
           return;
         }
       }
 
-      const res = await fetch(`https://api.github.com/repos/${repo}/releases`);
-      if (res.ok) {
-        const releases = await res.json();
-        let total = 0;
+      // Fetch GitHub Releases and npm stats in parallel
+      const [ghRes, npmRes] = await Promise.allSettled([
+        fetch(`https://api.github.com/repos/${repo}/releases`),
+        fetch(`https://api.npmjs.org/downloads/range/2026-01-01:${new Date().toISOString().slice(0, 10)}/${npmPackage}`)
+      ]);
+
+      let ghTotal = 0;
+      let npmTotal = 0;
+
+      if (ghRes.status === 'fulfilled' && ghRes.value.ok) {
+        const releases = await ghRes.value.json();
         if (Array.isArray(releases) && releases.length > 0) {
           latestReleaseTag = releases[0].tag_name || releases[0].name;
           for (const rel of releases) {
             if (Array.isArray(rel.assets)) {
               for (const asset of rel.assets) {
-                total += Number(asset.download_count) || 0;
+                ghTotal += Number(asset.download_count) || 0;
               }
             }
           }
         }
+      }
+
+      if (npmRes.status === 'fulfilled' && npmRes.value.ok) {
+        const npmData = await npmRes.value.json();
+        if (Array.isArray(npmData?.downloads)) {
+          for (const item of npmData.downloads) {
+            npmTotal += Number(item.downloads) || 0;
+          }
+        }
+      }
+
+      const total = ghTotal + npmTotal;
+      if (total > 0) {
         downloadCount = total;
+        githubDownloads = ghTotal;
+        npmDownloads = npmTotal;
         sessionStorage.setItem(
-          `gh_dls_${repo}`,
-          JSON.stringify({ count: total, tag: latestReleaseTag, timestamp: Date.now() })
+          cacheKey,
+          JSON.stringify({
+            count: total,
+            ghCount: ghTotal,
+            npmCount: npmTotal,
+            tag: latestReleaseTag,
+            timestamp: Date.now()
+          })
         );
       }
     } catch {
@@ -82,6 +117,11 @@
   const shouldRender = $derived(
     isEnabled && !loading && downloadCount !== null && downloadCount >= minThreshold
   );
+  const tooltip = $derived(
+    downloadCount !== null
+      ? `${downloadCount.toLocaleString()} total ecosystem downloads (${githubDownloads.toLocaleString()} desktop releases + ${npmDownloads.toLocaleString()} npm installs)${latestReleaseTag ? ` · Latest: ${latestReleaseTag}` : ''}`
+      : 'Ecosystem Downloads'
+  );
 </script>
 
 {#if shouldRender}
@@ -90,7 +130,7 @@
   target="_blank"
   rel="noopener noreferrer"
   class="downloads-badge"
-  title={downloadCount !== null ? `${downloadCount.toLocaleString()} total downloads${latestReleaseTag ? ` · Latest: ${latestReleaseTag}` : ''}` : 'GitHub Releases'}
+  title={tooltip}
 >
   <svg class="dl-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
