@@ -38,6 +38,10 @@ pub struct Cli {
     /// Fire webhook only on operation failure
     #[arg(global = true, long)]
     pub webhook_on_failure: bool,
+
+    /// Force zero-copy memory-mapped (`memmap2`) streaming regardless of file size threshold
+    #[arg(global = true, long)]
+    pub mmap: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -154,135 +158,15 @@ pub enum Commands {
     },
 
     // --- Group B: Document Operations ---
-    /// Compress PDF: Reduce document file size [Input: .pdf | Output: .pdf]
-    Compress {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        quality: String,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    #[command(name = "pdf-repair", alias = "repair")]
-    Repair {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Fast Web View: Optimize PDF for fast web viewing [Input: .pdf | Output: .pdf]
-    #[command(name = "pdf-linearize", alias = "linearize")]
-    Linearize {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Encrypt with Password: Protect document [Input: .pdf | Output: .pdf]
-    Encrypt {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long, visible_alias = "password", alias = "password")]
-        user_password: Option<String>,
-        #[arg(long)]
-        owner_password: Option<String>,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Remove Password: Remove password restrictions [Input: .pdf | Output: .pdf]
-    Decrypt {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        password: Option<String>,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Add Watermark: Stamp text or branding [Input: .pdf | Output: .pdf]
-    #[command(name = "watermark", alias = "pdf-watermark", alias = "pdf_watermark")]
-    Watermark {
-        #[arg(long)]
-        input: std::path::PathBuf,
-        #[arg(long)]
-        text: String,
-        #[arg(long, default_value_t = 45.0)]
-        angle: f32,
-        #[arg(long, default_value_t = 0.2)]
-        opacity: f32,
-        #[arg(long)]
-        color: Option<String>,
-        #[arg(long)]
-        font_size: Option<f32>,
-        #[arg(long)]
-        output: std::path::PathBuf,
-    },
-    /// Redact Text: Permanently remove sensitive information [Input: .pdf | Output: .pdf]
-    #[command(name = "redact", alias = "pdf-redact", alias = "pdf_redact")]
-    Redact {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long, default_value = "1")]
-        pages: String,
-        #[arg(long, default_value = "0,0,100,100")]
-        rect: String,
-        #[arg(long)]
-        data: Option<String>,
-        #[arg(long)]
-        query: Option<String>,
-        #[arg(long)]
-        regex: Option<String>,
-        #[arg(long)]
-        overlay_text: Option<String>,
-        #[arg(long, default_value = "all")]
-        occurrence: String,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]
-    /// Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]
-    #[command(name = "pii-scan", alias = "document-pii-scan", alias = "document_pii_scan", alias = "pii_scan")]
-    PiiScan {
+    #[command(flatten)]
+    DocumentOps(DocumentOpsCommands),
+    /// Inspect PDF Metadata & Page Count: Display PDF page count and version [Input: .pdf | Output: .json]
+    #[command(name = "info", alias = "pdf-info", alias = "pdf_info")]
+    Info {
         #[arg(long)]
         input: PathBuf,
         #[arg(long)]
         output: Option<PathBuf>,
-        #[arg(long, default_value_t = true)]
-        scan_ssn: bool,
-        #[arg(long, default_value_t = true)]
-        scan_credit_cards: bool,
-        #[arg(long, default_value_t = true)]
-        scan_emails: bool,
-        #[arg(long, default_value_t = true)]
-        scan_phones: bool,
-        #[arg(long, default_value_t = true)]
-        scan_iban: bool,
-    },
-    Sanitize {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value_t = true)]
-        remove_metadata: bool,
-        #[arg(long, default_value_t = true)]
-        remove_attachments: bool,
-        #[arg(long, default_value_t = true)]
-        remove_scripts: bool,
-    },
-    /// Edit Metadata: Edit document metadata [Input: .pdf | Output: .pdf]
-    Metadata {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        title: Option<String>,
-        #[arg(long)]
-        author: Option<String>,
-        #[arg(long)]
-        subject: Option<String>,
-        #[arg(long)]
-        keywords: Option<String>,
-        #[arg(long)]
-        output: PathBuf,
     },
     /// Sign Document: Apply digital signature to document [Input: .pdf | Output: .pdf]
     #[command(alias = "sign", alias = "pdf-sign", alias = "pdf_sign")]
@@ -294,57 +178,10 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    /// Flatten Annotations: Bake annotations and forms into page [Input: .pdf | Output: .pdf]
-    #[command(alias = "pdf-flatten", alias = "pdf_flatten")]
-    Flatten {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Convert to PDF/A: Archive-ready PDF format conversion [Input: .pdf | Output: .pdf]
-    /// Invert PDF colors or apply dark mode
-    #[command(name = "pdf-invert-colors", alias = "invert-colors")]
-    InvertColors {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        mode: Option<String>,
-        #[arg(long)]
-        pages: Option<String>,
-    },
     #[command(name = "pdf-a", alias = "to-pdf-a", alias = "pdf-to-pdf-a", alias = "pdf_to_pdf_a")]
     PdfA {
         #[arg(long)]
         input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Header & Footer: Add headers and footers to pages [Input: .pdf | Output: .pdf]
-    #[command(name = "header-footer", alias = "header_footer", alias = "pdf-header-footer", alias = "pdf_header_footer")]
-    HeaderFooter {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        text: String,
-        #[arg(long, default_value = "header")]
-        position: String,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Bates Numbering: Apply Bates stamps to pages [Input: .pdf | Output: .pdf]
-    #[command(name = "bates", alias = "pdf-bates", alias = "pdf_bates")]
-    Bates {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long, default_value = "CONF-")]
-        prefix: String,
-        #[arg(long, default_value_t = 1)]
-        start: u32,
-        #[arg(long, default_value = "bottom-right")]
-        position: String,
         #[arg(long)]
         output: PathBuf,
     },
@@ -359,87 +196,9 @@ pub enum Commands {
         position: String,
     },
 
-    // --- Group C & D: Extraction, Search & Conversion ---
-    /// PDF to Plain Text: Extract all raw textual content from a PDF [Input: .pdf | Output: .txt]
-    ExtractText {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value = "text")]
-        format: String,
-    },
-    /// Extract Tabular Data: Extract tables to JSON or CSV [Input: .pdf | Output: .json / .csv]
-    ExtractTables {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-        #[arg(long, default_value = "json")]
-        format: String,
-        #[arg(long, default_value = "all")]
-        pages: String,
-    },
-    #[command(name = "extract-images", alias = "pdf-extract-images", alias = "pdf_extract_images")]
-    ExtractImages {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long, alias = "output-dir")]
-        output: PathBuf,
-    },
-    /// Search Text: Search for text across document [Input: .pdf | Output: .json]
-    #[command(name = "search", alias = "pdf-search", alias = "pdf_search")]
-    Search {
-        #[arg(long)]
-        input: Option<PathBuf>,
-        #[arg(long)]
-        query: String,
-        #[arg(long)]
-        dir: Option<PathBuf>,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    /// Render Page: Render page to image format [Input: .pdf | Output: png/jpeg/webp images]
-    #[command(name = "render", alias = "pdf-render", alias = "pdf_render")]
-    Render {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long, default_value = "1")]
-        page: u32,
-        #[arg(long, default_value_t = 150.0)]
-        dpi: f32,
-        #[arg(long)]
-        format: Option<String>,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Compare PDFs: Diff two documents and highlight changes [Input: 2 .pdfs | Output: .pdf / .json]
-    Compare {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        input_b: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    /// OCR Text Recognition: Run OCR on scanned pages [Input: .pdf | Output: .txt / .pdf]
-    Ocr {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-        #[arg(long, default_value = "pdf")]
-        format: String,
-        #[arg(long)]
-        clipboard: bool,
-        #[arg(long)]
-        tier: Option<String>,
-    },
-    /// Extract Bookmarks: Read document outline and bookmarks [Input: .pdf | Output: .json]
-    Bookmarks {
-        #[arg(long)]
-        input: PathBuf,
-    },
+    // --- Group C, D & E: Extraction, Search, Conversion & Forms ---
+    #[command(flatten)]
+    Extraction(ExtractionCommands),
     /// Images to PDF: Combine images into PDF [Input: images | Output: .pdf]
     ImagesToPdf {
         #[arg(long, required = true, num_args = 1..)]
@@ -447,605 +206,10 @@ pub enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-
-    // --- Validate ---
-    /// Add Annotations: Programmatically add annotations [Input: .pdf | Output: .pdf]
-    #[command(name = "annotate", alias = "pdf-annotate", alias = "pdf_annotate")]
-    Annotate {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long, default_value = "[]")]
-        data: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    #[command(name = "classify-type", alias = "classify", alias = "pdf-classify-type", alias = "pdf_classify_type")]
-    Classify {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt/.json]
-    #[command(alias = "pdf-validate", alias = "pdf_validate")]
-    Validate {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    /// Generate Hash: Calculate document checksums [Input: .pdf | Output: .txt]
-    #[command(alias = "pdf-hash", alias = "pdf_hash")]
-    Hash {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    Verify {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        expected_hash: String,
-    },
-
-    // --- Group E: Forms ---
-    #[command(alias = "pdf-form", alias = "pdf_form")]
-    Form {
-        #[command(subcommand)]
-        command: FormCommands,
-    },
-    // --- Group D: Conversion ---
-    Convert {
-        #[arg(long, required = true)]
-        format: String,
-        #[arg(long, required = true)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-        #[arg(long)]
-        css: Option<PathBuf>,
-        #[arg(long)]
-        css_preset: Option<String>,
-        #[arg(long)]
-        inline_css: Option<String>,
-    },
-    /// Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity.
-    #[command(name = "pdf-validate-signatures", alias = "validate-signatures", alias = "validate_signatures", alias = "pdf_validate_signatures")]
-    PdfValidateSignatures {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        /// Optional path to the baseline reference PDF for pre-sign tamper detection
-        #[arg(long)]
-        baseline: Option<PathBuf>,
-    },
-    /// Booklet Imposition: Reorder and impose pages for 2-sided folding booklet printing.
-    #[command(name = "pdf-booklet")]
-    PdfBooklet {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// N-Up Page Imposition: Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.
-    #[command(name = "pdf-nup", alias = "nup", alias = "pdf_nup")]
-    PdfNup {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value_t = 2)]
-        nup: u32,
-        #[arg(long, default_value = "horizontal")]
-        ordering: String,
-        #[arg(long, default_value_t = 18.0)]
-        margin: f32,
-        #[arg(long, default_value_t = 10.0)]
-        spacing: f32,
-        #[arg(long, default_value_t = false)]
-        draw_borders: bool,
-    },
-    /// Scale Page Dimensions: Scale page dimensions between standard formats or percentages.
-    #[command(name = "pdf-scale-pages", alias = "scale-pages", alias = "scale_pages", alias = "pdf_scale_pages")]
-    PdfScalePages {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value = "A4")]
-        target_size: Option<String>,
-        #[arg(long, default_value = "1.0")]
-        scale_factor: Option<f32>,
-    },
-    /// Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations.
-    #[command(name = "pdf-remove-signatures", alias = "remove-signatures", alias = "remove_signatures", alias = "pdf_remove_signatures")]
-    PdfRemoveSignatures {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Stamp Image & Logo: Place coordinate-exact images, logos, and badges onto PDF pages.
-    #[command(name = "pdf-stamp", alias = "stamp", alias = "pdf_stamp")]
-    PdfStamp {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        image: Option<PathBuf>,
-        #[arg(long)]
-        x: Option<f32>,
-        #[arg(long)]
-        y: Option<f32>,
-        #[arg(long)]
-        width: Option<f32>,
-        #[arg(long)]
-        height: Option<f32>,
-        #[arg(long)]
-        opacity: Option<f32>,
-        #[arg(long)]
-        pages: Option<String>,
-    },
-    /// Fill AcroForm Interactive Form: Populate text boxes, checkboxes and choices with JSON dataset.
-    #[command(name = "pdf-fill-form", alias = "fill-form", alias = "pdf_fill_form")]
-    PdfFillForm {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        data: PathBuf,
-        #[arg(short, long)]
-        output: PathBuf,
-    },
-    /// Add AcroForm Field: Append interactive widget annotation with coordinates and field name to target page.
-    #[command(name = "pdf-create-form-field", alias = "create-form-field", alias = "pdf_create_form_field", alias = "add-field")]
-    PdfCreateFormField {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        name: String,
-        #[arg(long)]
-        label: Option<String>,
-        #[arg(long, default_value = "text")]
-        r#type: String,
-        #[arg(long, default_value = "1")]
-        page: i32,
-        #[arg(long)]
-        rect: String,
-        #[arg(short, long)]
-        output: PathBuf,
-    },
-    /// Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground.
-    #[command(name = "pdf-overlay-underlay", alias = "overlay-underlay", alias = "overlay_underlay", alias = "pdf_overlay_underlay")]
-    PdfOverlayUnderlay {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        stationery: Option<PathBuf>,
-        #[arg(long)]
-        template: Option<PathBuf>,
-        #[arg(long)]
-        mode: Option<String>,
-        #[arg(long)]
-        pages: Option<String>,
-        #[arg(long)]
-        opacity: Option<f32>,
-    },
-    /// Auto Upright Orientation: Heuristically detect text baseline and rotation angle to automatically upright pages.
-    #[command(name = "pdf-auto-rotate")]
-    PdfAutoRotate {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Stitch Continuous Canvas: Combine multiple pages vertically or horizontally into a continuous single-page canvas.
-    #[command(name = "pdf-stitch-canvas")]
-    PdfStitchCanvas {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value = "vertical")]
-        direction: String,
-        #[arg(long, default_value_t = 0.0)]
-        margin: f32,
-        #[arg(long, default_value_t = 0.0)]
-        spacing: f32,
-    },
-    /// PDF Portfolio Attachments: Inspect, extract, or embed file attachments into PDF portfolios.
-    #[command(name = "pdf-attachments")]
-    PdfAttachments {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        action: Option<String>,
-        #[arg(long)]
-        file_name: Option<String>,
-        #[arg(long)]
-        file: Option<PathBuf>,
-    },
-    /// Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens.
-    #[command(name = "pdf-timestamp", alias = "timestamp")]
-    PdfTimestamp {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        server_url: Option<String>,
-    },
-    /// Modify PDF Permissions: Configure user and owner permissions for printing, copying, and modification.
-    #[command(name = "pdf-change-permissions", alias = "change-permissions")]
-    PdfChangePermissions {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        allow_print: Option<bool>,
-        #[arg(long)]
-        allow_copy: Option<bool>,
-        #[arg(long)]
-        allow_modify: Option<bool>,
-    },
-    /// Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages.
-    #[command(name = "pdf-split-scanned-book")]
-    PdfSplitScannedBook {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        /// Reading direction (ltr or rtl)
-        #[arg(long, default_value = "ltr")]
-        reading_direction: String,
-        /// Gutter overlap in points
-        #[arg(long, default_value = "0.0")]
-        gutter_overlap: f32,
-        /// Split horizontally (top/bottom)
-        #[arg(long)]
-        split_horizontal: bool,
-    },
-    /// Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR).
-    #[command(name = "pdf-comic-archive", alias = "comic-archive", alias = "pdf_comic_archive")]
-    PdfComicArchive {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Split PDF by Outline: Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy
-    #[command(name = "pdf-split-by-outline")]
-    PdfSplitByOutline {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Alternating PDF Merge: Interleave pages from two PDF documents.
-    #[command(name = "pdf-merge-alternate")]
-    PdfMergeAlternate {
-        #[arg(long)]
-        input_a: PathBuf,
-        #[arg(long)]
-        input_b: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value = "false")]
-        reverse_a: bool,
-        #[arg(long, default_value = "false")]
-        reverse_b: bool,
-        #[arg(long, default_value = "1")]
-        step: usize,
-        #[arg(long, default_value = "1")]
-        step_b: usize,
-    },
-    /// Multi-Sheet Poster Tile Slicer: Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides
-    #[command(name = "pdf-posterize")]
-    PdfPosterize {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, default_value = "a4")]
-        target_sheet: String,
-        #[arg(long)]
-        grid: Option<String>,
-        #[arg(long, default_value = "14.17")]
-        overlap: f32,
-        #[arg(long, default_value = "1.0")]
-        scale: f32,
-        #[arg(long, default_value = "true")]
-        guides: bool,
-    },
-    /// Lossless Stream Deduplication: Lossless hash-based indirect object stream deduplication & CMYK-safe image compression
-    #[command(name = "pdf-dedup-streams")]
-    PdfDedupStreams {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks
-    #[command(name = "pdf-to-epub", alias = "to-epub", alias = "pdf_to_epub")]
-    PdfToEpub {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    #[command(name = "pdf-to-html")]
-    PdfToHtml {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    #[command(name = "pdf-to-markdown")]
-    PdfToMarkdown {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    #[command(name = "pdf-to-json")]
-    PdfToJson {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    #[command(name = "json-to-pdf", alias = "json_to_pdf")]
-    JsonToPdf {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-    },
-    /// Render Markdown source documents into publication-ready styled PDF files
-    #[command(name = "md-to-pdf", alias = "md_to_pdf", alias = "convert-markdown", alias = "pdf-convert-markdown", alias = "pdf_convert_markdown")]
-    MdToPdf {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        preset: Option<String>,
-        #[arg(long)]
-        css: Option<PathBuf>,
-        #[arg(long)]
-        custom_css: Option<String>,
-        #[arg(long)]
-        orientation: Option<String>,
-    },
-    /// Convert HTML source code and web pages directly into styled PDF documents
-    #[command(name = "html-to-pdf", alias = "html_to_pdf", alias = "convert-html", alias = "pdf-convert-html", alias = "pdf_convert_html")]
-    HtmlToPdf {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        preset: Option<String>,
-        #[arg(long)]
-        css: Option<PathBuf>,
-        #[arg(long)]
-        custom_css: Option<String>,
-        #[arg(long)]
-        orientation: Option<String>,
-    },
-    /// Convert spreadsheet (Excel / CSV) to formatted PDF document
-    #[command(name = "convert-excel", alias = "convert_excel", alias = "pdf-convert-excel", alias = "pdf_convert_excel", alias = "excel-to-pdf", alias = "excel_to_pdf")]
-    ConvertExcel {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        preset: Option<String>,
-        #[arg(long)]
-        css: Option<PathBuf>,
-        #[arg(long)]
-        custom_css: Option<String>,
-        #[arg(long)]
-        orientation: Option<String>,
-    },
-    #[command(name = "rag-chunks", alias = "rag_chunks", alias = "pdf-rag-chunks", alias = "pdf_rag_chunks")]
-    RagChunks {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    /// Intelligent structure-aware semantic chunking with dynamic overlap for AI agents [Input: .pdf | Output: .json]
-    #[command(name = "pdf-chunk", alias = "pdf_chunk", alias = "chunk")]
-    PdfChunk {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long, default_value_t = 500)]
-        target_tokens: usize,
-        #[arg(long, alias = "overlap-tokens", default_value_t = 50)]
-        overlap: usize,
-        #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
-        strip_boilerplate: bool,
-        #[arg(long, action = clap::ArgAction::SetTrue)]
-        no_strip_boilerplate: bool,
-        #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
-        break_on_headings: bool,
-        #[arg(long, action = clap::ArgAction::SetTrue)]
-        no_break_on_headings: bool,
-        #[arg(long, alias = "json-out")]
-        output: Option<PathBuf>,
-    },
-    #[command(name = "workspace-search", alias = "workspace_search")]
-    WorkspaceSearch {
-        #[arg(long)]
-        input: Option<PathBuf>,
-        #[arg(long)]
-        dir: Option<PathBuf>,
-        #[arg(long)]
-        query: Option<String>,
-        #[arg(long)]
-        formats: Option<String>,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    #[command(name = "semantic-search", alias = "semantic_search")]
-    SemanticSearch {
-        #[arg(long)]
-        input: Option<PathBuf>,
-        #[arg(long)]
-        dir: Option<PathBuf>,
-        #[arg(long)]
-        query: Option<String>,
-        #[arg(long)]
-        limit: Option<usize>,
-        #[arg(long)]
-        output: Option<PathBuf>,
-    },
-    /// Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]
-    #[command(name = "pdf-extract-patterns", alias = "extract-patterns", alias = "extract_patterns", alias = "pdf_extract_patterns")]
-    PdfExtractPatterns {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: Option<PathBuf>,
-        /// Keywords to match
-        #[arg(long, value_delimiter = ',')]
-        keywords: Option<Vec<String>>,
-        /// Regex patterns formatted as label=regex (e.g. ssn=\d{3}-\d{2}-\d{4})
-        #[arg(long = "pattern", value_name = "LABEL=REGEX")]
-        patterns: Option<Vec<String>>,
-        /// Perform case-sensitive matching (default: false)
-        #[arg(long)]
-        case_sensitive: bool,
-        /// Context length in characters before and after match (default: 30)
-        #[arg(long)]
-        context_len: Option<usize>,
-    },
-    /// Convert PDF to Animated GIF: Convert multi-page PDF documents into animated looping GIF previews
-    #[command(name = "pdf-to-gif")]
-    PdfToGif {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, help = "Frames per second (e.g. 1, 2)")]
-        fps: Option<u8>,
-        #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 100 for 1s)")]
-        delay: Option<u16>,
-        #[arg(long, help = "Maximum pages to render into the animation")]
-        max_pages: Option<usize>,
-        #[arg(long, help = "Target width of GIF frames in pixels (default: 800)")]
-        width: Option<u32>,
-    },
-    /// Generate Showcase GIF: Generate animated showcase demo GIF comparing before and after transformations
-    #[command(name = "showcase-gif")]
-    ShowcaseGif {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, help = "Frames per second (e.g. 4, 10)")]
-        fps: Option<u8>,
-        #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 25 for 0.25s)")]
-        delay: Option<u16>,
-        #[arg(long, help = "Target width of GIF frames in pixels (default: 1200)")]
-        width: Option<u32>,
-        #[arg(long, help = "Number of animation frames to render (default: 10)")]
-        transition_frames: Option<u8>,
-    },
-    /// Combine Images into Animated GIF: Stitch a sequence of images into a single animated looping GIF
-    #[command(name = "images-to-gif")]
-    ImagesToGif {
-        #[arg(
-            long,
-            value_delimiter = ',',
-            num_args = 1..,
-            help = "Input image file paths (supports multiple values or comma-separated)"
-        )]
-        input: Vec<PathBuf>,
-        #[arg(
-            long = "inputs",
-            alias = "images",
-            value_delimiter = ',',
-            num_args = 1..,
-            help = "Alternative alias for input images"
-        )]
-        inputs: Option<Vec<PathBuf>>,
-        #[arg(long, help = "Output GIF file path")]
-        output: PathBuf,
-        #[arg(long, help = "Frames per second")]
-        fps: Option<u8>,
-        #[arg(long, help = "Delay between frames in centiseconds (1/100s)")]
-        delay: Option<u16>,
-        #[arg(long, help = "Target frame width (pixels)")]
-        width: Option<u32>,
-    },
-    /// Optimize Image for Vision LLMs: Downscale and optimize images for LLM vision token economy and clarity
-    #[command(name = "img-optimize-for-llm")]
-    ImgOptimizeForLlm {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, help = "Max width or height in pixels")]
-        max_dim: Option<u32>,
-        #[arg(long, help = "Quality (1-100)")]
-        quality: Option<u8>,
-    },
-    /// Deskew Document Image: Detect text angle and straighten tilted scanned document images
-    #[command(name = "img-deskew")]
-    ImgDeskew {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long)]
-        angle: Option<f32>,
-    },
-    /// Convert Image Format: Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats
-    #[command(name = "img-convert")]
-    ImgConvert {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, help = "Target format: png, jpeg, webp, tiff, avif")]
-        format: Option<String>,
-        #[arg(long, help = "Compression quality (1-100)")]
-        quality: Option<u8>,
-    },
-    /// Auto-Crop Image to Content: Detect document boundaries and auto-crop background margins from scanned images
-    #[command(name = "img-crop-to-content")]
-    ImgCropToContent {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, help = "Background difference threshold (0.0-1.0)")]
-        threshold: Option<f32>,
-        #[arg(long, help = "Padding margin in pixels")]
-        padding: Option<u32>,
-    },
-    /// Redact Sensitive Image Regions: Apply permanent, irreversible pixel-level redaction over sensitive image regions
-    #[command(name = "img-redact")]
-    ImgRedact {
-        #[arg(long)]
-        input: PathBuf,
-        #[arg(long)]
-        output: PathBuf,
-        #[arg(long, help = "Redaction rectangle x,y,w,h (can be specified multiple times)")]
-        rect: Option<Vec<String>>,
-        #[arg(long, help = "Fill color: hex (#000000) or name (black, white, red)")]
-        color: Option<String>,
-    },
+    #[command(flatten)]
+    ExtendedPdf(ExtendedPdfCommands),
+    #[command(flatten)]
+    AiMedia(AiMediaCommands),
     /// Declarative multi-step document workflow execution
     Run {
         /// TOML .ppflow or JSON recipe
@@ -1131,6 +295,917 @@ pub enum Commands {
         #[command(subcommand)]
         command: crate::commands::office::OfficeCommands,
     },
+}
+
+impl Commands {
+    /// Returns the canonical variant name used in receipts and JSON command output.
+    pub fn operation_name(&self) -> String {
+        let dbg = match self {
+            Self::DocumentOps(sub) => format!("{sub:?}"),
+            Self::Extraction(sub) => format!("{sub:?}"),
+            Self::ExtendedPdf(sub) => format!("{sub:?}"),
+            Self::AiMedia(sub) => format!("{sub:?}"),
+            other => format!("{other:?}"),
+        };
+        dbg.split('(')
+            .next()
+            .unwrap_or("Unknown")
+            .split_whitespace()
+            .next()
+            .unwrap_or("Unknown")
+            .to_string()
+    }
+}
+
+#[derive(Subcommand, Debug)]
+pub enum DocumentOpsCommands {
+    /// Compress PDF: Reduce document file size [Input: .pdf | Output: .pdf]
+    Compress {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        quality: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-repair", alias = "repair")]
+    Repair {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Fast Web View: Optimize PDF for fast web viewing [Input: .pdf | Output: .pdf]
+    #[command(name = "pdf-linearize", alias = "linearize")]
+    Linearize {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Encrypt with Password: Protect document [Input: .pdf | Output: .pdf]
+    Encrypt {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, visible_alias = "password", alias = "password")]
+        user_password: Option<String>,
+        #[arg(long)]
+        owner_password: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Remove Password: Remove password restrictions [Input: .pdf | Output: .pdf]
+    Decrypt {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        password: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Add Watermark: Stamp text or branding [Input: .pdf | Output: .pdf]
+    #[command(name = "watermark", alias = "pdf-watermark", alias = "pdf_watermark")]
+    Watermark {
+        #[arg(long)]
+        input: std::path::PathBuf,
+        #[arg(long)]
+        text: String,
+        #[arg(long, default_value_t = 45.0)]
+        angle: f32,
+        #[arg(long, default_value_t = 0.2)]
+        opacity: f32,
+        #[arg(long)]
+        color: Option<String>,
+        #[arg(long)]
+        font_size: Option<f32>,
+        #[arg(long)]
+        output: std::path::PathBuf,
+    },
+    /// Redact Text: Permanently remove sensitive information [Input: .pdf | Output: .pdf]
+    #[command(name = "redact", alias = "pdf-redact", alias = "pdf_redact")]
+    Redact(Box<RedactArgs>),
+    /// Deep Security Sanitizer: Strip metadata, active scripts, embedded files, thumbnails [Input: .pdf | Output: .pdf]
+    /// Scan document for PII and sensitive information [Input: .pdf | Output: JSON report]
+    #[command(name = "pii-scan", alias = "document-pii-scan", alias = "document_pii_scan", alias = "pii_scan")]
+    PiiScan(Box<PiiScanArgs>),
+    Sanitize {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value_t = true)]
+        remove_metadata: bool,
+        #[arg(long, default_value_t = true)]
+        remove_attachments: bool,
+        #[arg(long, default_value_t = true)]
+        remove_scripts: bool,
+    },
+    /// Edit Metadata: Edit document metadata [Input: .pdf | Output: .pdf]
+    Metadata {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        author: Option<String>,
+        #[arg(long)]
+        subject: Option<String>,
+        #[arg(long)]
+        keywords: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Flatten Annotations: Bake annotations and forms into page [Input: .pdf | Output: .pdf]
+    #[command(alias = "pdf-flatten", alias = "pdf_flatten")]
+    Flatten {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Invert PDF colors or apply dark mode
+    #[command(name = "pdf-invert-colors", alias = "invert-colors")]
+    InvertColors {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        mode: Option<String>,
+        #[arg(long)]
+        pages: Option<String>,
+    },
+    /// Header & Footer: Add headers and footers to pages [Input: .pdf | Output: .pdf]
+    #[command(name = "header-footer", alias = "header_footer", alias = "pdf-header-footer", alias = "pdf_header_footer")]
+    HeaderFooter {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        text: String,
+        #[arg(long, default_value = "header")]
+        position: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Bates Numbering: Apply Bates stamps to pages [Input: .pdf | Output: .pdf]
+    #[command(name = "bates", alias = "pdf-bates", alias = "pdf_bates")]
+    Bates {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, default_value = "CONF-")]
+        prefix: String,
+        #[arg(long, default_value_t = 1)]
+        start: u32,
+        #[arg(long, default_value = "bottom-right")]
+        position: String,
+        #[arg(long)]
+        output: PathBuf,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ExtractionCommands {
+    /// PDF to Plain Text: Extract all raw textual content from a PDF [Input: .pdf | Output: .txt]
+    ExtractText {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Extract Tabular Data: Extract tables to JSON or CSV [Input: .pdf | Output: .json / .csv]
+    ExtractTables {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, default_value = "json")]
+        format: String,
+        #[arg(long, default_value = "all")]
+        pages: String,
+    },
+    #[command(name = "extract-images", alias = "pdf-extract-images", alias = "pdf_extract_images")]
+    ExtractImages {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, alias = "output-dir")]
+        output: PathBuf,
+    },
+    /// Search Text: Search for text across document [Input: .pdf | Output: .json]
+    #[command(name = "search", alias = "pdf-search", alias = "pdf_search")]
+    Search {
+        #[arg(long)]
+        input: Option<PathBuf>,
+        #[arg(long)]
+        query: String,
+        #[arg(long)]
+        dir: Option<PathBuf>,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Render Page: Render page to image format [Input: .pdf | Output: png/jpeg/webp images]
+    #[command(name = "render", alias = "pdf-render", alias = "pdf_render")]
+    Render {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, default_value = "1")]
+        page: u32,
+        #[arg(long, default_value_t = 150.0)]
+        dpi: f32,
+        #[arg(long)]
+        format: Option<String>,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Compare PDFs: Diff two documents and highlight changes [Input: 2 .pdfs | Output: .pdf / .json]
+    Compare {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        input_b: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// OCR Text Recognition: Run OCR on scanned pages [Input: .pdf | Output: .txt / .pdf]
+    Ocr {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long, default_value = "pdf")]
+        format: String,
+        #[arg(long)]
+        clipboard: bool,
+        #[arg(long)]
+        tier: Option<String>,
+    },
+    /// Extract Bookmarks: Read document outline and bookmarks [Input: .pdf | Output: .json]
+    Bookmarks {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    /// Add Annotations: Programmatically add annotations [Input: .pdf | Output: .pdf]
+    #[command(name = "annotate", alias = "pdf-annotate", alias = "pdf_annotate")]
+    Annotate {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long, default_value = "[]")]
+        data: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "classify-type", alias = "classify", alias = "pdf-classify-type", alias = "pdf_classify_type")]
+    Classify {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Validate PDF: Verify document structure and standards [Input: .pdf | Output: .txt/.json]
+    #[command(alias = "pdf-validate", alias = "pdf_validate")]
+    Validate {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Generate Hash: Calculate document checksums [Input: .pdf | Output: .txt]
+    #[command(alias = "pdf-hash", alias = "pdf_hash")]
+    Hash {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    Verify {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        expected_hash: String,
+    },
+    #[command(alias = "pdf-form", alias = "pdf_form")]
+    Form {
+        #[command(subcommand)]
+        command: FormCommands,
+    },
+    Convert {
+        #[arg(long, required = true)]
+        format: String,
+        #[arg(long, required = true)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+        #[arg(long)]
+        css: Option<PathBuf>,
+        #[arg(long)]
+        css_preset: Option<String>,
+        #[arg(long)]
+        inline_css: Option<String>,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ExtendedPdfCommands {
+    /// Validate Digital Signatures: Cryptographically verify digital signatures, certificate chains, and document integrity.
+    #[command(name = "pdf-validate-signatures", alias = "validate-signatures", alias = "validate_signatures", alias = "pdf_validate_signatures")]
+    PdfValidateSignatures {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        /// Optional path to the baseline reference PDF for pre-sign tamper detection
+        #[arg(long)]
+        baseline: Option<PathBuf>,
+    },
+    /// Booklet Imposition: Reorder and impose pages for 2-sided folding booklet printing.
+    #[command(name = "pdf-booklet")]
+    PdfBooklet {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// N-Up Page Imposition: Combine multiple pages per sheet in a 2, 4, 9, or 16-up grid layout.
+    #[command(name = "pdf-nup", alias = "nup", alias = "pdf_nup")]
+    PdfNup(Box<PdfNupArgs>),
+    /// Scale Page Dimensions: Scale page dimensions between standard formats or percentages.
+    #[command(name = "pdf-scale-pages", alias = "scale-pages", alias = "scale_pages", alias = "pdf_scale_pages")]
+    PdfScalePages {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "A4")]
+        target_size: Option<String>,
+        #[arg(long, default_value = "1.0")]
+        scale_factor: Option<f32>,
+    },
+    /// Remove Digital Signatures: Strip digital signature fields, cryptographic locks, and widget annotations.
+    #[command(name = "pdf-remove-signatures", alias = "remove-signatures", alias = "remove_signatures", alias = "pdf_remove_signatures")]
+    PdfRemoveSignatures {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Stamp Image & Logo: Place coordinate-exact images, logos, and badges onto PDF pages.
+    #[command(name = "pdf-stamp", alias = "stamp", alias = "pdf_stamp")]
+    PdfStamp(Box<PdfStampArgs>),
+    /// Fill AcroForm Interactive Form: Populate text boxes, checkboxes and choices with JSON dataset.
+    #[command(name = "pdf-fill-form", alias = "fill-form", alias = "pdf_fill_form")]
+    PdfFillForm {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        data: PathBuf,
+        #[arg(short, long)]
+        output: PathBuf,
+    },
+    /// Add AcroForm Field: Append interactive widget annotation with coordinates and field name to target page.
+    #[command(name = "pdf-create-form-field", alias = "create-form-field", alias = "pdf_create_form_field", alias = "add-field")]
+    PdfCreateFormField(Box<PdfCreateFormFieldArgs>),
+    /// Overlay & Underlay Stationary: Apply letterheads, watermarked stationary, and templates as background or foreground.
+    #[command(name = "pdf-overlay-underlay", alias = "overlay-underlay", alias = "overlay_underlay", alias = "pdf_overlay_underlay")]
+    PdfOverlayUnderlay(Box<PdfOverlayUnderlayArgs>),
+    /// Auto Upright Orientation: Heuristically detect text baseline and rotation angle to automatically upright pages.
+    #[command(name = "pdf-auto-rotate")]
+    PdfAutoRotate {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Stitch Continuous Canvas: Combine multiple pages vertically or horizontally into a continuous single-page canvas.
+    #[command(name = "pdf-stitch-canvas")]
+    PdfStitchCanvas {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "vertical")]
+        direction: String,
+        #[arg(long, default_value_t = 0.0)]
+        margin: f32,
+        #[arg(long, default_value_t = 0.0)]
+        spacing: f32,
+    },
+    /// PDF Portfolio Attachments: Inspect, extract, or embed file attachments into PDF portfolios.
+    #[command(name = "pdf-attachments")]
+    PdfAttachments {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        action: Option<String>,
+        #[arg(long)]
+        file_name: Option<String>,
+        #[arg(long)]
+        file: Option<PathBuf>,
+    },
+    /// Cryptographic Timestamp TSA: Apply RFC 3161 cryptographically verified TSA timestamp tokens.
+    #[command(name = "pdf-timestamp", alias = "timestamp")]
+    PdfTimestamp {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        server_url: Option<String>,
+    },
+    /// Modify PDF Permissions: Configure user and owner permissions for printing, copying, and modification.
+    #[command(name = "pdf-change-permissions", alias = "change-permissions")]
+    PdfChangePermissions {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        allow_print: Option<bool>,
+        #[arg(long)]
+        allow_copy: Option<bool>,
+        #[arg(long)]
+        allow_modify: Option<bool>,
+    },
+    /// Split Scanned Book Spine: Detect center binding gutter spine and split two-up page scans into single pages.
+    #[command(name = "pdf-split-scanned-book")]
+    PdfSplitScannedBook(Box<PdfSplitScannedBookArgs>),
+    /// Comic Archive Conversion: Convert between PDF documents and comic book archive formats (CBZ/CBR).
+    #[command(name = "pdf-comic-archive", alias = "comic-archive", alias = "pdf_comic_archive")]
+    PdfComicArchive {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Split PDF by Outline: Split multi-chapter PDF documents based on their /Outlines bookmark hierarchy
+    #[command(name = "pdf-split-by-outline")]
+    PdfSplitByOutline {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Alternating PDF Merge: Interleave pages from two PDF documents.
+    #[command(name = "pdf-merge-alternate")]
+    PdfMergeAlternate(Box<PdfMergeAlternateArgs>),
+    /// Multi-Sheet Poster Tile Slicer: Tile oversized PDF pages across a grid of standard printable sheets with overlap margins and cut guides
+    #[command(name = "pdf-posterize")]
+    PdfPosterize(Box<PdfPosterizeArgs>),
+    /// Lossless Stream Deduplication: Lossless hash-based indirect object stream deduplication & CMYK-safe image compression
+    #[command(name = "pdf-dedup-streams")]
+    PdfDedupStreams {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// PDF to EPUB 3.0: Convert fixed-layout PDF documents into reflowable EPUB 3.0 eBooks
+    #[command(name = "pdf-to-epub", alias = "to-epub", alias = "pdf_to_epub")]
+    PdfToEpub {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-html")]
+    PdfToHtml {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-markdown")]
+    PdfToMarkdown {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "pdf-to-json")]
+    PdfToJson {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    #[command(name = "json-to-pdf", alias = "json_to_pdf")]
+    JsonToPdf {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum AiMediaCommands {
+    /// Render Markdown source documents into publication-ready styled PDF files
+    #[command(name = "md-to-pdf", alias = "md_to_pdf", alias = "convert-markdown", alias = "pdf-convert-markdown", alias = "pdf_convert_markdown")]
+    MdToPdf(Box<StyledConversionArgs>),
+    /// Convert HTML source code and web pages directly into styled PDF documents
+    #[command(name = "html-to-pdf", alias = "html_to_pdf", alias = "convert-html", alias = "pdf-convert-html", alias = "pdf_convert_html")]
+    HtmlToPdf(Box<StyledConversionArgs>),
+    /// Convert spreadsheet (Excel / CSV) to formatted PDF document
+    #[command(name = "convert-excel", alias = "convert_excel", alias = "pdf-convert-excel", alias = "pdf_convert_excel", alias = "excel-to-pdf", alias = "excel_to_pdf")]
+    ConvertExcel(Box<StyledConversionArgs>),
+    #[command(name = "rag-chunks", alias = "rag_chunks", alias = "pdf-rag-chunks", alias = "pdf_rag_chunks")]
+    RagChunks {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+    /// Intelligent structure-aware semantic chunking with dynamic overlap for AI agents [Input: .pdf | Output: .json]
+    #[command(name = "pdf-chunk", alias = "pdf_chunk", alias = "chunk")]
+    PdfChunk(Box<PdfChunkArgs>),
+    #[command(name = "workspace-search", alias = "workspace_search")]
+    WorkspaceSearch(Box<WorkspaceSearchArgs>),
+    #[command(name = "semantic-search", alias = "semantic_search")]
+    SemanticSearch(Box<SemanticSearchArgs>),
+    /// Extract Keywords & Patterns: Scan document for custom keywords and regex patterns with match contexts [Input: .pdf | Output: .json]
+    #[command(name = "pdf-extract-patterns", alias = "extract-patterns", alias = "extract_patterns", alias = "pdf_extract_patterns")]
+    PdfExtractPatterns(Box<PdfExtractPatternsArgs>),
+    /// Convert PDF to Animated GIF: Convert multi-page PDF documents into animated looping GIF previews
+    #[command(name = "pdf-to-gif")]
+    PdfToGif(Box<PdfToGifArgs>),
+    /// Generate Showcase GIF: Generate animated showcase demo GIF comparing before and after transformations
+    #[command(name = "showcase-gif")]
+    ShowcaseGif(Box<ShowcaseGifArgs>),
+    /// Combine Images into Animated GIF: Stitch a sequence of images into a single animated looping GIF
+    #[command(name = "images-to-gif")]
+    ImagesToGif(Box<ImagesToGifArgs>),
+    /// Optimize Image for Vision LLMs: Downscale and optimize images for LLM vision token economy and clarity
+    #[command(name = "img-optimize-for-llm")]
+    ImgOptimizeForLlm {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Max width or height in pixels")]
+        max_dim: Option<u32>,
+        #[arg(long, help = "Quality (1-100)")]
+        quality: Option<u8>,
+    },
+    /// Deskew Document Image: Detect text angle and straighten tilted scanned document images
+    #[command(name = "img-deskew")]
+    ImgDeskew {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        angle: Option<f32>,
+    },
+    /// Convert Image Format: Convert images between PNG, JPEG, WebP, TIFF, and AVIF formats
+    #[command(name = "img-convert")]
+    ImgConvert {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Target format: png, jpeg, webp, tiff, avif")]
+        format: Option<String>,
+        #[arg(long, help = "Compression quality (1-100)")]
+        quality: Option<u8>,
+    },
+    /// Auto-Crop Image to Content: Detect document boundaries and auto-crop background margins from scanned images
+    #[command(name = "img-crop-to-content")]
+    ImgCropToContent {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Background difference threshold (0.0-1.0)")]
+        threshold: Option<f32>,
+        #[arg(long, help = "Padding margin in pixels")]
+        padding: Option<u32>,
+    },
+    /// Redact Sensitive Image Regions: Apply permanent, irreversible pixel-level redaction over sensitive image regions
+    #[command(name = "img-redact")]
+    ImgRedact {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, help = "Redaction rectangle x,y,w,h (can be specified multiple times)")]
+        rect: Option<Vec<String>>,
+        #[arg(long, help = "Fill color: hex (#000000) or name (black, white, red)")]
+        color: Option<String>,
+    },
+}
+
+#[derive(Args, Debug)]
+pub struct RedactArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long, default_value = "1")]
+    pub pages: String,
+    #[arg(long, default_value = "0,0,100,100")]
+    pub rect: String,
+    #[arg(long)]
+    pub data: Option<String>,
+    #[arg(long)]
+    pub query: Option<String>,
+    #[arg(long)]
+    pub regex: Option<String>,
+    #[arg(long)]
+    pub overlay_text: Option<String>,
+    #[arg(long, default_value = "all")]
+    pub occurrence: String,
+    #[arg(long)]
+    pub output: PathBuf,
+}
+
+#[derive(Args, Debug)]
+pub struct PiiScanArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: Option<PathBuf>,
+    #[arg(long, default_value_t = true)]
+    pub scan_ssn: bool,
+    #[arg(long, default_value_t = true)]
+    pub scan_credit_cards: bool,
+    #[arg(long, default_value_t = true)]
+    pub scan_emails: bool,
+    #[arg(long, default_value_t = true)]
+    pub scan_phones: bool,
+    #[arg(long, default_value_t = true)]
+    pub scan_iban: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfNupArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long, default_value_t = 2)]
+    pub nup: u32,
+    #[arg(long, default_value = "horizontal")]
+    pub ordering: String,
+    #[arg(long, default_value_t = 18.0)]
+    pub margin: f32,
+    #[arg(long, default_value_t = 10.0)]
+    pub spacing: f32,
+    #[arg(long, default_value_t = false)]
+    pub draw_borders: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfStampArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long)]
+    pub image: Option<PathBuf>,
+    #[arg(long)]
+    pub x: Option<f32>,
+    #[arg(long)]
+    pub y: Option<f32>,
+    #[arg(long)]
+    pub width: Option<f32>,
+    #[arg(long)]
+    pub height: Option<f32>,
+    #[arg(long)]
+    pub opacity: Option<f32>,
+    #[arg(long)]
+    pub pages: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfCreateFormFieldArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub name: String,
+    #[arg(long)]
+    pub label: Option<String>,
+    #[arg(long, default_value = "text")]
+    pub r#type: String,
+    #[arg(long, default_value = "1")]
+    pub page: i32,
+    #[arg(long)]
+    pub rect: String,
+    #[arg(short, long)]
+    pub output: PathBuf,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfOverlayUnderlayArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long)]
+    pub stationery: Option<PathBuf>,
+    #[arg(long)]
+    pub template: Option<PathBuf>,
+    #[arg(long)]
+    pub mode: Option<String>,
+    #[arg(long)]
+    pub pages: Option<String>,
+    #[arg(long)]
+    pub opacity: Option<f32>,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfSplitScannedBookArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    /// Reading direction (ltr or rtl)
+    #[arg(long, default_value = "ltr")]
+    pub reading_direction: String,
+    /// Gutter overlap in points
+    #[arg(long, default_value = "0.0")]
+    pub gutter_overlap: f32,
+    /// Split horizontally (top/bottom)
+    #[arg(long)]
+    pub split_horizontal: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfMergeAlternateArgs {
+    #[arg(long)]
+    pub input_a: PathBuf,
+    #[arg(long)]
+    pub input_b: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long, default_value = "false")]
+    pub reverse_a: bool,
+    #[arg(long, default_value = "false")]
+    pub reverse_b: bool,
+    #[arg(long, default_value = "1")]
+    pub step: usize,
+    #[arg(long, default_value = "1")]
+    pub step_b: usize,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfPosterizeArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long, default_value = "a4")]
+    pub target_sheet: String,
+    #[arg(long)]
+    pub grid: Option<String>,
+    #[arg(long, default_value = "14.17")]
+    pub overlap: f32,
+    #[arg(long, default_value = "1.0")]
+    pub scale: f32,
+    #[arg(long, default_value = "true")]
+    pub guides: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct StyledConversionArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long)]
+    pub preset: Option<String>,
+    #[arg(long)]
+    pub css: Option<PathBuf>,
+    #[arg(long)]
+    pub custom_css: Option<String>,
+    #[arg(long)]
+    pub orientation: Option<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfChunkArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long, default_value_t = 500)]
+    pub target_tokens: usize,
+    #[arg(long, alias = "overlap-tokens", default_value_t = 50)]
+    pub overlap: usize,
+    #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
+    pub strip_boilerplate: bool,
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    pub no_strip_boilerplate: bool,
+    #[arg(long, default_value_t = true, num_args = 0..=1, default_missing_value = "true", action = clap::ArgAction::Set)]
+    pub break_on_headings: bool,
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    pub no_break_on_headings: bool,
+    #[arg(long, alias = "json-out")]
+    pub output: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct WorkspaceSearchArgs {
+    #[arg(long)]
+    pub input: Option<PathBuf>,
+    #[arg(long)]
+    pub dir: Option<PathBuf>,
+    #[arg(long)]
+    pub query: Option<String>,
+    #[arg(long)]
+    pub formats: Option<String>,
+    #[arg(long)]
+    pub output: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct SemanticSearchArgs {
+    #[arg(long)]
+    pub input: Option<PathBuf>,
+    #[arg(long)]
+    pub dir: Option<PathBuf>,
+    #[arg(long)]
+    pub query: Option<String>,
+    #[arg(long)]
+    pub limit: Option<usize>,
+    #[arg(long)]
+    pub output: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfExtractPatternsArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: Option<PathBuf>,
+    /// Keywords to match
+    #[arg(long, value_delimiter = ',')]
+    pub keywords: Option<Vec<String>>,
+    /// Regex patterns formatted as label=regex (e.g. ssn=\d{3}-\d{2}-\d{4})
+    #[arg(long = "pattern", value_name = "LABEL=REGEX")]
+    pub patterns: Option<Vec<String>>,
+    /// Perform case-sensitive matching (default: false)
+    #[arg(long)]
+    pub case_sensitive: bool,
+    /// Context length in characters before and after match (default: 30)
+    #[arg(long)]
+    pub context_len: Option<usize>,
+}
+
+#[derive(Args, Debug)]
+pub struct PdfToGifArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long, help = "Frames per second (e.g. 1, 2)")]
+    pub fps: Option<u8>,
+    #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 100 for 1s)")]
+    pub delay: Option<u16>,
+    #[arg(long, help = "Maximum pages to render into the animation")]
+    pub max_pages: Option<usize>,
+    #[arg(long, help = "Target width of GIF frames in pixels (default: 800)")]
+    pub width: Option<u32>,
+}
+
+#[derive(Args, Debug)]
+pub struct ShowcaseGifArgs {
+    #[arg(long)]
+    pub input: PathBuf,
+    #[arg(long)]
+    pub output: PathBuf,
+    #[arg(long, help = "Frames per second (e.g. 4, 10)")]
+    pub fps: Option<u8>,
+    #[arg(long, help = "Delay between frames in centiseconds (1/100s, e.g. 25 for 0.25s)")]
+    pub delay: Option<u16>,
+    #[arg(long, help = "Target width of GIF frames in pixels (default: 1200)")]
+    pub width: Option<u32>,
+    #[arg(long, help = "Number of animation frames to render (default: 10)")]
+    pub transition_frames: Option<u8>,
+}
+
+#[derive(Args, Debug)]
+pub struct ImagesToGifArgs {
+    #[arg(
+        long,
+        value_delimiter = ',',
+        num_args = 1..,
+        help = "Input image file paths (supports multiple values or comma-separated)"
+    )]
+    pub input: Vec<PathBuf>,
+    #[arg(
+        long = "inputs",
+        alias = "images",
+        value_delimiter = ',',
+        num_args = 1..,
+        help = "Alternative alias for input images"
+    )]
+    pub inputs: Option<Vec<PathBuf>>,
+    #[arg(long, help = "Output GIF file path")]
+    pub output: PathBuf,
+    #[arg(long, help = "Frames per second")]
+    pub fps: Option<u8>,
+    #[arg(long, help = "Delay between frames in centiseconds (1/100s)")]
+    pub delay: Option<u16>,
+    #[arg(long, help = "Target frame width (pixels)")]
+    pub width: Option<u32>,
 }
 
 #[derive(Args, Debug)]
@@ -1499,5 +1574,41 @@ mod tests {
             }
             _ => panic!("Expected Workflow Run command"),
         }
+    }
+
+    #[test]
+    fn test_global_mmap_and_info_parsing() {
+        let args = vec![
+            "paperpilot",
+            "--mmap",
+            "info",
+            "--input",
+            "large.pdf",
+            "--output",
+            "info.json",
+        ];
+        let cli = Cli::try_parse_from(args).unwrap();
+        assert!(cli.mmap);
+        assert_eq!(cli.command.operation_name(), "Info");
+        match cli.command {
+            Commands::Info { input, output } => {
+                assert_eq!(input, PathBuf::from("large.pdf"));
+                assert_eq!(output, Some(PathBuf::from("info.json")));
+            }
+            _ => panic!("Expected Info command"),
+        }
+
+        let sub_args = vec![
+            "paperpilot",
+            "extract-text",
+            "--input",
+            "doc.pdf",
+            "--output",
+            "out.txt",
+            "--mmap",
+        ];
+        let cli2 = Cli::try_parse_from(sub_args).unwrap();
+        assert!(cli2.mmap);
+        assert_eq!(cli2.command.operation_name(), "ExtractText");
     }
 }

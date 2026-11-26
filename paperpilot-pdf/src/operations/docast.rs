@@ -160,6 +160,46 @@ impl DocAst {
 pub struct LayoutExtractor;
 
 impl LayoutExtractor {
+    /// Parse multiple page text slices in parallel (via `rayon` on native targets) into [`DocAst`]s,
+    /// preserving original page order.
+    pub fn parse_pages_parallel<S: AsRef<str> + Sync>(pages: &[S]) -> Vec<DocAst> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            use rayon::prelude::*;
+            pages
+                .par_iter()
+                .map(|page| Self::parse_text(page.as_ref()))
+                .collect()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            pages
+                .iter()
+                .map(|page| Self::parse_text(page.as_ref()))
+                .collect()
+        }
+    }
+
+    /// Parse and render multiple page text slices in parallel (via `rayon` on native targets)
+    /// into Markdown strings, preserving original page order.
+    pub fn render_pages_markdown_parallel<S: AsRef<str> + Sync>(pages: &[S]) -> Vec<String> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            use rayon::prelude::*;
+            pages
+                .par_iter()
+                .map(|page| Self::parse_text(page.as_ref()).to_markdown())
+                .collect()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            pages
+                .iter()
+                .map(|page| Self::parse_text(page.as_ref()).to_markdown())
+                .collect()
+        }
+    }
+
     /// Parse raw text from a document or page into a `DocAst`.
     pub fn parse_text(text: &str) -> DocAst {
         // Normalize text that might contain embedded '\n', bullet markers, or merged numbered items

@@ -223,7 +223,7 @@ impl PdfOperation for CompressOperation {
             }
         }
 
-        let original_bytes_len = lopdf_doc.original_bytes.as_ref().map(|b| b.len()).unwrap_or(0);
+        let original_bytes_len = lopdf_doc.source_len().unwrap_or(0);
         let mut final_bytes_len = 0;
         let mut buf = Vec::new();
         if lopdf_doc.inner.save_to(&mut buf).is_ok() {
@@ -259,6 +259,7 @@ mod tests {
         let mut lopdf_doc = LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         };
         let op = CompressOperation::new(None);
 
@@ -301,6 +302,7 @@ mod tests {
         let mut lopdf_doc = LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         };
         let op = CompressOperation::new(Some("low".to_string()));
 
@@ -419,6 +421,7 @@ mod tests {
         let mut lopdf_doc = LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         };
         let op = CompressOperation::new(Some("low".to_string()));
         let result = op.execute(&mut lopdf_doc);
@@ -474,6 +477,7 @@ mod tests {
         let mut lopdf_doc = LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         };
         let op = CompressOperation::new(Some("low".to_string()));
 
@@ -521,6 +525,7 @@ mod tests {
         let mut lopdf_doc = LopdfDocument {
             inner: original_doc,
             original_bytes: None,
+            source: None,
         };
         let op = CompressOperation::new(Some("high".to_string()));
         let result = op.execute(&mut lopdf_doc);

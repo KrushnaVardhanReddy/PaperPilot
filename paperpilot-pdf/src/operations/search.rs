@@ -62,26 +62,60 @@ impl SearchOperation {
         let mut found_pages = Vec::new();
 
         for batch in batch_iter {
-            for page_idx in batch {
-                let page_u32 = page_idx as u32;
-                match inner.extract_text(&[page_u32]) {
-                    Ok(text) => {
-                        if text
+            let batch_pages: Vec<u32> = batch.map(|p| p as u32).collect();
+            #[cfg(not(target_arch = "wasm32"))]
+            let batch_hits: Vec<u32> = {
+                use rayon::prelude::*;
+                batch_pages
+                    .par_iter()
+                    .map(|&page_u32| {
+                        let text = inner.extract_text(&[page_u32]).map_err(|e| {
+                            PdfError::Other(format!(
+                                "Failed to extract text from page {}: {}",
+                                page_u32, e
+                            ))
+                        })?;
+                        Ok(if text
                             .replace(' ', "")
                             .to_lowercase()
                             .contains(&query_normalized)
                         {
-                            found_pages.push(page_u32);
-                        }
-                    }
-                    Err(e) => {
-                        return Err(PdfError::Other(format!(
+                            Some(page_u32)
+                        } else {
+                            None
+                        })
+                    })
+                    .collect::<OperationResult<Vec<Option<u32>>>>()?
+                    .into_iter()
+                    .flatten()
+                    .collect()
+            };
+            #[cfg(target_arch = "wasm32")]
+            let batch_hits: Vec<u32> = batch_pages
+                .iter()
+                .map(|&page_u32| {
+                    let text = inner.extract_text(&[page_u32]).map_err(|e| {
+                        PdfError::Other(format!(
                             "Failed to extract text from page {}: {}",
                             page_u32, e
-                        )));
-                    }
-                }
-            }
+                        ))
+                    })?;
+                    Ok(if text
+                        .replace(' ', "")
+                        .to_lowercase()
+                        .contains(&query_normalized)
+                    {
+                        Some(page_u32)
+                    } else {
+                        None
+                    })
+                })
+                .collect::<OperationResult<Vec<Option<u32>>>>()?
+                .into_iter()
+                .flatten()
+                .collect();
+
+            found_pages.extend(batch_hits);
         }
 
         if let Ok(mut lock) = self.match_pages.lock() {
@@ -121,33 +155,64 @@ impl PdfOperation for SearchOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
+        let inner = &lopdf_doc.inner;
 
         let pages_dict = inner.get_pages();
-        let mut all_pages: Vec<(&u32, &lopdf::ObjectId)> = pages_dict.iter().collect();
-        all_pages.sort_by_key(|k| k.0); // Ensure they are sorted by page index
+        let mut all_pages: Vec<u32> = pages_dict.keys().copied().collect();
+        all_pages.sort_unstable();
 
-        let mut found_pages = Vec::new();
-
-        for (page_idx, _page_id) in all_pages {
-            match inner.extract_text(&[*page_idx]) {
-                Ok(text) => {
-                    if text
-                        .replace(" ", "")
+        let query_normalized = self.search_query.replace(' ', "").to_lowercase();
+        #[cfg(not(target_arch = "wasm32"))]
+        let found_pages: Vec<u32> = {
+            use rayon::prelude::*;
+            all_pages
+                .par_iter()
+                .map(|&page_idx| {
+                    let text = inner.extract_text(&[page_idx]).map_err(|e| {
+                        PdfError::Other(format!(
+                            "Failed to extract text from page {:?}: {}",
+                            page_idx, e
+                        ))
+                    })?;
+                    Ok(if text
+                        .replace(' ', "")
                         .to_lowercase()
-                        .contains(&self.search_query.replace(" ", "").to_lowercase())
+                        .contains(&query_normalized)
                     {
-                        found_pages.push(*page_idx);
-                    }
-                }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
+                        Some(page_idx)
+                    } else {
+                        None
+                    })
+                })
+                .collect::<OperationResult<Vec<Option<u32>>>>()?
+                .into_iter()
+                .flatten()
+                .collect()
+        };
+        #[cfg(target_arch = "wasm32")]
+        let found_pages: Vec<u32> = all_pages
+            .iter()
+            .map(|&page_idx| {
+                let text = inner.extract_text(&[page_idx]).map_err(|e| {
+                    PdfError::Other(format!(
                         "Failed to extract text from page {:?}: {}",
                         page_idx, e
-                    )));
-                }
-            }
-        }
+                    ))
+                })?;
+                Ok(if text
+                    .replace(' ', "")
+                    .to_lowercase()
+                    .contains(&query_normalized)
+                {
+                    Some(page_idx)
+                } else {
+                    None
+                })
+            })
+            .collect::<OperationResult<Vec<Option<u32>>>>()?
+            .into_iter()
+            .flatten()
+            .collect();
 
         if let Ok(mut lock) = self.match_pages.lock() {
             *lock = found_pages;
@@ -214,6 +279,7 @@ mod tests {
         LopdfDocument {
             inner: doc,
             original_bytes: None,
+            source: None,
         }
     }
 

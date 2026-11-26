@@ -487,8 +487,8 @@ impl PdfOperation for PdfToEpubOperation {
             })?;
 
         let mut bytes = Vec::new();
-        if let Some(orig) = &doc.original_bytes {
-            bytes = orig.clone();
+        if let Some(orig) = doc.source_bytes() {
+            bytes = orig.to_vec();
         } else {
             doc.inner
                 .save_to(&mut bytes)

@@ -88,6 +88,7 @@ mod tests {
         let mut doc = LopdfDocument {
             inner,
             original_bytes: None,
+            source: None,
         };
 
         let mut op = EncryptOperation::new();

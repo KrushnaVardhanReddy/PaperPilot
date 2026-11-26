@@ -99,6 +99,7 @@ mod tests {
         LopdfDocument {
             inner,
             original_bytes: None,
+            source: None,
         }
     }
 
@@ -155,6 +156,7 @@ mod tests {
         let mut doc = LopdfDocument {
             inner,
             original_bytes: None,
+            source: None,
         };
 
         // Rotate only page 2

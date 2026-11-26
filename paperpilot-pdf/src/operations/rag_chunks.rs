@@ -31,6 +31,56 @@ impl Default for PdfRagChunksOperation {
     }
 }
 
+fn push_markdown_page_chunks(
+    page_text: &str,
+    page_num: u32,
+    current_section: &mut String,
+    all_chunks: &mut Vec<RagChunk>,
+) {
+    let mut current_content = String::new();
+
+    for line in page_text.lines() {
+        if line.starts_with('#') {
+            if !current_content.trim().is_empty() {
+                let text = current_content.trim().to_string();
+                let token_count = text.split_whitespace().count().max(1);
+                let title = if current_section.is_empty() {
+                    format!("Page {}", page_num)
+                } else {
+                    current_section.clone()
+                };
+                all_chunks.push(RagChunk {
+                    page: page_num,
+                    section_title: title,
+                    content: text,
+                    token_count,
+                });
+            }
+            *current_section = line.trim_start_matches('#').trim().to_string();
+            current_content.clear();
+        } else {
+            current_content.push_str(line);
+            current_content.push('\n');
+        }
+    }
+
+    if !current_content.trim().is_empty() {
+        let text = current_content.trim().to_string();
+        let token_count = text.split_whitespace().count().max(1);
+        let title = if current_section.is_empty() {
+            format!("Page {}", page_num)
+        } else {
+            current_section.clone()
+        };
+        all_chunks.push(RagChunk {
+            page: page_num,
+            section_title: title,
+            content: text,
+            token_count,
+        });
+    }
+}
+
 impl PdfOperation for PdfRagChunksOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
         let lopdf_doc = document
@@ -40,67 +90,35 @@ impl PdfOperation for PdfRagChunksOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let bytes = lopdf_doc.original_bytes.as_deref().unwrap_or(&[]);
-        if bytes.is_empty() {
+        let bytes = lopdf_doc.source_bytes().unwrap_or(&[]);
+        if bytes.is_empty() && lopdf_doc.inner.get_pages().is_empty() {
             if let Ok(mut lock) = self.chunks.lock() {
                 *lock = Vec::new();
             }
             return Ok(());
         }
 
-        let mut pdf = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
-            .map_err(|e| PdfError::Other(format!("pdf_oxide error: {:?}", e)))?;
-
         let mut all_chunks = Vec::new();
-        let page_count = pdf.page_count().unwrap_or(0);
-        let mut current_section = String::new();
+        if !bytes.is_empty()
+            && (!lopdf_doc.is_mmap()
+                || bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES)
+        {
+            let mut pdf = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+                .map_err(|e| PdfError::Other(format!("pdf_oxide error: {:?}", e)))?;
 
-        for i in 0..page_count {
-            if let Ok(page_md) = pdf.to_markdown(i) {
-                // simple split by headers
-                let lines = page_md.lines();
-                let mut current_content = String::new();
+            let page_count = pdf.page_count().unwrap_or(0);
+            let mut current_section = String::new();
 
-                for line in lines {
-                    if line.starts_with("#") {
-                        if !current_content.trim().is_empty() {
-                            let text = current_content.trim().to_string();
-                            let token_count = text.split_whitespace().count().max(1);
-                            let title = if current_section.is_empty() {
-                                format!("Page {}", i + 1)
-                            } else {
-                                current_section.clone()
-                            };
-                            all_chunks.push(RagChunk {
-                                page: (i + 1) as u32,
-                                section_title: title,
-                                content: text,
-                                token_count,
-                            });
-                        }
-                        current_section = line.trim_start_matches('#').trim().to_string();
-                        current_content.clear();
-                    } else {
-                        current_content.push_str(line);
-                        current_content.push('\n');
-                    }
+            for i in 0..page_count {
+                if let Ok(page_md) = pdf.to_markdown(i) {
+                    push_markdown_page_chunks(&page_md, (i + 1) as u32, &mut current_section, &mut all_chunks);
                 }
-
-                if !current_content.trim().is_empty() {
-                    let text = current_content.trim().to_string();
-                    let token_count = text.split_whitespace().count().max(1);
-                    let title = if current_section.is_empty() {
-                        format!("Page {}", i + 1)
-                    } else {
-                        current_section.clone()
-                    };
-                    all_chunks.push(RagChunk {
-                        page: (i + 1) as u32,
-                        section_title: title,
-                        content: text,
-                        token_count,
-                    });
-                }
+            }
+        } else {
+            let pages_text = lopdf_doc.extract_text_parallel(None)?;
+            let mut current_section = String::new();
+            for (i, page_text) in pages_text.into_iter().enumerate() {
+                push_markdown_page_chunks(&page_text, (i + 1) as u32, &mut current_section, &mut all_chunks);
             }
         }
 

@@ -908,25 +908,36 @@ fn extract_pages_markdown(bytes: &[u8]) -> Result<Vec<(u32, String)>, PdfError> 
     }
 
     let mut pages = Vec::new();
-    if let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec()) {
-        if let Ok(page_count) = pdf.page_count() {
-            for i in 0..page_count {
-                if let Ok(md) = pdf.to_markdown(i) {
-                    pages.push((i as u32 + 1, md));
-                }
+    if bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES
+        && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
+        && let Ok(page_count) = pdf.page_count()
+    {
+        for i in 0..page_count {
+            if let Ok(md) = pdf.to_markdown(i) {
+                pages.push((i as u32 + 1, md));
             }
         }
     }
 
     if pages.is_empty() {
-        let doc = lopdf::Document::load_mem(bytes)
-            .map_err(|e| PdfError::ParseError(format!("Failed to parse PDF document: {}", e)))?;
+        let doc = crate::operations::repair::RepairOperation::load_document_resilient(bytes)?;
         let page_dict = doc.get_pages();
         let mut sorted: Vec<u32> = page_dict.keys().copied().collect();
         sorted.sort_unstable();
-        for p in sorted {
-            let text = doc.extract_text(&[p]).unwrap_or_default();
-            pages.push((p, text));
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            use rayon::prelude::*;
+            pages = sorted
+                .par_iter()
+                .map(|&p| (p, doc.extract_text(&[p]).unwrap_or_default()))
+                .collect();
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            for p in sorted {
+                let text = doc.extract_text(&[p]).unwrap_or_default();
+                pages.push((p, text));
+            }
         }
     }
 
@@ -993,7 +1004,7 @@ impl PdfOperation for PdfChunkOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let bytes = lopdf_doc.original_bytes.as_deref().unwrap_or(&[]);
+        let bytes = lopdf_doc.source_bytes().unwrap_or(&[]);
         let result = Self::chunk_bytes(bytes, self.options.clone())?;
         if let Ok(mut lock) = self.result.lock() {
             *lock = Some(result);

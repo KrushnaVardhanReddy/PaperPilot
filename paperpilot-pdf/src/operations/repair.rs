@@ -1,4 +1,5 @@
 use crate::document::LopdfDocument;
+use paperpilot_core::document_source::DocumentSource;
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use regex::bytes::Regex;
@@ -180,11 +181,42 @@ impl RepairOperation {
             .map_err(|e| PdfError::ParseError(format!("Self-healing failed to parse repaired PDF: {e}")))
     }
 
-    /// High-level file repair method that reads from input path, repairs, and writes to output path.
+    /// High-level file repair method that reads/memory-maps from input path, repairs, and writes to output path.
     pub fn repair_file(input: &Path, output: &Path) -> OperationResult<()> {
-        let bytes = std::fs::read(input).map_err(PdfError::IoError)?;
-        let repaired_bytes = Self::repair_bytes(&bytes)?;
-        if let Some(parent) = output.parent() {
+        let source = DocumentSource::open(input, None).map_err(PdfError::IoError)?;
+        let repaired_bytes = Self::repair_bytes(source.as_slice())?;
+        if let Some(parent) = output.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        std::fs::write(output, repaired_bytes).map_err(PdfError::IoError)?;
+        Ok(())
+    }
+
+    /// Explicitly forces `memmap2` memory-mapped file access on native targets before repairing.
+    pub fn repair_file_mmap(input: &Path, output: &Path) -> OperationResult<()> {
+        #[cfg(not(target_arch = "wasm32"))]
+        let repaired_bytes = {
+            let file = std::fs::File::open(input).map_err(PdfError::IoError)?;
+            let meta = file.metadata().map_err(PdfError::IoError)?;
+            if meta.len() == 0 {
+                return Err(PdfError::ParseError(
+                    "Cannot repair empty PDF file".to_string(),
+                ));
+            }
+            // Safety: Mapped input bytes are treated read-only during repair.
+            let mmap = unsafe { memmap2::Mmap::map(&file).map_err(PdfError::IoError)? };
+            Self::repair_bytes(&mmap)?
+        };
+        #[cfg(target_arch = "wasm32")]
+        let repaired_bytes = {
+            let source = DocumentSource::open(input, None).map_err(PdfError::IoError)?;
+            Self::repair_bytes(source.as_slice())?
+        };
+        if let Some(parent) = output.parent()
+            && !parent.as_os_str().is_empty()
+        {
             let _ = std::fs::create_dir_all(parent);
         }
         std::fs::write(output, repaired_bytes).map_err(PdfError::IoError)?;
@@ -221,10 +253,7 @@ mod tests {
     #[test]
     fn test_repair_operation_success() {
         let doc = Document::with_version("1.5");
-        let mut lopdf_doc = LopdfDocument {
-            inner: doc,
-            original_bytes: None,
-        };
+        let mut lopdf_doc = LopdfDocument::from_inner(doc);
         let op = RepairOperation::new();
 
         let result = op.execute(&mut lopdf_doc);

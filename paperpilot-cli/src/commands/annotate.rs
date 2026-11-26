@@ -1,7 +1,6 @@
 #![cfg(feature = "pdf")]
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::PdfDocument;
-use paperpilot_pdf::document::LopdfDocument;
 use paperpilot_pdf::operations::annotate::{AnnotateOperation, AnnotationParams};
 use std::fs;
 use std::path::Path;
@@ -49,7 +48,7 @@ pub fn handle_annotate(input: &Path, data: &Path, output: &Path) -> OperationRes
         ));
     }
 
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     op.execute(&mut doc.inner)?;
     doc.save(output)
 }
@@ -89,7 +88,7 @@ mod tests {
         }
         assert!(result.is_ok(), "Failed to handle inline JSON");
 
-        let out_doc = LopdfDocument::load(&output_path).unwrap();
+        let out_doc = paperpilot_pdf::document::LopdfDocument::load(&output_path).unwrap();
         let pages = out_doc.page_count().unwrap();
         assert_eq!(pages, 1);
     }

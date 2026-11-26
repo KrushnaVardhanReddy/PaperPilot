@@ -1,10 +1,9 @@
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 use std::fs::File;
 use std::io::{Cursor, Write};
-use tempfile::NamedTempFile;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImageOutputFormat {
@@ -77,6 +76,71 @@ impl Default for RenderOperation {
     }
 }
 
+fn render_single_page(
+    page: &hayro_syntax::page::Page<'_>,
+    dpi: f32,
+    effective_format: ImageOutputFormat,
+) -> OperationResult<Vec<u8>> {
+    let cache = hayro::RenderCache::new();
+    let render_settings = hayro::RenderSettings::default();
+    // Setting scale based on DPI (72 DPI is scale 1.0)
+    let mut pixmap_settings = hayro::PixmapSettings::default();
+    let scale_factor = dpi / 72.0;
+    pixmap_settings.x_scale = scale_factor;
+    pixmap_settings.y_scale = scale_factor;
+
+    let pixmap = hayro::render(
+        page,
+        &cache,
+        &Default::default(),
+        &render_settings,
+        &pixmap_settings,
+    );
+    let width = pixmap.width() as u32;
+    let height = pixmap.height() as u32;
+    let data: &[u8] = bytemuck::cast_slice(pixmap.data());
+
+    match effective_format {
+        ImageOutputFormat::Png => {
+            let mut skia_pixmap = tiny_skia::Pixmap::new(width, height)
+                .ok_or_else(|| PdfError::ParseError("Failed to allocate Pixmap".to_string()))?;
+            skia_pixmap.data_mut().copy_from_slice(data);
+            skia_pixmap
+                .encode_png()
+                .map_err(|e| PdfError::ParseError(e.to_string()))
+        }
+        ImageOutputFormat::Jpeg => {
+            let rgba_img = image::RgbaImage::from_raw(width, height, data.to_vec())
+                .ok_or_else(|| PdfError::ParseError("Failed to construct RgbaImage".to_string()))?;
+            let mut rgb_img = image::RgbImage::new(width, height);
+            for (x, y, pixel) in rgba_img.enumerate_pixels() {
+                let alpha = pixel[3] as f32 / 255.0;
+                let r = ((pixel[0] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
+                let g = ((pixel[1] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
+                let b = ((pixel[2] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
+                rgb_img.put_pixel(x, y, image::Rgb([r, g, b]));
+            }
+
+            let mut bytes = Vec::new();
+            let mut cursor = Cursor::new(&mut bytes);
+            rgb_img
+                .write_to(&mut cursor, image::ImageFormat::Jpeg)
+                .map_err(|e| PdfError::ParseError(format!("Failed to encode JPEG: {:?}", e)))?;
+            Ok(bytes)
+        }
+        ImageOutputFormat::Webp => {
+            let rgba_img = image::RgbaImage::from_raw(width, height, data.to_vec())
+                .ok_or_else(|| PdfError::ParseError("Failed to construct RgbaImage".to_string()))?;
+            let mut bytes = Vec::new();
+            let mut cursor = Cursor::new(&mut bytes);
+            rgba_img
+                .write_to(&mut cursor, image::ImageFormat::WebP)
+                .map_err(|e| PdfError::ParseError(format!("Failed to encode WebP: {:?}", e)))?;
+            Ok(bytes)
+        }
+    }
+}
+
 impl PdfOperation for RenderOperation {
     fn execute(&self, document: &mut dyn PdfDocument) -> OperationResult<()> {
         let doc = document
@@ -84,14 +148,24 @@ impl PdfOperation for RenderOperation {
             .downcast_mut::<crate::document::LopdfDocument>()
             .ok_or_else(|| PdfError::UnsupportedOperation("Expected LopdfDocument".to_string()))?;
 
-        let mut temp_file = NamedTempFile::new().map_err(PdfError::IoError)?;
-        doc.inner
-            .save_to(&mut temp_file)
-            .map_err(|e| PdfError::ParseError(e.to_string()))?;
+        let lopdf_page_count = doc.inner.get_pages().len();
+        let zero_copy_pdf = doc
+            .shared_source()
+            .filter(|src| !src.is_empty())
+            .and_then(|src| hayro_syntax::Pdf::new(Arc::clone(src)).ok())
+            .filter(|candidate| candidate.pages().len() == lopdf_page_count);
 
-        let pdf_bytes = std::fs::read(temp_file.path()).map_err(PdfError::IoError)?;
-        let pdf = hayro_syntax::Pdf::new(pdf_bytes)
-            .map_err(|e| PdfError::ParseError(format!("{:?}", e)))?;
+        let pdf = match zero_copy_pdf {
+            Some(pdf) => pdf,
+            None => {
+                let mut pdf_bytes = Vec::new();
+                doc.inner
+                    .save_to(&mut pdf_bytes)
+                    .map_err(|e| PdfError::ParseError(e.to_string()))?;
+                hayro_syntax::Pdf::new(pdf_bytes)
+                    .map_err(|e| PdfError::ParseError(format!("{:?}", e)))?
+            }
+        };
 
         let pages = pdf.pages();
         let total_pages = pages.len();
@@ -120,79 +194,47 @@ impl PdfOperation for RenderOperation {
             .or_else(|| self.output_path.as_deref().and_then(ImageOutputFormat::from_path))
             .unwrap_or(ImageOutputFormat::Png);
 
+        let rendered_pages: Vec<Vec<u8>> = {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                use rayon::prelude::*;
+                (start_page..end_page)
+                    .into_par_iter()
+                    .map(|i| {
+                        let page = pages
+                            .get(i)
+                            .ok_or_else(|| PdfError::ParseError("Failed to get page".to_string()))?;
+                        render_single_page(page, self.dpi, effective_format)
+                    })
+                    .collect::<OperationResult<Vec<Vec<u8>>>>()?
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                (start_page..end_page)
+                    .map(|i| {
+                        let page = pages
+                            .get(i)
+                            .ok_or_else(|| PdfError::ParseError("Failed to get page".to_string()))?;
+                        render_single_page(page, self.dpi, effective_format)
+                    })
+                    .collect::<OperationResult<Vec<Vec<u8>>>>()?
+            }
+        };
+
         let mut out_images = self
             .rendered_images
             .lock()
             .map_err(|_| PdfError::Other("Mutex lock poisoned".to_string()))?;
 
-        for i in start_page..end_page {
-            let page = pages
-                .get(i)
-                .ok_or_else(|| PdfError::ParseError("Failed to get page".to_string()))?;
-            let cache = hayro::RenderCache::new();
-            let render_settings = hayro::RenderSettings::default();
-            // Setting scale based on DPI (72 DPI is scale 1.0)
-            let mut pixmap_settings = hayro::PixmapSettings::default();
-            let scale_factor = self.dpi / 72.0;
-            pixmap_settings.x_scale = scale_factor;
-            pixmap_settings.y_scale = scale_factor;
-
-            let pixmap = hayro::render(
-                page,
-                &cache,
-                &Default::default(),
-                &render_settings,
-                &pixmap_settings,
-            );
-            let width = pixmap.width() as u32;
-            let height = pixmap.height() as u32;
-            let data: &[u8] = bytemuck::cast_slice(pixmap.data());
-
-            let img_bytes = match effective_format {
-                ImageOutputFormat::Png => {
-                    let mut skia_pixmap = tiny_skia::Pixmap::new(width, height)
-                        .ok_or_else(|| PdfError::ParseError("Failed to allocate Pixmap".to_string()))?;
-                    skia_pixmap.data_mut().copy_from_slice(data);
-                    skia_pixmap
-                        .encode_png()
-                        .map_err(|e| PdfError::ParseError(e.to_string()))?
-                }
-                ImageOutputFormat::Jpeg => {
-                    let rgba_img = image::RgbaImage::from_raw(width, height, data.to_vec())
-                        .ok_or_else(|| PdfError::ParseError("Failed to construct RgbaImage".to_string()))?;
-                    let mut rgb_img = image::RgbImage::new(width, height);
-                    for (x, y, pixel) in rgba_img.enumerate_pixels() {
-                        let alpha = pixel[3] as f32 / 255.0;
-                        let r = ((pixel[0] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
-                        let g = ((pixel[1] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
-                        let b = ((pixel[2] as f32 * alpha) + (255.0 * (1.0 - alpha))).round() as u8;
-                        rgb_img.put_pixel(x, y, image::Rgb([r, g, b]));
-                    }
-
-                    let mut bytes = Vec::new();
-                    let mut cursor = Cursor::new(&mut bytes);
-                    rgb_img
-                        .write_to(&mut cursor, image::ImageFormat::Jpeg)
-                        .map_err(|e| PdfError::ParseError(format!("Failed to encode JPEG: {:?}", e)))?;
-                    bytes
-                }
-                ImageOutputFormat::Webp => {
-                    let rgba_img = image::RgbaImage::from_raw(width, height, data.to_vec())
-                        .ok_or_else(|| PdfError::ParseError("Failed to construct RgbaImage".to_string()))?;
-                    let mut bytes = Vec::new();
-                    let mut cursor = Cursor::new(&mut bytes);
-                    rgba_img
-                        .write_to(&mut cursor, image::ImageFormat::WebP)
-                        .map_err(|e| PdfError::ParseError(format!("Failed to encode WebP: {:?}", e)))?;
-                    bytes
-                }
-            };
-
+        for (i, img_bytes) in (start_page..end_page).zip(rendered_pages) {
             if let Some(out_path) = &self.output_path {
                 let current_out_path = if self.page.is_none() && total_pages > 1 {
                     let mut path = out_path.clone();
                     if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                        let ext = path.extension().and_then(|s| s.to_str()).unwrap_or(effective_format.file_extension());
+                        let ext = path
+                            .extension()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or(effective_format.file_extension());
                         path.set_file_name(format!("{}_{}.{}", stem, i + 1, ext));
                     }
                     path
