@@ -34,7 +34,7 @@
 | 5.2.6 | Single-Document Contextual Q&A | Grounded Q&A against document content with page source citations |
 | 5.2.7 | Multi-Document Synthesis | Query 2–50 documents simultaneously (e.g. "compare indemnity caps across all 3 vendor agreements") |
 | 5.2.8 | Layout-Preserving Translation | Translate text blocks in-place while keeping columns, tables, and typography intact |
-| 5.2.9 | High-Scale Memory-Mapped Streaming (`memmap2`) | Lazy page streaming and multi-core Rayon processing for fast opening of 1,000+ page documents |
+| 5.2.9 | High-Scale Memory-Mapped Streaming (`memmap2`) ✅ | **Completed (PR #382 / commit `62693d03`)** — Zero-copy memory-mapped streaming via `memmap2` & Rayon parallelization for 1,000+ page high-volume PDFs with constant memory footprint and resilient self-healing. Verified with 1,000-page & 50-file concurrent stress tests. |
 | 5.2.10 | E2E Intelligence tests | Real embeddings and pipeline execution on test corpus (No Mocking) |
 
 ---
