@@ -670,12 +670,9 @@ mod tests {
 
         let result = op.execute(&mut doc);
 
-        let models_path =
-            std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
-                .join(".paperpilot")
-                .join("models")
-                .join("text_recognition.onnx");
-        if models_path.exists() {
+        let has_real_models = find_model("det.rten").or_else(|| find_model("det.onnx")).is_some()
+            && find_model("rec.rten").or_else(|| find_model("rec.onnx")).is_some();
+        if has_real_models {
             assert!(result.is_ok());
             assert!(output_path.exists());
         } else {
@@ -739,12 +736,9 @@ mod tests {
         op.output_path = Some(output_path.clone());
 
         let result = op.execute(&mut doc);
-        let models_path =
-            std::path::PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".to_string()))
-                .join(".paperpilot")
-                .join("models")
-                .join("text_recognition.onnx");
-        if models_path.exists() {
+        let has_real_models = find_model("det.rten").or_else(|| find_model("det.onnx")).is_some()
+            && find_model("rec.rten").or_else(|| find_model("rec.onnx")).is_some();
+        if has_real_models {
             assert!(result.is_ok());
             assert!(output_path.exists());
         } else {
