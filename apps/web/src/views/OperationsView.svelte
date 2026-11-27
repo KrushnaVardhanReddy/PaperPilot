@@ -12,7 +12,6 @@
   let activeTool = $state('merge');
   let isProcessing = $state(false);
   let showDocsPanel = $state(false);
-  const currentToolObj = $derived(tools.find((t) => t.id === activeTool));
   let recentToolIds = $state<string[]>([]);
 
   $effect(() => {
@@ -57,8 +56,8 @@
       let matched = tools.find(t => t.id === toolParam);
       if (!matched) {
         const catalogEntry = ALL_101_TOOLS.find(t => t.id === toolParam);
-        if (catalogEntry?.wasmId) {
-          matched = tools.find(t => t.id === catalogEntry.wasmId);
+        if (catalogEntry?.wasmToolId) {
+          matched = tools.find(t => t.id === catalogEntry.wasmToolId);
         }
       }
       if (matched) {
@@ -164,6 +163,8 @@
     { id: 'img_convert', title: 'Convert Image', icon: '🔄', category: 'convert', releaseStatus: 'preview', description: 'Convert image formats between PNG, JPEG, WebP, BMP, and TIFF' },
     { id: 'img_crop_to_content', title: 'Crop to Content', icon: '✂️', category: 'convert', releaseStatus: 'preview', description: 'Automatically trim empty borders and margins around visual content' }
   ];
+
+  const currentToolObj = $derived(tools.find((t) => t.id === activeTool));
 
   // Tool specific states (batch array support)
   let mergeFiles: File[] = $state([]);
