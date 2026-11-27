@@ -6,6 +6,7 @@ export const GITHUB_REPO = 'KrushnaVardhanReddy/PaperPilot';
 export const GITHUB_BASE_URL = `https://github.com/${GITHUB_REPO}`;
 export const GITHUB_ISSUES_NEW = `${GITHUB_BASE_URL}/issues/new`;
 export const GITHUB_DISCUSSIONS_URL = `${GITHUB_BASE_URL}/discussions`;
+export const FEEDBACK_EMAIL = 'kpakkiragari@gmail.com';
 
 export type FeedbackCategory = 'bug' | 'performance' | 'feature' | 'praise';
 
@@ -127,6 +128,28 @@ export function buildGitHubIssueUrl(data: FeedbackData): string {
   params.set('environment', `${osInfo} (${surface})`);
 
   return `${GITHUB_ISSUES_NEW}?${params.toString()}`;
+}
+
+export function generateMailtoUrl(data: FeedbackData): string {
+  const env = detectEnvironment(data.clientType);
+  const subject = `[PaperPilot ${data.category.toUpperCase()}]: ${data.title.trim() || 'User Feedback'}`;
+  
+  let body = `Category: ${data.category} (${data.subcategory || 'General'})\n`;
+  if (data.affectedTool) body += `Affected Tool: ${data.affectedTool}\n`;
+  body += `Environment: ${env.clientType} on ${env.osEnvironment} (v${env.appVersion})\n\n`;
+  body += `Details:\n${data.description || 'No description provided.'}\n\n`;
+  
+  if (data.reproductionSteps) {
+    body += `Steps to reproduce:\n${data.reproductionSteps}\n\n`;
+  }
+  if (data.expectedBehavior) {
+    body += `Expected behavior:\n${data.expectedBehavior}\n\n`;
+  }
+  if (data.errorTrace) {
+    body += `Logs / Error Trace:\n${data.errorTrace}\n\n`;
+  }
+
+  return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 export async function openExternalUrl(url: string): Promise<void> {

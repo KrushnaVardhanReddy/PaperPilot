@@ -1,12 +1,14 @@
 <script lang="ts">
   import {
     buildGitHubIssueUrl,
+    generateMailtoUrl,
     detectEnvironment,
     openExternalUrl,
     type FeedbackCategory,
     type FeedbackData,
     GITHUB_BASE_URL,
-    GITHUB_DISCUSSIONS_URL
+    GITHUB_DISCUSSIONS_URL,
+    FEEDBACK_EMAIL
   } from '$lib/utils/feedback';
   import { appState } from '$lib/state/app.svelte';
   import { allTools } from '$lib/types/toolList';
@@ -100,8 +102,10 @@
     }
   }
 
-  async function handleSubmit() {
-    const data: FeedbackData = {
+  let copyStatus = $state(false);
+
+  function getFeedbackData(): FeedbackData {
+    return {
       category,
       subcategory,
       title: title || (category === 'praise' ? 'Loving PaperPilot!' : 'Issue report'),
@@ -119,10 +123,39 @@
       clientType: envInfo.clientType,
       osEnvironment: envInfo.osEnvironment
     };
+  }
 
+  async function handleSubmit() {
+    const data = getFeedbackData();
     const targetUrl = buildGitHubIssueUrl(data);
     await openExternalUrl(targetUrl);
     onClose();
+  }
+
+  async function handleEmailFallback() {
+    const data = getFeedbackData();
+    const mailtoUrl = generateMailtoUrl(data);
+    await openExternalUrl(mailtoUrl);
+  }
+
+  async function handleCopyFallback() {
+    const data = getFeedbackData();
+    const env = detectEnvironment(data.clientType);
+    let text = `[PaperPilot ${data.category.toUpperCase()}]: ${data.title}\n`;
+    text += `Category: ${data.category} (${data.subcategory || 'General'})\n`;
+    if (data.affectedTool) text += `Tool: ${data.affectedTool}\n`;
+    text += `Environment: ${env.clientType} (${env.osEnvironment}) v${env.appVersion}\n\n`;
+    text += `${data.description}\n`;
+    if (data.reproductionSteps) text += `\nReproduction:\n${data.reproductionSteps}\n`;
+    if (data.errorTrace) text += `\nLogs:\n${data.errorTrace}\n`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      copyStatus = true;
+      setTimeout(() => { copyStatus = false; }, 2500);
+    } catch (e) {
+      console.error('Failed to copy', e);
+    }
   }
 </script>
 
@@ -386,35 +419,48 @@
 
         <!-- Footer Actions -->
         <footer class="modal-footer">
-          <button type="button" class="cancel-btn" onclick={onClose}>
-            Cancel
-          </button>
+          <div class="footer-fallback-note">
+            <span>No GitHub account?</span>
+            <button type="button" class="fallback-link-btn" onclick={handleEmailFallback}>
+              ✉️ Email Founder ({FEEDBACK_EMAIL})
+            </button>
+            <span class="env-sep">•</span>
+            <button type="button" class="fallback-link-btn" onclick={handleCopyFallback}>
+              {copyStatus ? '✓ Copied Details!' : '📋 Copy Details'}
+            </button>
+          </div>
 
-          {#if category === 'praise'}
-            <button
-              type="submit"
-              class="primary-submit-btn"
-            >
-              <span>Share on GitHub Discussions</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
+          <div class="footer-buttons">
+            <button type="button" class="cancel-btn" onclick={onClose}>
+              Cancel
             </button>
-          {:else}
-            <button
-              type="submit"
-              class="primary-submit-btn"
-            >
-              <span>Submit on GitHub</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-            </button>
-          {/if}
+
+            {#if category === 'praise'}
+              <button
+                type="submit"
+                class="primary-submit-btn"
+              >
+                <span>Share on GitHub Discussions</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </button>
+            {:else}
+              <button
+                type="submit"
+                class="primary-submit-btn"
+              >
+                <span>Submit on GitHub</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </button>
+            {/if}
+          </div>
         </footer>
       </form>
     </div>
@@ -666,11 +712,41 @@
 
   .modal-footer {
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     margin-top: 8px;
     padding-top: 12px;
     border-top: 1px solid var(--border-color, #334155);
+    flex-wrap: wrap;
+  }
+
+  .footer-fallback-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+
+  .fallback-link-btn {
+    background: none;
+    border: none;
+    color: #38bdf8;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0;
+  }
+
+  .fallback-link-btn:hover {
+    color: #7dd3fc;
+  }
+
+  .footer-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
 
   .cancel-btn {
