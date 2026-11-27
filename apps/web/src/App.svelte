@@ -70,8 +70,6 @@
         <span class="separator">•</span>
         <a href="/embed-test" target="_blank" rel="noopener noreferrer">Embed Sandbox</a>
         <span class="separator">•</span>
-        <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Docs</a>
-        <span class="separator">•</span>
         <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">Tools Handbook</a>
         <span class="separator">•</span>
         <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">Releases</a>
