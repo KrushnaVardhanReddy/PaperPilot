@@ -7,7 +7,7 @@
 
   const availableTools = [
     'merge', 'split', 'compress', 'encrypt', 'decrypt', 'watermark',
-    'ocr', 'extract', 'reorder', 'rotate', 'metadata'
+    'ocr', 'extract', 'reorder', 'rotate', 'metadata', 'pdf_edit_text'
   ];
 
   function toggleTool(tool: string) {
