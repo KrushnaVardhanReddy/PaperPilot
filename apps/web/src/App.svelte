@@ -75,6 +75,10 @@
         <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">Tools Handbook</a>
         <span class="separator">•</span>
         <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">Releases</a>
+        <span class="separator">•</span>
+        <a href="https://github.com/KrushnaVardhanReddy/PaperPilot" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <span class="separator">•</span>
+        <a href="https://github.com/KrushnaVardhanReddy/PaperPilot/releases" target="_blank" rel="noopener noreferrer">Changelog</a>
       </div>
     </div>
   </footer>
