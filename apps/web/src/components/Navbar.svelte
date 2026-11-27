@@ -210,16 +210,8 @@
       </a>
     </div>
 
-    <!-- Right: Feedback & High-Contrast Download Desktop CTA -->
+    <!-- Right: High-Contrast Download Desktop CTA -->
     <div class="navbar-actions-section">
-      <button
-        type="button"
-        class="feedback-action-btn"
-        onclick={() => onOpenFeedback('bug')}
-      >
-        💬 Feedback
-      </button>
-
       <button
         type="button"
         class="desktop-cta-btn"
