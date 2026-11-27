@@ -20,7 +20,7 @@
     {
       question: 'Is PaperPilot really free & open source?',
       answer:
-        'Yes — free and open source under MIT/Apache-2.0 with no watermarks, no file limits, and no account required.'
+        'Yes — free and open source under Apache-2.0 with no watermarks, no file limits, and no account required.'
     },
     {
       question: 'Why do Windows SmartScreen or macOS Gatekeeper show a warning on first launch?',

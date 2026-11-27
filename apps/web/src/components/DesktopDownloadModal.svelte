@@ -112,7 +112,7 @@
 
       <div class="modal-footer">
         <span class="release-info">
-          Latest stable release on GitHub • Fully Open Source (Apache-2.0 / MIT)
+          Latest stable release on GitHub • Fully Open Source (Apache-2.0)
         </span>
         <a
           href={DOWNLOAD_URL}
