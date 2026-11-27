@@ -1,14 +1,27 @@
 <script lang="ts">
   import OperationsView from "../views/OperationsView.svelte";
+  import QuickToolLaunchRow from "./QuickToolLaunchRow.svelte";
+  import PrivacyTrustBanner from "./PrivacyTrustBanner.svelte";
   import { DOWNLOAD_URL } from "../constants";
+
+  interface Props {
+    onOpenAllTools?: () => void;
+  }
+
+  let { onOpenAllTools }: Props = $props();
 </script>
 
 <div id="hero-section" class="hero-section">
   <div class="hero-content">
+    <PrivacyTrustBanner />
+
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
     <p class="hero-tagline">
       100% Client-Side. 0 Bytes Uploaded. ~30–95ms WASM Execution.
     </p>
+
+    <!-- Quick Tool Launch Row with Popular Instant Tools -->
+    <QuickToolLaunchRow {onOpenAllTools} />
 
     <div class="hero-ctas">
       <a
