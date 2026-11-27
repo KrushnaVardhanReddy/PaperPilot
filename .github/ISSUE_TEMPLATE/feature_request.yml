@@ -6,22 +6,40 @@ body:
   - type: markdown
     attributes:
       value: |
-        Have an idea to make PaperPilot better for your coding agents or daily workflows?
+        Have an idea to make PaperPilot better for your workflows or coding agents?
         We prioritize tools that can run 100% locally in Rust without cloud reliance.
+  - type: dropdown
+    id: subcategory
+    attributes:
+      label: Feature Subcategory
+      description: Is this a brand new tool or an enhancement to an existing capability?
+      options:
+        - "💡 New Tool Request"
+        - "🚀 Enhance Existing Tool"
+        - "💬 General Feedback / UX Improvement"
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Related / Existing Tool (if applicable)
+      description: Name of existing tool (e.g. `pdf_ocr`, `pdf_watermark`, `pdf_edit_text`) or proposed new tool name.
+    validations:
+      required: false
   - type: textarea
     id: problem
     attributes:
-      label: Problem Statement
+      label: Problem Statement / Motivation
       description: Is your feature request related to a specific problem or workflow bottleneck?
-      placeholder: I'm always frustrated when my agent cannot...
+      placeholder: I am frequently blocked when my workflow requires...
     validations:
       required: true
   - type: textarea
     id: proposed_solution
     attributes:
       label: Proposed Solution / Tool Design
-      description: Describe what tool, CLI argument, or MCP function should exist and how it should behave.
-      placeholder: Add `pdf_flatten` to flatten form fields, or add an EPUB exporter...
+      description: Describe what tool, CLI argument, or capability should exist and how it should behave.
+      placeholder: Add `pdf_bates_numbering` or add CAD DWG to PDF conversion...
     validations:
       required: true
   - type: dropdown
@@ -31,11 +49,11 @@ body:
       description: Where should this capability be exposed?
       options:
         - "All Surfaces (Core Rust engine)"
+        - "Desktop App (Tauri)"
+        - "Browser WASM (Zero-install web)"
         - "MCP Server (Coding agents like Claude Code, Codex, Cursor)"
         - "CLI (Batch and shell automation)"
         - "Local REST Gateway (API / n8n / Open-WebUI)"
-        - "Browser WASM (Zero-install web)"
-        - "Desktop App (Tauri)"
     validations:
       required: true
   - type: textarea

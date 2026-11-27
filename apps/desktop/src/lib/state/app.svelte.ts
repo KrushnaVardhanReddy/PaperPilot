@@ -43,6 +43,12 @@ export class AppState {
   exportCodeModalOpen = $state(false);
   exportCodeTarget = $state<any | null>(null);
 
+  // Global Feedback Modal state
+  feedbackModalOpen = $state(false);
+  feedbackInitialCategory = $state<'bug' | 'performance' | 'feature' | 'praise'>('bug');
+  feedbackInitialTool = $state<string>('');
+  feedbackInitialError = $state<string>('');
+
   // Developer Mode
   developerMode = $state(false);
   gatewayRunning = $state(false);
@@ -229,6 +235,26 @@ export class AppState {
   closeExportCode() {
     this.exportCodeModalOpen = false;
     this.exportCodeTarget = null;
+  }
+
+  openFeedback(options?: {
+    category?: 'bug' | 'performance' | 'feature' | 'praise';
+    tool?: string;
+    error?: string;
+  }) {
+    if (options) {
+      if (options.category) this.feedbackInitialCategory = options.category;
+      if (options.tool) this.feedbackInitialTool = options.tool;
+      if (options.error) this.feedbackInitialError = options.error;
+    }
+    this.feedbackModalOpen = true;
+  }
+
+  closeFeedback() {
+    this.feedbackModalOpen = false;
+    this.feedbackInitialCategory = 'bug';
+    this.feedbackInitialTool = '';
+    this.feedbackInitialError = '';
   }
 
   setLoading(loading: boolean) {

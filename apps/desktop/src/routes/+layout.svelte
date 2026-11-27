@@ -8,6 +8,7 @@
   import ModularSetupModal from '$lib/components/onboarding/ModularSetupModal.svelte';
   import WorkspaceSearchModal from '$lib/components/workspace/WorkspaceSearchModal.svelte';
   import ExportCodeModal from '$lib/components/pipeline/ExportCodeModal.svelte';
+  import FeedbackModal from '$lib/components/FeedbackModal.svelte';
   import { onMount } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
@@ -184,6 +185,14 @@
   isOpen={appState.exportCodeModalOpen}
   target={appState.exportCodeTarget}
   onClose={() => appState.closeExportCode()}
+/>
+
+<FeedbackModal
+  isOpen={appState.feedbackModalOpen}
+  initialCategory={appState.feedbackInitialCategory}
+  initialTool={appState.feedbackInitialTool}
+  initialError={appState.feedbackInitialError}
+  onClose={() => appState.closeFeedback()}
 />
 
 {#if !appState.onboardingCompleted}

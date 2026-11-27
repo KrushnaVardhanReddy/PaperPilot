@@ -1,0 +1,91 @@
+name: "⚡ Performance / Slowdown / Memory"
+description: "Report excessive processing time, high memory usage, or UI freezing"
+title: "[PERF]: "
+labels: ["performance", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make PaperPilot blazingly fast!
+        PaperPilot targets pure-Rust zero-panic performance on all platforms.
+  - type: textarea
+    id: description
+    attributes:
+      label: Performance Issue Description
+      description: What slowdown, memory spike, or UI freeze did you experience?
+      placeholder: Describe the bottleneck or lag...
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface / Interface
+      description: Which PaperPilot surface encountered the performance issue?
+      options:
+        - "Desktop App (Tauri)"
+        - "Browser WASM (usepaperpilot.com / portable HTML)"
+        - "CLI (`paperpilot ...`)"
+        - "MCP Server (`paperpilot-mcp`)"
+        - "Local REST Gateway (`paperpilot-gateway` / port 7823)"
+        - "Core Rust Crates (`paperpilot-pdf`, `paperpilot-core`)"
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Affected Tool / Operation
+      description: Which tool was executing? (e.g. `pdf_split`, `pdf_ocr`, `pdf_to_xlsx`, `batch_pipeline`).
+    validations:
+      required: false
+  - type: input
+    id: file_size
+    attributes:
+      label: Input File Size & Page Count
+      description: E.g., 150 MB, 2,400 pages, scanned 600 DPI, etc.
+    validations:
+      required: false
+  - type: input
+    id: processing_time
+    attributes:
+      label: Observed Processing Time / Duration
+      description: E.g., Took 45s, froze UI for 12s, or timed out.
+    validations:
+      required: false
+  - type: input
+    id: memory_usage
+    attributes:
+      label: RAM / Memory Spikes
+      description: E.g., Memory spiked to 2.4 GB, out of memory panic.
+    validations:
+      required: false
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we replicate this performance issue?
+      placeholder: |
+        1. Open file with X pages
+        2. Run tool Y with settings Z
+        3. Notice freeze or delay
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Benchmark / Trace
+      description: Paste any console metrics, benchmark output, or error messages.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: PaperPilot Version
+      description: E.g., `0.8.2`, commit hash, or `paperpilot --version`.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating System & Hardware Specs
+      description: E.g., Ubuntu 24.04 (x86_64, 16GB RAM), macOS Sonoma (M3 Max, 36GB), Windows 11.
+    validations:
+      required: true
