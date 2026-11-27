@@ -43,13 +43,6 @@
         <img src="/logo.png" alt="PaperPilot" class="brand-img" />
         <span class="brand-text">PaperPilot <span class="web-badge">Web</span></span>
       </a>
-
-      <!-- Trust Badge in Navbar -->
-      <div class="navbar-trust-pill" title="All processing happens on your machine via WebAssembly">
-        <span class="pulse-indicator"></span>
-        <span class="trust-text">100% Client-Side WASM</span>
-        <span class="trust-extra">— Zero Uploads</span>
-      </div>
     </div>
 
     <!-- Center: Main Navigation Dropdowns & Links -->
@@ -105,7 +98,7 @@
         class="nav-text-btn"
         onclick={() => isDownloadModalOpen = true}
       >
-        Desktop App
+        Desktop
       </button>
 
       <!-- Documentation Link -->
@@ -115,7 +108,7 @@
         rel="noopener noreferrer"
         class="nav-text-link"
       >
-        Documentation
+        Docs
       </a>
 
       <!-- GitHub Link with Star Badge -->
@@ -129,7 +122,6 @@
         <svg class="gh-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
           <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
         </svg>
-        <span>GitHub</span>
         <span class="star-badge">★ Star</span>
       </a>
     </div>
@@ -141,11 +133,8 @@
         class="feedback-action-btn"
         onclick={() => onOpenFeedback('bug')}
       >
-        💬 Feedback & Bugs
+        💬 Feedback
       </button>
-
-      <DownloadBadge />
-      <ShareModal />
 
       <button
         type="button"
@@ -153,7 +142,6 @@
         onclick={() => isDownloadModalOpen = true}
       >
         <span>Download Desktop</span>
-        <span class="cta-shine"></span>
       </button>
     </div>
   </div>
@@ -240,46 +228,6 @@
     padding: 2px 7px;
     border-radius: 10px;
     text-transform: uppercase;
-  }
-
-  .navbar-trust-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.78rem;
-    color: #10b981;
-    font-weight: 600;
-  }
-
-  @media (max-width: 1250px) {
-    .trust-extra {
-      display: none;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    .navbar-trust-pill {
-      display: none;
-    }
-  }
-
-  .pulse-indicator {
-    width: 7px;
-    height: 7px;
-    background-color: #10b981;
-    border-radius: 50%;
-    box-shadow: 0 0 8px #10b981;
-    animation: pulseGlow 2s infinite;
-  }
-
-  @keyframes pulseGlow {
-    0% { transform: scale(0.9); opacity: 0.7; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(0.9); opacity: 0.7; }
   }
 
   /* Center Navigation */
@@ -456,27 +404,5 @@
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
     background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-  }
-
-  .cta-shine {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.25),
-      transparent
-    );
-    transform: skewX(-20deg);
-    animation: shine 4s infinite;
-  }
-
-  @keyframes shine {
-    0% { left: -100%; }
-    20% { left: 200%; }
-    100% { left: 200%; }
   }
 </style>

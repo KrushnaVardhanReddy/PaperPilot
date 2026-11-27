@@ -17,32 +17,11 @@
 
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
     <p class="hero-tagline">
-      100% Client-Side. 0 Bytes Uploaded. ~30–95ms WASM Execution.
+      Over 100 tools executed entirely in your browser's private memory. No servers, no tracking, zero file uploads.
     </p>
 
     <!-- Quick Tool Launch Row with Popular Instant Tools -->
     <QuickToolLaunchRow {onOpenAllTools} />
-
-    <div class="hero-ctas">
-      <a
-        href={DOWNLOAD_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="cta-btn primary"
-      >
-        <span class="icon">⚡</span> Download Desktop
-        <span class="muted">(Free & Open Source)</span>
-      </a>
-      <button
-        class="cta-btn secondary"
-        onclick={() =>
-          document
-            .getElementById("embed-generator")
-            ?.scrollIntoView({ behavior: "smooth" })}
-      >
-        <span class="icon">&lt; / &gt;</span> Get Embed Code
-      </button>
-    </div>
   </div>
 
   <div id="wasm-playground" class="hero-playground">
@@ -105,56 +84,6 @@
     color: var(--text-secondary);
     margin-bottom: 32px;
     font-weight: 500;
-  }
-
-  .hero-ctas {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .cta-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: var(--border-radius-lg);
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    text-decoration: none;
-  }
-
-  .cta-btn.primary {
-    background-color: var(--accent-primary);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 14px rgba(94, 106, 210, 0.4);
-  }
-
-  .cta-btn.primary:hover {
-    background-color: var(--accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(94, 106, 210, 0.5);
-  }
-
-  .cta-btn.primary .muted {
-    opacity: 0.8;
-    font-size: 0.9em;
-    font-weight: 400;
-  }
-
-  .cta-btn.secondary {
-    background-color: transparent;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-  }
-
-  .cta-btn.secondary:hover {
-    background-color: var(--bg-surface);
-    border-color: var(--text-secondary);
   }
 
   .hero-playground {
@@ -256,18 +185,6 @@
       height: auto;
       min-height: 700px;
       border-radius: var(--border-radius-md, 8px);
-    }
-
-    .hero-ctas {
-      flex-direction: column;
-      width: 100%;
-      gap: 12px;
-    }
-
-    .cta-btn {
-      width: 100%;
-      min-height: 48px;
-      justify-content: center;
     }
 
     :global(.playground-content .operations-view) {

@@ -9,15 +9,10 @@
 <div class="privacy-trust-banner" class:compact>
   <div class="trust-badge-pill">
     <span class="status-indicator"></span>
-    <span class="trust-bold">🟢 100% Client-Side WASM</span>
+    <span class="trust-bold">100% Client-Side WASM</span>
     <span class="divider">•</span>
     <span class="trust-subtitle">Zero Cloud Uploads</span>
   </div>
-  <p class="trust-explainer">
-    Unlike server-side PDF services, PaperPilot compiles pure Rust into WebAssembly.
-    Every page merge, text edit, and conversion executes directly in your browser's private memory.
-    <strong>0 bytes uploaded to any remote server.</strong>
-  </p>
 </div>
 
 <style>
@@ -77,17 +72,5 @@
     font-size: 0.88rem;
     font-weight: 600;
     color: #34d399;
-  }
-
-  .trust-explainer {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-secondary, #a1a1aa);
-    line-height: 1.45;
-    max-width: 620px;
-  }
-
-  .trust-explainer strong {
-    color: var(--text-primary, #f4f4f5);
   }
 </style>
