@@ -32,7 +32,8 @@ jobs:
           results_format: sarif
           publish_results: true
 
-      - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4.39.2
-        with:
-          sarif_file: results.sarif
+      # Upload SARIF to GitHub Code Scanning is optional; disabled to prevent non-vulnerability governance checks from flooding security tab
+      # - name: Upload SARIF to GitHub Code Scanning
+      #   uses: github/codeql-action/upload-sarif@1fc58d04a4d4374f921bdac573c3811c240f9c26
+      #   with:
+      #     sarif_file: results.sarif
