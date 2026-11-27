@@ -5,9 +5,10 @@
   interface Props {
     isOpen: boolean;
     onClose: () => void;
+    onOpenDesktopModal?: () => void;
   }
 
-  let { isOpen = $bindable(false), onClose }: Props = $props();
+  let { isOpen = $bindable(false), onClose, onOpenDesktopModal }: Props = $props();
 
   let searchQuery = $state('');
   let selectedIndex = $state(0);
@@ -64,6 +65,11 @@
   }
 
   function handleSelect(tool: CatalogTool) {
+    if (tool.runtime === 'desktop' && onOpenDesktopModal) {
+      onClose();
+      onOpenDesktopModal();
+      return;
+    }
     selectToolAndScroll(tool.id, tool.wasmToolId);
     onClose();
   }

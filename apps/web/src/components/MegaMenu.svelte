@@ -9,15 +9,22 @@
   interface Props {
     isOpen: boolean;
     onClose: () => void;
+    onOpenDesktopModal?: () => void;
   }
 
-  let { isOpen = $bindable(false), onClose }: Props = $props();
+  let { isOpen = $bindable(false), onClose, onOpenDesktopModal }: Props = $props();
 
   let activeCategory = $state<'all' | 'organize' | 'edit' | 'convert' | 'optimize' | 'intelligence'>('all');
   let filterText = $state('');
+  let wasmOnly = $state(false);
+
+  const wasmCount = ALL_101_TOOLS.filter((t: CatalogTool) => t.runtime === 'wasm').length;
 
   let filteredTools = $derived.by(() => {
     let list = ALL_101_TOOLS;
+    if (wasmOnly) {
+      list = list.filter((t: CatalogTool) => t.runtime === 'wasm');
+    }
     if (activeCategory !== 'all') {
       list = list.filter((t: CatalogTool) => t.category === activeCategory);
     }
@@ -33,6 +40,11 @@
   });
 
   function handleSelect(tool: CatalogTool) {
+    if (tool.runtime === 'desktop' && onOpenDesktopModal) {
+      onClose();
+      onOpenDesktopModal();
+      return;
+    }
     selectToolAndScroll(tool.id, tool.wasmToolId);
     onClose();
   }
@@ -93,11 +105,23 @@
           <span class="tab-count">{getCategoryCount(cat.id)}</span>
         </button>
       {/each}
+
+      <button
+        type="button"
+        class="tab-btn wasm-filter-pill"
+        class:active={wasmOnly}
+        onclick={() => wasmOnly = !wasmOnly}
+        aria-pressed={wasmOnly}
+      >
+        <span class="tab-icon">⚡</span>
+        <span class="tab-label">WASM Only</span>
+        <span class="tab-count">{wasmCount}</span>
+      </button>
     </div>
 
     <!-- Mega Menu Grid Body -->
     <div class="megamenu-body">
-      {#if activeCategory === 'all' && !filterText}
+      {#if activeCategory === 'all' && !filterText && !wasmOnly}
         <!-- Multi-Column Category View -->
         <div class="categories-grid">
           {#each TOOLS_CATEGORIES as cat}

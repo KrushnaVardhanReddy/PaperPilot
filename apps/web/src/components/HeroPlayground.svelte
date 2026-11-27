@@ -9,6 +9,7 @@
   }
 
   let { onOpenAllTools }: Props = $props();
+  let isFullWidth = $state(false);
 </script>
 
 <div id="hero-section" class="hero-section">
@@ -24,7 +25,7 @@
     <QuickToolLaunchRow {onOpenAllTools} />
   </div>
 
-  <div id="wasm-playground" class="hero-playground">
+  <div id="wasm-playground" class="hero-playground" class:full-width={isFullWidth}>
     <div class="playground-wrapper">
       <div class="playground-header">
         <div class="window-controls">
@@ -33,6 +34,15 @@
           <span class="dot maximize"></span>
         </div>
         <div class="window-title">PaperPilot WASM Engine</div>
+        <button
+          type="button"
+          class="expand-toggle-btn"
+          onclick={() => isFullWidth = !isFullWidth}
+          title={isFullWidth ? 'Exit Full Width' : 'Expand Full Width'}
+          aria-label={isFullWidth ? 'Exit Full Width' : 'Expand Full Width'}
+        >
+          {isFullWidth ? '⤡ Exit Full Width' : '⤢ Full Width'}
+        </button>
       </div>
       <div class="playground-content">
         <OperationsView />
@@ -94,6 +104,11 @@
     min-height: 700px;
     position: relative;
     z-index: 10;
+    transition: max-width 0.25s ease;
+  }
+
+  .hero-playground.full-width {
+    max-width: none;
   }
 
   .playground-wrapper {
@@ -145,7 +160,25 @@
     font-size: 0.85rem;
     color: var(--text-secondary);
     font-weight: 500;
-    margin-right: 44px; /* Offset for window controls */
+  }
+
+  .expand-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .expand-toggle-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+    background-color: var(--surface-2, rgba(255, 255, 255, 0.05));
   }
 
   .playground-content {

@@ -23,13 +23,13 @@
       title: 'Hexagonal Storage Architecture',
       description: 'Modular file persistence ports supporting local disk, cloud buckets, and encrypted client-side memory buffers.',
       icon: '⬡',
-      link: 'https://docs.usepaperpilot.com/architecture/storage/'
+      link: 'https://docs.usepaperpilot.com/architecture/zero-copy-streaming/'
     },
     {
       title: 'CLI & AI Agent MCP Server',
       description: 'Universal developer tooling with Model Context Protocol (MCP) server for Claude Desktop, Cursor, and automated scripts.',
       icon: '🤖',
-      link: 'https://docs.usepaperpilot.com/mcp/'
+      link: 'https://docs.usepaperpilot.com/getting-started/cli-guide/'
     }
   ];
 

@@ -150,6 +150,7 @@
   <MegaMenu
     isOpen={isMegaMenuOpen}
     onClose={() => isMegaMenuOpen = false}
+    onOpenDesktopModal={() => isDownloadModalOpen = true}
   />
 </nav>
 
@@ -162,6 +163,7 @@
 <ToolQuickFinderModal
   isOpen={isQuickFinderOpen}
   onClose={() => isQuickFinderOpen = false}
+  onOpenDesktopModal={() => isDownloadModalOpen = true}
 />
 
 <style>
