@@ -1,8 +1,6 @@
 <script lang="ts">
   import Navbar from './components/Navbar.svelte';
   import HeroPlayground from './components/HeroPlayground.svelte';
-  import UseCasesShowcase from './components/UseCasesShowcase.svelte';
-  import TriSurfaceShowcase from './components/TriSurfaceShowcase.svelte';
   import DeveloperTabsSection from './components/DeveloperTabsSection.svelte';
   import FaqSection from './components/FaqSection.svelte';
   import FeedbackModal from './components/FeedbackModal.svelte';
@@ -45,8 +43,6 @@
 
   <main class="main-content">
     <HeroPlayground />
-    <UseCasesShowcase />
-    <TriSurfaceShowcase />
     <DeveloperTabsSection />
     <FaqSection />
   </main>

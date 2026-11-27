@@ -1,13 +1,17 @@
 <script lang="ts">
+  import UseCasesShowcase from './UseCasesShowcase.svelte';
+  import TriSurfaceShowcase from './TriSurfaceShowcase.svelte';
   import EmbedGenerator from './EmbedGenerator.svelte';
   import ApiExplorer from './ApiExplorer.svelte';
   import BenchmarkMatrix from './BenchmarkMatrix.svelte';
 
-  type TabId = 'embed' | 'api' | 'benchmarks';
+  type TabId = 'workflows' | 'surfaces' | 'embed' | 'api' | 'benchmarks';
 
-  let activeTab = $state<TabId>('embed');
+  let activeTab = $state<TabId>('workflows');
 
   const tabs: { id: TabId; label: string }[] = [
+    { id: 'workflows', label: 'Workflows' },
+    { id: 'surfaces', label: '3 Surfaces' },
     { id: 'embed', label: '</> Embed Widget' },
     { id: 'api', label: '⚡ REST & MCP API' },
     { id: 'benchmarks', label: '📊 Benchmarks' }
@@ -33,7 +37,11 @@
   </div>
 
   <div class="tabs-panel" role="tabpanel">
-    {#if activeTab === 'embed'}
+    {#if activeTab === 'workflows'}
+      <UseCasesShowcase />
+    {:else if activeTab === 'surfaces'}
+      <TriSurfaceShowcase />
+    {:else if activeTab === 'embed'}
       <EmbedGenerator />
     {:else if activeTab === 'api'}
       <ApiExplorer />
