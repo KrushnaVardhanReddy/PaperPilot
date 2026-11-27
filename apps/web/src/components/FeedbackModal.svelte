@@ -77,18 +77,25 @@
     'img_crop_to_content'
   ];
 
+  let wasOpen = false;
   $effect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpen) {
       envInfo = detectEnvironment('Web (WASM)');
       category = initialCategory || 'bug';
       if (category === 'bug') {
         subcategory = '🐞 Functional Bug / Crash';
+      } else if (category === 'performance') {
+        subcategory = '⚡ Performance / Slowdown / Memory';
       } else if (category === 'feature') {
         subcategory = '💡 New Tool Request';
+      } else if (category === 'praise') {
+        subcategory = '⭐ Praise & Testimonial';
       }
 
       if (initialTool) {
         affectedTool = initialTool;
+      } else {
+        affectedTool = '';
       }
 
       if (initialError) {
@@ -98,6 +105,7 @@
         }
       }
     }
+    wasOpen = isOpen;
   });
 
   function selectCategory(cat: FeedbackCategory) {

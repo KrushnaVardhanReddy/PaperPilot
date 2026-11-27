@@ -51,7 +51,7 @@
           <span>Explore All 101 Pure-Rust Tools</span>
           <span class="count-pill">101 Tools</span>
         </h3>
-        <p class="megamenu-sub">Zero Cloud Uploads • 100% Client-Side WebAssembly Execution</p>
+        <p class="megamenu-sub">Zero Cloud Uploads • Browser WASM Instant Tools & Desktop Engine</p>
       </div>
 
       <div class="header-search">

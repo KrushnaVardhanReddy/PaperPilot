@@ -55,15 +55,20 @@
   // Unique list of sorted tool IDs
   const toolOptions = Array.from(new Set(allTools.map((t) => t.id))).sort();
 
+  let wasOpen = false;
   // Watch modal open and populate initial values
   $effect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpen) {
       envInfo = detectEnvironment();
       category = initialCategory || 'bug';
       if (category === 'bug') {
         subcategory = '🐞 Functional Bug / Crash';
+      } else if (category === 'performance') {
+        subcategory = '⚡ Performance / Slowdown / Memory';
       } else if (category === 'feature') {
         subcategory = '💡 New Tool Request';
+      } else if (category === 'praise') {
+        subcategory = '⭐ Praise & Testimonial';
       }
 
       if (initialTool) {
@@ -81,6 +86,7 @@
         }
       }
     }
+    wasOpen = isOpen;
   });
 
   function selectCategory(cat: FeedbackCategory) {

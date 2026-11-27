@@ -17,7 +17,7 @@
 
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
     <p class="hero-tagline">
-      Over 100 tools executed entirely in your browser's private memory. No servers, no tracking, zero file uploads.
+      Zero-cloud PDF toolbox executed directly in your browser's private memory. Instant WASM performance, no servers, zero tracking.
     </p>
 
     <!-- Quick Tool Launch Row with Popular Instant Tools -->
