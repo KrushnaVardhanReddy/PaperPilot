@@ -1245,6 +1245,9 @@ export const ALL_101_TOOLS: CatalogTool[] = [
 
 export function selectToolAndScroll(toolId: string, wasmId?: string) {
   const targetId = wasmId || toolId;
+  if (typeof window !== 'undefined') {
+    history.replaceState(null, '', `?tool=${targetId}`);
+  }
   window.dispatchEvent(
     new CustomEvent('select-tool', {
       detail: { toolId: targetId }

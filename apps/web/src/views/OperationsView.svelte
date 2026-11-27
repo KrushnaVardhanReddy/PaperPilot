@@ -1,12 +1,33 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { wasmPdfClient } from '../lib/wasm';
+  import { ALL_101_TOOLS } from '../lib/toolsCatalog';
   import DropZone from '../components/DropZone.svelte';
 
   let activeTool = $state('merge');
   let isProcessing = $state(false);
 
+  $effect(() => {
+    if (typeof window !== 'undefined' && activeTool) {
+      history.replaceState(null, '', '?tool=' + activeTool);
+    }
+  });
+
   onMount(() => {
+    const toolParam = new URLSearchParams(window.location.search).get('tool');
+    if (toolParam) {
+      let matched = tools.find(t => t.id === toolParam);
+      if (!matched) {
+        const catalogEntry = ALL_101_TOOLS.find(t => t.id === toolParam);
+        if (catalogEntry?.wasmId) {
+          matched = tools.find(t => t.id === catalogEntry.wasmId);
+        }
+      }
+      if (matched) {
+        activeTool = matched.id;
+      }
+    }
+
     const handleSelectTool = (e: CustomEvent<{ toolId: string }>) => {
       if (e.detail?.toolId) {
         activeTool = e.detail.toolId;
