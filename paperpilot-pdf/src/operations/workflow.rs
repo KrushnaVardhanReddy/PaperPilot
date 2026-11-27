@@ -62,6 +62,7 @@ fn apply_op<T: PdfOperation>(bytes: &[u8], op: T) -> OperationResult<Vec<u8>> {
     let mut doc = crate::document::LopdfDocument {
         inner: inner_doc,
         original_bytes: Some(bytes.to_vec()),
+        source: None,
     };
     op.execute(&mut doc)?;
     let mut out_buf = Vec::new();

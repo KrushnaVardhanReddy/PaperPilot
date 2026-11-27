@@ -1,4 +1,3 @@
-use paperpilot_core::document_source::DocumentSource;
 use paperpilot_core::error::PdfError;
 use paperpilot_pdf::operations::pdf_extract_patterns::{
     PdfExtractPatternsOptions, pdf_extract_patterns_bytes,
@@ -14,7 +13,7 @@ pub fn handle_pdf_extract_patterns_command(
     case_sensitive: bool,
     context_len: Option<usize>,
 ) -> Result<(), PdfError> {
-    let doc_source = DocumentSource::open(input, None).map_err(PdfError::IoError)?;
+    let doc_source = super::open_document_source(input)?;
 
     let mut patterns = HashMap::new();
     if let Some(list) = patterns_arg {

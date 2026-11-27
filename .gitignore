@@ -1,6 +1,7 @@
 .env
 .env.*
 target/
+.tools/
 node_modules/
 .pnpm-store/
 dist/
@@ -48,6 +49,8 @@ update_*.py
 *.sh
 !scripts/gen_corpus_suite1.sh
 !scripts/gen_corpus_suite2.sh
+!scripts/run_zap_local.sh
+!scripts/run_secrets_scan.sh
 run_tests.sh
 parse_test.rs
 apps/desktop/src-tauri/gen/android/.gradle/

@@ -85,6 +85,15 @@
   <div class="window-controls">
     <button
       class="control-btn action-control-btn"
+      aria-label="Report Issue or Feedback"
+      title="Feedback & Bug Reporting"
+      onclick={() => appState.openFeedback()}
+    >
+      <span class="btn-icon">💬</span>
+      <span class="btn-text">Feedback</span>
+    </button>
+    <button
+      class="control-btn action-control-btn"
       class:active={appState.isOperationsDrawerOpen}
       aria-label="Toggle Tools Drawer"
       title="Tools & Actions (Toggle)"

@@ -528,7 +528,7 @@ impl Ctm {
 }
 
 fn extract_page_media(
-    lopdf_doc: &mut lopdf::Document,
+    lopdf_doc: &lopdf::Document,
     page_id: (u32, u16),
     original_bytes: &[u8],
     page_index: usize,
@@ -604,7 +604,10 @@ fn extract_page_media(
         }
     }
 
-    if has_forms && let Ok(hayro_pdf) = hayro_syntax::Pdf::new(original_bytes.to_vec()) {
+    if has_forms
+        && original_bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES
+        && let Ok(hayro_pdf) = hayro_syntax::Pdf::new(original_bytes.to_vec())
+    {
         let pages = hayro_pdf.pages();
         if let Some(page) = pages.get(page_index) {
             let cache = hayro::RenderCache::new();
@@ -966,8 +969,11 @@ impl PdfOperation for PdfToHtmlOperation {
             DEFAULT_PDF_HTML_CSS.trim().to_string()
         };
 
-        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+        let is_mmap = lopdf_doc.is_mmap();
+        let raw_bytes = lopdf_doc.source_bytes();
+        if let Some(bytes) = raw_bytes
             && !bytes.is_empty()
+            && (!is_mmap || bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES)
             && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
             && let Ok(page_count) = pdf.page_count()
         {
@@ -989,7 +995,7 @@ impl PdfOperation for PdfToHtmlOperation {
                 };
 
                 let page_media = if obj_id.0 != 0 {
-                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                    extract_page_media(&lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
                 } else {
                     Vec::new()
                 };
@@ -1118,7 +1124,7 @@ impl PdfOperation for PdfToHtmlOperation {
         }
 
         if html.is_empty() {
-            let inner = &mut lopdf_doc.inner;
+            let inner = &lopdf_doc.inner;
             let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
 
             html = format!(
@@ -1126,24 +1132,39 @@ impl PdfOperation for PdfToHtmlOperation {
                 css
             );
 
-            for page_id in all_pages {
-                match inner.extract_text(&[page_id]) {
-                    Ok(text) => {
-                        html.push_str(&format!("<div class=\"page\" id=\"page-{}\" data-page=\"{}\">\n", page_id, page_id));
-                        for line in text.lines() {
-                            if !line.trim().is_empty() {
-                                html.push_str(&format!("<p>{}</p>\n", line.trim()));
-                            }
-                        }
-                        html.push_str("</div>\n");
-                    }
-                    Err(e) => {
-                        return Err(PdfError::Other(format!(
-                            "Failed to extract text from page {}: {}",
-                            page_id, e
-                        )));
+            let extract_html_block = |page_id: u32| -> OperationResult<String> {
+                let text = inner.extract_text(&[page_id]).map_err(|e| {
+                    PdfError::Other(format!("Failed to extract text from page {}: {}", page_id, e))
+                })?;
+                let mut block = format!(
+                    "<div class=\"page\" id=\"page-{}\" data-page=\"{}\">\n",
+                    page_id, page_id
+                );
+                for line in text.lines() {
+                    if !line.trim().is_empty() {
+                        block.push_str(&format!("<p>{}</p>\n", line.trim()));
                     }
                 }
+                block.push_str("</div>\n");
+                Ok(block)
+            };
+
+            #[cfg(not(target_arch = "wasm32"))]
+            let page_blocks: Vec<String> = {
+                use rayon::prelude::*;
+                all_pages
+                    .par_iter()
+                    .map(|&page_id| extract_html_block(page_id))
+                    .collect::<OperationResult<Vec<String>>>()?
+            };
+            #[cfg(target_arch = "wasm32")]
+            let page_blocks: Vec<String> = all_pages
+                .iter()
+                .map(|&page_id| extract_html_block(page_id))
+                .collect::<OperationResult<Vec<String>>>()?;
+
+            for block in page_blocks {
+                html.push_str(&block);
             }
 
             html.push_str("</body>\n</html>");
@@ -1183,8 +1204,11 @@ impl PdfOperation for PdfToMarkdownOperation {
 
         let mut md = String::new();
 
-        if let Some(bytes) = lopdf_doc.original_bytes.as_deref()
+        let is_mmap = lopdf_doc.is_mmap();
+        let raw_bytes = lopdf_doc.source_bytes();
+        if let Some(bytes) = raw_bytes
             && !bytes.is_empty()
+            && (!is_mmap || bytes.len() <= crate::operations::extract_text::MAX_PDF_OXIDE_HEAP_BYTES)
             && let Ok(mut pdf) = pdf_oxide::api::Pdf::from_bytes(bytes.to_vec())
             && let Ok(page_count) = pdf.page_count()
         {
@@ -1202,7 +1226,7 @@ impl PdfOperation for PdfToMarkdownOperation {
                 };
 
                 let page_media = if obj_id.0 != 0 {
-                    extract_page_media(&mut lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
+                    extract_page_media(&lopdf_doc.inner, obj_id, bytes, i).unwrap_or_default()
                 } else {
                     Vec::new()
                 };
@@ -1323,29 +1347,41 @@ impl PdfOperation for PdfToMarkdownOperation {
         }
 
         if md.is_empty() {
-            let inner = &mut lopdf_doc.inner;
+            let inner = &lopdf_doc.inner;
             let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
 
-            for page_id in all_pages {
-                match inner.extract_text(&[page_id]) {
-                    Ok(text) => {
-                        md.push_str(&format!("# Page {}\n\n", page_id));
-                        let doc_ast = crate::operations::docast::LayoutExtractor::parse_text(&text);
-                        let page_md = doc_ast.to_markdown();
-                        if page_md.is_empty() {
-                            md.push_str(text.trim());
-                        } else {
-                            md.push_str(&page_md);
-                        }
-                        md.push_str("\n\n");
-                    }
-                    Err(e) => {
-                        return Err(PdfError::Other(format!(
-                            "Failed to extract text from page {}: {}",
-                            page_id, e
-                        )));
-                    }
+            let extract_md_block = |page_id: u32| -> OperationResult<String> {
+                let text = inner.extract_text(&[page_id]).map_err(|e| {
+                    PdfError::Other(format!("Failed to extract text from page {}: {}", page_id, e))
+                })?;
+                let doc_ast = crate::operations::docast::LayoutExtractor::parse_text(&text);
+                let page_md = doc_ast.to_markdown();
+                let mut block = format!("# Page {}\n\n", page_id);
+                if page_md.is_empty() {
+                    block.push_str(text.trim());
+                } else {
+                    block.push_str(&page_md);
                 }
+                block.push_str("\n\n");
+                Ok(block)
+            };
+
+            #[cfg(not(target_arch = "wasm32"))]
+            let page_blocks: Vec<String> = {
+                use rayon::prelude::*;
+                all_pages
+                    .par_iter()
+                    .map(|&page_id| extract_md_block(page_id))
+                    .collect::<OperationResult<Vec<String>>>()?
+            };
+            #[cfg(target_arch = "wasm32")]
+            let page_blocks: Vec<String> = all_pages
+                .iter()
+                .map(|&page_id| extract_md_block(page_id))
+                .collect::<OperationResult<Vec<String>>>()?;
+
+            for block in page_blocks {
+                md.push_str(&block);
             }
         }
 
@@ -1398,48 +1434,56 @@ impl PdfOperation for PdfToLlmExportOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
+        let inner = &lopdf_doc.inner;
         let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
 
+        let process_llm_page = |page_id: u32| -> OperationResult<(PageMetadata, String)> {
+            let text = inner.extract_text(&[page_id]).map_err(|e| {
+                PdfError::Other(format!("Failed to extract text from page {}: {}", page_id, e))
+            })?;
+            let doc_ast = crate::operations::docast::LayoutExtractor::parse_text(&text);
+            let page_md = doc_ast.to_markdown();
+            let content = if page_md.is_empty() {
+                text.trim().to_string()
+            } else {
+                page_md
+            };
+
+            let chars = content.chars().count();
+            let words = content.split_whitespace().count();
+            let meta = PageMetadata {
+                page_number: page_id,
+                char_count: chars,
+                word_count: words,
+            };
+            let section = format!("## Page {}\n\n{}\n\n---\n\n", page_id, content);
+            Ok((meta, section))
+        };
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let page_results: Vec<(PageMetadata, String)> = {
+            use rayon::prelude::*;
+            all_pages
+                .par_iter()
+                .map(|&page_id| process_llm_page(page_id))
+                .collect::<OperationResult<Vec<_>>>()?
+        };
+        #[cfg(target_arch = "wasm32")]
+        let page_results: Vec<(PageMetadata, String)> = all_pages
+            .iter()
+            .map(|&page_id| process_llm_page(page_id))
+            .collect::<OperationResult<Vec<_>>>()?;
+
         let mut md = String::new();
-        let mut pages_meta = Vec::new();
+        let mut pages_meta = Vec::with_capacity(page_results.len());
         let mut total_chars = 0;
         let mut total_words = 0;
 
-        for page_id in &all_pages {
-            match inner.extract_text(&[*page_id]) {
-                Ok(text) => {
-                    let doc_ast = crate::operations::docast::LayoutExtractor::parse_text(&text);
-                    let page_md = doc_ast.to_markdown();
-                    let content = if page_md.is_empty() {
-                        text.trim().to_string()
-                    } else {
-                        page_md
-                    };
-
-                    let chars = content.chars().count();
-                    let words = content.split_whitespace().count();
-
-                    pages_meta.push(PageMetadata {
-                        page_number: *page_id,
-                        char_count: chars,
-                        word_count: words,
-                    });
-
-                    total_chars += chars;
-                    total_words += words;
-
-                    md.push_str(&format!("## Page {}\n\n", page_id));
-                    md.push_str(&content);
-                    md.push_str("\n\n---\n\n");
-                }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
-                }
-            }
+        for (pm, section) in page_results {
+            total_chars += pm.char_count;
+            total_words += pm.word_count;
+            pages_meta.push(pm);
+            md.push_str(&section);
         }
 
         let meta = LlmExportMetadata {
@@ -1518,30 +1562,35 @@ impl PdfOperation for PdfToJsonOperation {
                 PdfError::UnsupportedOperation("Document must be an LopdfDocument".to_string())
             })?;
 
-        let inner = &mut lopdf_doc.inner;
+        let inner = &lopdf_doc.inner;
         let all_pages: Vec<u32> = inner.get_pages().keys().copied().collect();
 
-        let mut pages_data = Vec::new();
+        let build_json_page = |page_id: u32| -> OperationResult<JsonPage> {
+            let text = inner.extract_text(&[page_id]).map_err(|e| {
+                PdfError::Other(format!("Failed to extract text from page {}: {}", page_id, e))
+            })?;
+            let chars = text.chars().count();
+            Ok(JsonPage {
+                page_number: page_id,
+                text,
+                char_count: chars,
+                images: vec![],
+            })
+        };
 
-        for page_id in all_pages {
-            match inner.extract_text(&[page_id]) {
-                Ok(text) => {
-                    let chars = text.chars().count();
-                    pages_data.push(JsonPage {
-                        page_number: page_id,
-                        text,
-                        char_count: chars,
-                        images: vec![], // Add an empty vector as pdf_to_json doesn't extract images yet in this mock or if we're not touching its impl here
-                    });
-                }
-                Err(e) => {
-                    return Err(PdfError::Other(format!(
-                        "Failed to extract text from page {}: {}",
-                        page_id, e
-                    )));
-                }
-            }
-        }
+        #[cfg(not(target_arch = "wasm32"))]
+        let pages_data: Vec<JsonPage> = {
+            use rayon::prelude::*;
+            all_pages
+                .par_iter()
+                .map(|&page_id| build_json_page(page_id))
+                .collect::<OperationResult<Vec<JsonPage>>>()?
+        };
+        #[cfg(target_arch = "wasm32")]
+        let pages_data: Vec<JsonPage> = all_pages
+            .iter()
+            .map(|&page_id| build_json_page(page_id))
+            .collect::<OperationResult<Vec<JsonPage>>>()?;
 
         let doc_struct = JsonDocument {
             document_name: self.document_name.clone(),
@@ -2477,6 +2526,7 @@ mod tests {
         LopdfDocument {
             inner: doc,
             original_bytes: Some(bytes),
+            source: None,
         }
     }
 

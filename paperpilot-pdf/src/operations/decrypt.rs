@@ -46,8 +46,7 @@ impl PdfOperation for DecryptOperation {
         // when loaded without its password. Decrypting that object table alone
         // can report success while dropping the catalog and every page.
         let encrypted_source = lopdf_doc
-            .original_bytes
-            .as_deref()
+            .source_bytes()
             .filter(|bytes| lopdf::Document::load_mem(bytes).is_ok_and(|doc| doc.is_encrypted()));
         let result = if lopdf_doc.inner.is_encrypted()
             && let Some(bytes) = encrypted_source
@@ -167,6 +166,7 @@ mod tests {
         let mut doc = LopdfDocument {
             inner,
             original_bytes: None,
+            source: None,
         };
 
         // Encrypt the test document first

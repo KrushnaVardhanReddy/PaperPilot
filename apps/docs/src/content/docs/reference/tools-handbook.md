@@ -4329,3 +4329,54 @@ curl -s -X POST http://127.0.0.1:7823/api/v1/search/workspace_search \
   }'
 ```
 
+
+## 101. `pdf_edit_text` *(Added in v0.8.0+)*
+
+**Status**: ✅ Verified  |  **Format**: PDF $\to$ .pdf
+
+**Find and replace text typos in-place inside PDF content streams**
+
+---
+
+### CLI
+```bash
+paperpilot edit-text \
+  --input tests/e2e_fixtures/real/single_page.pdf \
+  --output tests/e2e_fixtures/out/penta_e2e/pdf_edit_text_out.pdf \
+  --find "Helo" \
+  --replace "Hello" \
+  --json
+```
+Optional flags: `--page <N>`, `--occurrence <N>` (1-indexed match occurrence), `--match-case <true|false>`.
+
+### MCP JSON-RPC
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "pdf_edit_text",
+    "arguments": {
+      "input": "tests/e2e_fixtures/real/single_page.pdf",
+      "output": "tests/e2e_fixtures/out/penta_e2e/pdf_edit_text_out.pdf",
+      "find": "Helo",
+      "replace": "Hello",
+      "occurrence": 1
+    }
+  },
+  "id": 1
+}
+```
+
+### REST API
+```bash
+curl -s -X POST http://127.0.0.1:7823/api/v1/pdf/edit-text \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "tests/e2e_fixtures/real/single_page.pdf",
+    "output": "tests/e2e_fixtures/out/penta_e2e/pdf_edit_text_out.pdf",
+    "find": "Helo",
+    "replace": "Hello",
+    "occurrence": 1
+  }'
+```

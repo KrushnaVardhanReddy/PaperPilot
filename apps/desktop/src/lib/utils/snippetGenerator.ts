@@ -32,6 +32,27 @@ export function generateSnippets(target: SnippetTarget): GeneratedSnippets {
   if (outputFile) jsonArgs.output = output;
 
   switch (toolId) {
+    case 'pdf_edit_text':
+    case 'edit_text': {
+      const find = params.find || 'Helo';
+      const replace = params.replace ?? 'Hello';
+      const pageFlag = params.page ? ` --page ${params.page}` : '';
+      const occurrenceFlag = params.occurrence ? ` --occurrence ${params.occurrence}` : '';
+      const matchCaseFlag = params.match_case === false ? ' --match-case false' : '';
+      cli = `paperpilot edit-text --input "${input}" --find "${find}" --replace "${replace}"${pageFlag}${occurrenceFlag}${matchCaseFlag} --output "${output}"`;
+      const curlPage = params.page ? ` -F "page=${params.page}"` : '';
+      const curlOccurrence = params.occurrence ? ` -F "occurrence=${params.occurrence}"` : '';
+      curl = `curl -X POST http://localhost:7823/api/v1/pdf/edit-text -F "file=@${input}" -F "find=${find}" -F "replace=${replace}"${curlPage}${curlOccurrence}`;
+
+      const mcpArgs: any = { input, find, replace, output };
+      if (params.page) mcpArgs.page = params.page;
+      if (params.occurrence) mcpArgs.occurrence = params.occurrence;
+      if (params.match_case !== undefined) mcpArgs.match_case = params.match_case;
+      mcpToolCall = JSON.stringify({ name: "pdf_edit_text", arguments: mcpArgs }, null, 2);
+      mcpAgentPrompt = `Find "${find}" and replace with "${replace}" in "${input}" and save to "${output}".`;
+      embedJs = `await window.PaperPilot.executeTool('pdf_edit_text', ${JSON.stringify(mcpArgs)});`;
+      break;
+    }
     case 'pdf_posterize':
     case 'posterize': {
       const grid = params.grid || '2x2';

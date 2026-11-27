@@ -1,10 +1,9 @@
 #![cfg(feature = "pdf")]
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use paperpilot_pdf::document::LopdfDocument;
 
 pub fn handle_validate(input: &std::path::Path, output: Option<std::path::PathBuf>) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::validate::ValidateOperation::new();
     let res = op.execute(&mut doc);
     let is_valid = res.is_ok();
@@ -35,7 +34,7 @@ pub fn handle_hash(input: &std::path::Path, output: Option<std::path::PathBuf>) 
     use sha2::{Digest, Sha256};
     use std::fs;
 
-    let data = fs::read(input).map_err(paperpilot_core::error::PdfError::IoError)?;
+    let data = super::open_document_source(input)?;
     let mut hasher = Sha256::new();
     hasher.update(&data);
     let result = hasher.finalize();
@@ -58,9 +57,8 @@ pub fn handle_hash(input: &std::path::Path, output: Option<std::path::PathBuf>) 
 
 pub fn handle_verify(input: &std::path::Path, expected_hash: &str) -> OperationResult<()> {
     use sha2::{Digest, Sha256};
-    use std::fs;
 
-    let data = fs::read(input).map_err(paperpilot_core::error::PdfError::IoError)?;
+    let data = super::open_document_source(input)?;
     let mut hasher = Sha256::new();
     hasher.update(&data);
     let result = hasher.finalize();

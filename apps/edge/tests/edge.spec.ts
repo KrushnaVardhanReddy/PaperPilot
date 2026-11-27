@@ -25,6 +25,7 @@ vi.mock('paperpilot-wasm', () => {
       flatten: vi.fn().mockReturnValue(new Uint8Array([37, 80, 68, 70, 45])),
       set_metadata: vi.fn().mockReturnValue(new Uint8Array([37, 80, 68, 70, 45])),
       pdf_to_docx: vi.fn().mockReturnValue(new Uint8Array([80, 75, 3, 4])),
+      pdf_edit_text: vi.fn().mockReturnValue(new Uint8Array([37, 80, 68, 70, 45])),
     }
   };
 });
@@ -65,6 +66,7 @@ describe('Cloudflare Edge Worker', () => {
     { path: '/api/v1/flatten', method: 'POST' },
     { path: '/api/v1/set_metadata', method: 'POST' },
     { path: '/api/v1/pdf_to_docx', method: 'POST' },
+    { path: '/api/v1/edit-text', method: 'POST' },
   ];
 
   for (const { path, method } of endpoints) {

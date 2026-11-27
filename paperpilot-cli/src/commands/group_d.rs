@@ -1,7 +1,6 @@
 #![cfg(feature = "pdf")]
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::PdfOperation;
-use paperpilot_pdf::document::LopdfDocument;
 use std::path::Path;
 
 pub fn handle_convert(
@@ -148,7 +147,7 @@ pub fn handle_convert_with_orientation(
         _ => {}
     }
 
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
 
     match actual_format {
         "html" | "htm" => {
@@ -256,7 +255,7 @@ pub fn handle_convert_with_orientation(
 }
 
 pub fn handle_classify(input: &Path, output: Option<&Path>) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = paperpilot_pdf::operations::classify::PdfClassifyOperation::new();
     op.execute(&mut doc)?;
 

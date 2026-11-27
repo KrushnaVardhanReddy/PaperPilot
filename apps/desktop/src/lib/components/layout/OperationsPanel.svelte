@@ -312,6 +312,13 @@
   let imgConvertFormat = $state("png");
   let imgConvertQuality = $state(90);
 
+  // Edit PDF Text parameter states
+  let editTextFind = $state("");
+  let editTextReplace = $state("");
+  let editTextPage = $state<number | undefined>(undefined);
+  let editTextOccurrence = $state<number | undefined>(undefined);
+  let editTextMatchCase = $state(true);
+
   // Alternating Merge & Compare parameter states
   let mergeAlternateDocA = $state("");
   let mergeAlternateDocB = $state("");
@@ -775,6 +782,10 @@
       case "pdf_invert_colors":
         customOutputPath = getOutputPath(`${base}_inverted.pdf`);
         break;
+      case "edit_text":
+      case "pdf_edit_text":
+        customOutputPath = getOutputPath(`${base}_edited.pdf`);
+        break;
       case "render":
       case "pdf_render": {
         const ext = renderFormat === "jpeg" ? "jpg" : renderFormat;
@@ -1212,6 +1223,11 @@
             imgOptimizeQuality,
             imgConvertFormat,
             imgConvertQuality,
+            editTextFind,
+            editTextReplace,
+            editTextPage,
+            editTextOccurrence,
+            editTextMatchCase,
           };
 
           const args = await buildOperationArgs(activeTool.id, context);
@@ -1513,6 +1529,11 @@
           imgOptimizeQuality,
           imgConvertFormat,
           imgConvertQuality,
+          editTextFind,
+          editTextReplace,
+          editTextPage,
+          editTextOccurrence,
+          editTextMatchCase,
         };
 
         const args = await buildOperationArgs(activeTool.id, context);
@@ -5763,6 +5784,81 @@
               >Output: <code>.json</code> — daemon shutdown confirmation and telemetry.</span
             >
           </div>
+        {:else if activeTool.id === "pdf_edit_text" || activeTool.id === "edit_text"}
+          <div class="operation-config">
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="editTextFind" class="section-desc">Find Text:</label>
+              <input
+                id="editTextFind"
+                type="text"
+                class="form-input"
+                bind:value={editTextFind}
+                placeholder="Exact text or typo to find..."
+              />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="editTextReplace" class="section-desc"
+                >Replace With:</label
+              >
+              <input
+                id="editTextReplace"
+                type="text"
+                class="form-input"
+                bind:value={editTextReplace}
+                placeholder="Corrected replacement text..."
+              />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="editTextPage" class="section-desc"
+                >Target Page (1-indexed, optional):</label
+              >
+              <input
+                id="editTextPage"
+                type="number"
+                min="1"
+                class="form-input"
+                bind:value={editTextPage}
+                placeholder="All pages"
+              />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="editTextOccurrence" class="section-desc"
+                >Target Occurrence (1-indexed, optional):</label
+              >
+              <input
+                id="editTextOccurrence"
+                type="number"
+                min="1"
+                class="form-input"
+                bind:value={editTextOccurrence}
+                placeholder="All occurrences"
+              />
+            </div>
+
+            <label
+              for="editTextMatchCase"
+              style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #cbd5e1; cursor: pointer; margin-bottom: 8px;"
+            >
+              <input
+                id="editTextMatchCase"
+                type="checkbox"
+                bind:checked={editTextMatchCase}
+              />
+              Match case (case-sensitive)
+            </label>
+
+            <p
+              class="section-desc"
+              style="line-height: 1.5; color: #cbd5e1; margin-top: 8px;"
+            >
+              Replaces matching text occurrences in-place inside PDF content
+              streams (Tj / TJ operators) while preserving document layout and
+              untouched pages.
+            </p>
+          </div>
         {:else}
           <div class="operation-config">
             <p class="section-desc">Applies directly to the active document.</p>
@@ -6087,13 +6183,6 @@
                   <div class="tool-card-title-row">
                     <div class="tool-title-with-badge">
                       <span class="tool-card-title">{tool.title}</span>
-                      {#if tool.releaseStatus === 'v0.5-core'}
-                        <span class="status-badge-v1">v0.5 Core</span>
-                      {:else if tool.releaseStatus === 'v0.6-core'}
-                        <span class="status-badge-v06">v0.6 Core</span>
-                      {:else}
-                        <span class="status-badge-preview">Preview</span>
-                      {/if}
                       {#if appState.documents.length >= 2}
                         {#if tool.rule?.minDocuments === 2}
                           <span class="smart-badge">Multi-File Action</span>
@@ -6134,13 +6223,6 @@
                       <div class="tool-card-title-row">
                         <div class="tool-title-with-badge">
                           <span class="tool-card-title">{tool.title}</span>
-                          {#if tool.releaseStatus === 'v0.5-core'}
-                            <span class="status-badge-v1">v0.5 Core</span>
-                          {:else if tool.releaseStatus === 'v0.6-core'}
-                            <span class="status-badge-v06">v0.6 Core</span>
-                          {:else}
-                            <span class="status-badge-preview">Preview</span>
-                          {/if}
                         </div>
                         <span class="tool-card-desc">{tool.description}</span>
                       </div>

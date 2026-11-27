@@ -132,6 +132,7 @@ fn bench_concurrent(_c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&large_pdf_path).unwrap(),
             original_bytes: None,
+            source: None,
         };
         let extract_op = ExtractTextOperation::new(None);
         extract_op.execute(&mut doc).unwrap();
@@ -142,6 +143,7 @@ fn bench_concurrent(_c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&medium_pdf_path).unwrap(),
             original_bytes: None,
+            source: None,
         };
         let compress_op = CompressOperation::default();
         compress_op.execute(&mut doc).unwrap();
@@ -152,6 +154,7 @@ fn bench_concurrent(_c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&small_pdf_path).unwrap(),
             original_bytes: None,
+            source: None,
         };
         let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
         watermark_op.execute(&mut doc).unwrap();
@@ -176,6 +179,7 @@ fn bench_concurrent(_c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&large_pdf_path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let extract_op = ExtractTextOperation::new(None);
             extract_op.execute(&mut doc).unwrap();
@@ -188,6 +192,7 @@ fn bench_concurrent(_c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&medium_pdf_path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let compress_op = CompressOperation::default();
             compress_op.execute(&mut doc).unwrap();
@@ -200,6 +205,7 @@ fn bench_concurrent(_c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&small_pdf_path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
             watermark_op.execute(&mut doc).unwrap();

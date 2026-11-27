@@ -1,38 +1,31 @@
 <script lang="ts">
   import OperationsView from "../views/OperationsView.svelte";
+  import QuickToolLaunchRow from "./QuickToolLaunchRow.svelte";
+  import PrivacyTrustBanner from "./PrivacyTrustBanner.svelte";
   import { DOWNLOAD_URL } from "../constants";
+
+  interface Props {
+    onOpenAllTools?: () => void;
+  }
+
+  let { onOpenAllTools }: Props = $props();
+  let isFullWidth = $state(false);
 </script>
 
 <div id="hero-section" class="hero-section">
   <div class="hero-content">
+    <PrivacyTrustBanner />
+
     <h1 class="hero-title">The Pure-Rust, Zero-Cloud PDF Powerhouse.</h1>
     <p class="hero-tagline">
-      100% Client-Side. 0 Bytes Uploaded. ~30–95ms WASM Execution.
+      Zero-cloud PDF toolbox executed directly in your browser's private memory. Instant WASM performance, no servers, zero tracking.
     </p>
 
-    <div class="hero-ctas">
-      <a
-        href={DOWNLOAD_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="cta-btn primary"
-      >
-        <span class="icon">⚡</span> Download Desktop
-        <span class="muted">(Free & Open Source)</span>
-      </a>
-      <button
-        class="cta-btn secondary"
-        onclick={() =>
-          document
-            .getElementById("embed-generator")
-            ?.scrollIntoView({ behavior: "smooth" })}
-      >
-        <span class="icon">&lt; / &gt;</span> Get Embed Code
-      </button>
-    </div>
+    <!-- Quick Tool Launch Row with Popular Instant Tools -->
+    <QuickToolLaunchRow {onOpenAllTools} />
   </div>
 
-  <div id="wasm-playground" class="hero-playground">
+  <div id="wasm-playground" class="hero-playground" class:full-width={isFullWidth}>
     <div class="playground-wrapper">
       <div class="playground-header">
         <div class="window-controls">
@@ -41,6 +34,15 @@
           <span class="dot maximize"></span>
         </div>
         <div class="window-title">PaperPilot WASM Engine</div>
+        <button
+          type="button"
+          class="expand-toggle-btn"
+          onclick={() => isFullWidth = !isFullWidth}
+          title={isFullWidth ? 'Exit Full Width' : 'Expand Full Width'}
+          aria-label={isFullWidth ? 'Exit Full Width' : 'Expand Full Width'}
+        >
+          {isFullWidth ? '⤡ Exit Full Width' : '⤢ Full Width'}
+        </button>
       </div>
       <div class="playground-content">
         <OperationsView />
@@ -94,56 +96,6 @@
     font-weight: 500;
   }
 
-  .hero-ctas {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .cta-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border-radius: var(--border-radius-lg);
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    text-decoration: none;
-  }
-
-  .cta-btn.primary {
-    background-color: var(--accent-primary);
-    color: white;
-    border: none;
-    box-shadow: 0 4px 14px rgba(94, 106, 210, 0.4);
-  }
-
-  .cta-btn.primary:hover {
-    background-color: var(--accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(94, 106, 210, 0.5);
-  }
-
-  .cta-btn.primary .muted {
-    opacity: 0.8;
-    font-size: 0.9em;
-    font-weight: 400;
-  }
-
-  .cta-btn.secondary {
-    background-color: transparent;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-  }
-
-  .cta-btn.secondary:hover {
-    background-color: var(--bg-surface);
-    border-color: var(--text-secondary);
-  }
-
   .hero-playground {
     width: 100%;
     max-width: 1400px;
@@ -152,6 +104,11 @@
     min-height: 700px;
     position: relative;
     z-index: 10;
+    transition: max-width 0.25s ease;
+  }
+
+  .hero-playground.full-width {
+    max-width: none;
   }
 
   .playground-wrapper {
@@ -203,7 +160,25 @@
     font-size: 0.85rem;
     color: var(--text-secondary);
     font-weight: 500;
-    margin-right: 44px; /* Offset for window controls */
+  }
+
+  .expand-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .expand-toggle-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+    background-color: var(--surface-2, rgba(255, 255, 255, 0.05));
   }
 
   .playground-content {
@@ -243,18 +218,6 @@
       height: auto;
       min-height: 700px;
       border-radius: var(--border-radius-md, 8px);
-    }
-
-    .hero-ctas {
-      flex-direction: column;
-      width: 100%;
-      gap: 12px;
-    }
-
-    .cta-btn {
-      width: 100%;
-      min-height: 48px;
-      justify-content: center;
     }
 
     :global(.playground-content .operations-view) {

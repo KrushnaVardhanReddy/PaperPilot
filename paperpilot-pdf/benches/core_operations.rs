@@ -191,6 +191,7 @@ fn bench_split(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let out_dir = tempfile::tempdir().unwrap();
             let split_op = SplitOperation::new(out_dir.path().to_path_buf(), vec![]);
@@ -204,6 +205,7 @@ fn bench_split(c: &mut Criterion) {
                 let mut doc = LopdfDocument {
                     inner: Document::load(path).unwrap(),
                     original_bytes: None,
+                    source: None,
                 };
                 let out_dir = tempfile::tempdir().unwrap();
                 let split_op = SplitOperation::new(out_dir.path().to_path_buf(), vec![]);
@@ -233,6 +235,7 @@ fn bench_extract_text(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let extract_op = ExtractTextOperation::new(None);
             extract_op.execute(&mut doc).unwrap();
@@ -245,6 +248,7 @@ fn bench_extract_text(c: &mut Criterion) {
                 let mut doc = LopdfDocument {
                     inner: Document::load(path).unwrap(),
                     original_bytes: None,
+                    source: None,
                 };
                 let extract_op = ExtractTextOperation::new(None);
                 extract_op.execute(&mut doc).unwrap();
@@ -273,6 +277,7 @@ fn bench_compress(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let compress_op = CompressOperation::default();
             compress_op.execute(&mut doc).unwrap();
@@ -285,6 +290,7 @@ fn bench_compress(c: &mut Criterion) {
                 let mut doc = LopdfDocument {
                     inner: Document::load(path).unwrap(),
                     original_bytes: None,
+                    source: None,
                 };
                 let compress_op = CompressOperation::default();
                 compress_op.execute(&mut doc).unwrap();
@@ -313,6 +319,7 @@ fn bench_watermark(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
             watermark_op.execute(&mut doc).unwrap();
@@ -325,6 +332,7 @@ fn bench_watermark(c: &mut Criterion) {
                 let mut doc = LopdfDocument {
                     inner: Document::load(path).unwrap(),
                     original_bytes: None,
+                    source: None,
                 };
                 let watermark_op = WatermarkOperation::new("CONFIDENTIAL".to_string());
                 watermark_op.execute(&mut doc).unwrap();
@@ -353,6 +361,7 @@ fn bench_encrypt(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let encrypt_op = EncryptOperation::new();
             let _ = encrypt_op.execute(&mut doc);
@@ -365,6 +374,7 @@ fn bench_encrypt(c: &mut Criterion) {
                 let mut doc = LopdfDocument {
                     inner: Document::load(path).unwrap(),
                     original_bytes: None,
+                    source: None,
                 };
                 let encrypt_op = EncryptOperation::new();
                 let _ = encrypt_op.execute(&mut doc);
@@ -385,6 +395,7 @@ fn bench_ocr(c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&path).unwrap(),
             original_bytes: None,
+            source: None,
         };
         let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation::new();
         let _ = ocr_op.execute(&mut doc);
@@ -399,6 +410,7 @@ fn bench_ocr(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let ocr_op = paperpilot_pdf::operations::ocr::OcrOperation::new();
             let _ = ocr_op.execute(&mut doc);
@@ -418,6 +430,7 @@ fn bench_pdf_to_image(c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&path).unwrap(),
             original_bytes: None,
+            source: None,
         };
         let render_op = paperpilot_pdf::operations::render::RenderOperation::new();
         let _ = render_op.execute(&mut doc);
@@ -432,6 +445,7 @@ fn bench_pdf_to_image(c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let render_op = paperpilot_pdf::operations::render::RenderOperation::new();
             let _ = render_op.execute(&mut doc);
@@ -460,6 +474,7 @@ fn bench_cold_warm_and_leak(_c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&large_pdf_path).unwrap(),
             original_bytes: None,
+            source: None,
         };
         let extract_op = ExtractTextOperation::new(None);
         extract_op.execute(&mut doc).unwrap();
@@ -470,6 +485,7 @@ fn bench_cold_warm_and_leak(_c: &mut Criterion) {
             let mut doc = LopdfDocument {
                 inner: Document::load(&large_pdf_path).unwrap(),
                 original_bytes: None,
+                source: None,
             };
             let extract_op = ExtractTextOperation::new(None);
             extract_op.execute(&mut doc).unwrap();
@@ -520,6 +536,7 @@ fn bench_cold_warm_and_leak(_c: &mut Criterion) {
         let mut doc = LopdfDocument {
             inner: Document::load(&small_batch_paths[0]).unwrap(),
             original_bytes: None,
+            source: None,
         };
         let extract_op = ExtractTextOperation::new(None);
         extract_op.execute(&mut doc).unwrap();

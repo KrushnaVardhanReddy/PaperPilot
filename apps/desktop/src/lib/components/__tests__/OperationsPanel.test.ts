@@ -7,6 +7,7 @@ describe('OperationsPanel', () => {
     // Reset app state before each test
     appState.documents = [];
     appState.selectedDocumentIndex = -1;
+    appState.activeTool = null;
   });
 
   it('renders the operations search and directory initially', async () => {
@@ -60,6 +61,27 @@ describe('OperationsPanel', () => {
     // Check if rotate params are visible
     await waitFor(() => {
       expect(screen.getByLabelText('Rotation Angle:')).toBeInTheDocument();
+    });
+  });
+
+  it('shows Edit PDF Text parameter inputs when selected', async () => {
+    render(OperationsPanel);
+
+    const allChip = screen.getByText(/All Tools/);
+    await fireEvent.click(allChip);
+
+    const editTextButton = screen.getAllByText('Edit PDF Text')[0].closest('button');
+    expect(editTextButton).not.toBeNull();
+    if (editTextButton) {
+      await fireEvent.click(editTextButton);
+    }
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Find Text:')).toBeInTheDocument();
+      expect(screen.getByLabelText('Replace With:')).toBeInTheDocument();
+      expect(screen.getByLabelText('Target Page (1-indexed, optional):')).toBeInTheDocument();
+      expect(screen.getByLabelText('Target Occurrence (1-indexed, optional):')).toBeInTheDocument();
+      expect(screen.getByLabelText('Match case (case-sensitive)')).toBeChecked();
     });
   });
 });

@@ -626,6 +626,13 @@ zap-scan-local:
 	@chmod +x scripts/run_zap_local.sh
 	./scripts/run_zap_local.sh
 
+# Secret & Credential Leak Scanner (TruffleHog)
+secret-scan-local:
+	@chmod +x scripts/run_secrets_scan.sh
+	./scripts/run_secrets_scan.sh
+
+trufflehog-scan: secret-scan-local
+
 # Aggressive Container & Disk Cleanup (Protects 14GB Disk Budget)
 podman-clean:
 	@echo "==> Cleaning Podman stopped containers, volumes, and dangling images..."

@@ -1,12 +1,71 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { wasmPdfClient } from '../lib/wasm';
+  import { ALL_101_TOOLS } from '../lib/toolsCatalog';
   import DropZone from '../components/DropZone.svelte';
+  import ToolDocsPanel from '../components/ToolDocsPanel.svelte';
+
+  const DEFAULT_TITLE = 'PaperPilot — 100% Private Client-Side PDF & Document Tools (No Upload)';
+  const RECENT_TOOLS_KEY = 'paperpilot_recent_tools';
+  const MAX_RECENT_TOOLS = 5;
 
   let activeTool = $state('merge');
   let isProcessing = $state(false);
+  let showDocsPanel = $state(false);
+  const currentToolObj = $derived(tools.find((t) => t.id === activeTool));
+  let recentToolIds = $state<string[]>([]);
+
+  $effect(() => {
+    if (typeof window !== 'undefined' && activeTool) {
+      history.replaceState(null, '', '?tool=' + activeTool);
+      const current = tools.find(t => t.id === activeTool);
+      document.title = current ? `${current.title} — PaperPilot` : DEFAULT_TITLE;
+
+      if (current) {
+        const next = [activeTool, ...recentToolIds.filter(id => id !== activeTool)].slice(0, MAX_RECENT_TOOLS);
+        if (next.length !== recentToolIds.length || next.some((id, i) => id !== recentToolIds[i])) {
+          recentToolIds = next;
+          try {
+            localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(next));
+          } catch {
+            // Ignore storage errors (e.g. private browsing quota)
+          }
+        }
+      }
+    } else if (typeof document !== 'undefined') {
+      document.title = DEFAULT_TITLE;
+    }
+  });
 
   onMount(() => {
+    try {
+      const saved = localStorage.getItem(RECENT_TOOLS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          recentToolIds = parsed
+            .filter((id): id is string => typeof id === 'string' && tools.some(t => t.id === id))
+            .slice(0, MAX_RECENT_TOOLS);
+        }
+      }
+    } catch {
+      // Ignore malformed localStorage data
+    }
+
+    const toolParam = new URLSearchParams(window.location.search).get('tool');
+    if (toolParam) {
+      let matched = tools.find(t => t.id === toolParam);
+      if (!matched) {
+        const catalogEntry = ALL_101_TOOLS.find(t => t.id === toolParam);
+        if (catalogEntry?.wasmId) {
+          matched = tools.find(t => t.id === catalogEntry.wasmId);
+        }
+      }
+      if (matched) {
+        activeTool = matched.id;
+      }
+    }
+
     const handleSelectTool = (e: CustomEvent<{ toolId: string }>) => {
       if (e.detail?.toolId) {
         activeTool = e.detail.toolId;
@@ -87,6 +146,7 @@
     { id: 'pdf_posterize', title: 'Posterize Print', icon: '🪟', category: 'pages', releaseStatus: 'preview', description: 'Tile a large single PDF page across a multi-sheet grid for poster printing' },
 
     { id: 'pdf_attachments', title: 'Attachments', icon: '📎', category: 'edit', releaseStatus: 'preview', description: 'View, extract, add, or remove embedded PDF file attachments' },
+    { id: 'pdf_edit_text', title: 'Edit PDF Text', icon: '✏️', category: 'edit', releaseStatus: 'preview', description: 'Find and replace text typos in-place inside PDF content streams' },
 
     { id: 'pdf_dedup_streams', title: 'Dedup Streams', icon: '🗜️', category: 'optimize', releaseStatus: 'preview', description: 'Deduplicate identical font, image, and content streams to optimize file size' },
 
@@ -275,6 +335,13 @@ let metadataFile: File | null = $state(null);
   let redactBoxY = $state(50);
   let redactBoxW = $state(200);
   let redactBoxH = $state(100);
+
+  let editTextFile: File | null = $state(null);
+  let editTextFind = $state('');
+  let editTextReplace = $state('');
+  let editTextPage = $state<number | string | null | undefined>('');
+  let editTextOccurrence = $state<number | string | null | undefined>('');
+  let editTextMatchCase = $state(true);
 
 
   async function readAsUint8Array(file: File): Promise<Uint8Array> {
@@ -1186,6 +1253,39 @@ let metadataFile: File | null = $state(null);
     }
   }
 
+  async function handlePdfEditText() {
+    if (!editTextFile || !editTextFind) return;
+    isProcessing = true;
+    try {
+      const buffer = await readAsUint8Array(editTextFile);
+      const parsePositiveInt = (val: number | string | null | undefined): number | undefined => {
+        const trimmed = val == null ? '' : String(val).trim();
+        if (trimmed === '') return undefined;
+        const parsed = Number(trimmed);
+        return Number.isFinite(parsed) && parsed >= 1 ? Math.trunc(parsed) : undefined;
+      };
+      const options: Record<string, any> = {
+        find: editTextFind,
+        replace: editTextReplace,
+        match_case: editTextMatchCase
+      };
+      const parsedPage = parsePositiveInt(editTextPage);
+      if (parsedPage !== undefined) {
+        options.page = parsedPage;
+      }
+      const parsedOccurrence = parsePositiveInt(editTextOccurrence);
+      if (parsedOccurrence !== undefined) {
+        options.occurrence = parsedOccurrence;
+      }
+      const res = await wasmPdfClient.pdf_edit_text(buffer, options);
+      downloadBlob(res, `${editTextFile.name.replace(/\.pdf$/i, '')}_edited.pdf`);
+    } catch (e) {
+      alert(`Error editing PDF text: ${e}`);
+    } finally {
+      isProcessing = false;
+    }
+  }
+
   // Helpers for merge files
   function removeMergeFile(index: number) {
       mergeFiles = mergeFiles.filter((_, i) => i !== index);
@@ -1254,6 +1354,29 @@ let metadataFile: File | null = $state(null);
       </div>
     </div>
 
+    {#if recentToolIds.length > 0}
+      {@const recentTools = recentToolIds.map(id => tools.find(t => t.id === id)).filter((t): t is WebTool => Boolean(t))}
+      {#if recentTools.length > 0}
+        <div class="recent-tools-section">
+          <span class="recent-tools-label">Recently Used</span>
+          <div class="recent-tools-pills">
+            {#each recentTools as tool}
+              <button
+                type="button"
+                class="recent-tool-pill"
+                class:active={activeTool === tool.id}
+                onclick={() => activeTool = tool.id}
+                title={tool.title}
+              >
+                <span class="recent-tool-icon">{tool.icon}</span>
+                <span class="recent-tool-name">{tool.title}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
+    {/if}
+
     <div class="search-box" style="margin-bottom: 12px;">
       <input
         type="text"
@@ -1287,17 +1410,30 @@ let metadataFile: File | null = $state(null);
         >
           <span class="tool-icon">{tool.icon}</span>
           <span class="tool-title-text">{tool.title}</span>
-          {#if tool.releaseStatus === 'v0.5-core'}
-            <span class="web-badge-v1">v0.5 Core</span>
-          {:else}
-            <span class="web-badge-preview">Preview</span>
-          {/if}
         </button>
       {/each}
     </div>
   </div>
 
   <div class="tool-content">
+    <div class="active-tool-bar">
+      <div class="active-tool-meta">
+        {#if currentToolObj}
+          <span class="active-tool-icon">{currentToolObj.icon}</span>
+          <span class="active-tool-name">{currentToolObj.title}</span>
+        {/if}
+      </div>
+      <button
+        type="button"
+        class="docs-toggle-btn"
+        class:active={showDocsPanel}
+        onclick={() => (showDocsPanel = !showDocsPanel)}
+        aria-expanded={showDocsPanel}
+        title="Toggle tool documentation"
+      >
+        ? Docs
+      </button>
+    </div>
     {#if activeTool === 'merge'}
       <div class="tool-pane">
         <h2>Merge PDFs</h2>
@@ -2708,8 +2844,56 @@ let metadataFile: File | null = $state(null);
         {/if}
       </div>
 
+    {:else if activeTool === 'pdf_edit_text'}
+      <div class="tool-pane">
+        <h2>Edit PDF Text</h2>
+        <p>Find and replace literal text typos in-place inside PDF content streams without rasterizing pages.</p>
+        {#if !editTextFile}
+            <DropZone ondrop={(files: File[]) => editTextFile = files[0]} multiple={false} />
+        {:else}
+            <div class="selected-file">
+                <span class="file-name">{editTextFile.name}</span>
+                <button onclick={() => editTextFile = null}>✕</button>
+            </div>
+            <div class="input-group">
+                <label for="webEditTextFind">Find Text:</label>
+                <input id="webEditTextFind" type="text" placeholder="Exact text to find..." bind:value={editTextFind} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+            </div>
+            <div class="input-group">
+                <label for="webEditTextReplace">Replace With:</label>
+                <input id="webEditTextReplace" type="text" placeholder="Corrected replacement text..." bind:value={editTextReplace} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: end;">
+                <div class="input-group">
+                    <label for="webEditTextPage">Page Number (optional):</label>
+                    <input id="webEditTextPage" type="number" min="1" placeholder="All pages" bind:value={editTextPage} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+                </div>
+                <div class="input-group">
+                    <label for="webEditTextOccurrence">Occurrence (1-indexed, optional):</label>
+                    <input id="webEditTextOccurrence" type="number" min="1" placeholder="All occurrences" bind:value={editTextOccurrence} style="width: 100%; padding: 8px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);" />
+                </div>
+            </div>
+            <div class="input-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                <input id="webEditTextMatchCase" type="checkbox" bind:checked={editTextMatchCase} />
+                <label for="webEditTextMatchCase" style="margin: 0; cursor: pointer;">Match case</label>
+            </div>
+            <button class="action-btn" onclick={handlePdfEditText} disabled={isProcessing || !editTextFind}>
+                {isProcessing ? 'Processing...' : 'Replace Text in PDF'}
+            </button>
+        {/if}
+      </div>
+
     {/if}
   </div>
+  {#if showDocsPanel}
+    <ToolDocsPanel
+      toolId={activeTool}
+      toolTitle={currentToolObj?.title ?? activeTool}
+      toolIcon={currentToolObj?.icon}
+      toolDescription={currentToolObj?.description}
+      onclose={() => (showDocsPanel = false)}
+    />
+  {/if}
 </div>
 
 <style>
@@ -2719,6 +2903,57 @@ let metadataFile: File | null = $state(null);
     height: 100%;
     max-width: 1400px;
     margin: 0 auto;
+  }
+
+  .active-tool-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .active-tool-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .active-tool-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .active-tool-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .docs-toggle-btn {
+    padding: 5px 11px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .docs-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+  }
+
+  .docs-toggle-btn.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
   }
 
   .tools-sidebar {
@@ -2745,6 +2980,60 @@ let metadataFile: File | null = $state(null);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .recent-tools-section {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .recent-tools-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .recent-tools-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .recent-tool-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+    max-width: 100%;
+  }
+
+  .recent-tool-pill:hover {
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+  }
+
+  .recent-tool-pill.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+  }
+
+  .recent-tool-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .filter-toggle {
@@ -2805,32 +3094,6 @@ let metadataFile: File | null = $state(null);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .web-badge-v1 {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 9999px;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.35);
-  }
-
-  .web-badge-preview {
-    display: inline-block;
-    padding: 2px 5px;
-    border-radius: 9999px;
-    font-size: 7.5px;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    background: rgba(147, 51, 234, 0.12);
-    color: #c084fc;
-    border: 1px solid rgba(147, 51, 234, 0.28);
   }
 
   .tool-btn:hover {

@@ -72,7 +72,7 @@ impl PaperPilotMcpServer {
         }
     }
     pub fn execute_list_tools(&self) -> Result<ListToolsResult, ErrorData> {
-        let mut tools = Vec::with_capacity(92);
+        let mut tools = Vec::with_capacity(93);
 
         let add_tool = |tools: &mut Vec<Tool>,
                         name: &str,
@@ -1424,6 +1424,25 @@ impl PaperPilotMcpServer {
                     "name_template": { "type": "string", "description": "Optional output basename template; when provided, output must be a directory." }
                 },
                 "required": ["input", "output"]
+            }),
+        );
+
+        add_tool(
+            &mut tools,
+            "pdf_edit_text",
+            "Find and replace literal text strings in-place inside PDF content streams (Tj and TJ text operators). When to use: fixing typos or replacing short literal strings directly inside PDF pages without rasterizing pages or rebuilding layouts. Difference from related tools: mutates existing PDF text operators in-place rather than drawing opaque blackout redactions (use pdf_redact) or adding overlay annotations (use pdf_annotate or pdf_watermark). Key parameters: input, output, find, replace; optional page (1-indexed page number; omit for all pages), occurrence (1-indexed match occurrence to replace, e.g. 1 replaces only the 1st match; omit for all), match_case (default true). [Input: PDF (.pdf) | Output: PDF (.pdf)]",
+            serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "input": { "type": "string", "description": "Path or URL of the input .pdf document." },
+                    "output": { "type": "string", "description": "Destination path for the edited .pdf document." },
+                    "find": { "type": "string", "description": "Literal text string to search for inside PDF content streams." },
+                    "replace": { "type": "string", "description": "Replacement text string." },
+                    "page": { "type": "integer", "description": "Optional 1-indexed page number to restrict replacements to; omit to edit all pages." },
+                    "occurrence": { "type": "integer", "description": "Optional 1-indexed match occurrence to replace (e.g. 1 replaces only the 1st match); omit to replace all occurrences." },
+                    "match_case": { "type": "boolean", "default": true, "description": "Whether text matching is case-sensitive (default true)." }
+                },
+                "required": ["input", "output", "find", "replace"]
             }),
         );
 
@@ -5099,6 +5118,86 @@ impl PaperPilotMcpServer {
                     diff_detected: None,
                 })
             }
+            "pdf_edit_text" => {
+                let input = get_string("input")?;
+                let output = get_string("output")?;
+                let find = get_string("find")?;
+                let replace = get_string("replace")?;
+                let parse_positive_u32 = |key: &str| -> Result<Option<u32>, ErrorData> {
+                    match args.get(key) {
+                        None | Some(serde_json::Value::Null) => Ok(None),
+                        Some(v) => {
+                            let n = v.as_u64().ok_or_else(|| {
+                                ErrorData::invalid_params(
+                                    format!("'{key}' must be a positive integer"),
+                                    None,
+                                )
+                            })?;
+                            let p = u32::try_from(n).map_err(|_| {
+                                ErrorData::invalid_params(
+                                    format!("'{key}' is out of range for u32"),
+                                    None,
+                                )
+                            })?;
+                            if p == 0 {
+                                return Err(ErrorData::invalid_params(
+                                    format!("'{key}' is 1-indexed and must be >= 1"),
+                                    None,
+                                ));
+                            }
+                            Ok(Some(p))
+                        }
+                    }
+                };
+                let page = parse_positive_u32("page")?;
+                let occurrence = parse_positive_u32("occurrence")?;
+                let match_case = match args.get("match_case") {
+                    None | Some(serde_json::Value::Null) => None,
+                    Some(v) => Some(v.as_bool().ok_or_else(|| {
+                        ErrorData::invalid_params("'match_case' must be a boolean", None)
+                    })?),
+                };
+
+                ensure_parent_dir(&output)?;
+
+                let input_bytes = std::fs::read(&input)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+                let options = paperpilot_pdf::operations::pdf_edit_text::PdfEditTextOptions {
+                    find,
+                    replace,
+                    page,
+                    match_case,
+                    occurrence,
+                };
+                let result = paperpilot_pdf::operations::pdf_edit_text::pdf_edit_text_bytes(
+                    &input_bytes,
+                    &options,
+                )
+                .map_err(|e| match e {
+                    paperpilot_core::error::PdfError::InvalidInput(msg) => {
+                        ErrorData::invalid_params(msg, None)
+                    }
+                    other => rmcp::ErrorData::internal_error(other.to_string(), None),
+                })?;
+
+                std::fs::write(&output, result)
+                    .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?;
+
+                Ok(OperationResult {
+                    data: Some(serde_json::json!({
+                        "output_path": output,
+                        "find": options.find,
+                        "replace": options.replace,
+                        "page": options.page,
+                        "occurrence": options.occurrence,
+                        "match_case": options.match_case.unwrap_or(true),
+                    })),
+                    success: true,
+                    message: "Edit PDF Text executed successfully".to_string(),
+                    output_path: Some(output),
+                    diff_detected: None,
+                })
+            }
             "pdf_sanitize" => {
                 let input = get_string("input")?;
                 let output = get_string("output")?;
@@ -5812,11 +5911,11 @@ mod tests {
     #[test]
     fn test_execute_list_tools() {
         let res = PaperPilotMcpServer::new(None).execute_list_tools().unwrap();
-        assert_eq!(res.tools.len(), 92);
+        assert_eq!(res.tools.len(), 93);
 
         let names: std::collections::HashSet<&str> =
             res.tools.iter().map(|t| t.name.as_ref()).collect();
-        assert_eq!(names.len(), 92, "All exposed tool names must be unique");
+        assert_eq!(names.len(), 93, "All exposed tool names must be unique");
 
         for suppressed_alias in ["cli_fill_batch", "html_to_pdf", "md_to_pdf", "img_to_pdf"] {
             assert!(
@@ -5831,6 +5930,7 @@ mod tests {
             "pdf_convert_markdown",
             "pdf_images_to_pdf",
             "pdf_invert_colors",
+            "pdf_edit_text",
             "execution_receipt_list",
             "execution_receipt_get",
             "pdf_extract_text",
@@ -6237,6 +6337,26 @@ mod tests {
                 "semantic_search missing '{key}'"
             );
         }
+
+        let edit_text_schema = &by_name["pdf_edit_text"].input_schema;
+        assert_eq!(
+            edit_text_schema["required"],
+            serde_json::json!(["input", "output", "find", "replace"])
+        );
+        for key in [
+            "input",
+            "output",
+            "find",
+            "replace",
+            "page",
+            "occurrence",
+            "match_case",
+        ] {
+            assert!(
+                edit_text_schema["properties"].get(key).is_some(),
+                "pdf_edit_text missing '{key}'"
+            );
+        }
     }
 
     #[test]
@@ -6481,5 +6601,92 @@ mod tests_added {
         if output_path.exists() {
             std::fs::remove_file(&output_path).unwrap();
         }
+    }
+
+    #[test]
+    fn test_execute_call_tool_pdf_edit_text() {
+        use lopdf::dictionary;
+
+        let mut doc = lopdf::Document::with_version("1.5");
+        let pages_id = doc.new_object_id();
+        let font_id = doc.add_object(dictionary! {
+            "Type" => "Font",
+            "Subtype" => "Type1",
+            "BaseFont" => "Helvetica",
+        });
+        let resources_id = doc.add_object(dictionary! {
+            "Font" => dictionary! { "F1" => font_id },
+        });
+        let content = lopdf::content::Content {
+            operations: vec![
+                lopdf::content::Operation::new("BT", vec![]),
+                lopdf::content::Operation::new(
+                    "Tf",
+                    vec![lopdf::Object::Name(b"F1".to_vec()), lopdf::Object::Real(12.0)],
+                ),
+                lopdf::content::Operation::new(
+                    "Tj",
+                    vec![lopdf::Object::string_literal("Helo first and Helo second from MCP")],
+                ),
+                lopdf::content::Operation::new("ET", vec![]),
+            ],
+        };
+        let content_id = doc.add_object(lopdf::Stream::new(
+            lopdf::Dictionary::new(),
+            content.encode().unwrap(),
+        ));
+        let page_id = doc.add_object(dictionary! {
+            "Type" => "Page",
+            "Parent" => pages_id,
+            "Resources" => resources_id,
+            "Contents" => content_id,
+            "MediaBox" => vec![0.into(), 0.into(), 612.into(), 792.into()],
+        });
+        doc.objects.insert(
+            pages_id,
+            lopdf::Object::Dictionary(dictionary! {
+                "Type" => "Pages",
+                "Kids" => vec![page_id.into()],
+                "Count" => 1,
+            }),
+        );
+        let catalog_id = doc.add_object(dictionary! {
+            "Type" => "Catalog",
+            "Pages" => pages_id,
+        });
+        doc.trailer.set("Root", catalog_id);
+
+        let dir = tempfile::tempdir().unwrap();
+        let input_path = dir.path().join("in_mcp_edit.pdf");
+        let output_path = dir.path().join("out_mcp_edit.pdf");
+        doc.save(&input_path).unwrap();
+
+        let mut request = CallToolRequestParams::default();
+        request.name = "pdf_edit_text".into();
+        request.arguments = Some(
+            json!({
+                "input": input_path.to_str().unwrap(),
+                "output": output_path.to_str().unwrap(),
+                "find": "Helo",
+                "replace": "Hello",
+                "page": 1,
+                "occurrence": 1,
+                "match_case": true
+            })
+            .as_object()
+            .unwrap()
+            .clone(),
+        );
+
+        let res = PaperPilotMcpServer::new(None).execute_call_tool(request);
+        assert!(res.is_ok(), "MCP pdf_edit_text failed: {:?}", res.err());
+        assert!(output_path.exists());
+
+        let edited = lopdf::Document::load(&output_path).unwrap();
+        let text = edited.extract_text(&[1]).unwrap();
+        assert!(
+            text.contains("Hello first and Helo second from MCP"),
+            "Extracted text: {text}"
+        );
     }
 }

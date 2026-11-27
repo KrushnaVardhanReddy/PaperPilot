@@ -1,18 +1,21 @@
 name: Release Build & Publish
 
 on:
+  push:
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version tag (e.g., v0.6.0 or v1.0.0)'
-        required: true
-        default: 'v0.6.0'
+        description: 'Release version tag (e.g., v0.8.3 or v1.0.0)'
+        required: false
+        default: ''
         type: string
       prerelease:
         description: 'Mark as pre-release'
         required: true
         type: boolean
-        default: true
+        default: false
       draft:
         description: 'Create as draft release'
         required: true
@@ -25,6 +28,9 @@ env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
   CARGO_BUILD_JOBS: 4
+  RELEASE_VERSION: ${{ inputs.version || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'v0.8.3' }}
+  IS_DRAFT: ${{ inputs.draft || false }}
+  IS_PRERELEASE: ${{ inputs.prerelease || false }}
 
 jobs:
   # =========================================================================
@@ -154,7 +160,7 @@ jobs:
       - name: Set Dynamic Version in Desktop App
         shell: bash
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
           CLEAN_VER="${INPUT_VERSION#v}"
           echo "Setting desktop version to ${CLEAN_VER}..."
@@ -305,7 +311,7 @@ jobs:
       - name: Sync Cargo version with Release Tag
         shell: bash
         run: |
-          RAW_VERSION="${{ inputs.version }}"
+          RAW_VERSION="${{ env.RELEASE_VERSION }}"
           CLEAN_VERSION="${RAW_VERSION#v}"
           echo "Setting Cargo.toml package versions to ${CLEAN_VERSION}..."
           python3 -c "
@@ -513,7 +519,7 @@ jobs:
 
       - name: Package Android Release APK
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
           mkdir -p release_pkgs
           APK_PATH=$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" | head -n 1)
@@ -626,7 +632,7 @@ jobs:
       - name: Update Packaging Manifests Version
         shell: bash
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
           CLEAN_VER="${INPUT_VERSION#v}"
           TODAY=$(date -u +'%Y-%m-%d')
@@ -646,9 +652,9 @@ jobs:
 
           # 2. Update WinGet version and installer URLs
           sed -i "s|PackageVersion: .*|PackageVersion: ${CLEAN_VER}|g" packaging/winget/*.yaml 2>/dev/null || true
-          sed -i "s|download/v[^/]*/|download/${{ inputs.version }}/|g" packaging/winget/*.yaml 2>/dev/null || true
+          sed -i "s|download/v[^/]*/|download/${INPUT_VERSION}/|g" packaging/winget/*.yaml 2>/dev/null || true
           sed -i "s|PaperPilot_[0-9.]*_[a-zA-Z0-9_-]*|PaperPilot_${CLEAN_VER}_x64|g" packaging/winget/*.yaml 2>/dev/null || true
-          sed -i "s|tag/v.*|tag/${{ inputs.version }}|g" packaging/winget/*.yaml 2>/dev/null || true
+          sed -i "s|tag/v.*|tag/${INPUT_VERSION}|g" packaging/winget/*.yaml 2>/dev/null || true
 
           # Calculate and inject installer SHA256 hashes if available in release-assets
           SETUP_EXE=$(ls release-assets/*setup.exe 2>/dev/null | head -n 1)
@@ -665,14 +671,14 @@ jobs:
       - name: Create / Update GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ inputs.version }}
-          name: "PaperPilot ${{ inputs.version }}"
-          draft: ${{ inputs.draft }}
-          prerelease: ${{ inputs.prerelease }}
+          tag_name: ${{ env.RELEASE_VERSION }}
+          name: "PaperPilot ${{ env.RELEASE_VERSION }}"
+          draft: ${{ fromJSON(env.IS_DRAFT) }}
+          prerelease: ${{ fromJSON(env.IS_PRERELEASE) }}
           files: release-assets/*
           generate_release_notes: true
           body: |
-            ## PaperPilot Release ${{ inputs.version }}
+            ## PaperPilot Release ${{ env.RELEASE_VERSION }}
 
             ### Included Release Binaries & GUI Installers
             - **Desktop GUI Applications**:
@@ -706,10 +712,10 @@ jobs:
             SHA-256 checksums are attached alongside each installer, binary package, and APK artifact.
 
       - name: Update Homebrew Tap Cask
-        if: ${{ !inputs.draft }}
+        if: ${{ !fromJSON(env.IS_DRAFT) }}
         shell: bash
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VERSION: ${{ env.RELEASE_VERSION }}
           HOMEBREW_TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT || secrets.GITHUB_TOKEN }}
         run: |
           CLEAN_VER="${INPUT_VERSION#v}"

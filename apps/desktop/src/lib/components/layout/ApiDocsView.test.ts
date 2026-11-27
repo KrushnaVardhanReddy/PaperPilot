@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, within } from '@testing-library/svelte';
 import ApiDocsView from './ApiDocsView.svelte';
 
 describe('ApiDocsView', () => {
@@ -56,12 +56,14 @@ describe('ApiDocsView', () => {
     // Expand a POST endpoint (e.g. /api/v1/pdf/compare)
     const comparePath = screen.getByText('/api/v1/pdf/compare');
     const endpointHeader = comparePath.closest('.endpoint-header');
+    const endpointCard = comparePath.closest('.endpoint-card') as HTMLElement | null;
     expect(endpointHeader).toBeTruthy();
+    expect(endpointCard).toBeTruthy();
 
-    if (endpointHeader) {
+    if (endpointHeader && endpointCard) {
       await fireEvent.click(endpointHeader);
       // Edit button should appear
-      const editBtn = screen.getByRole('button', { name: /edit/i });
+      const editBtn = within(endpointCard).getByRole('button', { name: /edit/i });
       expect(editBtn).toBeTruthy();
     }
   });
@@ -71,9 +73,10 @@ describe('ApiDocsView', () => {
 
     const comparePath = screen.getByText('/api/v1/pdf/compare');
     const endpointHeader = comparePath.closest('.endpoint-header');
-    if (endpointHeader) {
+    const endpointCard = comparePath.closest('.endpoint-card') as HTMLElement | null;
+    if (endpointHeader && endpointCard) {
       await fireEvent.click(endpointHeader);
-      const editBtn = screen.getByRole('button', { name: /edit/i });
+      const editBtn = within(endpointCard).getByRole('button', { name: /edit/i });
       await fireEvent.click(editBtn);
 
       // The textarea (JSON editor) should now be visible
@@ -84,7 +87,7 @@ describe('ApiDocsView', () => {
       expect(typeof parsed).toBe('object');
 
       // Done button should be visible
-      const doneBtn = screen.getByRole('button', { name: /done/i });
+      const doneBtn = within(endpointCard).getByRole('button', { name: /done/i });
       expect(doneBtn).toBeTruthy();
     }
   });
@@ -94,9 +97,10 @@ describe('ApiDocsView', () => {
 
     const comparePath = screen.getByText('/api/v1/pdf/compare');
     const endpointHeader = comparePath.closest('.endpoint-header');
-    if (endpointHeader) {
+    const endpointCard = comparePath.closest('.endpoint-card') as HTMLElement | null;
+    if (endpointHeader && endpointCard) {
       await fireEvent.click(endpointHeader);
-      const editBtn = screen.getByRole('button', { name: /edit/i });
+      const editBtn = within(endpointCard).getByRole('button', { name: /edit/i });
       await fireEvent.click(editBtn);
 
       const textarea = document.querySelector('.body-editor') as HTMLTextAreaElement;

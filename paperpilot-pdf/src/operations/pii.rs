@@ -114,24 +114,24 @@ pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanR
     let mut sorted_pages: Vec<u32> = pages.keys().copied().collect();
     sorted_pages.sort_unstable();
 
-    for page_num in sorted_pages {
+    let scan_page = |page_num: u32| -> Vec<PiiFinding> {
+        let mut page_findings = Vec::new();
         let page_text = doc.extract_text(&[page_num]).unwrap_or_default();
         if page_text.trim().is_empty() {
-            continue;
+            return page_findings;
         }
 
         if options.scan_ssn {
             for cap in ssn_re.captures_iter(&page_text) {
                 let m = cap.get(0).unwrap();
                 let last4 = cap.get(3).unwrap().as_str();
-                findings.push(PiiFinding {
+                page_findings.push(PiiFinding {
                     category: "ssn".to_string(),
                     value_masked: format!("XXX-XX-{}", last4),
                     page: page_num,
                     confidence: 0.99,
                     context_snippet: extract_context(&page_text, m.start(), m.end(), 20),
                 });
-                *findings_by_category.entry("ssn".to_string()).or_insert(0) += 1;
             }
         }
 
@@ -145,16 +145,13 @@ pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanR
                     } else {
                         &clean_s
                     };
-                    findings.push(PiiFinding {
+                    page_findings.push(PiiFinding {
                         category: "credit_card".to_string(),
                         value_masked: format!("**** **** **** {}", last4),
                         page: page_num,
                         confidence: 0.95,
                         context_snippet: extract_context(&page_text, m.start(), m.end(), 20),
                     });
-                    *findings_by_category
-                        .entry("credit_card".to_string())
-                        .or_insert(0) += 1;
                 }
             }
         }
@@ -169,14 +166,13 @@ pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanR
                 } else {
                     "***".to_string()
                 };
-                findings.push(PiiFinding {
+                page_findings.push(PiiFinding {
                     category: "email".to_string(),
                     value_masked: format!("{}@{}", masked_user, domain),
                     page: page_num,
                     confidence: 0.98,
                     context_snippet: extract_context(&page_text, m.start(), m.end(), 20),
                 });
-                *findings_by_category.entry("email".to_string()).or_insert(0) += 1;
             }
         }
 
@@ -190,14 +186,13 @@ pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanR
                 let clean_s: String = s.chars().filter(|c| c.is_ascii_digit()).collect();
                 if clean_s.len() >= 10 {
                     let last4 = &clean_s[clean_s.len() - 4..];
-                    findings.push(PiiFinding {
+                    page_findings.push(PiiFinding {
                         category: "phone".to_string(),
                         value_masked: format!("(***) ***-{}", last4),
                         page: page_num,
                         confidence: 0.85,
                         context_snippet: extract_context(&page_text, m.start(), m.end(), 20),
                     });
-                    *findings_by_category.entry("phone".to_string()).or_insert(0) += 1;
                 }
             }
         }
@@ -213,15 +208,34 @@ pub fn scan_pii(input_bytes: &[u8], options: &PiiScanOptions) -> Result<PiiScanR
                 } else {
                     "****".to_string()
                 };
-                findings.push(PiiFinding {
+                page_findings.push(PiiFinding {
                     category: "iban".to_string(),
                     value_masked: masked,
                     page: page_num,
                     confidence: 0.80,
                     context_snippet: extract_context(&page_text, m.start(), m.end(), 20),
                 });
-                *findings_by_category.entry("iban".to_string()).or_insert(0) += 1;
             }
+        }
+
+        page_findings
+    };
+
+    #[cfg(not(target_arch = "wasm32"))]
+    let per_page_findings: Vec<Vec<PiiFinding>> = {
+        use rayon::prelude::*;
+        sorted_pages.par_iter().map(|&p| scan_page(p)).collect()
+    };
+    #[cfg(target_arch = "wasm32")]
+    let per_page_findings: Vec<Vec<PiiFinding>> =
+        sorted_pages.iter().map(|&p| scan_page(p)).collect();
+
+    for page_findings in per_page_findings {
+        for finding in page_findings {
+            *findings_by_category
+                .entry(finding.category.clone())
+                .or_insert(0) += 1;
+            findings.push(finding);
         }
     }
 

@@ -67,6 +67,7 @@ export const wasmpdfengine_pdf_booklet: (a: number, b: number, c: number, d: num
 export const wasmpdfengine_pdf_change_permissions: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_comic_archive: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_dedup_streams: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmpdfengine_pdf_edit_text: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wasmpdfengine_pdf_extract_patterns: (a: number, b: number, c: number, d: number, e: number) => void;
 export const rust_zstd_wasm_shim_calloc: (a: number, b: number) => number;
 export const rust_zstd_wasm_shim_free: (a: number) => void;

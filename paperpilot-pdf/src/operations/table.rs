@@ -82,6 +82,40 @@ fn is_page_selected(page_num: u32, pages_filter: &str) -> bool {
     false
 }
 
+pub fn extract_tables_source(
+    source: std::sync::Arc<paperpilot_core::document_source::DocumentSource>,
+    options: &TableExtractOptions,
+) -> Result<TableExtractResult, PdfError> {
+    if source.is_empty() {
+        return Ok(TableExtractResult {
+            total_tables: 0,
+            tables: Vec::new(),
+            csv_output: if options.format.to_lowercase() == "csv" {
+                Some(String::new())
+            } else {
+                None
+            },
+        });
+    }
+
+    let mut lopdf_doc = match LopdfDocument::from_shared_source(source) {
+        Ok(doc) => doc,
+        Err(_) => {
+            return Ok(TableExtractResult {
+                total_tables: 0,
+                tables: Vec::new(),
+                csv_output: if options.format.to_lowercase() == "csv" {
+                    Some(String::new())
+                } else {
+                    None
+                },
+            });
+        }
+    };
+
+    extract_tables_document(&mut lopdf_doc, options)
+}
+
 pub fn extract_tables_bytes(
     input_bytes: &[u8],
     options: &TableExtractOptions,
@@ -113,8 +147,15 @@ pub fn extract_tables_bytes(
         }
     };
 
+    extract_tables_document(&mut lopdf_doc, options)
+}
+
+fn extract_tables_document(
+    lopdf_doc: &mut LopdfDocument,
+    options: &TableExtractOptions,
+) -> Result<TableExtractResult, PdfError> {
     let html_op = PdfToHtmlOperation::new();
-    let _ = html_op.execute(&mut lopdf_doc);
+    let _ = html_op.execute(lopdf_doc);
     let html = {
         let guard = html_op.extracted_html.lock().unwrap();
         guard.clone().unwrap_or_default()

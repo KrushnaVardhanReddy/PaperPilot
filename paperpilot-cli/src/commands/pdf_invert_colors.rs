@@ -4,7 +4,6 @@
 #![allow(clippy::needless_borrow)]
 use paperpilot_core::error::OperationResult;
 use paperpilot_core::traits::PdfDocument;
-use paperpilot_pdf::document::LopdfDocument;
 use paperpilot_pdf::operations::pdf_invert_colors::{
     InvertColorsOptions, InvertMode, invert_pdf_colors,
 };
@@ -16,7 +15,7 @@ pub fn handle_invert_colors(
     mode_str: &Option<String>,
     pages: &Option<String>,
 ) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
 
     let mode = match mode_str.as_deref() {
         Some("true_invert") => Some(InvertMode::TrueInvert),

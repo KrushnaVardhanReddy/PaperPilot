@@ -57,6 +57,7 @@ mod tests {
         LopdfDocument {
             inner: LopdfInnerDocument::with_version("1.5"),
             original_bytes: None,
+            source: None,
         }
     }
 

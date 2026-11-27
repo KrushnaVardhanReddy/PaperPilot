@@ -36,6 +36,14 @@
   </nav>
 
   <div class="sidebar-footer">
+    <button
+      class="nav-item"
+      title="Feedback & Bug Reporting"
+      aria-label="Feedback & Bug Reporting"
+      onclick={() => appState.openFeedback()}
+    >
+      <span class="nav-icon" aria-hidden="true">💬</span>
+    </button>
     <div class="theme-toggle">
       <button
         class="theme-btn"

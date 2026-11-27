@@ -1,5 +1,6 @@
 <script lang="ts">
   import { toastState, type Toast } from '$lib/state/toast.svelte';
+  import { appState } from '$lib/state/app.svelte';
   import { fade, slide } from 'svelte/transition';
 
   let expandedDetails: Record<string, boolean> = $state({});
@@ -26,6 +27,19 @@
         <span class="toast-message">{toast.message}</span>
         {#if toast.actionHint}
           <div class="toast-hint">{toast.actionHint}</div>
+        {/if}
+        {#if toast.type === 'error'}
+          <div class="toast-actions">
+            <button
+              class="report-issue-btn"
+              onclick={() => appState.openFeedback({
+                category: 'bug',
+                error: `${toast.message}\n${toast.technicalDetails || ''}`
+              })}
+            >
+              🐞 Report Issue
+            </button>
+          </div>
         {/if}
         {#if toast.technicalDetails}
           <div class="toast-technical">
@@ -114,6 +128,27 @@
     color: var(--text-secondary);
     margin-top: 4px;
     line-height: 1.3;
+  }
+
+  .toast-actions {
+    margin-top: 6px;
+  }
+
+  .report-issue-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .report-issue-btn:hover {
+    background: rgba(239, 68, 68, 0.35);
+    color: #fff;
   }
 
   .toast-technical {

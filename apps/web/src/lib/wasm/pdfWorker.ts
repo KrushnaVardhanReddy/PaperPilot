@@ -213,6 +213,10 @@ case 'set_metadata':
                 // @ts-ignore
                 result = WasmPdfEngine.pdf_extract_patterns(payload.file, JSON.stringify(payload.options || {}));
                 break;
+            case 'pdf_edit_text':
+                // @ts-ignore
+                result = WasmPdfEngine.pdf_edit_text(payload.file, JSON.stringify(payload.options || {}));
+                break;
             default:
                 throw new Error(`Unknown operation type: ${type}`);
         }

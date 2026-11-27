@@ -1,7 +1,6 @@
 #![cfg(feature = "pdf")]
 use paperpilot_core::error::{OperationResult, PdfError};
 use paperpilot_core::traits::{PdfDocument, PdfOperation};
-use paperpilot_pdf::document::LopdfDocument;
 use paperpilot_pdf::operations::form::{
     CreateFormFieldOperation, FillFormOperation, ReadFormOperation,
 };
@@ -10,7 +9,7 @@ use std::fs;
 use std::path::Path;
 
 pub fn handle_form_read(input: &Path, output: Option<&Path>) -> OperationResult<()> {
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = ReadFormOperation::new();
     op.execute(&mut doc)?;
 
@@ -42,7 +41,7 @@ pub fn handle_form_fill(input: &Path, data: &Path, output: &Path) -> OperationRe
     let values: HashMap<String, String> =
         serde_json::from_str(&data_str).map_err(|e| PdfError::InvalidInput(e.to_string()))?;
 
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let op = FillFormOperation::new(values);
     op.execute(&mut doc)?;
     doc.save(output)?;
@@ -79,7 +78,7 @@ pub fn handle_form_add_field(
         parse_f32(rect_parts[3])?,
     ];
 
-    let mut doc = LopdfDocument::load(input)?;
+    let mut doc = super::load_document(input)?;
     let mut op =
         CreateFormFieldOperation::new(name.to_string(), field_type.to_string(), page, rect_arr);
     if let Some(lbl) = label {
