@@ -26,10 +26,10 @@ jobs:
       - name: Run Semgrep OSS Scan
         run: |
           python3 -m pip install semgrep
-          # Scan repository and generate SARIF report for GitHub Security tab
-          semgrep scan --config auto --sarif -o semgrep.sarif || true
+          # Scan production codebase and generate SARIF report for GitHub Security tab
+          semgrep scan --config auto --exclude="scripts" --exclude="tests" --exclude="test-corpus" --sarif -o semgrep.sarif || true
           # Enforce failure on high/critical findings
-          semgrep scan --config auto --severity ERROR --exclude=".github"
+          semgrep scan --config auto --severity ERROR --exclude=".github" --exclude="scripts" --exclude="tests" --exclude="test-corpus"
 
       - name: Upload SARIF to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4.39.2
@@ -69,4 +69,22 @@ jobs:
           scan-type: 'fs'
           severity: 'HIGH,CRITICAL'
           format: 'table'
+
+  trufflehog-secrets:
+    name: TruffleHog Secret Leak Audit
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code (full history)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog OSS Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
 

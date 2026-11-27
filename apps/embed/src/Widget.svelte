@@ -65,6 +65,7 @@
     { id: 'pdf_auto_rotate', name: 'Auto Upright', description: 'Automatically detect and upright landscape or skewed pages', category: 'pages' },
     { id: 'pdf_stamp', name: 'Image Stamp', description: 'Stamp coordinate-exact PNG/JPEG logos and badges', category: 'edit' },
     { id: 'pdf_overlay_underlay', name: 'Stationery Overlay', description: 'Apply letterheads and stationery background/foreground', category: 'edit' },
+    { id: 'pdf_edit_text', name: 'Edit PDF Text', description: 'Find and replace text typos in-place', category: 'edit' },
     { id: 'pdf_validate_signatures', name: 'Validate Signatures', description: 'Verify digital signatures and baseline tamper detection', category: 'security' },
     { id: 'pdf_remove_signatures', name: 'Strip Signatures', description: 'Remove signature fields and cryptographic locks', category: 'security' }
   ];
@@ -230,6 +231,8 @@
   let searchQuery = $state('');
   let watermarkAngle = $state('45');
   let stampPosition = $state('bottom-right');
+  let editTextFind = $state('');
+  let editTextReplace = $state('');
 
   function selectTool(toolId: string) {
     if (activeToolId === toolId) {
@@ -412,12 +415,13 @@
           let outName: string;
 
           // For the new tools that only need to be sent through the mock API (if they don't do real manipulation)
-          if (['pdf_nup', 'pdf_booklet', 'pdf_scale_pages', 'pdf_auto_rotate', 'pdf_stamp', 'pdf_overlay_underlay', 'pdf_validate_signatures', 'pdf_remove_signatures'].includes(toolId)) {
+          if (['pdf_nup', 'pdf_booklet', 'pdf_scale_pages', 'pdf_auto_rotate', 'pdf_stamp', 'pdf_overlay_underlay', 'pdf_edit_text', 'pdf_validate_signatures', 'pdf_remove_signatures'].includes(toolId)) {
             // Extract the parameters from state based on the tool
             let params = {};
             if (toolId === 'pdf_nup') params = { grid: parseInt(nupGrid, 10) };
             if (toolId === 'pdf_scale_pages') params = { target: scaleFormat };
             if (toolId === 'pdf_auto_rotate') params = { target_orientation: autoRotateOrientation };
+            if (toolId === 'pdf_edit_text') params = { find: editTextFind, replace: editTextReplace };
 
             console.log(`Executing ${toolId} in-browser with params:`, params);
 
@@ -1112,6 +1116,17 @@
                             <option value="bottom-center">Bottom Center</option>
                             <option value="bottom-right">Bottom Right</option>
                           </select>
+                        </div>
+                      </div>
+                    {:else if activeToolId === 'pdf_edit_text'}
+                      <div class="config-row">
+                        <div class="config-field">
+                          <label for="editTextFind">Find Text:</label>
+                          <input id="editTextFind" type="text" class="pp-input" placeholder="e.g. 2025" bind:value={editTextFind} />
+                        </div>
+                        <div class="config-field">
+                          <label for="editTextReplace">Replace With:</label>
+                          <input id="editTextReplace" type="text" class="pp-input" placeholder="e.g. 2026" bind:value={editTextReplace} />
                         </div>
                       </div>
                     {/if}
