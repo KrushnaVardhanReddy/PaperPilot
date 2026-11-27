@@ -132,6 +132,11 @@
                 <div class="tool-details">
                   <div class="tool-title-row">
                     <span class="tool-name">{tool.name}</span>
+                    {#if tool.runtime === 'desktop'}
+                      <span class="runtime-badge desktop">Desktop</span>
+                    {:else}
+                      <span class="runtime-badge wasm">WASM</span>
+                    {/if}
                     {#if tool.isPopular}
                       <span class="pop-pill">Popular</span>
                     {/if}
@@ -392,5 +397,26 @@
 
   .footer-brand {
     font-weight: 500;
+  }
+
+  .runtime-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .runtime-badge.wasm {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+  }
+
+  .runtime-badge.desktop {
+    background: rgba(99, 102, 241, 0.12);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.28);
   }
 </style>

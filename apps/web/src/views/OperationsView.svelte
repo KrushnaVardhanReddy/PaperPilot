@@ -2882,32 +2882,6 @@ let metadataFile: File | null = $state(null);
     white-space: nowrap;
   }
 
-  .web-badge-v1 {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 9999px;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.35);
-  }
-
-  .web-badge-preview {
-    display: inline-block;
-    padding: 2px 5px;
-    border-radius: 9999px;
-    font-size: 7.5px;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    background: rgba(147, 51, 234, 0.12);
-    color: #c084fc;
-    border: 1px solid rgba(147, 51, 234, 0.28);
-  }
-
   .tool-btn:hover {
     background-color: var(--bg-surface-hover);
   }

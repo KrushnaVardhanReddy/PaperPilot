@@ -8,6 +8,7 @@ export interface CatalogTool {
   description: string;
   isPopular?: boolean;
   handbookNum: number;
+  runtime?: 'wasm' | 'desktop';
 }
 
 export const TOOLS_CATEGORIES = [
@@ -37,7 +38,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "High-throughput AcroForm mail-merge engine for automated document generation with audit receipts.",
     "isPopular": false,
-    "handbookNum": 1
+    "handbookNum": 1,
+    "runtime": "desktop"
   },
   {
     "id": "cli_ask",
@@ -48,7 +50,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Executes PDF operations using natural language prompts.",
     "isPopular": false,
-    "handbookNum": 2
+    "handbookNum": 2,
+    "runtime": "desktop"
   },
   {
     "id": "cli_fill_batch",
@@ -59,7 +62,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Command-line batch mail-merge engine for generating populated, flattened AcroForm PDFs with audit receipts.",
     "isPopular": false,
-    "handbookNum": 3
+    "handbookNum": 3,
+    "runtime": "desktop"
   },
   {
     "id": "doctor",
@@ -70,7 +74,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Runs a comprehensive suite of diagnostic probes across the system to ensure PaperPilot is ready to execute tasks locally and offline.",
     "isPopular": false,
-    "handbookNum": 4
+    "handbookNum": 4,
+    "runtime": "desktop"
   },
   {
     "id": "document_pii_scan",
@@ -81,7 +86,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Scans document content streams for Personally Identifiable Information (PII) and sensitive data leaks.",
     "isPopular": false,
-    "handbookNum": 5
+    "handbookNum": 5,
+    "runtime": "desktop"
   },
   {
     "id": "document_workflow",
@@ -92,7 +98,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Runs a declarative version-1 document workflow recipe through one unified in-memory PDF engine.",
     "isPopular": false,
-    "handbookNum": 6
+    "handbookNum": 6,
+    "runtime": "desktop"
   },
   {
     "id": "excel_to_csv",
@@ -103,7 +110,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Exports Excel workbooks (.xlsx, .xls) into standard RFC 4180 CSV text files.",
     "isPopular": false,
-    "handbookNum": 7
+    "handbookNum": 7,
+    "runtime": "desktop"
   },
   {
     "id": "excel_to_json",
@@ -114,7 +122,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Ingests Excel workbooks (.xlsx, .xls) and converts sheets, rows, and columns into structured JSON arrays.",
     "isPopular": false,
-    "handbookNum": 8
+    "handbookNum": 8,
+    "runtime": "desktop"
   },
   {
     "id": "execution_receipt_get",
@@ -125,7 +134,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Reads one durable execution receipt by its exact filename (`receipt_id`) in an explicitly specified directory. Returns normalized metadata, cryptographic SHA-256 hashes, start/finish timestamps, durations, error information, and the complete execution report under `details`.",
     "isPopular": false,
-    "handbookNum": 9
+    "handbookNum": 9,
+    "runtime": "desktop"
   },
   {
     "id": "execution_receipt_list",
@@ -136,7 +146,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Lists normalized receipt summaries from an explicitly selected local receipts directory, ordered newest to oldest.",
     "isPopular": false,
-    "handbookNum": 10
+    "handbookNum": 10,
+    "runtime": "desktop"
   },
   {
     "id": "images_to_gif",
@@ -147,7 +158,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Combines an ordered sequence of images into a single animated looping GIF.",
     "isPopular": false,
-    "handbookNum": 11
+    "handbookNum": 11,
+    "runtime": "wasm"
   },
   {
     "id": "img_convert",
@@ -158,7 +170,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Performs pure-Rust transcoding between image formats without system-level image libraries.",
     "isPopular": false,
-    "handbookNum": 12
+    "handbookNum": 12,
+    "runtime": "wasm"
   },
   {
     "id": "img_crop_to_content",
@@ -169,7 +182,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Detects document boundaries and automatically trims scanner bed and background margins.",
     "isPopular": false,
-    "handbookNum": 13
+    "handbookNum": 13,
+    "runtime": "wasm"
   },
   {
     "id": "img_deskew",
@@ -180,7 +194,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Detects text baseline skew angle and straightens tilted document scans.",
     "isPopular": false,
-    "handbookNum": 14
+    "handbookNum": 14,
+    "runtime": "wasm"
   },
   {
     "id": "img_optimize_for_llm",
@@ -191,7 +206,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Downscales and sharpens images for Vision LLM token budget economy and OCR legibility.",
     "isPopular": false,
-    "handbookNum": 15
+    "handbookNum": 15,
+    "runtime": "wasm"
   },
   {
     "id": "img_redact",
@@ -202,7 +218,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Applies permanent, irreversible pixel-level redaction over sensitive image regions.",
     "isPopular": false,
-    "handbookNum": 16
+    "handbookNum": 16,
+    "runtime": "wasm"
   },
   {
     "id": "json_to_pdf",
@@ -213,7 +230,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Synthesizes publication-ready PDF documents from structured JSON document definitions.",
     "isPopular": false,
-    "handbookNum": 17
+    "handbookNum": 17,
+    "runtime": "wasm"
   },
   {
     "id": "office_extract_text",
@@ -224,7 +242,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Extracts raw, unformatted text strings from Microsoft Office documents (.docx, .xlsx, .pptx).",
     "isPopular": false,
-    "handbookNum": 18
+    "handbookNum": 18,
+    "runtime": "desktop"
   },
   {
     "id": "office_modernize_legacy",
@@ -235,7 +254,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Upgrades obsolete legacy binary Microsoft Office files (Word 97-2003 `.doc`, Excel 97-2003 `.xls`, PowerPoint 97-2003 `.ppt`) to modern OpenXML formats (`.docx`, `.xlsx`, `.pptx`).",
     "isPopular": false,
-    "handbookNum": 19
+    "handbookNum": 19,
+    "runtime": "desktop"
   },
   {
     "id": "office_to_markdown",
@@ -246,7 +266,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Converts Microsoft Word documents, Excel spreadsheets, and PowerPoint slide decks into structured Markdown.",
     "isPopular": false,
-    "handbookNum": 20
+    "handbookNum": 20,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_annotate",
@@ -257,7 +278,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Appends interactive and visual annotations (highlights, underlines, notes, and stamps) onto PDF pages.",
     "isPopular": false,
-    "handbookNum": 21
+    "handbookNum": 21,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_attachments",
@@ -268,7 +290,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Inspects, extracts, adds, or removes embedded file attachments in PDF documents and portfolios.",
     "isPopular": false,
-    "handbookNum": 22
+    "handbookNum": 22,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_auto_rotate",
@@ -279,7 +302,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Heuristically detects page aspect ratios and orientations to automatically upright pages.",
     "isPopular": false,
-    "handbookNum": 23
+    "handbookNum": 23,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_bates",
@@ -290,7 +314,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Applies consecutive legal Bates numbering stamps across documents.",
     "isPopular": false,
-    "handbookNum": 24
+    "handbookNum": 24,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_booklet",
@@ -301,7 +326,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Transforms a document into print-ready saddle-stitch booklet signatures.",
     "isPopular": false,
-    "handbookNum": 25
+    "handbookNum": 25,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_bookmarks",
@@ -312,7 +338,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Reads, extracts, and parses the document outline and Table of Contents bookmarks hierarchy into structured JSON.",
     "isPopular": false,
-    "handbookNum": 26
+    "handbookNum": 26,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_burst",
@@ -323,7 +350,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Explodes a multi-page PDF into separate 1-page PDF files.",
     "isPopular": false,
-    "handbookNum": 27
+    "handbookNum": 27,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_change_permissions",
@@ -334,7 +362,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Configures user and owner permissions for printing, copying, and modification.",
     "isPopular": false,
-    "handbookNum": 28
+    "handbookNum": 28,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_chunk",
@@ -345,7 +374,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Splits PDF documents into intelligent, structure-aware semantic text chunks tailored for LLMs and AI agent context windows.",
     "isPopular": false,
-    "handbookNum": 29
+    "handbookNum": 29,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_classify_type",
@@ -356,7 +386,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Classifies a PDF document into standard taxonomy types using structural and typographical layout heuristics.",
     "isPopular": false,
-    "handbookNum": 30
+    "handbookNum": 30,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_comic_archive",
@@ -367,7 +398,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Converts PDF documents or folders of images into Comic Book Archive (.cbz) packages.",
     "isPopular": false,
-    "handbookNum": 31
+    "handbookNum": 31,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_compare",
@@ -378,7 +410,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Compares two PDF documents page-by-page and generates a structured comparison report.",
     "isPopular": false,
-    "handbookNum": 32
+    "handbookNum": 32,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_compress",
@@ -389,7 +422,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Reduces PDF file size through intelligent image resampling and stream compression.",
     "isPopular": true,
-    "handbookNum": 33
+    "handbookNum": 33,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_convert_excel",
@@ -400,7 +434,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Renders spreadsheet workbooks (Excel `.xlsx`/`.xls` or CSV) directly into publication-ready styled PDF documents.",
     "isPopular": false,
-    "handbookNum": 34
+    "handbookNum": 34,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_convert_html",
@@ -411,7 +446,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Renders HTML source documents and web pages directly into styled, publication-ready PDF files.",
     "isPopular": false,
-    "handbookNum": 35
+    "handbookNum": 35,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_convert_markdown",
@@ -422,7 +458,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Renders Markdown source documents directly into beautifully styled, publication-ready PDF files.",
     "isPopular": false,
-    "handbookNum": 36
+    "handbookNum": 36,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_create_form_field",
@@ -433,7 +470,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Appends interactive AcroForm widget annotations (text fields or checkboxes) to a target PDF page.",
     "isPopular": false,
-    "handbookNum": 37
+    "handbookNum": 37,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_crop",
@@ -444,7 +482,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Trims page margins or crops documents to a custom rectangular bounding box.",
     "isPopular": false,
-    "handbookNum": 38
+    "handbookNum": 38,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_decrypt",
@@ -455,7 +494,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Removes password protection and usage restrictions from an unlocked PDF.",
     "isPopular": false,
-    "handbookNum": 39
+    "handbookNum": 39,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_dedup_streams",
@@ -466,7 +506,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Performs lossless indirect object stream deduplication and CMYK-safe document compression.",
     "isPopular": false,
-    "handbookNum": 40
+    "handbookNum": 40,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_delete_pages",
@@ -477,7 +518,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Deletes specific pages or page ranges from a PDF document.",
     "isPopular": false,
-    "handbookNum": 41
+    "handbookNum": 41,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_encrypt",
@@ -488,7 +530,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Secures a PDF document with standard password encryption.",
     "isPopular": false,
-    "handbookNum": 42
+    "handbookNum": 42,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_extract_images",
@@ -499,7 +542,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Extracts embedded photos, raster graphics, and figures from inside a PDF file.",
     "isPopular": false,
-    "handbookNum": 43
+    "handbookNum": 43,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_extract_pages",
@@ -510,7 +554,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Extracts specific pages or page ranges into a new standalone PDF document.",
     "isPopular": false,
-    "handbookNum": 44
+    "handbookNum": 44,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_extract_patterns",
@@ -521,7 +566,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Scans PDF documents for custom keywords and arbitrary regular expression patterns, capturing match contexts and spatial coordinates across all pages.",
     "isPopular": false,
-    "handbookNum": 45
+    "handbookNum": 45,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_extract_tables",
@@ -532,7 +578,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Extracts structured tabular data from PDF documents into JSON or CSV.",
     "isPopular": false,
-    "handbookNum": 46
+    "handbookNum": 46,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_extract_text",
@@ -543,7 +590,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Extracts all readable textual content from a PDF document with layout and reading-order awareness.",
     "isPopular": false,
-    "handbookNum": 47
+    "handbookNum": 47,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_fill_form",
@@ -554,7 +602,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Fills interactive AcroForm fields (text fields, checkboxes, choices) from a JSON dataset.",
     "isPopular": false,
-    "handbookNum": 48
+    "handbookNum": 48,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_flatten",
@@ -565,7 +614,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Flattens interactive AcroForm form fields and annotations directly into the static page content stream.",
     "isPopular": false,
-    "handbookNum": 49
+    "handbookNum": 49,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_hash",
@@ -576,7 +626,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Calculates cryptographic checksums and document integrity hashes of a PDF file.",
     "isPopular": false,
-    "handbookNum": 50
+    "handbookNum": 50,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_header_footer",
@@ -587,7 +638,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Adds customizable headers and footers with configurable positioning, margins, and text alignment across pages.",
     "isPopular": false,
-    "handbookNum": 51
+    "handbookNum": 51,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_images_to_pdf",
@@ -598,7 +650,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Combines one or more image files (PNG, JPG, WebP) into a single PDF document.",
     "isPopular": false,
-    "handbookNum": 52
+    "handbookNum": 52,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_invert_colors",
@@ -609,7 +662,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Inverts colors or applies dark mode styling across PDF vector content while preserving selectable text.",
     "isPopular": false,
-    "handbookNum": 53
+    "handbookNum": 53,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_linearize",
@@ -620,7 +674,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Optimizes a PDF for Fast Web View (byte-serving linearization).",
     "isPopular": false,
-    "handbookNum": 54
+    "handbookNum": 54,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_merge",
@@ -631,7 +686,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Combines multiple separate PDF documents into a single continuous file.",
     "isPopular": true,
-    "handbookNum": 55
+    "handbookNum": 55,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_merge_alternate",
@@ -642,7 +698,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Interleaves and collates pages from two PDF documents with independent step intervals and reversing.",
     "isPopular": false,
-    "handbookNum": 56
+    "handbookNum": 56,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_metadata",
@@ -653,7 +710,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Inspects, reads, updates, or edits document metadata fields (Title, Author, Subject, Keywords).",
     "isPopular": false,
-    "handbookNum": 57
+    "handbookNum": 57,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_nup",
@@ -664,7 +722,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Imposes multiple pages onto a single sheet in an N-Up grid layout (2, 4, 9, or 16 pages per sheet).",
     "isPopular": false,
-    "handbookNum": 58
+    "handbookNum": 58,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_ocr",
@@ -675,7 +734,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Performs local neural optical character recognition (OCR) on scanned documents and raster images.",
     "isPopular": true,
-    "handbookNum": 59
+    "handbookNum": 59,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_overlay_underlay",
@@ -686,7 +746,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Applies letterheads, watermarked stationary, and templates as background or foreground.",
     "isPopular": false,
-    "handbookNum": 60
+    "handbookNum": 60,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_page_numbers",
@@ -697,7 +758,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Adds dynamic page numbering stamps (e.g. \"Page 1 of 5\", \"1 / 10\", or \"Page 1\") across PDF pages.",
     "isPopular": false,
-    "handbookNum": 61
+    "handbookNum": 61,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_posterize",
@@ -708,7 +770,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Tiles oversized PDF pages across a multi-sheet grid of standard printable paper with overlap margins and cut guides.",
     "isPopular": false,
-    "handbookNum": 62
+    "handbookNum": 62,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_rag_chunks",
@@ -719,7 +782,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Splits a PDF document into section-level semantic text chunks tailored for RAG vector indexing.",
     "isPopular": false,
-    "handbookNum": 63
+    "handbookNum": 63,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_read_form",
@@ -730,7 +794,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Extracts AcroForm field names and current values from a PDF document.",
     "isPopular": false,
-    "handbookNum": 64
+    "handbookNum": 64,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_redact",
@@ -741,7 +806,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Permanently blackouts and scrubs sensitive text, regular expressions, or coordinate bounding boxes from a PDF.",
     "isPopular": false,
-    "handbookNum": 65
+    "handbookNum": 65,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_remove_blank",
@@ -752,7 +818,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Scans a PDF and strips out all blank or empty pages.",
     "isPopular": false,
-    "handbookNum": 66
+    "handbookNum": 66,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_remove_signatures",
@@ -763,7 +830,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Strips digital signatures, signature field appearances, cryptographic lock dictionaries, and signature widget annotations from a PDF.",
     "isPopular": false,
-    "handbookNum": 67
+    "handbookNum": 67,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_render",
@@ -774,7 +842,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Renders PDF document pages into high-resolution raster images.",
     "isPopular": false,
-    "handbookNum": 68
+    "handbookNum": 68,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_reorder_pages",
@@ -785,7 +854,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Rearranges the sequence of pages in a PDF according to a custom specified order.",
     "isPopular": false,
-    "handbookNum": 69
+    "handbookNum": 69,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_repair",
@@ -796,7 +866,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Rebuilds corrupted, truncated, or unreadable PDF files.",
     "isPopular": false,
-    "handbookNum": 70
+    "handbookNum": 70,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_rotate",
@@ -807,7 +878,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Rotates PDF pages by 90, 180, or 270 degrees clockwise.",
     "isPopular": false,
-    "handbookNum": 71
+    "handbookNum": 71,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_sanitize",
@@ -818,7 +890,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Performs deep structural sanitization and threat neutralization on PDF files.",
     "isPopular": false,
-    "handbookNum": 72
+    "handbookNum": 72,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_scale_pages",
@@ -829,7 +902,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Scales PDF page dimensions between standard sheet formats (A4, Letter, Legal, A3, A5, Tabloid) or custom scale percentages.",
     "isPopular": false,
-    "handbookNum": 73
+    "handbookNum": 73,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_search",
@@ -840,7 +914,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Searches for a text query inside a PDF document or a folder of PDFs and returns matching 1-based page numbers.",
     "isPopular": false,
-    "handbookNum": 74
+    "handbookNum": 74,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_sign",
@@ -851,7 +926,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Applies digital signature metadata and AcroForm signature flags to a PDF document.",
     "isPopular": false,
-    "handbookNum": 75
+    "handbookNum": 75,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_split",
@@ -862,7 +938,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Splits a PDF into smaller documents based on page numbers, ranges, cut points, or periodic intervals.",
     "isPopular": true,
-    "handbookNum": 76
+    "handbookNum": 76,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_split_by_outline",
@@ -873,7 +950,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Splits multi-chapter PDF documents into discrete section files based on their Bookmark (`/Outlines`) hierarchy.",
     "isPopular": false,
-    "handbookNum": 77
+    "handbookNum": 77,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_split_scanned_book",
@@ -884,7 +962,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Detects center binding gutter spines and splits two-up scanned book spreads into individual pages.",
     "isPopular": false,
-    "handbookNum": 78
+    "handbookNum": 78,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_stamp",
@@ -895,7 +974,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Places coordinate-exact images, logos, badges, and signatures onto PDF pages with configurable transparency.",
     "isPopular": false,
-    "handbookNum": 79
+    "handbookNum": 79,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_stitch_canvas",
@@ -906,7 +986,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Organize & Pages",
     "description": "Combines multiple pages vertically or horizontally into a seamless, continuous single-page canvas.",
     "isPopular": false,
-    "handbookNum": 80
+    "handbookNum": 80,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_timestamp",
@@ -917,7 +998,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Applies RFC 3161 cryptographically verified TSA timestamp tokens.",
     "isPopular": false,
-    "handbookNum": 81
+    "handbookNum": 81,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_to_docx",
@@ -928,7 +1010,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Decompiles PDF documents into editable Microsoft Word (.docx) files.",
     "isPopular": true,
-    "handbookNum": 82
+    "handbookNum": 82,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_to_epub",
@@ -939,7 +1022,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Converts fixed-layout PDF documents into reflowable EPUB 3.0 eBooks.",
     "isPopular": false,
-    "handbookNum": 83
+    "handbookNum": 83,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_to_gif",
@@ -950,7 +1034,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Converts multi-page PDF documents into animated looping GIF flipbooks.",
     "isPopular": false,
-    "handbookNum": 84
+    "handbookNum": 84,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_to_html",
@@ -961,7 +1046,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Converts a PDF into styled, standalone HTML5.",
     "isPopular": false,
-    "handbookNum": 85
+    "handbookNum": 85,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_to_json",
@@ -972,7 +1058,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Exports full multimodal PDF layout AST to structured JSON.",
     "isPopular": false,
-    "handbookNum": 86
+    "handbookNum": 86,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_to_markdown",
@@ -983,7 +1070,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Decompiles PDF documents into clean, LLM-ready Markdown.",
     "isPopular": false,
-    "handbookNum": 87
+    "handbookNum": 87,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_to_pdf_a",
@@ -994,7 +1082,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Converts PDF documents into the ISO 19005 archival format (PDF/A-1b).",
     "isPopular": false,
-    "handbookNum": 88
+    "handbookNum": 88,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_to_pptx",
@@ -1005,7 +1094,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Converts PDF document pages into editable Microsoft PowerPoint presentation slides (.pptx).",
     "isPopular": false,
-    "handbookNum": 89
+    "handbookNum": 89,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_to_xlsx",
@@ -1016,7 +1106,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Extracts tabular data and financial statements from PDF into an Excel workbook (.xlsx).",
     "isPopular": false,
-    "handbookNum": 90
+    "handbookNum": 90,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_validate",
@@ -1027,7 +1118,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Runs deep diagnostic checks on PDF structure and compliance.",
     "isPopular": false,
-    "handbookNum": 91
+    "handbookNum": 91,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_validate_signatures",
@@ -1038,7 +1130,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Optimize & Security",
     "description": "Cryptographically verifies digital signatures, certificate chains, and document integrity.",
     "isPopular": false,
-    "handbookNum": 92
+    "handbookNum": 92,
+    "runtime": "wasm"
   },
   {
     "id": "pdf_watermark",
@@ -1049,7 +1142,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Stamps semi-transparent text watermarks across PDF pages.",
     "isPopular": false,
-    "handbookNum": 93
+    "handbookNum": 93,
+    "runtime": "wasm"
   },
   {
     "id": "recipe_run",
@@ -1060,7 +1154,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Executes a validated declarative document recipe (`.ppflow`, TOML, JSON) or preset against a local PDF.",
     "isPopular": false,
-    "handbookNum": 94
+    "handbookNum": 94,
+    "runtime": "desktop"
   },
   {
     "id": "semantic_search",
@@ -1071,7 +1166,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Performs structure-aware semantic chunk search and conceptual relevance ranking across PDF documents.",
     "isPopular": false,
-    "handbookNum": 95
+    "handbookNum": 95,
+    "runtime": "desktop"
   },
   {
     "id": "showcase_gif",
@@ -1082,7 +1178,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Convert",
     "description": "Generates an animated showcase mockup card highlighting document content with elegant transitions.",
     "isPopular": false,
-    "handbookNum": 96
+    "handbookNum": 96,
+    "runtime": "wasm"
   },
   {
     "id": "watcher_list",
@@ -1093,7 +1190,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Inspects active folder watchers, runtime lifecycle states, and live processing statistics.",
     "isPopular": false,
-    "handbookNum": 97
+    "handbookNum": 97,
+    "runtime": "desktop"
   },
   {
     "id": "watcher_start",
@@ -1104,7 +1202,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Registers an operating-system folder watcher, processing arriving PDFs with validated recipes and durable audit receipts.",
     "isPopular": false,
-    "handbookNum": 98
+    "handbookNum": 98,
+    "runtime": "desktop"
   },
   {
     "id": "watcher_stop",
@@ -1115,7 +1214,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Gracefully cancels a running folder watcher after its active PDF operation completes and unregisters it.",
     "isPopular": false,
-    "handbookNum": 99
+    "handbookNum": 99,
+    "runtime": "desktop"
   },
   {
     "id": "workspace_search",
@@ -1126,7 +1226,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Intelligence",
     "description": "Performs recursive, multi-format text discovery and snippet extraction across a workspace directory.",
     "isPopular": false,
-    "handbookNum": 100
+    "handbookNum": 100,
+    "runtime": "desktop"
   },
   {
     "id": "pdf_edit_text",
@@ -1137,7 +1238,8 @@ export const ALL_101_TOOLS: CatalogTool[] = [
     "categoryLabel": "Edit & Protect",
     "description": "Find and replace text typos in-place inside PDF content streams",
     "isPopular": true,
-    "handbookNum": 101
+    "handbookNum": 101,
+    "runtime": "wasm"
   }
 ];
 

@@ -119,6 +119,11 @@
                     <div class="tool-info">
                       <div class="tool-name-row">
                         <span class="tool-title">{tool.name}</span>
+                        {#if tool.runtime === 'desktop'}
+                          <span class="runtime-badge desktop">Desktop</span>
+                        {:else}
+                          <span class="runtime-badge wasm">WASM</span>
+                        {/if}
                         {#if tool.isPopular}
                           <span class="star-badge">Hot</span>
                         {/if}
@@ -146,6 +151,11 @@
               <div class="tool-info">
                 <div class="tool-name-row">
                   <span class="tool-title">{tool.name}</span>
+                  {#if tool.runtime === 'desktop'}
+                    <span class="runtime-badge desktop">Desktop</span>
+                  {:else}
+                    <span class="runtime-badge wasm">WASM</span>
+                  {/if}
                   {#if tool.isPopular}
                     <span class="star-badge">Hot</span>
                   {/if}
@@ -555,5 +565,26 @@
     padding: 2px 6px;
     font-size: 0.75rem;
     color: var(--text-primary, #f4f4f5);
+  }
+
+  .runtime-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .runtime-badge.wasm {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+  }
+
+  .runtime-badge.desktop {
+    background: rgba(99, 102, 241, 0.12);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.28);
   }
 </style>
