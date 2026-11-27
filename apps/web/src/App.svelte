@@ -8,9 +8,7 @@
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
   import FeedbackModal from './components/FeedbackModal.svelte';
   import {
-    DOWNLOAD_LINUX_URL,
-    DOWNLOAD_WINDOWS_URL,
-    DOWNLOAD_MACOS_URL,
+    DOWNLOAD_URL,
     getDocsBaseUrl,
     getToolsHandbookUrl
   } from './constants';
@@ -55,11 +53,7 @@
         <span class="separator">•</span>
         <a href={toolsHandbookUrl} target="_blank" rel="noopener noreferrer">Tools Handbook</a>
         <span class="separator">•</span>
-        <a href={DOWNLOAD_LINUX_URL} target="_blank" rel="noopener noreferrer">Linux</a>
-        <span class="separator">•</span>
-        <a href={DOWNLOAD_WINDOWS_URL} target="_blank" rel="noopener noreferrer">Windows</a>
-        <span class="separator">•</span>
-        <a href={DOWNLOAD_MACOS_URL} target="_blank" rel="noopener noreferrer">macOS</a>
+        <a href={DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">Releases</a>
       </div>
     </div>
   </footer>
