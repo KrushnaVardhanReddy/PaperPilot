@@ -13,6 +13,15 @@ echo "========================================================"
 echo "  PaperPilot Secret & Credential Leak Scanner (TruffleHog)"
 echo "========================================================"
 
+# Enforce: only run on main branch (can be bypassed with FORCE_SCAN=true)
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+if [ "${CURRENT_BRANCH}" != "main" ] && [ "${FORCE_SCAN:-false}" != "true" ]; then
+  echo "Notice: Current branch is '${CURRENT_BRANCH}'. Secret scan runs only on 'main' branch."
+  echo "To force scan on this branch, run: FORCE_SCAN=true make trufflehog-scan"
+  echo "========================================================"
+  exit 0
+fi
+
 # 1. Prefer native standalone binary in .tools/bin, PATH, or ~/.cargo/bin
 if [ -x "${BIN_DIR}/trufflehog" ]; then
   TRUFFLEHOG_BIN="${BIN_DIR}/trufflehog"
