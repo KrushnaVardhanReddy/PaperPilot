@@ -1,8 +1,6 @@
 <script lang="ts">
   import Navbar from './components/Navbar.svelte';
   import HeroPlayground from './components/HeroPlayground.svelte';
-  import ToolsBentoGrid from './components/ToolsBentoGrid.svelte';
-  import DesktopDownloadModal from './components/DesktopDownloadModal.svelte';
   import UseCasesShowcase from './components/UseCasesShowcase.svelte';
   import TriSurfaceShowcase from './components/TriSurfaceShowcase.svelte';
   import EmbedGenerator from './components/EmbedGenerator.svelte';
@@ -20,7 +18,6 @@
 
   let isFeedbackOpen = $state(false);
   let feedbackCategory = $state<'bug' | 'performance' | 'feature' | 'praise'>('bug');
-  let isDesktopModalOpen = $state(false);
 
   function openFeedback(cat: 'bug' | 'performance' | 'feature' | 'praise' = 'bug') {
     feedbackCategory = cat;
@@ -33,7 +30,6 @@
 
   <main class="main-content">
     <HeroPlayground />
-    <ToolsBentoGrid onOpenDesktopModal={() => (isDesktopModalOpen = true)} />
     <UseCasesShowcase />
     <TriSurfaceShowcase />
     <EmbedGenerator />
@@ -67,11 +63,6 @@
   isOpen={isFeedbackOpen}
   initialCategory={feedbackCategory}
   onClose={() => isFeedbackOpen = false}
-/>
-
-<DesktopDownloadModal
-  isOpen={isDesktopModalOpen}
-  onClose={() => (isDesktopModalOpen = false)}
 />
 
 <style>
