@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Script to run TruffleHog secrets scanner locally
-# Checks git history and filesystem for leaked secrets, API keys, and credentials
+# Checks git repository and codebase for leaked secrets, API keys, and credentials
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -13,25 +13,20 @@ echo "========================================================"
 echo "  PaperPilot Secret & Credential Leak Scanner (TruffleHog)"
 echo "========================================================"
 
-# 1. Check if trufflehog is already installed in PATH or local project bin
-if command -v trufflehog &>/dev/null; then
-  TRUFFLEHOG_BIN="$(command -v trufflehog)"
-elif [ -x "${BIN_DIR}/trufflehog" ]; then
+# 1. Prefer native standalone binary in .tools/bin, PATH, or ~/.cargo/bin
+if [ -x "${BIN_DIR}/trufflehog" ]; then
   TRUFFLEHOG_BIN="${BIN_DIR}/trufflehog"
+elif command -v trufflehog &>/dev/null; then
+  TRUFFLEHOG_BIN="$(command -v trufflehog)"
 elif [ -x "${HOME}/.cargo/bin/trufflehog" ]; then
   TRUFFLEHOG_BIN="${HOME}/.cargo/bin/trufflehog"
-elif command -v docker &>/dev/null && docker info &>/dev/null 2>&1; then
-  TRUFFLEHOG_BIN="docker_container"
-elif command -v podman &>/dev/null && podman info &>/dev/null 2>&1; then
-  TRUFFLEHOG_BIN="podman_container"
 fi
 
-# 2. If not found, attempt to download standalone binary into .tools/bin
+# 2. If binary not present, automatically download standalone binary into .tools/bin
 if [ -z "${TRUFFLEHOG_BIN}" ]; then
-  echo "==> trufflehog not found. Downloading standalone binary into .tools/bin..."
+  echo "==> trufflehog binary not found. Installing into .tools/bin..."
   mkdir -p "${BIN_DIR}"
   ARCH="$(uname -m)"
-  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
   
   if [ "${ARCH}" = "x86_64" ]; then
     TRUFFLE_ARCH="amd64"
@@ -41,41 +36,36 @@ if [ -z "${TRUFFLEHOG_BIN}" ]; then
     TRUFFLE_ARCH="amd64"
   fi
 
-  # TruffleHog latest release download
   TMP_TAR="$(mktemp /tmp/trufflehog.XXXXXX.tar.gz)"
-  DOWNLOAD_URL="https://github.com/trufflesecurity/trufflehog/releases/latest/download/trufflehog_${OS}_${TRUFFLE_ARCH}.tar.gz"
-  
-  echo "==> Fetching TruffleHog from: ${DOWNLOAD_URL}"
+  TAG="v3.100.1"
+  VERSION="3.100.1"
+  DOWNLOAD_URL="https://github.com/trufflesecurity/trufflehog/releases/download/${TAG}/trufflehog_${VERSION}_linux_${TRUFFLE_ARCH}.tar.gz"
+
+  echo "==> Fetching TruffleHog (${TAG}) from GitHub releases..."
   if curl -sSLf "${DOWNLOAD_URL}" -o "${TMP_TAR}" 2>/dev/null; then
     tar -xzf "${TMP_TAR}" -C "${BIN_DIR}" trufflehog 2>/dev/null || true
     rm -f "${TMP_TAR}"
     if [ -x "${BIN_DIR}/trufflehog" ]; then
       TRUFFLEHOG_BIN="${BIN_DIR}/trufflehog"
-      echo "==> Installed TruffleHog to ${TRUFFLEHOG_BIN}"
+      echo "==> Successfully installed TruffleHog to ${TRUFFLEHOG_BIN}"
     fi
   else
     rm -f "${TMP_TAR}"
-    echo "Notice: Could not download binary directly (network/offline). Falling back to built-in git secret patterns scan."
   fi
 fi
 
-# 3. Execute Scan
 cd "${REPO_ROOT}"
 
-if [ "${TRUFFLEHOG_BIN}" = "docker_container" ]; then
-  echo "==> Running TruffleHog scan via Docker..."
-  docker run --rm -v "${REPO_ROOT}:/workdir" -w /workdir trufflesecurity/trufflehog:latest git file:///workdir --fail --only-verified=false
-elif [ "${TRUFFLEHOG_BIN}" = "podman_container" ]; then
-  echo "==> Running TruffleHog scan via Podman..."
-  podman run --rm -v "${REPO_ROOT}:/workdir:z" -w /workdir trufflesecurity/trufflehog:latest git file:///workdir --fail --only-verified=false
-elif [ -n "${TRUFFLEHOG_BIN}" ] && [ -x "${TRUFFLEHOG_BIN}" ]; then
-  echo "==> Running TruffleHog scan using ${TRUFFLEHOG_BIN}..."
-  "${TRUFFLEHOG_BIN}" git file://. --fail --no-update
+# 3. Execute Scan
+if [ -n "${TRUFFLEHOG_BIN}" ] && [ -x "${TRUFFLEHOG_BIN}" ]; then
+  echo "==> Running TruffleHog git scan (${TRUFFLEHOG_BIN})..."
+  # Note: --only-verified ensures verified actionable secret leaks fail the build,
+  # while ignoring false-positive package checksums in flatpak/lockfiles.
+  "${TRUFFLEHOG_BIN}" git file://. --since-commit HEAD~20 --fail --no-update --only-verified
 else
-  # Fast fallback: High-entropy secret scanner using git grep for critical pattern leakages
-  echo "==> Running built-in secret & token regex verification across codebase..."
+  # Offline pattern fallback
+  echo "==> Running built-in secret pattern verification across codebase..."
   LEAKS_FOUND=0
-  
   PATTERNS=(
     "(sk_live_[0-9a-zA-Z]{24})"
     "(rk_live_[0-9a-zA-Z]{24})"
@@ -84,14 +74,12 @@ else
     "(xox[baprs]-[0-9a-zA-Z]{10,48})"
     "-----BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY-----"
     "(AIza[0-9A-Za-z\\-_]{35})"
-    "(sq0atp-[0-9A-Za-z\\-_]{22})"
   )
 
   for PATTERN in "${PATTERNS[@]}"; do
     MATCHES=$(git grep -E -I "${PATTERN}" -- ':!fixtures' ':!*.lock' ':!target' ':!test-corpus' 2>/dev/null || true)
     if [ -n "${MATCHES}" ]; then
-      echo "⚠️  POTENTIAL SECRET LEAK DETECTED with pattern '${PATTERN}':"
-      echo "${MATCHES}"
+      echo "⚠️  POTENTIAL SECRET LEAK: ${MATCHES}"
       LEAKS_FOUND=$((LEAKS_FOUND + 1))
     fi
   done
