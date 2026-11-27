@@ -1328,11 +1328,6 @@ let metadataFile: File | null = $state(null);
         >
           <span class="tool-icon">{tool.icon}</span>
           <span class="tool-title-text">{tool.title}</span>
-          {#if tool.releaseStatus === 'v0.5-core'}
-            <span class="web-badge-v1">v0.5 Core</span>
-          {:else}
-            <span class="web-badge-preview">Preview</span>
-          {/if}
         </button>
       {/each}
     </div>

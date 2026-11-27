@@ -6183,13 +6183,6 @@
                   <div class="tool-card-title-row">
                     <div class="tool-title-with-badge">
                       <span class="tool-card-title">{tool.title}</span>
-                      {#if tool.releaseStatus === 'v0.5-core'}
-                        <span class="status-badge-v1">v0.5 Core</span>
-                      {:else if tool.releaseStatus === 'v0.6-core'}
-                        <span class="status-badge-v06">v0.6 Core</span>
-                      {:else}
-                        <span class="status-badge-preview">Preview</span>
-                      {/if}
                       {#if appState.documents.length >= 2}
                         {#if tool.rule?.minDocuments === 2}
                           <span class="smart-badge">Multi-File Action</span>
@@ -6230,13 +6223,6 @@
                       <div class="tool-card-title-row">
                         <div class="tool-title-with-badge">
                           <span class="tool-card-title">{tool.title}</span>
-                          {#if tool.releaseStatus === 'v0.5-core'}
-                            <span class="status-badge-v1">v0.5 Core</span>
-                          {:else if tool.releaseStatus === 'v0.6-core'}
-                            <span class="status-badge-v06">v0.6 Core</span>
-                          {:else}
-                            <span class="status-badge-preview">Preview</span>
-                          {/if}
                         </div>
                         <span class="tool-card-desc">{tool.description}</span>
                       </div>
