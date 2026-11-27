@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import MegaMenu from './MegaMenu.svelte';
   import FeaturesDropdown from './FeaturesDropdown.svelte';
   import DesktopDownloadModal from './DesktopDownloadModal.svelte';
@@ -8,7 +9,9 @@
   import {
     GITHUB_REPO_URL,
     DOWNLOAD_URL,
-    getDocsBaseUrl
+    getDocsBaseUrl,
+    ENABLE_DOWNLOAD_COUNT_BADGE,
+    MIN_DOWNLOAD_COUNT_THRESHOLD
   } from '../constants';
 
   interface Props {
@@ -21,8 +24,89 @@
   let isFeaturesOpen = $state(false);
   let isDownloadModalOpen = $state(false);
   let isQuickFinderOpen = $state(false);
+  let downloadCount = $state<number | null>(null);
 
   const docsUrl = getDocsBaseUrl();
+
+  onMount(async () => {
+    if (!ENABLE_DOWNLOAD_COUNT_BADGE) return;
+
+    const repo = 'KrushnaVardhanReddy/PaperPilot';
+    const npmPackage = '@usepaperpilot/mcp';
+
+    try {
+      const cacheKey = `eco_dls_${repo}_${npmPackage}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < 1000 * 60 * 15) {
+          downloadCount = parsed.count;
+          return;
+        }
+      }
+
+      const [ghRes, npmRes] = await Promise.allSettled([
+        fetch(`https://api.github.com/repos/${repo}/releases`),
+        fetch(`https://api.npmjs.org/downloads/range/2026-01-01:${new Date().toISOString().slice(0, 10)}/${npmPackage}`)
+      ]);
+
+      let ghTotal = 0;
+      let npmTotal = 0;
+      let latestReleaseTag: string | null = null;
+
+      if (ghRes.status === 'fulfilled' && ghRes.value.ok) {
+        const releases = await ghRes.value.json();
+        if (Array.isArray(releases) && releases.length > 0) {
+          latestReleaseTag = releases[0].tag_name || releases[0].name;
+          for (const rel of releases) {
+            if (Array.isArray(rel.assets)) {
+              for (const asset of rel.assets) {
+                ghTotal += Number(asset.download_count) || 0;
+              }
+            }
+          }
+        }
+      }
+
+      if (npmRes.status === 'fulfilled' && npmRes.value.ok) {
+        const npmData = await npmRes.value.json();
+        if (Array.isArray(npmData?.downloads)) {
+          for (const item of npmData.downloads) {
+            npmTotal += Number(item.downloads) || 0;
+          }
+        }
+      }
+
+      const total = ghTotal + npmTotal;
+      if (total > 0) {
+        downloadCount = total;
+        sessionStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            count: total,
+            ghCount: ghTotal,
+            npmCount: npmTotal,
+            tag: latestReleaseTag,
+            timestamp: Date.now()
+          })
+        );
+      }
+    } catch {
+      // Fallback silently if offline or rate limited
+    }
+  });
+
+  function formatCount(count: number): string {
+    if (count >= 1_000_000) {
+      const millions = Math.floor(count / 100_000) / 10;
+      return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M+`;
+    }
+    if (count >= 1_000) {
+      const thousands = Math.floor(count / 100) / 10;
+      return `${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K+`;
+    }
+    return count.toLocaleString();
+  }
 
   function toggleMegaMenu() {
     isMegaMenuOpen = !isMegaMenuOpen;
@@ -142,6 +226,9 @@
         onclick={() => isDownloadModalOpen = true}
       >
         <span>Download Desktop</span>
+        {#if ENABLE_DOWNLOAD_COUNT_BADGE && downloadCount !== null && downloadCount >= MIN_DOWNLOAD_COUNT_THRESHOLD}
+          <span class="dl-count-pill">{formatCount(downloadCount)}</span>
+        {/if}
       </button>
     </div>
   </div>
@@ -388,6 +475,9 @@
 
   .desktop-cta-btn {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -400,6 +490,17 @@
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
     overflow: hidden;
+  }
+
+  .dl-count-pill {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    line-height: 1.2;
   }
 
   .desktop-cta-btn:hover {
