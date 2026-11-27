@@ -4,16 +4,51 @@
   import { ALL_101_TOOLS } from '../lib/toolsCatalog';
   import DropZone from '../components/DropZone.svelte';
 
+  const DEFAULT_TITLE = 'PaperPilot — 100% Private Client-Side PDF & Document Tools (No Upload)';
+  const RECENT_TOOLS_KEY = 'paperpilot_recent_tools';
+  const MAX_RECENT_TOOLS = 5;
+
   let activeTool = $state('merge');
   let isProcessing = $state(false);
+  let recentToolIds = $state<string[]>([]);
 
   $effect(() => {
     if (typeof window !== 'undefined' && activeTool) {
       history.replaceState(null, '', '?tool=' + activeTool);
+      const current = tools.find(t => t.id === activeTool);
+      document.title = current ? `${current.title} — PaperPilot` : DEFAULT_TITLE;
+
+      if (current) {
+        const next = [activeTool, ...recentToolIds.filter(id => id !== activeTool)].slice(0, MAX_RECENT_TOOLS);
+        if (next.length !== recentToolIds.length || next.some((id, i) => id !== recentToolIds[i])) {
+          recentToolIds = next;
+          try {
+            localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(next));
+          } catch {
+            // Ignore storage errors (e.g. private browsing quota)
+          }
+        }
+      }
+    } else if (typeof document !== 'undefined') {
+      document.title = DEFAULT_TITLE;
     }
   });
 
   onMount(() => {
+    try {
+      const saved = localStorage.getItem(RECENT_TOOLS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          recentToolIds = parsed
+            .filter((id): id is string => typeof id === 'string' && tools.some(t => t.id === id))
+            .slice(0, MAX_RECENT_TOOLS);
+        }
+      }
+    } catch {
+      // Ignore malformed localStorage data
+    }
+
     const toolParam = new URLSearchParams(window.location.search).get('tool');
     if (toolParam) {
       let matched = tools.find(t => t.id === toolParam);
@@ -1315,6 +1350,29 @@ let metadataFile: File | null = $state(null);
         >✅ Ready</button>
       </div>
     </div>
+
+    {#if recentToolIds.length > 0}
+      {@const recentTools = recentToolIds.map(id => tools.find(t => t.id === id)).filter((t): t is WebTool => Boolean(t))}
+      {#if recentTools.length > 0}
+        <div class="recent-tools-section">
+          <span class="recent-tools-label">Recently Used</span>
+          <div class="recent-tools-pills">
+            {#each recentTools as tool}
+              <button
+                type="button"
+                class="recent-tool-pill"
+                class:active={activeTool === tool.id}
+                onclick={() => activeTool = tool.id}
+                title={tool.title}
+              >
+                <span class="recent-tool-icon">{tool.icon}</span>
+                <span class="recent-tool-name">{tool.title}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
+    {/if}
 
     <div class="search-box" style="margin-bottom: 12px;">
       <input
@@ -2841,6 +2899,60 @@ let metadataFile: File | null = $state(null);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .recent-tools-section {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .recent-tools-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .recent-tools-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .recent-tool-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+    max-width: 100%;
+  }
+
+  .recent-tool-pill:hover {
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+  }
+
+  .recent-tool-pill.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+  }
+
+  .recent-tool-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .filter-toggle {

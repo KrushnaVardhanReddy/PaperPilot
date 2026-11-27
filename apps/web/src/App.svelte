@@ -43,6 +43,17 @@
 
   <main class="main-content">
     <HeroPlayground />
+    <section class="social-proof-strip" aria-label="Platform highlights">
+      <div class="social-proof-inner">
+        <span class="proof-item">🔒 100% Private WASM</span>
+        <span class="proof-sep" aria-hidden="true">•</span>
+        <span class="proof-item">⚡ 50+ Browser Tools</span>
+        <span class="proof-sep" aria-hidden="true">•</span>
+        <span class="proof-item">🌐 100% Open Source</span>
+        <span class="proof-sep" aria-hidden="true">•</span>
+        <span class="proof-item">🚫 Zero File Uploads</span>
+      </div>
+    </section>
     <DeveloperTabsSection />
     <FaqSection />
   </main>
@@ -105,6 +116,39 @@
     flex: 1;
     background-color: var(--bg-primary);
     overflow-y: auto;
+  }
+
+  .social-proof-strip {
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    padding: 12px 24px;
+  }
+
+  .social-proof-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px 20px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.01em;
+  }
+
+  .proof-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .proof-sep {
+    color: var(--text-secondary);
+    opacity: 0.5;
   }
 
   .app-footer {
