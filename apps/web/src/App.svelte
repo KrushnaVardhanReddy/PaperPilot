@@ -6,6 +6,7 @@
   import EmbedGenerator from './components/EmbedGenerator.svelte';
   import ApiExplorer from './components/ApiExplorer.svelte';
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
+  import FaqSection from './components/FaqSection.svelte';
   import FeedbackModal from './components/FeedbackModal.svelte';
   import {
     DOWNLOAD_URL,
@@ -35,6 +36,7 @@
     <EmbedGenerator />
     <ApiExplorer />
     <BenchmarkMatrix />
+    <FaqSection />
   </main>
 
   <footer class="app-footer">
