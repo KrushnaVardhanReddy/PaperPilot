@@ -111,6 +111,16 @@ describe('PaperPilot Desktop E2E - Batch 5 (10 Forms, Bates, Annotations & Stamp
       outputPath: '/tmp/desktop_e2e_pdf_annotate.pdf',
       expectedType: 'pdf' as const,
       expectedControlId: '#annotationSearchPattern'
+    },
+    {
+      id: 'pdf_edit_text',
+      title: 'Edit PDF Text',
+      inputFmt: 'PDF',
+      outputFmt: '.PDF',
+      fixtureType: 'single_page',
+      outputPath: '/tmp/desktop_e2e_pdf_edit_text.pdf',
+      expectedType: 'pdf' as const,
+      expectedControlId: '#editTextFind'
     }
   ];
 
@@ -255,6 +265,11 @@ describe('PaperPilot Desktop E2E - Batch 5 (10 Forms, Bates, Annotations & Stamp
         await patternInput.setValue('Sample');
         const noteInput = await $('#annotationContent');
         await noteInput.setValue('Verified by PaperPilot Test Suite');
+      } else if (tool.id === 'pdf_edit_text') {
+        const findInput = await $('#editTextFind');
+        await findInput.setValue('Sample');
+        const replaceInput = await $('#editTextReplace');
+        await replaceInput.setValue('PaperPilot');
       }
 
       // 5. Explicitly set predictable output path
