@@ -3,9 +3,7 @@
   import HeroPlayground from './components/HeroPlayground.svelte';
   import UseCasesShowcase from './components/UseCasesShowcase.svelte';
   import TriSurfaceShowcase from './components/TriSurfaceShowcase.svelte';
-  import EmbedGenerator from './components/EmbedGenerator.svelte';
-  import ApiExplorer from './components/ApiExplorer.svelte';
-  import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
+  import DeveloperTabsSection from './components/DeveloperTabsSection.svelte';
   import FaqSection from './components/FaqSection.svelte';
   import FeedbackModal from './components/FeedbackModal.svelte';
   import {
@@ -19,12 +17,28 @@
 
   let isFeedbackOpen = $state(false);
   let feedbackCategory = $state<'bug' | 'performance' | 'feature' | 'praise'>('bug');
+  let showScrollTop = $state(false);
 
   function openFeedback(cat: 'bug' | 'performance' | 'feature' | 'praise' = 'bug') {
     feedbackCategory = cat;
     isFeedbackOpen = true;
   }
+
+  function handleScroll() {
+    showScrollTop = window.scrollY > 600;
+  }
+
+  function scrollToPlayground() {
+    const el = document.getElementById('wasm-playground');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
 </script>
+
+<svelte:window onscroll={handleScroll} />
 
 <div class="app-container">
   <Navbar onOpenFeedback={openFeedback} />
@@ -33,9 +47,7 @@
     <HeroPlayground />
     <UseCasesShowcase />
     <TriSurfaceShowcase />
-    <EmbedGenerator />
-    <ApiExplorer />
-    <BenchmarkMatrix />
+    <DeveloperTabsSection />
     <FaqSection />
   </main>
 
@@ -66,6 +78,17 @@
   initialCategory={feedbackCategory}
   onClose={() => isFeedbackOpen = false}
 />
+
+{#if showScrollTop}
+  <button
+    type="button"
+    class="scroll-playground-btn"
+    onclick={scrollToPlayground}
+    aria-label="Scroll back to playground"
+  >
+    ↑ Playground
+  </button>
+{/if}
 
 <style>
   :global(body) {
@@ -155,5 +178,29 @@
 
   .separator {
     color: var(--border-color);
+  }
+
+  .scroll-playground-btn {
+    position: fixed;
+    right: 24px;
+    bottom: 64px;
+    z-index: 50;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  }
+
+  .scroll-playground-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    transform: translateY(-2px);
   }
 </style>
