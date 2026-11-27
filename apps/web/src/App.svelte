@@ -7,6 +7,7 @@
   import BenchmarkMatrix from './components/BenchmarkMatrix.svelte';
   import ShareModal from './components/ShareModal.svelte';
   import DownloadBadge from './components/DownloadBadge.svelte';
+  import FeedbackModal from './components/FeedbackModal.svelte';
   import {
     DOWNLOAD_URL,
     DOWNLOAD_LINUX_URL,
@@ -18,6 +19,14 @@
 
   const docsBaseUrl = getDocsBaseUrl();
   const toolsHandbookUrl = getToolsHandbookUrl();
+
+  let isFeedbackOpen = $state(false);
+  let feedbackCategory = $state<'bug' | 'performance' | 'feature' | 'praise'>('bug');
+
+  function openFeedback(cat: 'bug' | 'performance' | 'feature' | 'praise' = 'bug') {
+    feedbackCategory = cat;
+    isFeedbackOpen = true;
+  }
 </script>
 
 <div class="app-container">
@@ -29,6 +38,14 @@
       </div>
 
       <div class="header-actions">
+        <button
+          type="button"
+          class="feedback-header-btn"
+          onclick={() => openFeedback('bug')}
+          aria-label="Feedback & Bugs"
+        >
+          💬 Feedback & Bugs
+        </button>
         <DownloadBadge />
         <ShareModal />
         <div class="cta-banner">
@@ -56,6 +73,10 @@
         <span class="icon">🔒</span> 100% Client-Side <span class="muted">— Documents never leave your device.</span>
       </div>
       <div class="footer-links">
+        <button type="button" class="footer-link-btn" onclick={() => openFeedback('bug')}>
+          💬 Feedback & Bugs
+        </button>
+        <span class="separator">•</span>
         <a href="/embed-test" target="_blank" rel="noopener noreferrer">Embed Sandbox</a>
         <span class="separator">•</span>
         <a href={docsBaseUrl} target="_blank" rel="noopener noreferrer">Docs</a>
@@ -71,6 +92,12 @@
     </div>
   </footer>
 </div>
+
+<FeedbackModal
+  isOpen={isFeedbackOpen}
+  initialCategory={feedbackCategory}
+  onClose={() => isFeedbackOpen = false}
+/>
 
 <style>
   :global(body) {
@@ -226,6 +253,42 @@
 
   .footer-links a:hover {
     color: var(--accent-primary);
+  }
+
+  .footer-link-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+    font-family: inherit;
+  }
+
+  .footer-link-btn:hover {
+    color: var(--accent-primary);
+  }
+
+  .feedback-header-btn {
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #38bdf8;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .feedback-header-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
   }
 
   .separator {
