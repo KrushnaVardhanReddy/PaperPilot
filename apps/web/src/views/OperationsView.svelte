@@ -3,6 +3,7 @@
   import { wasmPdfClient } from '../lib/wasm';
   import { ALL_101_TOOLS } from '../lib/toolsCatalog';
   import DropZone from '../components/DropZone.svelte';
+  import ToolDocsPanel from '../components/ToolDocsPanel.svelte';
 
   const DEFAULT_TITLE = 'PaperPilot — 100% Private Client-Side PDF & Document Tools (No Upload)';
   const RECENT_TOOLS_KEY = 'paperpilot_recent_tools';
@@ -10,6 +11,8 @@
 
   let activeTool = $state('merge');
   let isProcessing = $state(false);
+  let showDocsPanel = $state(false);
+  const currentToolObj = $derived(tools.find((t) => t.id === activeTool));
   let recentToolIds = $state<string[]>([]);
 
   $effect(() => {
@@ -1413,6 +1416,24 @@ let metadataFile: File | null = $state(null);
   </div>
 
   <div class="tool-content">
+    <div class="active-tool-bar">
+      <div class="active-tool-meta">
+        {#if currentToolObj}
+          <span class="active-tool-icon">{currentToolObj.icon}</span>
+          <span class="active-tool-name">{currentToolObj.title}</span>
+        {/if}
+      </div>
+      <button
+        type="button"
+        class="docs-toggle-btn"
+        class:active={showDocsPanel}
+        onclick={() => (showDocsPanel = !showDocsPanel)}
+        aria-expanded={showDocsPanel}
+        title="Toggle tool documentation"
+      >
+        ? Docs
+      </button>
+    </div>
     {#if activeTool === 'merge'}
       <div class="tool-pane">
         <h2>Merge PDFs</h2>
@@ -2864,6 +2885,15 @@ let metadataFile: File | null = $state(null);
 
     {/if}
   </div>
+  {#if showDocsPanel}
+    <ToolDocsPanel
+      toolId={activeTool}
+      toolTitle={currentToolObj?.title ?? activeTool}
+      toolIcon={currentToolObj?.icon}
+      toolDescription={currentToolObj?.description}
+      onclose={() => (showDocsPanel = false)}
+    />
+  {/if}
 </div>
 
 <style>
@@ -2873,6 +2903,57 @@ let metadataFile: File | null = $state(null);
     height: 100%;
     max-width: 1400px;
     margin: 0 auto;
+  }
+
+  .active-tool-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .active-tool-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .active-tool-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .active-tool-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .docs-toggle-btn {
+    padding: 5px 11px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .docs-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+  }
+
+  .docs-toggle-btn.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
   }
 
   .tools-sidebar {
