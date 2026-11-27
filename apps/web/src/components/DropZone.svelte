@@ -110,6 +110,10 @@
         👁️ View Sample
       </a>
     </div>
+
+    <div class="privacy-pill">
+      <span aria-hidden="true">🔒</span> 0 KB Uploaded • Executed in Local WASM Memory
+    </div>
   </div>
 </div>
 
@@ -144,6 +148,20 @@
     align-items: center;
     text-align: center;
     padding: 32px;
+  }
+
+  .privacy-pill {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #10b981;
+    background-color: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.24);
   }
 
   .icon {
