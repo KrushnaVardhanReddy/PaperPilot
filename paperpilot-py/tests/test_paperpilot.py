@@ -174,4 +174,4 @@ def test_list_tools_and_run_tool(tmp_path):
     text_res = json.loads(
         paperpilot.run_tool("extract_text", json.dumps({"input_path": str(pdf_path)}))
     )
-    assert "RunTool Disk Test" in text_res["text"]
+    assert "RunTool Disk Test" in "".join(text_res["text"])
