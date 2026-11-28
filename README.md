@@ -2,6 +2,9 @@
 
 **PDF tools for your AI agent — and for you. Pure Rust. Runs locally. Files never leave your machine.**
 
+> **Let the LLM be the brain. Let PaperPilot handle the documents.**  
+> *Save your tokens for reasoning — parse, chunk, redact, and transform PDFs locally in pure Rust at zero token cost.*
+
 [![CI](https://github.com/KrushnaVardhanReddy/PaperPilot/actions/workflows/rust.yml/badge.svg)](https://github.com/KrushnaVardhanReddy/PaperPilot/actions)
 [![Downloads](https://img.shields.io/github/downloads/KrushnaVardhanReddy/PaperPilot/total?color=2563eb&label=desktop%20downloads)](https://github.com/KrushnaVardhanReddy/PaperPilot/releases)
 [![npm downloads](https://img.shields.io/npm/dt/@usepaperpilot/mcp?color=cb3837&label=npm%20downloads)](https://www.npmjs.com/package/@usepaperpilot/mcp)

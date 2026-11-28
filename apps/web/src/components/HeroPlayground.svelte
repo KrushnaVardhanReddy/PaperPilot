@@ -20,6 +20,10 @@
     <p class="hero-tagline">
       Zero-cloud PDF toolbox executed directly in your browser's private memory. Instant WASM performance, no servers, zero tracking.
     </p>
+    <p class="hero-llm-callout">
+      <strong>Let the LLM be the brain. Let PaperPilot handle the documents.</strong>
+      <span>Save your tokens for reasoning — parse, chunk, redact, and transform PDFs locally in pure Rust at zero token cost.</span>
+    </p>
 
     <!-- Quick Tool Launch Row with Popular Instant Tools -->
     <QuickToolLaunchRow {onOpenAllTools} />
@@ -92,8 +96,26 @@
   .hero-tagline {
     font-size: 1.25rem;
     color: var(--text-secondary);
-    margin-bottom: 32px;
+    margin-bottom: 16px;
     font-weight: 500;
+  }
+
+  .hero-llm-callout {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  .hero-llm-callout strong {
+    color: var(--text-primary, #ffffff);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .hero-llm-callout span {
+    font-style: italic;
+    opacity: 0.9;
   }
 
   .hero-playground {
