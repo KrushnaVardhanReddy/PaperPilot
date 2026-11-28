@@ -1563,20 +1563,21 @@
     color: var(--text-primary, #ffffff);
   }
 
-  /* Floating Canvas Mini-Toolbar */
+  /* Floating Canvas Mini-Toolbar (vertical left rail, avoids bottom action pill) */
   .floating-canvas-toolbar {
     position: absolute;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: 4px;
-    padding: 5px 8px;
+    padding: 6px;
     background: rgba(20, 22, 32, 0.92);
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
-    border-radius: 999px;
+    border-radius: 14px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     z-index: 25;
   }
