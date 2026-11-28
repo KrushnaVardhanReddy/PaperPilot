@@ -29,7 +29,7 @@ walkdir = "2.5.0"
 [dev-dependencies]
 paperpilot-mcp = { path = "../paperpilot-mcp" }
 lopdf = "0.45.0"
-rmcp = "3.5.0"
+rmcp = "3.9.0"
 criterion = "0.8.2"
 
 [[bench]]
