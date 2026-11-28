@@ -48,7 +48,7 @@
       const [ghRes, npmRes, pypiRes] = await Promise.allSettled([
         fetch(`https://api.github.com/repos/${repo}/releases`),
         fetch(`https://api.npmjs.org/downloads/range/2026-01-01:${new Date().toISOString().slice(0, 10)}/${npmPackage}`),
-        fetch('https://pypistats.org/api/packages/paperpilot/overall')
+        fetch('https://pypistats.org/api/packages/usepaperpilot/overall')
           .then((r) => (r.ok ? r.json() : null))
           .catch(() => null)
       ]);

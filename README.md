@@ -68,7 +68,7 @@ brew install KrushnaVardhanReddy/tap/paperpilot
 #### Python SDK (PyPI)
 
 ```bash
-pip install paperpilot
+pip install usepaperpilot
 ```
 
 #### Quick Installer (curl / irm)

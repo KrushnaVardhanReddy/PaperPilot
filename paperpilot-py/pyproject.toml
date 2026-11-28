@@ -3,7 +3,7 @@ requires = ["maturin>=1.7,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "paperpilot"
+name = "usepaperpilot"
 version = "0.8.2"
 description = "High-performance pure-Rust PDF & RAG engine for Python"
 requires-python = ">=3.9"

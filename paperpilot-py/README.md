@@ -8,7 +8,7 @@ Native Python bindings for PaperPilot's pure-Rust PDF engine. Zero cloud calls, 
 ## Installation
 
 ```bash
-pip install paperpilot
+pip install usepaperpilot
 ```
 
 ## Quick Examples

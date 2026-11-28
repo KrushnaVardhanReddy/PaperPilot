@@ -15,8 +15,8 @@ REPO_URL = f"https://api.github.com/repos/{OWNER}/{REPO}"
 RELEASES_URL = f"{REPO_URL}/releases"
 ISSUES_URL = f"{REPO_URL}/issues?state=open&per_page=30"
 NPM_LAST_7D_URL = "https://api.npmjs.org/downloads/point/last-week/@usepaperpilot/mcp"
-PYPI_OVERALL_URL = "https://pypistats.org/api/packages/paperpilot/overall"
-PYPI_RECENT_URL = "https://pypistats.org/api/packages/paperpilot/recent"
+PYPI_OVERALL_URL = "https://pypistats.org/api/packages/usepaperpilot/overall"
+PYPI_RECENT_URL = "https://pypistats.org/api/packages/usepaperpilot/recent"
 HEADERS = {"User-Agent": "PaperPilot-Monitor"}
 
 
