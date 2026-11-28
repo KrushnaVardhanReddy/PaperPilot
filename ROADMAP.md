@@ -196,7 +196,7 @@
 | **5.8.3 / 5.2.3**| Layout-Aware Semantic Chunker | Chunk by natural semantic boundaries with token counts | Pinecone, Qdrant, Chroma RAG |
 | **5.8.4** | Key-Value & Form Extractor | Heuristic invoice, receipt, and tax form data extraction | Financial & ERP Automation |
 | **5.8.5 / 5.2.1**| Local Embedded Vector Engine | Microsecond in-memory vector index via `candle`/`rten` nano | 100% Offline Semantic Search |
-| **5.8.6** | Python SDK (`paperpilot-py`) | Zero-dependency pure-Rust PyO3 Python wheel | Capture Python AI Engineers |
+| **5.8.6** | Python SDK (`paperpilot-py`) | ✅ **Phase 1 & 2 Complete** — Pure-Rust PyO3 wheel, `*_bytes` in-memory RAG/FastAPI API, `rotate`/`watermark`, `.pyi` stubs, & PyPI CI/CD | Capture Python AI Engineers |
 | **5.2.6** | Single-Document Grounded Q&A | In-memory Q&A with exact page/coordinate citations | Document Assistants |
 | **5.2.7** | Multi-Document Synthesis | Compare terms across 2–50 documents simultaneously | Enterprise Legal Due Diligence |
 | **5.2.8** | Layout-Preserving Translation | In-place text block translation preserving typography | Global Enterprise Publishing |

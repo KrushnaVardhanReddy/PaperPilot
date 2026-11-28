@@ -13,7 +13,9 @@ use paperpilot_pdf::operations::{
     pdf_chunk::{ChunkOptions, chunk_pdf_bytes},
     redact::RedactOperation,
     repair::RepairOperation,
+    rotate::RotatePagesOperation,
     split::SplitOperation,
+    watermark::WatermarkOperation,
 };
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
@@ -284,6 +286,143 @@ fn repair<'py>(py: Python<'py>, pdf: Vec<u8>) -> PyResult<Bound<'py, PyBytes>> {
     Ok(PyBytes::new(py, &bytes))
 }
 
+/// Rotate pages in a PDF by a multiple of 90 degrees.
+#[pyfunction]
+#[pyo3(signature = (pdf, degrees, pages=None))]
+fn rotate<'py>(
+    py: Python<'py>,
+    pdf: Vec<u8>,
+    degrees: u16,
+    pages: Option<Vec<u32>>,
+) -> PyResult<Bound<'py, PyBytes>> {
+    let out_bytes = py.allow_threads(|| -> Result<Vec<u8>, PdfError> {
+        let mut doc = LopdfDocument::from_bytes(&pdf)?;
+        let op = RotatePagesOperation::new(degrees, pages);
+        op.execute(&mut doc)?;
+
+        let mut out = Vec::new();
+        doc.inner
+            .save_to(&mut out)
+            .map_err(|e| PdfError::Other(format!("Failed to serialize rotated PDF: {e}")))?;
+        Ok(out)
+    });
+
+    let bytes = out_bytes.map_err(map_pdf_err)?;
+    Ok(PyBytes::new(py, &bytes))
+}
+
+/// Add a diagonal text watermark to a PDF.
+#[pyfunction]
+#[pyo3(signature = (pdf, text, angle=45.0, opacity=0.2, font_size=None, color=None, pages=None))]
+fn watermark<'py>(
+    py: Python<'py>,
+    pdf: Vec<u8>,
+    text: String,
+    angle: f32,
+    opacity: f32,
+    font_size: Option<f32>,
+    color: Option<String>,
+    pages: Option<Vec<u32>>,
+) -> PyResult<Bound<'py, PyBytes>> {
+    let out_bytes = py.allow_threads(|| -> Result<Vec<u8>, PdfError> {
+        let mut doc = LopdfDocument::from_bytes(&pdf)?;
+        let op = WatermarkOperation {
+            text,
+            angle,
+            opacity,
+            font_size,
+            color,
+            pages,
+        };
+        op.execute(&mut doc)?;
+
+        let mut out = Vec::new();
+        doc.inner
+            .save_to(&mut out)
+            .map_err(|e| PdfError::Other(format!("Failed to serialize watermarked PDF: {e}")))?;
+        Ok(out)
+    });
+
+    let bytes = out_bytes.map_err(map_pdf_err)?;
+    Ok(PyBytes::new(py, &bytes))
+}
+
+/// In-memory bytes alias for `merge` (for RAG/FastAPI pipelines).
+#[pyfunction]
+fn merge_bytes<'py>(py: Python<'py>, pdfs: Vec<Vec<u8>>) -> PyResult<Bound<'py, PyBytes>> {
+    merge(py, pdfs)
+}
+
+/// In-memory bytes alias for `compress` (for RAG/FastAPI pipelines).
+#[pyfunction]
+#[pyo3(signature = (pdf, level="medium"))]
+fn compress_bytes<'py>(
+    py: Python<'py>,
+    pdf: Vec<u8>,
+    level: &str,
+) -> PyResult<Bound<'py, PyBytes>> {
+    compress(py, pdf, level)
+}
+
+/// In-memory bytes alias for `to_markdown` (for RAG/FastAPI pipelines).
+#[pyfunction]
+fn to_markdown_bytes(py: Python<'_>, pdf: Vec<u8>) -> PyResult<String> {
+    to_markdown(py, pdf)
+}
+
+/// In-memory bytes alias for `extract_text` (for RAG/FastAPI pipelines).
+#[pyfunction]
+#[pyo3(signature = (pdf, pages=None))]
+fn extract_text_bytes(py: Python<'_>, pdf: Vec<u8>, pages: Option<Vec<u32>>) -> PyResult<String> {
+    extract_text(py, pdf, pages)
+}
+
+/// In-memory bytes alias for `chunk_rag` (for RAG/FastAPI pipelines).
+#[pyfunction]
+#[pyo3(signature = (pdf, max_tokens=512, overlap=50))]
+fn chunk_rag_bytes<'py>(
+    py: Python<'py>,
+    pdf: Vec<u8>,
+    max_tokens: usize,
+    overlap: usize,
+) -> PyResult<Bound<'py, PyList>> {
+    chunk_rag(py, pdf, max_tokens, overlap)
+}
+
+/// In-memory bytes alias for `info` (for RAG/FastAPI pipelines).
+#[pyfunction]
+fn info_bytes<'py>(py: Python<'py>, pdf: Vec<u8>) -> PyResult<Bound<'py, PyDict>> {
+    info(py, pdf)
+}
+
+/// In-memory bytes alias for `rotate` (for RAG/FastAPI pipelines).
+#[pyfunction]
+#[pyo3(signature = (pdf, degrees, pages=None))]
+fn rotate_bytes<'py>(
+    py: Python<'py>,
+    pdf: Vec<u8>,
+    degrees: u16,
+    pages: Option<Vec<u32>>,
+) -> PyResult<Bound<'py, PyBytes>> {
+    rotate(py, pdf, degrees, pages)
+}
+
+/// In-memory bytes alias for `watermark` (for RAG/FastAPI pipelines).
+#[pyfunction]
+#[pyo3(signature = (pdf, text, angle=45.0, opacity=0.2, font_size=None, color=None, pages=None))]
+fn watermark_bytes<'py>(
+    py: Python<'py>,
+    pdf: Vec<u8>,
+    text: String,
+    angle: f32,
+    opacity: f32,
+    font_size: Option<f32>,
+    color: Option<String>,
+    pages: Option<Vec<u32>>,
+) -> PyResult<Bound<'py, PyBytes>> {
+    watermark(py, pdf, text, angle, opacity, font_size, color, pages)
+}
+
 /// Native Python bindings for PaperPilot.
 #[pymodule]
 fn paperpilot(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -298,5 +437,15 @@ fn paperpilot(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(encrypt, m)?)?;
     m.add_function(wrap_pyfunction!(info, m)?)?;
     m.add_function(wrap_pyfunction!(repair, m)?)?;
+    m.add_function(wrap_pyfunction!(rotate, m)?)?;
+    m.add_function(wrap_pyfunction!(watermark, m)?)?;
+    m.add_function(wrap_pyfunction!(merge_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(compress_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(to_markdown_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(extract_text_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(chunk_rag_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(info_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(rotate_bytes, m)?)?;
+    m.add_function(wrap_pyfunction!(watermark_bytes, m)?)?;
     Ok(())
 }
