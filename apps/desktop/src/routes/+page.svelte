@@ -606,6 +606,30 @@
 
         <!-- COLUMN 3: Main Stage Hero Canvas -->
         <div class="main-stage">
+          {#if appState.selectedDocumentIndex !== null && !appState.showDiffView && appState.documents[appState.selectedDocumentIndex]}
+            {@const ctxDoc = appState.documents[appState.selectedDocumentIndex]}
+            <div class="smart-context-banner" role="region" aria-label="Document Context Banner">
+              <div class="ctx-doc-info">
+                <span class="ctx-doc-name" title={ctxDoc.name}>{ctxDoc.name}</span>
+                {#if isPdfFile(ctxDoc.name) && pdfDoc?.numPages}
+                  <span class="ctx-doc-badge">Page {pageNum} of {pdfDoc.numPages}</span>
+                {/if}
+              </div>
+              <div class="ctx-quick-actions">
+                <button type="button" class="ctx-action-btn" onclick={() => { appState.uiMode = 'ai'; appState.toggleOperationsDrawer(true); }}>
+                  ✨ Ask AI
+                </button>
+                <button type="button" class="ctx-action-btn" onclick={() => { appState.uiMode = 'convert'; appState.toggleOperationsDrawer(true); }}>
+                  🔄 Convert
+                </button>
+                {#if isPdfFile(ctxDoc.name)}
+                  <button type="button" class="ctx-action-btn" onclick={() => { activeTool = 'highlight'; }}>
+                    🖍️ Annotate
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/if}
           {#if appState.showDiffView}
             <PdfVisualDiff onClose={() => appState.showDiffView = false} />
           {:else if appState.selectedDocumentIndex !== null && isSpreadsheetFile(appState.documents[appState.selectedDocumentIndex]?.name ?? '')}
@@ -648,6 +672,46 @@
                     }}
                   />
                 </div>
+              </div>
+
+              <!-- Floating Canvas Mini-Toolbar -->
+              <div class="floating-canvas-toolbar" role="toolbar" aria-label="Canvas Tools">
+                <button
+                  type="button"
+                  class="canvas-tool-btn"
+                  class:active={activeTool === 'select' || !activeTool}
+                  title="Select"
+                  onclick={() => { activeTool = 'select'; armedSignature = null; }}
+                >
+                  ↖️ Select
+                </button>
+                <button
+                  type="button"
+                  class="canvas-tool-btn"
+                  class:active={activeTool === 'hand'}
+                  title="Hand / Pan"
+                  onclick={() => { activeTool = 'hand'; armedSignature = null; }}
+                >
+                  ✋ Hand
+                </button>
+                <button
+                  type="button"
+                  class="canvas-tool-btn"
+                  class:active={activeTool === 'highlight'}
+                  title="Annotate / Highlight"
+                  onclick={() => { activeTool = 'highlight'; armedSignature = null; }}
+                >
+                  🖍️ Annotate
+                </button>
+                <button
+                  type="button"
+                  class="canvas-tool-btn"
+                  class:active={activeTool === 'sign'}
+                  title="Sign / Draw"
+                  onclick={() => { activeTool = 'sign'; showSignatureModal = true; }}
+                >
+                  ✍️ Sign
+                </button>
               </div>
 
               <!-- Floating Action Pill Wrapper with Spec 152 Signature Bar & Popover -->
@@ -1435,6 +1499,114 @@
   }
   .fmt-out {
     color: var(--text-primary, #ffffff);
+  }
+
+  /* Smart Context Banner */
+  .smart-context-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 14px;
+    background: var(--bg-secondary, #161822);
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .ctx-doc-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .ctx-doc-name {
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 280px;
+  }
+
+  .ctx-doc-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.14);
+    color: var(--accent-primary, #60a5fa);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .ctx-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ctx-action-btn {
+    padding: 3px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .ctx-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #ffffff);
+  }
+
+  /* Floating Canvas Mini-Toolbar (vertical left rail, avoids bottom action pill) */
+  .floating-canvas-toolbar {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 6px;
+    background: rgba(20, 22, 32, 0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 25;
+  }
+
+  .canvas-tool-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .canvas-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary, #ffffff);
+  }
+
+  .canvas-tool-btn.active {
+    background: var(--accent-primary, #3b82f6);
+    color: #ffffff;
   }
 
 </style>

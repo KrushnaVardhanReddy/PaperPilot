@@ -113,9 +113,11 @@
   }
 
   .sidebar-footer {
-    padding: 16px 0;
+    padding: 12px 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
     border-top: 1px solid var(--border-color);
   }
 

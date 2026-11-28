@@ -82,6 +82,29 @@
     </div>
   </div>
 
+  <div class="mode-switcher" role="tablist" aria-label="Workspace Mode">
+    {#each [
+      { id: 'all', label: 'All tools' },
+      { id: 'read', label: 'Read' },
+      { id: 'edit', label: 'Edit' },
+      { id: 'convert', label: 'Convert' },
+      { id: 'ai', label: 'AI & RAG' }
+    ] as mode (mode.id)}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={appState.uiMode === mode.id}
+        class="mode-pill"
+        class:active={appState.uiMode === mode.id}
+        onclick={() => {
+          appState.uiMode = mode.id as any;
+        }}
+      >
+        {mode.label}
+      </button>
+    {/each}
+  </div>
+
   <div class="window-controls">
     <button
       class="control-btn action-control-btn"
@@ -240,12 +263,9 @@
   .window-controls {
     display: flex;
     height: 38px;
-    margin-left: auto;
     flex-shrink: 0;
     z-index: 9999;
-    position: fixed;
-    right: 0;
-    top: 0;
+    position: relative;
     background: var(--bg-secondary);
   }
 
@@ -304,6 +324,41 @@
   .control-btn.close:hover {
     background-color: #E81123;
     color: white;
+  }
+
+  .mode-switcher {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    border-radius: 8px;
+    -webkit-app-region: no-drag;
+  }
+
+  .mode-pill {
+    padding: 3px 9px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .mode-pill:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .mode-pill.active {
+    color: var(--text-primary);
+    background: var(--accent-primary, #3b82f6);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   }
 
   @media (max-width: 768px) {

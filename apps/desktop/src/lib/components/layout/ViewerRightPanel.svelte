@@ -110,7 +110,59 @@
     {isCollapsed ? '›' : '‹'}
   </button>
 
-  {#if !isCollapsed}
+  {#if isCollapsed}
+    <div class="inspector-rail" aria-label="Inspector and Zoom Rail">
+      <button
+        type="button"
+        class="rail-btn"
+        class:active={activeTab === 'annotations'}
+        title="Annotations"
+        aria-label="Open Annotations"
+        onclick={() => { activeTab = 'annotations'; isCollapsed = false; }}
+      >
+        📝
+      </button>
+      <button
+        type="button"
+        class="rail-btn"
+        class:active={activeTab === 'info'}
+        title="Document Info"
+        aria-label="Open Document Info"
+        onclick={() => { activeTab = 'info'; isCollapsed = false; }}
+      >
+        ℹ️
+      </button>
+      <button
+        type="button"
+        class="rail-btn"
+        class:active={activeTab === 'chat'}
+        title="Ask AI"
+        aria-label="Open AI Chat"
+        onclick={() => { activeTab = 'chat'; isCollapsed = false; }}
+      >
+        💬
+      </button>
+      <div class="rail-divider"></div>
+      <button
+        type="button"
+        class="rail-btn"
+        title="Zoom In"
+        aria-label="Zoom In"
+        onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-in'))}
+      >
+        ＋
+      </button>
+      <button
+        type="button"
+        class="rail-btn"
+        title="Zoom Out"
+        aria-label="Zoom Out"
+        onclick={() => window.dispatchEvent(new CustomEvent('paperpilot:zoom-out'))}
+      >
+        －
+      </button>
+    </div>
+  {:else}
     <div class="panel-tabs" role="tablist" aria-label="Panel sections">
       <button
         class="tab-btn"
@@ -260,5 +312,47 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+  }
+
+  .inspector-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 36px 4px 12px;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .rail-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s ease;
+  }
+
+  .rail-btn:hover {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+
+  .rail-btn.active {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--accent-primary);
+  }
+
+  .rail-divider {
+    width: 20px;
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 0;
   }
 </style>
