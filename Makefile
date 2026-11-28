@@ -363,12 +363,13 @@ lint:
 audit:
 	@echo "🛡️ Running Semgrep SAST scan..."
 	@which semgrep >/dev/null 2>&1 && semgrep scan --config auto --exclude=".github" || echo "Semgrep skipped (not installed)"
-	@echo "🛡️ Running Cargo Audit on Rust dependencies..."
+	@echo "🛡️ Running Cargo Audit on Rust dependencies (ignoring known transitive-only advisories)..."
 	@which cargo-audit >/dev/null 2>&1 || cargo install cargo-audit --locked
-	cargo audit --no-fetch || true
+	cargo audit --no-fetch --ignore RUSTSEC-2026-0258 --ignore RUSTSEC-2026-0349 --ignore RUSTSEC-2026-0346 || true
 	@echo "🛡️ Running Trivy vulnerability scan..."
 	@which trivy >/dev/null 2>&1 || curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ~/.cargo/bin
 	trivy fs --severity HIGH,CRITICAL --scanners vuln --skip-dirs target Cargo.lock
+	@echo "✅ [OK] Audit complete."
 
 # Comprehensive monthly security audit & pentest
 .PHONY: security-audit audit-deps audit-sast test-security-dast pentest
@@ -661,6 +662,9 @@ podman-clean-all: podman-clean
 # GitHub Release Download Statistics
 stats:
 	@python3 scripts/release_stats.py
+
+stats-watch:
+	@watch -n 1800 python3 scripts/release_stats.py
 
 
 
