@@ -498,6 +498,32 @@
     if (selectedCategory !== "all") {
       tools = tools.filter((t) => t.category === selectedCategory);
     }
+    if (appState.uiMode !== "all") {
+      const mode = appState.uiMode;
+      tools = tools.filter((t) => {
+        if (mode === "convert") return t.category === "convert";
+        if (mode === "ai") {
+          return (
+            t.context === "ai" ||
+            t.category === "ai" ||
+            t.tags?.includes("ocr") ||
+            t.tags?.includes("ai")
+          );
+        }
+        if (mode === "edit") {
+          return ["edit", "organize", "sign", "annotate", "optimize", "security"].includes(t.category);
+        }
+        if (mode === "read") {
+          return (
+            ["inspect", "extract", "view"].includes(t.category) ||
+            t.tags?.some((tag) =>
+              ["read", "view", "inspect", "search", "bookmark", "outline", "metadata"].includes(tag),
+            )
+          );
+        }
+        return true;
+      });
+    }
     return tools;
   });
 

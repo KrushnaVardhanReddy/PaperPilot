@@ -681,7 +681,7 @@
                   class="canvas-tool-btn"
                   class:active={activeTool === 'select' || !activeTool}
                   title="Select"
-                  onclick={() => { activeTool = 'select'; }}
+                  onclick={() => { activeTool = 'select'; armedSignature = null; }}
                 >
                   ↖️ Select
                 </button>
@@ -690,7 +690,7 @@
                   class="canvas-tool-btn"
                   class:active={activeTool === 'hand'}
                   title="Hand / Pan"
-                  onclick={() => { activeTool = 'hand'; }}
+                  onclick={() => { activeTool = 'hand'; armedSignature = null; }}
                 >
                   ✋ Hand
                 </button>
@@ -699,7 +699,7 @@
                   class="canvas-tool-btn"
                   class:active={activeTool === 'highlight'}
                   title="Annotate / Highlight"
-                  onclick={() => { activeTool = 'highlight'; }}
+                  onclick={() => { activeTool = 'highlight'; armedSignature = null; }}
                 >
                   🖍️ Annotate
                 </button>
