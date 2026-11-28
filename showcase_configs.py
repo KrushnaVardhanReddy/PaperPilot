@@ -1373,4 +1373,63 @@ C[26] = {
     "api_res": '  "status": "rendered", "size_kb": 198'
 }
 
+# Week 27
+C[27] = {
+    "week_badge": "WEEK 27 : PYTHON SDK",
+    "title": "usepaperpilot: Zero-Token RAG & Native Python Bindings",
+    "sub1": "Surface 1/4: PaperPilot Desktop GUI — Visual RAG chunking & PII redaction preview",
+    "sub2": "Surface 2/4: AI Agent / MCP — Zero-token pre-processing before LLM context",
+    "sub3": "Surface 3/4: Python SDK & CLI — pip install usepaperpilot with GIL-released Rust core",
+    "sub4": "Surface 4/4: Python SDK Matrix — to_markdown, chunk_rag, redact & *_bytes",
+    "out_gif": "docs/assets/showcase/week27-python-sdk-zero-token-rag.gif",
+    "card_title": "🐍 USEPAPERPILOT PYTHON SDK: GIL-RELEASED RUST CORE",
+    "card_sub": "pip install usepaperpilot  •  Zero-Token RAG  •  In-Memory *_bytes() APIs",
+    "card_detail": "Let the LLM be the brain. Let PaperPilot handle the documents.",
+    "gui_tab": "python_sdk_rag",
+    "gui_left_title": "ZERO-TOKEN RAG PIPELINE",
+    "gui_options": [
+        ("Package:", "pip install usepaperpilot"),
+        ("Markdown Engine:", "to_markdown() / to_markdown_bytes()"),
+        ("RAG Chunker:", "chunk_rag() (Semantic Boundaries)"),
+        ("PII Redaction:", "redact() (Zero-LLM Deterministic)"),
+        ("Concurrency:", "GIL-Released Native Rust Core")
+    ],
+    "gui_btn": "⚡ Run Python SDK Pipeline",
+    "gui_btn_done": "✓ Chunked & Redacted (4.2ms)",
+    "gui_doc_title": "ENTERPRISE CONTRACT (Zero-Token Pre-Processing)",
+    "gui_doc_p1": "Convert raw PDFs to clean Markdown, split into RAG chunks, and redact PII locally.",
+    "gui_doc_p2": "Zero LLM tokens spent on parsing. Pure Rust speed directly inside Python.",
+    "gui_doc_badge_pre": ("🐍 SLOW PYTHON PDF PARSERS", "Pure-Python PDF libraries block the GIL and burn LLM tokens on noisy text.", (220, 150, 50)),
+    "gui_doc_badge_post": ("✓ 4.2ms GIL-RELEASED RUST BINDING", "Clean Markdown + 18 RAG chunks + PII redacted in-memory via *_bytes().", (40, 180, 100)),
+    "mcp_user": "Parse contract.pdf to Markdown, redact PII, and split into 512-token RAG chunks without spending LLM tokens.",
+    "mcp_claude": "Invoking PaperPilot's native Rust pipeline for zero-token RAG preparation.",
+    "mcp_tool": "paperpilot.chunk_rag",
+    "mcp_args": [
+        '{',
+        '  "input": "contract.pdf",',
+        '  "max_tokens": 512,',
+        '  "redact_pii": true,',
+        '  "format": "markdown"',
+        '}'
+    ],
+    "mcp_res": '{"chunks": 18, "pii_redacted": 6, "llm_tokens_spent": 0, "execution_ms": 4.2}',
+    "mcp_summary_1": "Claude: 18 semantic RAG chunks ready with 6 PII entities redacted.",
+    "mcp_summary_2": "0 LLM tokens spent on document parsing; completed in 4.2ms.",
+    "cli_cmd1": "pip install usepaperpilot",
+    "cli_res1": "✓ Installed usepaperpilot (Native PyO3 Rust wheels, zero system deps)",
+    "cli_cmd2": "python -c \"import usepaperpilot as pp; print(len(pp.chunk_rag('contract.pdf')))\"",
+    "cli_res2": "✓ 18 semantic RAG chunks generated in 4.2ms (GIL released)",
+    "api_code": [
+        "import usepaperpilot as pp",
+        "",
+        "md = pp.to_markdown('contract.pdf')",
+        "chunks = pp.chunk_rag('contract.pdf', max_tokens=512)",
+        "clean = pp.redact('contract.pdf', 'contract_redacted.pdf')",
+        "# In-memory & GIL-released for async/threads:",
+        "md_mem = pp.to_markdown_bytes(pdf_bytes)",
+        "chunks_mem = pp.chunk_rag_bytes(pdf_bytes)"
+    ],
+    "api_res": '  "chunks": 18, "gil_released": True, "tokens_spent": 0'
+}
+
 print(f"All configs loaded: Weeks {min(C.keys())} to {max(C.keys())} (Total: {len(C)} configs)")
