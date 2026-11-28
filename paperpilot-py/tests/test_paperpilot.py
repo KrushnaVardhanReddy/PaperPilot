@@ -123,3 +123,33 @@ def test_bytes_aliases():
 
     watermarked = paperpilot.watermark_bytes(p1, "DRAFT")
     assert watermarked.startswith(b"%PDF-")
+
+
+def test_file_roundtrip_with_tmp_path(tmp_path):
+    """Real end-to-end integration test reading/writing actual PDF files on disk."""
+    p1_path = tmp_path / "doc1.pdf"
+    p2_path = tmp_path / "doc2.pdf"
+    p1_path.write_bytes(_make_minimal_pdf("Disk Document One"))
+    p2_path.write_bytes(_make_minimal_pdf("Disk Document Two"))
+
+    b1 = p1_path.read_bytes()
+    b2 = p2_path.read_bytes()
+
+    merged_path = tmp_path / "merged.pdf"
+    merged_path.write_bytes(paperpilot.merge([b1, b2]))
+    assert paperpilot.info(merged_path.read_bytes())["page_count"] == 2
+
+    parts = paperpilot.split(merged_path.read_bytes(), "1")
+    assert len(parts) == 2
+
+    rotated_path = tmp_path / "rotated.pdf"
+    rotated_path.write_bytes(paperpilot.rotate(b1, degrees=90))
+    assert paperpilot.info(rotated_path.read_bytes())["page_count"] == 1
+
+    watermarked_path = tmp_path / "watermarked.pdf"
+    watermarked_path.write_bytes(paperpilot.watermark(b1, "CONFIDENTIAL"))
+    assert watermarked_path.read_bytes().startswith(b"%PDF-")
+
+    assert "Disk Document One" in paperpilot.extract_text(b1)
+    assert "Disk Document One" in paperpilot.to_markdown(b1)
+    assert len(paperpilot.chunk_rag(b1, max_tokens=128, overlap=16)) >= 1

@@ -449,3 +449,174 @@ fn paperpilot(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(watermark_bytes, m)?)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_minimal_pdf(text: &str) -> Vec<u8> {
+        let stream = format!("BT /F1 12 Tf 72 720 Td ({text}) Tj ET");
+        let objs = vec![
+            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n".to_string(),
+            "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n".to_string(),
+            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n".to_string(),
+            format!(
+                "4 0 obj\n<< /Length {} >>\nstream\n{}\nendstream\nendobj\n",
+                stream.len(),
+                stream
+            ),
+            "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n".to_string(),
+        ];
+
+        let mut out = b"%PDF-1.4\n".to_vec();
+        let mut offsets = Vec::with_capacity(objs.len());
+        for obj in &objs {
+            offsets.push(out.len());
+            out.extend_from_slice(obj.as_bytes());
+        }
+        let xref_pos = out.len();
+        out.extend_from_slice(
+            format!("xref\n0 {}\n0000000000 65535 f \n", objs.len() + 1).as_bytes(),
+        );
+        for off in offsets {
+            out.extend_from_slice(format!("{off:010} 00000 n \n").as_bytes());
+        }
+        out.extend_from_slice(
+            format!(
+                "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n",
+                objs.len() + 1
+            )
+            .as_bytes(),
+        );
+        out
+    }
+
+    #[test]
+    fn test_info_operation() {
+        let pdf = make_minimal_pdf("Info Test");
+        let mut doc = LopdfDocument::from_bytes(&pdf).unwrap();
+        let op = InfoOperation::new();
+        op.execute(&mut doc).unwrap();
+        let res = op.result.lock().unwrap().clone().unwrap();
+        assert_eq!(res.page_count, 1);
+        assert!(!res.version.is_empty());
+    }
+
+    #[test]
+    fn test_extract_text_and_markdown() {
+        let pdf = make_minimal_pdf("PaperPilot Rust Test");
+        let pages = run_extract_text_bytes(&pdf, None).unwrap();
+        assert_eq!(pages.len(), 1);
+        assert!(pages[0].contains("PaperPilot"));
+
+        let filtered = run_extract_text_bytes(&pdf, Some(&[1])).unwrap();
+        assert_eq!(filtered.len(), 1);
+        assert!(filtered[0].contains("PaperPilot"));
+    }
+
+    #[test]
+    fn test_chunk_rag_bytes() {
+        let pdf = make_minimal_pdf("Chunking test sentence for PaperPilot RAG.");
+        let mut opts = ChunkOptions::default();
+        opts.target_tokens = 128;
+        opts.overlap_tokens = 16;
+        let result = chunk_pdf_bytes(&pdf, opts).unwrap();
+        assert!(!result.chunks.is_empty());
+        assert!(result.chunks[0].text.contains("PaperPilot"));
+    }
+
+    #[test]
+    fn test_merge_and_split_operations() {
+        let p1 = make_minimal_pdf("Page One");
+        let p2 = make_minimal_pdf("Page Two");
+
+        let mut base_doc = LopdfDocument::from_bytes(&p1).unwrap();
+        let mut tf = tempfile::NamedTempFile::new().unwrap();
+        tf.write_all(&p2).unwrap();
+        let merge_op = MergeOperation::new(vec![tf.path().to_path_buf()]);
+        merge_op.execute(&mut base_doc).unwrap();
+
+        let mut merged_bytes = Vec::new();
+        base_doc.inner.save_to(&mut merged_bytes).unwrap();
+
+        let mut merged_doc = LopdfDocument::from_bytes(&merged_bytes).unwrap();
+        let info_op = InfoOperation::new();
+        info_op.execute(&mut merged_doc).unwrap();
+        assert_eq!(info_op.result.lock().unwrap().as_ref().unwrap().page_count, 2);
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let split_op = SplitOperation::new(temp_dir.path().to_path_buf(), vec![1]);
+        split_op.execute(&mut merged_doc).unwrap();
+
+        let mut parts: Vec<PathBuf> = std::fs::read_dir(temp_dir.path())
+            .unwrap()
+            .filter_map(|e| e.ok().map(|entry| entry.path()))
+            .filter(|p| p.extension().is_some_and(|ext| ext == "pdf"))
+            .collect();
+        parts.sort();
+        assert_eq!(parts.len(), 2);
+    }
+
+    #[test]
+    fn test_compress_redact_encrypt_repair() {
+        let pdf = make_minimal_pdf("SecretToken123");
+
+        let mut doc = LopdfDocument::from_bytes(&pdf).unwrap();
+        CompressOperation::new(Some("medium".to_string()))
+            .execute(&mut doc)
+            .unwrap();
+        let mut out = Vec::new();
+        doc.inner.save_to(&mut out).unwrap();
+        assert!(out.starts_with(b"%PDF-"));
+
+        let mut doc = LopdfDocument::from_bytes(&pdf).unwrap();
+        RedactOperation::from_patterns(vec!["SecretToken123".to_string()], None)
+            .execute(&mut doc)
+            .unwrap();
+        let mut out = Vec::new();
+        doc.inner.save_to(&mut out).unwrap();
+        assert!(out.starts_with(b"%PDF-"));
+
+        let mut doc = LopdfDocument::from_bytes(&pdf).unwrap();
+        EncryptOperation {
+            user_password: Some("pass".to_string()),
+            owner_password: None,
+        }
+        .execute(&mut doc)
+        .unwrap();
+        let mut out = Vec::new();
+        doc.inner.save_to(&mut out).unwrap();
+        assert!(out.starts_with(b"%PDF-"));
+
+        let repaired = RepairOperation::repair_bytes(&pdf).unwrap();
+        assert!(repaired.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_rotate_and_watermark_operations() {
+        let pdf = make_minimal_pdf("Rotate and Watermark");
+
+        let mut doc = LopdfDocument::from_bytes(&pdf).unwrap();
+        RotatePagesOperation::new(90, None)
+            .execute(&mut doc)
+            .unwrap();
+        let mut out = Vec::new();
+        doc.inner.save_to(&mut out).unwrap();
+        assert!(out.starts_with(b"%PDF-"));
+
+        let mut doc = LopdfDocument::from_bytes(&pdf).unwrap();
+        WatermarkOperation {
+            text: "CONFIDENTIAL".to_string(),
+            angle: 45.0,
+            opacity: 0.25,
+            font_size: None,
+            color: None,
+            pages: None,
+        }
+        .execute(&mut doc)
+        .unwrap();
+        let mut out = Vec::new();
+        doc.inner.save_to(&mut out).unwrap();
+        assert!(out.starts_with(b"%PDF-"));
+    }
+}
