@@ -6,6 +6,7 @@ import type { DocumentFacts, InspectionState } from '$lib/utils/documentFilters'
 const MAX_OPEN_TABS = 8;
 
 export type WorkspaceLayoutMode = 'studio' | 'split' | 'hero';
+export type UiMode = 'all' | 'read' | 'edit' | 'convert' | 'ai';
 
 export class AppState {
   activeTab = $state('documents');
@@ -18,6 +19,7 @@ export class AppState {
   documentPaths = $state<string[]>([]);  // parallel array: absolute FS path for documents[i]
   selectedDocumentIndex = $state<number | null>(null);
   workspaceLayout = $state<WorkspaceLayoutMode>('studio');
+  uiMode = $state<UiMode>('all');
   isContextPanelOpen = $state(true);
 
   isMobileViewport = $state(false);
