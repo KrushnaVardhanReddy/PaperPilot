@@ -662,6 +662,9 @@ podman-clean-all: podman-clean
 stats:
 	@python3 scripts/release_stats.py
 
+stats-watch:
+	@watch -n 1800 python3 scripts/release_stats.py
+
 
 
 

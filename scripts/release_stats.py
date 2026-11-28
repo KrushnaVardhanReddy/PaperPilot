@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Fetch PaperPilot ecosystem download statistics across GitHub Releases and npm.
+PaperPilot Live Monitor: Downloads (npm + Desktop), GitHub Stars,
+and open external PRs & Issues.
 """
 
 import sys
@@ -8,59 +9,87 @@ import json
 import urllib.request
 from datetime import datetime
 
-GITHUB_URL = "https://api.github.com/repos/KrushnaVardhanReddy/PaperPilot/releases"
-NPM_RANGE_URL = f"https://api.npmjs.org/downloads/range/2026-01-01:{datetime.now().strftime('%Y-%m-%d')}/@usepaperpilot/mcp"
+OWNER = "KrushnaVardhanReddy"
+REPO = "PaperPilot"
+REPO_URL = f"https://api.github.com/repos/{OWNER}/{REPO}"
+RELEASES_URL = f"{REPO_URL}/releases"
+ISSUES_URL = f"{REPO_URL}/issues?state=open&per_page=30"
 NPM_LAST_7D_URL = "https://api.npmjs.org/downloads/point/last-week/@usepaperpilot/mcp"
-NPM_LAST_30D_URL = "https://api.npmjs.org/downloads/point/last-month/@usepaperpilot/mcp"
+HEADERS = {"User-Agent": "PaperPilot-Monitor"}
 
-headers = {"User-Agent": "PaperPilot-Stats"}
 
-# 1. Fetch GitHub Releases
-gh_total = 0
-gh_breakdown = []
-try:
-    req = urllib.request.Request(GITHUB_URL, headers=headers)
+def fetch_json(url: str):
+    req = urllib.request.Request(url, headers=HEADERS)
     with urllib.request.urlopen(req, timeout=10) as resp:
-        releases = json.loads(resp.read().decode())
-        for r in releases:
-            tag = r.get("tag_name", "unknown")
-            r_total = sum(a.get("download_count", 0) for a in r.get("assets", []))
-            if r_total > 0:
-                gh_breakdown.append((tag, r_total))
-        gh_total = sum(count for _, count in gh_breakdown)
-except Exception as e:
-    print(f"Warning: Failed to fetch GitHub stats: {e}", file=sys.stderr)
+        return json.loads(resp.read().decode())
 
-# 2. Fetch npm stats
-npm_total = 0
-npm_7d = 0
-npm_30d = 0
-try:
-    req = urllib.request.Request(NPM_RANGE_URL, headers=headers)
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        npm_data = json.loads(resp.read().decode())
+
+def main() -> None:
+    npm_range_url = (
+        f"https://api.npmjs.org/downloads/range/2026-01-01:"
+        f"{datetime.now().strftime('%Y-%m-%d')}/@usepaperpilot/mcp"
+    )
+
+    # 1. GitHub Repo (Stars)
+    stars = 0
+    try:
+        repo_data = fetch_json(REPO_URL)
+        stars = repo_data.get("stargazers_count", 0)
+    except Exception as e:
+        print(f"Warning: Failed to fetch repo info: {e}", file=sys.stderr)
+
+    # 2. GitHub Releases (Desktop total)
+    gh_total = 0
+    try:
+        releases = fetch_json(RELEASES_URL)
+        gh_total = sum(
+            a.get("download_count", 0)
+            for r in releases
+            for a in r.get("assets", [])
+        )
+    except Exception as e:
+        print(f"Warning: Failed to fetch GitHub releases: {e}", file=sys.stderr)
+
+    # 3. npm stats (total + 7d)
+    npm_total = 0
+    npm_7d = 0
+    try:
+        npm_data = fetch_json(npm_range_url)
         npm_total = sum(d.get("downloads", 0) for d in npm_data.get("downloads", []))
+        npm_7d = fetch_json(NPM_LAST_7D_URL).get("downloads", 0)
+    except Exception as e:
+        print(f"Warning: Failed to fetch npm stats: {e}", file=sys.stderr)
 
-    req_7d = urllib.request.Request(NPM_LAST_7D_URL, headers=headers)
-    with urllib.request.urlopen(req_7d, timeout=10) as resp:
-        data_7d = json.loads(resp.read().decode())
-        npm_7d = data_7d.get("downloads", 0)
+    # 4. External Open PRs & Issues
+    ext_prs = []
+    ext_issues = []
+    try:
+        items = fetch_json(ISSUES_URL)
+        for item in items:
+            author = item.get("user", {}).get("login", "")
+            if author.lower() == OWNER.lower() or author.endswith("[bot]"):
+                continue
+            entry = (item.get("number"), item.get("title", ""), author)
+            if "pull_request" in item:
+                ext_prs.append(entry)
+            else:
+                ext_issues.append(entry)
+    except Exception as e:
+        print(f"Warning: Failed to fetch issues/PRs: {e}", file=sys.stderr)
 
-    req_30d = urllib.request.Request(NPM_LAST_30D_URL, headers=headers)
-    with urllib.request.urlopen(req_30d, timeout=10) as resp:
-        data_30d = json.loads(resp.read().decode())
-        npm_30d = data_30d.get("downloads", 0)
-except Exception as e:
-    print(f"Warning: Failed to fetch npm stats: {e}", file=sys.stderr)
+    grand_total = gh_total + npm_total
 
-grand_total = gh_total + npm_total
+    print(f"🚀 PaperPilot Monitor  |  ⭐ {stars:,} Stars")
+    print("═" * 48)
+    print(f"📥 Total Downloads : {grand_total:,}  (npm: {npm_total:,} [7d: {npm_7d:,}] | Desktop: {gh_total:,})")
+    print("─" * 48)
+    print(f"🔀 External Open PRs    : {len(ext_prs)}")
+    for num, title, author in ext_prs[:5]:
+        print(f"   • #{num} {title[:36]} (@{author})")
+    print(f"🐛 External Open Issues : {len(ext_issues)}")
+    for num, title, author in ext_issues[:5]:
+        print(f"   • #{num} {title[:36]} (@{author})")
 
-print(f"🚀 PaperPilot Ecosystem Downloads: {grand_total:,}")
-print("═" * 44)
-print(f"📦 npm (@usepaperpilot/mcp) : {npm_total:,}")
-print(f"   • Last 7 days            : {npm_7d:,}")
-print(f"   • Last 30 days           : {npm_30d:,}")
-print("─" * 44)
-print(f"💻 GitHub Releases (Desktop): {gh_total:,}")
-for tag, count in gh_breakdown:
-    print(f"   • {tag:23}: {count:,}")
+
+if __name__ == "__main__":
+    main()
