@@ -1583,16 +1583,20 @@
   }
 
   .canvas-tool-btn {
-    padding: 5px 11px;
-    border-radius: 999px;
+    padding: 8px 14px;
+    border-radius: 10px;
     border: none;
     background: transparent;
     color: var(--text-secondary, #cbd5e1);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
     white-space: nowrap;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .canvas-tool-btn:hover {
