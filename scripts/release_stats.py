@@ -15,6 +15,8 @@ REPO_URL = f"https://api.github.com/repos/{OWNER}/{REPO}"
 RELEASES_URL = f"{REPO_URL}/releases"
 ISSUES_URL = f"{REPO_URL}/issues?state=open&per_page=30"
 NPM_LAST_7D_URL = "https://api.npmjs.org/downloads/point/last-week/@usepaperpilot/mcp"
+PYPI_OVERALL_URL = "https://pypistats.org/api/packages/paperpilot/overall"
+PYPI_RECENT_URL = "https://pypistats.org/api/packages/paperpilot/recent"
 HEADERS = {"User-Agent": "PaperPilot-Monitor"}
 
 
@@ -60,7 +62,23 @@ def main() -> None:
     except Exception as e:
         print(f"Warning: Failed to fetch npm stats: {e}", file=sys.stderr)
 
-    # 4. External Open PRs & Issues
+    # 4. PyPI stats (total + 7d), silent 0 fallback on error
+    pypi_total = 0
+    pypi_7d = 0
+    try:
+        pypi_overall = fetch_json(PYPI_OVERALL_URL)
+        rows = pypi_overall.get("data", [])
+        without_mirrors = [d.get("downloads", 0) for d in rows if d.get("category") == "without_mirrors"]
+        pypi_total = sum(without_mirrors) if without_mirrors else sum(d.get("downloads", 0) for d in rows)
+    except Exception:
+        pypi_total = 0
+    try:
+        pypi_recent = fetch_json(PYPI_RECENT_URL)
+        pypi_7d = pypi_recent.get("data", {}).get("last_week", 0) or 0
+    except Exception:
+        pypi_7d = 0
+
+    # 5. External Open PRs & Issues
     ext_prs = []
     ext_issues = []
     try:
@@ -77,11 +95,11 @@ def main() -> None:
     except Exception as e:
         print(f"Warning: Failed to fetch issues/PRs: {e}", file=sys.stderr)
 
-    grand_total = gh_total + npm_total
+    grand_total = gh_total + npm_total + pypi_total
 
     print(f"🚀 PaperPilot Monitor  |  ⭐ {stars:,} Stars")
     print("═" * 48)
-    print(f"📥 Total Downloads : {grand_total:,}  (npm: {npm_total:,} [7d: {npm_7d:,}] | Desktop: {gh_total:,})")
+    print(f"📥 Total Downloads : {grand_total:,}  (npm: {npm_total:,} [7d: {npm_7d:,}] | PyPI: {pypi_total:,} | Desktop: {gh_total:,})")
     print("─" * 48)
     print(f"🔀 External Open PRs    : {len(ext_prs)}")
     for num, title, author in ext_prs[:5]:

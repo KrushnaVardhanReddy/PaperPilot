@@ -45,13 +45,17 @@
         }
       }
 
-      const [ghRes, npmRes] = await Promise.allSettled([
+      const [ghRes, npmRes, pypiRes] = await Promise.allSettled([
         fetch(`https://api.github.com/repos/${repo}/releases`),
-        fetch(`https://api.npmjs.org/downloads/range/2026-01-01:${new Date().toISOString().slice(0, 10)}/${npmPackage}`)
+        fetch(`https://api.npmjs.org/downloads/range/2026-01-01:${new Date().toISOString().slice(0, 10)}/${npmPackage}`),
+        fetch('https://pypistats.org/api/packages/paperpilot/overall')
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
       ]);
 
       let ghTotal = 0;
       let npmTotal = 0;
+      let pypiTotal = 0;
       let latestReleaseTag: string | null = null;
 
       if (ghRes.status === 'fulfilled' && ghRes.value.ok) {
@@ -77,7 +81,16 @@
         }
       }
 
-      const total = ghTotal + npmTotal;
+      if (pypiRes.status === 'fulfilled' && Array.isArray(pypiRes.value?.data)) {
+        const rows = pypiRes.value.data;
+        const withoutMirrors = rows.filter((d: { category?: string }) => d.category === 'without_mirrors');
+        const targetRows = withoutMirrors.length > 0 ? withoutMirrors : rows;
+        for (const item of targetRows) {
+          pypiTotal += Number(item.downloads) || 0;
+        }
+      }
+
+      const total = ghTotal + npmTotal + pypiTotal;
       if (total > 0) {
         downloadCount = total;
         sessionStorage.setItem(
