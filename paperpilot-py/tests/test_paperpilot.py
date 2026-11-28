@@ -153,3 +153,25 @@ def test_file_roundtrip_with_tmp_path(tmp_path):
     assert "Disk Document One" in paperpilot.extract_text(b1)
     assert "Disk Document One" in paperpilot.to_markdown(b1)
     assert len(paperpilot.chunk_rag(b1, max_tokens=128, overlap=16)) >= 1
+
+
+def test_list_tools_and_run_tool(tmp_path):
+    tools = paperpilot.list_tools()
+    assert isinstance(tools, list)
+    tool_ids = {t["id"] for t in tools}
+    assert {"merge", "split", "info", "extract_text", "chunk_rag"}.issubset(tool_ids)
+
+    pdf_path = tmp_path / "run_tool.pdf"
+    pdf_path.write_bytes(_make_minimal_pdf("RunTool Disk Test"))
+
+    import json
+
+    info_res = json.loads(
+        paperpilot.run_tool("info", json.dumps({"input_path": str(pdf_path)}))
+    )
+    assert info_res["page_count"] == 1
+
+    text_res = json.loads(
+        paperpilot.run_tool("extract_text", json.dumps({"input_path": str(pdf_path)}))
+    )
+    assert "RunTool Disk Test" in text_res["text"]

@@ -423,10 +423,191 @@ fn watermark_bytes<'py>(
     watermark(py, pdf, text, angle, opacity, font_size, color, pages)
 }
 
+struct ToolCatalogEntry {
+    id: &'static str,
+    name: &'static str,
+    description: &'static str,
+    category: &'static str,
+}
+
+const TOOL_CATALOG: &[ToolCatalogEntry] = &[
+    ToolCatalogEntry {
+        id: "merge",
+        name: "Merge PDFs",
+        description: "Merge multiple PDF documents into a single PDF.",
+        category: "organize",
+    },
+    ToolCatalogEntry {
+        id: "split",
+        name: "Split PDF",
+        description: "Split a PDF at the specified 1-based page break points.",
+        category: "organize",
+    },
+    ToolCatalogEntry {
+        id: "compress",
+        name: "Compress PDF",
+        description: "Compress a PDF document (low, medium, high).",
+        category: "optimize",
+    },
+    ToolCatalogEntry {
+        id: "to_markdown",
+        name: "PDF to Markdown",
+        description: "Convert a PDF document into layout-aware Markdown.",
+        category: "ai",
+    },
+    ToolCatalogEntry {
+        id: "extract_text",
+        name: "Extract Text",
+        description: "Extract plain text from a PDF document.",
+        category: "extract",
+    },
+    ToolCatalogEntry {
+        id: "chunk_rag",
+        name: "Chunk PDF for RAG",
+        description: "Split a PDF into semantic RAG chunks with token counts.",
+        category: "ai",
+    },
+    ToolCatalogEntry {
+        id: "redact",
+        name: "Redact PDF",
+        description: "Redact matching text terms from a PDF document.",
+        category: "security",
+    },
+    ToolCatalogEntry {
+        id: "encrypt",
+        name: "Encrypt PDF",
+        description: "Encrypt a PDF document with user/owner passwords.",
+        category: "security",
+    },
+    ToolCatalogEntry {
+        id: "info",
+        name: "PDF Info",
+        description: "Return page count and PDF version metadata.",
+        category: "inspect",
+    },
+    ToolCatalogEntry {
+        id: "repair",
+        name: "Repair PDF",
+        description: "Repair a damaged PDF document.",
+        category: "optimize",
+    },
+    ToolCatalogEntry {
+        id: "rotate",
+        name: "Rotate Pages",
+        description: "Rotate PDF pages by 90, 180, or 270 degrees.",
+        category: "organize",
+    },
+    ToolCatalogEntry {
+        id: "watermark",
+        name: "Watermark PDF",
+        description: "Stamp a text watermark across PDF pages.",
+        category: "edit",
+    },
+    // PENTA_SCAFFOLD_TOOL_CATALOG_MARKER
+];
+
+fn list_tools_impl() -> Vec<serde_json::Value> {
+    TOOL_CATALOG
+        .iter()
+        .map(|t| {
+            serde_json::json!({
+                "id": t.id,
+                "name": t.name,
+                "description": t.description,
+                "category": t.category,
+            })
+        })
+        .collect()
+}
+
+fn run_tool_impl(tool_id: &str, params_json: &str) -> Result<String, PdfError> {
+    let params: serde_json::Value = if params_json.trim().is_empty() {
+        serde_json::json!({})
+    } else {
+        serde_json::from_str(params_json)
+            .map_err(|e| PdfError::InvalidInput(format!("Invalid params_json: {e}")))?
+    };
+
+    match tool_id {
+        "list_tools" => serde_json::to_string(&list_tools_impl())
+            .map_err(|e| PdfError::InvalidInput(format!("Serialization error: {e}"))),
+        "info" => {
+            let path = params
+                .get("input_path")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| PdfError::InvalidInput("Missing 'input_path' string".to_string()))?;
+            let bytes = std::fs::read(path)
+                .map_err(|e| PdfError::InvalidInput(format!("Failed to read {path}: {e}")))?;
+            let doc = LopdfDocument::from_bytes(&bytes)?;
+            let page_count = doc.inner.get_pages().len();
+            let version = doc.inner.version.clone();
+            serde_json::to_string(&serde_json::json!({
+                "page_count": page_count,
+                "version": version,
+            }))
+            .map_err(|e| PdfError::InvalidInput(format!("Serialization error: {e}")))
+        }
+        "extract_text" => {
+            let path = params
+                .get("input_path")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| PdfError::InvalidInput("Missing 'input_path' string".to_string()))?;
+            let bytes = std::fs::read(path)
+                .map_err(|e| PdfError::InvalidInput(format!("Failed to read {path}: {e}")))?;
+            let pages: Option<Vec<u32>> = params
+                .get("pages")
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|x| x.as_u64().map(|n| n as u32))
+                        .collect()
+                });
+            let text = run_extract_text_bytes(&bytes, pages.as_deref())?;
+            serde_json::to_string(&serde_json::json!({ "text": text }))
+                .map_err(|e| PdfError::InvalidInput(format!("Serialization error: {e}")))
+        }
+        _ => {
+            if TOOL_CATALOG.iter().any(|t| t.id == tool_id) {
+                Err(PdfError::InvalidInput(format!(
+                    "Tool '{tool_id}' is registered; call its dedicated Python function `paperpilot.{tool_id}(...)` directly."
+                )))
+            } else {
+                Err(PdfError::InvalidInput(format!(
+                    "Unknown tool_id '{tool_id}'. Call list_tools() to see available tools."
+                )))
+            }
+        }
+    }
+}
+
+/// List all registered PaperPilot tools in Python.
+#[pyfunction]
+fn list_tools(py: Python<'_>) -> PyResult<Py<PyList>> {
+    let list = PyList::empty(py);
+    for entry in TOOL_CATALOG {
+        let d = PyDict::new(py);
+        d.set_item("id", entry.id)?;
+        d.set_item("name", entry.name)?;
+        d.set_item("description", entry.description)?;
+        d.set_item("category", entry.category)?;
+        list.append(d)?;
+    }
+    Ok(list.unbind())
+}
+
+/// Run a PaperPilot tool by ID with a JSON parameter string.
+#[pyfunction]
+#[pyo3(signature = (tool_id, params_json = "{}"))]
+fn run_tool(tool_id: &str, params_json: &str) -> PyResult<String> {
+    run_tool_impl(tool_id, params_json).map_err(map_pdf_err)
+}
+
 /// Native Python bindings for PaperPilot.
 #[pymodule]
 fn paperpilot(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add_function(wrap_pyfunction!(list_tools, m)?)?;
+    m.add_function(wrap_pyfunction!(run_tool, m)?)?;
     m.add_function(wrap_pyfunction!(merge, m)?)?;
     m.add_function(wrap_pyfunction!(split, m)?)?;
     m.add_function(wrap_pyfunction!(compress, m)?)?;
@@ -618,5 +799,32 @@ mod tests {
         let mut out = Vec::new();
         doc.inner.save_to(&mut out).unwrap();
         assert!(out.starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn test_list_tools_and_run_tool() {
+        let tools = list_tools_impl();
+        assert!(tools.len() >= 12);
+        assert!(tools.iter().any(|t| t["id"] == "info"));
+        assert!(tools.iter().any(|t| t["id"] == "extract_text"));
+
+        let listed_json = run_tool_impl("list_tools", "{}").unwrap();
+        assert!(listed_json.contains("\"id\":\"info\""));
+
+        let pdf = make_minimal_pdf("RunTool Rust Test");
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(tmp.path(), &pdf).unwrap();
+        let params = serde_json::json!({
+            "input_path": tmp.path().to_string_lossy()
+        })
+        .to_string();
+
+        let info_out = run_tool_impl("info", &params).unwrap();
+        assert!(info_out.contains("\"page_count\":1"));
+
+        let text_out = run_tool_impl("extract_text", &params).unwrap();
+        assert!(text_out.contains("RunTool Rust Test"));
+
+        assert!(run_tool_impl("nonexistent_tool", "{}").is_err());
     }
 }
