@@ -241,6 +241,7 @@ pub fn handle_{name_snake}_command(
     append_mcp(&args, name_snake, &name_pascal)?;
     append_gateway(&args, name_snake)?;
     append_wasm_desktop(&args, name_snake, &name_pascal)?;
+    append_python_bindings(&args, name_snake)?;
     append_edge_e2e(&args, name_snake, &name_pascal)?;
     append_desktop_args_builder(&args, name_snake)?;
     append_svelte_ui(&args, name_snake)?;
@@ -520,6 +521,39 @@ pub async fn {name_snake}(req: axum::extract::Request) -> impl IntoResponse {{
         let mut new_server = lines.join("\n");
         ensure_newline_at_eof(&mut new_server);
         write_or_print(server_path, &new_server, args.dry_run)?;
+    }
+
+    Ok(())
+}
+
+fn append_python_bindings(args: &ScaffoldArgs, name_snake: &str) -> Result<()> {
+    let pyi_path = "paperpilot-py/paperpilot.pyi";
+    if Path::new(pyi_path).exists() {
+        let mut pyi = fs::read_to_string(pyi_path)?;
+        let sig = format!("def {name_snake}(");
+        if !pyi.contains(&sig) {
+            if !pyi.ends_with('\n') {
+                pyi.push('\n');
+            }
+            pyi.push_str(&format!(
+                "def {name_snake}(pdf: bytes) -> bytes: ...  # scaffolded by penta-scaffold\n"
+            ));
+            write_or_print(pyi_path, &pyi, args.dry_run)?;
+        }
+    }
+
+    let lib_path = "paperpilot-py/src/lib.rs";
+    if Path::new(lib_path).exists() {
+        let lib = fs::read_to_string(lib_path)?;
+        let marker = "// PENTA_SCAFFOLD_TOOL_CATALOG_MARKER";
+        let id_entry = format!("id: \"{name_snake}\",");
+        if lib.contains(marker) && !lib.contains(&id_entry) {
+            let entry = format!(
+                "    ToolCatalogEntry {{\n        id: \"{name_snake}\",\n        name: \"{name_snake}\",\n        description: \"Scaffolded {name_snake} operation.\",\n        category: \"pdf\",\n    }},\n    {marker}"
+            );
+            let updated = lib.replace(marker, &entry);
+            write_or_print(lib_path, &updated, args.dry_run)?;
+        }
     }
 
     Ok(())

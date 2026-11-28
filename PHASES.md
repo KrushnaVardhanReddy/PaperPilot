@@ -60,5 +60,14 @@
   - **Task 6.1.3 (Spec 162)**: AI framework integration recipes (LangChain `PaperPilotLoader`, LlamaIndex `PaperPilotReader`, Claude/Cursor MCP presets, n8n OCR workflow) — ✅ **MERGED (PR #338)**.
   - **Task 6.1.2 (Spec 160)**: System diagnostics engine (`paperpilot doctor`, `GET /health`, `GET /api/v1/doctor`, Settings UI modal) — ✅ **Merged & Verified**.
 
+- **Phase 6.2 (`paperpilot-py` Python SDK — PyO3 / Maturin)**:
+  - **Done (v1 — Ready to Ship):**
+    - PyO3 + `maturin` (`abi3-py39`) crate (`paperpilot-py/`) with 12 core/RAG tools & 18 functions (`merge`, `split`, `compress`, `to_markdown`, `extract_text`, `chunk_rag`, `redact`, `encrypt`, `info`, `repair`, `rotate`, `watermark` + `*_bytes` variants).
+    - `list_tools()`, `run_tool()`, `paperpilot.pyi` type stubs, `penta-scaffold` Python binding hook, `.github/workflows/pypi.yml`, 7 Rust unit tests (`cargo test --offline -p paperpilot-py -j 4` passing), and real Python `tmp_path` integration tests.
+  - **Pending (v2 / Future):**
+    - Full `run_tool()` dispatch & dedicated Python bindings for remaining ~88 tools (OCR, table extraction, signatures, PDF/A, office/image conversions).
+    - Local `maturin build` + `pytest` wheel verification and TestPyPI / PyPI release.
+    - LangChain / LlamaIndex / FastAPI example recipes (`paperpilot-py/examples/`).
+
 For session handoff, checklist, and developer guides, see [`HANDOFF.md`](file:///home/krushna/Project/PaperPilot/HANDOFF.md).
 

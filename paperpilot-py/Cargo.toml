@@ -1,0 +1,17 @@
+[package]
+name = "paperpilot-py"
+version = "0.8.2"
+edition = "2024"
+description = "Native Python bindings for PaperPilot PDF & RAG engine (PyO3 + maturin)"
+license = "Apache-2.0"
+
+[lib]
+name = "paperpilot"
+crate-type = ["cdylib"]
+
+[dependencies]
+paperpilot-core = { path = "../paperpilot-core" }
+paperpilot-pdf = { path = "../paperpilot-pdf" }
+pyo3 = { version = "0.24", features = ["extension-module", "abi3-py39"] }
+serde_json = "1.0"
+tempfile = "3.27.0"
